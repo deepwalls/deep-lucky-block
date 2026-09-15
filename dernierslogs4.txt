@@ -1,0 +1,829 @@
+
+Executing Gradle task: runClient 
+Build info: MCreator 2026.1.14619, neoforge-1.21.1, 64-bit, 16267 MB, Windows 10, JVM 21.0.10, JAVA_HOME: C:\Program Files\Pylo\MCreator\jdk, started on: 2026-09-12-03:12:18 
+ 
+> Configure project : 
+Creating Minecraft artifacts without recompilation. 
+> Task :applyMcreatorPatch 
+[PATCH 1.21.1] Fichiers cadre MCreator restaures (version corregee) + 51 advancements fixes. ]: ] 
+> Task :createMinecraftArtifacts UP-TO-DATE 
+> Task :compileJava 
+> Task :processResources 
+> Task :classes 
+> Task :downloadAssets UP-TO-DATE 
+> Task :writeClientLegacyClasspath UP-TO-DATE 
+> Task :prepareClientRun UP-TO-DATE 
+> Task :runClient 
+[03:12:40] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeclientuserdev, --version, 21.1.77, --assetIndex, 17, --assetsDir, C:\Users\Nazario Delucci\.mcreator\gradle\caches\neoformruntime\assets, --gameDir, ., --fml.neoForgeVersion, 21.1.77, --fml.fmlVersion, 4.0.31, --fml.mcVersion, 1.21.1, --fml.neoFormVersion, 20240808.144430] 
+[03:12:40] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: JVM identified as JetBrains s.r.o. OpenJDK 64-Bit Server VM 21.0.10+1-b1163.105 
+[03:12:40] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher 11.0.4+main.d2e20e43 starting: java version 21.0.10 by JetBrains s.r.o.; OS Windows 10 arch amd64 version 10.0 
+[03:12:40] [main/DEBUG] [cp.mo.mo.LaunchServiceHandler/MODLAUNCHER]: Found launch services [minecraft,forgeclient,forgedatauserdev,testharness,forgeserverdev,forgeserveruserdev,forgejunitdev,forgeclientdev,forgeclientuserdev,forgeserver,forgejunituserdev,forgedatadev] 
+[03:12:40] [main/DEBUG] [cp.mo.mo.LaunchPluginHandler/MODLAUNCHER]: Found launch plugins: [mixin,slf4jfixer,runtime_enum_extender,accesstransformer,runtimedistcleaner] 
+[03:12:40] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Discovering transformation services 
+[03:12:40] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path GAMEDIR is C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run 
+[03:12:40] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path MODSDIR is C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\mods 
+[03:12:40] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path CONFIGDIR is C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config 
+[03:12:40] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path FMLCONFIG is C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\fml.toml 
+[03:12:40] [main/DEBUG] [ne.ne.fm.lo.ta.CommonLaunchHandler/CORE]: Got mod coordinates deep_lucky_block%%C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\classes\java\main;deep_lucky_block%%C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\resources\main from env 
+[03:12:40] [main/DEBUG] [ne.ne.fm.lo.ta.CommonLaunchHandler/CORE]: Found supplied mod coordinates [{deep_lucky_block=[C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\classes\java\main, C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\resources\main]}] 
+[03:12:40] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Found additional transformation services from discovery services: 
+[03:12:40] [main/INFO] [ne.ne.fm.lo.ImmediateWindowHandler/]: Loading ImmediateWindowProvider fmlearlywindow 
+[03:12:40] [main/INFO] [EARLYDISPLAY/]: Trying GL version 4.6 
+[03:12:41] [main/INFO] [EARLYDISPLAY/]: Requested GL version 4.6 got version 4.6 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Found transformer services : [mixin,fml] 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services loading 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loading service mixin 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loaded service mixin 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loading service fml 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: FML 4.0.31 loading 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: FML found ModLauncher version : 11.0.4+main.d2e20e43 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: FML found AccessTransformer version : 10.0.1+139da711 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: FML found EventBus version : null 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: Found Runtime Dist Cleaner 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loaded service fml 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Configuring option handling for services 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Received command line version data  : VersionInfo[neoForgeVersion=21.1.77, fmlVersion=4.0.31, mcVersion=1.21.1, neoFormVersion=20240808.144430] 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services initializing 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformation service mixin 
+[03:12:41] [main/DEBUG] [mixin/]: MixinService [ModLauncher] was successfully booted in cpw.mods.cl.ModuleClassLoader@7193666c 
+[03:12:41] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=union:/C:/Users/Nazario%20Delucci/.mcreator/gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/2af2f021d8e02a0220dc27a7a72b4666d66d44ca/sponge-mixin-0.15.2+mixin.0.8.7.jar%23131!/ Service=ModLauncher Env=CLIENT 
+[03:12:41] [main/DEBUG] [mixin/]: Initialising Mixin Platform Manager 
+[03:12:41] [main/DEBUG] [mixin/]: Adding mixin platform agents for container ModLauncher Root Container(ModLauncher:4f56a0a2) 
+[03:12:41] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for ModLauncher Root Container(ModLauncher:4f56a0a2) 
+[03:12:41] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container ModLauncher Root Container(ModLauncher:4f56a0a2) 
+[03:12:41] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for ModLauncher Root Container(ModLauncher:4f56a0a2) 
+[03:12:41] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container ModLauncher Root Container(ModLauncher:4f56a0a2) 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformation service mixin 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformation service fml 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Setting up basic FML game directories 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path GAMEDIR is C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path MODSDIR is C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\mods 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path CONFIGDIR is C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path FMLCONFIG is C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\fml.toml 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Loading configuration 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Preparing launch handler 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: Using forgeclientuserdev as launch service 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformation service fml 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services begin scanning 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Beginning scan trigger - transformation service mixin 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: End scan trigger - transformation service mixin 
+[03:12:41] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Beginning scan trigger - transformation service fml 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Initiating mod scan 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.ta.CommonLaunchHandler/CORE]: Got mod coordinates deep_lucky_block%%C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\classes\java\main;deep_lucky_block%%C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\resources\main from env 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.ta.CommonLaunchHandler/CORE]: Found supplied mod coordinates [{deep_lucky_block=[C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\classes\java\main, C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\resources\main]}] 
+[03:12:41] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: Found 4 implementations of IModFileCandidateLocator: 
+[03:12:41] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]:            0 - [built-in] net.neoforged.fml.loading.moddiscovery.locators.NeoForgeDevProvider from loader-4.0.31.jar 
+[03:12:41] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]:            0 - net.neoforged.fml.loading.moddiscovery.locators.ModsFolderLocator from loader-4.0.31.jar 
+[03:12:41] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]:            0 - net.neoforged.fml.loading.moddiscovery.locators.MavenDirectoryLocator from loader-4.0.31.jar 
+[03:12:41] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]:        -1000 - [built-in] net.neoforged.fml.loading.moddiscovery.locators.UserdevLocator from loader-4.0.31.jar 
+[03:12:41] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: Found 2 implementations of IModFileReader: 
+[03:12:41] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]:            0 - net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader from loader-4.0.31.jar 
+[03:12:41] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]:        -1000 - net.neoforged.fml.loading.moddiscovery.readers.NestedLibraryModReader from loader-4.0.31.jar 
+[03:12:41] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: Found 1 implementations of IDependencyLocator: 
+[03:12:41] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]:            0 - net.neoforged.fml.loading.moddiscovery.locators.JarInJarDependencyLocator from loader-4.0.31.jar 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file neoforge-21.1.77.jar with {minecraft} mods - versions {1.21.1} 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\moddev\artifacts\neoforge-21.1.77.jar 
+[03:12:41] [pool-2-thread-1/INFO] [EARLYDISPLAY/]: GL info: Intel(R) HD Graphics 630 GL version 4.6.0 - Build 31.0.101.2141, Intel 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file neoforge-21.1.77.jar with {neoforge} mods - versions {21.1.77} 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModListHandler/CORE]: Found mod coordinates from lists: [] 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\classes\java\main 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file main with {deep_lucky_block} mods - versions {2.3} 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\moddev\artifacts\neoforge-21.1.77.jar 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file neoforge-21.1.77.jar with {neoforge} mods - versions {21.1.77} 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.neoforged.fancymodloader\earlydisplay\4.0.31\1aa78304adfb2e2830f6aa99d9c6bdebf0b14e0\earlydisplay-4.0.31.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.neoforged.fancymodloader\loader\4.0.31\3218703063e576c5c1f3edcccc1f3c06cb95bf48\loader-4.0.31.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.neoforged\coremods\7.0.3\9147e6f638b4272b3bd5fc8f92ad37802512c6c\coremods-7.0.3.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\cpw.mods\modlauncher\11.0.4\6619d4812a3c092310d521ebc4c9503727563df7\modlauncher-11.0.4.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.neoforged.accesstransformers\at-modlauncher\10.0.1\5aba50202aceead086bc09fbc2751c9f05cb4890\at-modlauncher-10.0.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.neoforged\accesstransformers\10.0.1\fd83b5725f76eae9115e9355fa1c456a6a441400\accesstransformers-10.0.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.openjdk.nashorn\nashorn-core\15.4\f67f5ffaa5f5130cf6fb9b133da00c7df3b532a5\nashorn-core-15.4.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.neoforged\mergetool\2.0.3\1275202cbbb248f49345cf6787ce299afd9a02fb\mergetool-2.0.3-api.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.neoforged\bus\8.0.2\163c9ef7c4bcca6d850c34e95261b606af91fe06\bus-8.0.2.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.electronwill.night-config\toml\3.8.0\861dbcf2757dd6701c98b3949198549ccb5f62ff\toml-3.8.0.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.electronwill.night-config\core\3.8.0\2498dd2b3120dd49e963e2feab8fa5d0c5f80e0a\core-3.8.0.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.neoforged\JarJarSelector\0.4.1\fb3cc7a58af22ad2880adb98af6d518128c47dae\JarJarSelector-0.4.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.neoforged\JarJarMetadata\0.4.1\f8da03683dc81694556dc3e177c5e3bb77ae6fcb\JarJarMetadata-0.4.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.apache.maven\maven-artifact\3.8.5\4433f50c07debefaed0553bd0068f4f48d449313\maven-artifact-3.8.5.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.jodah\typetools\0.6.3\a01aaa6ddaea9ec07ec4f209487b7a46a526283a\typetools-0.6.3.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.minecrell\terminalconsoleappender\1.3.0\b562e9bb61235c9520e26282cdee71f8f802d1fc\terminalconsoleappender-1.3.0.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.fabricmc\sponge-mixin\0.15.2+mixin.0.8.7\2af2f021d8e02a0220dc27a7a72b4666d66d44ca\sponge-mixin-0.15.2+mixin.0.8.7.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.apache.commons\commons-lang3\3.14.0\1ed471194b02f2c6cb734a0cd6f6f107c673afae\commons-lang3-3.14.0.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.mojang\logging\1.2.7\24cb95ffb0e3433fd6e844c04e68009e504ca1c0\logging-1.2.7.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.apache.logging.log4j\log4j-slf4j2-impl\2.22.1\d7e6693c2606cb7e7335047d7bb96dec52db5665\log4j-slf4j2-impl-2.22.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.apache.logging.log4j\log4j-core\2.22.1\7183a25510a02ad00cc6a95d3b3d2a7d3c5a8dc4\log4j-core-2.22.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.apache.logging.log4j\log4j-api\2.22.1\bea6fede6328fabafd7e68363161a7ea6605abd1\log4j-api-2.22.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.sf.jopt-simple\jopt-simple\5.0.4\4fdac2fbe92dfad86aa6e9301736f6b4342a3f5c\jopt-simple-5.0.4.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\commons-io\commons-io\2.15.1\f11560da189ab563a5c8e351941415430e9304ea\commons-io-2.15.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.google.guava\guava\32.1.2-jre\5e64ec7e056456bef3a4bc4c6fdaef71e8ab6318\guava-32.1.2-jre.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.google.code.gson\gson\2.10.1\b3add478d4382b78ea20b1671390a858002feb6c\gson-2.10.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.slf4j\slf4j-api\2.0.9\7cf2726fdcfbc8610f9a71fb3ed639871f315340\slf4j-api-2.0.9.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.antlr\antlr4-runtime\4.13.1\17125bae1d965624e265ef49552f6465a2bfa307\antlr4-runtime-4.13.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.minecraftforge\srgutils\0.4.15\ca408b131759478f164e010fae0d73997e125fb5\srgutils-0.4.15.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.codehaus.plexus\plexus-utils\3.3.0\cf43b5391de623b36fe066a21127baef82c64022\plexus-utils-3.3.0.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.jline\jline-reader\3.20.0\8f15415b022a25b473e8e16c28ae913186ffb9c4\jline-reader-3.20.0.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.machinezoo.noexception\noexception\1.7.1\b65330c98e38a1f915fa54a6e5eca496505e3f0a\noexception-1.7.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.github.oshi\oshi-core\6.4.10\b1d8ab82d11d92fd639b56d639f8f46f739dd5fa\oshi-core-6.4.10.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.google.guava\failureaccess\1.0.1\1dcf1de382a0bf95a3d8b0849546c88bac1292c9\failureaccess-1.0.1.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.ibm.icu\icu4j\73.2\61ad4ef7f9131fcf6d25c34b817f90d6da06c9e9\icu4j-73.2.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.mojang\authlib\6.0.54\de8bc95660e1b2fe8793fd427a7a10dcec5b3ea7\authlib-6.0.54.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.mojang\blocklist\1.0.10\5c685c5ffa94c4cd39496c7184c1d122e515ecef\blocklist-1.0.10.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.mojang\brigadier\1.3.10\d15b53a14cf20fdcaa98f731af5dda654452c010\brigadier-1.3.10.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.mojang\datafixerupper\8.0.16\67d4de6d7f95d89bcf5862995fb854ebaec02a34\datafixerupper-8.0.16.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.mojang\patchy\2.2.10\da05971b07cbb379d002cf7eaec6a2048211fefc\patchy-2.2.10.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.mojang\text2speech\1.17.9\3cad216e3a7f0c19b4b394388bc9ffc446f13b14\text2speech-1.17.9.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\commons-codec\commons-codec\1.16.0\4e3eb3d79888d76b54e28b350915b5dc3919c9de\commons-codec-1.16.0.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\commons-logging\commons-logging\1.2\4bfc12adfe4842bf07b657f0369c4cb522955686\commons-logging-1.2.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\io.netty\netty-buffer\4.1.97.Final\f8f3d8644afa5e6e1a40a3a6aeb9d9aa970ecb4f\netty-buffer-4.1.97.Final.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\io.netty\netty-codec\4.1.97.Final\384ba4d75670befbedb45c4d3b497a93639c206d\netty-codec-4.1.97.Final.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\io.netty\netty-common\4.1.97.Final\7cceacaf11df8dc63f23d0fb58e9d4640fc88404\netty-common-4.1.97.Final.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\io.netty\netty-handler\4.1.97.Final\abb86c6906bf512bf2b797a41cd7d2e8d3cd7c36\netty-handler-4.1.97.Final.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\io.netty\netty-resolver\4.1.97.Final\cec8348108dc76c47cf87c669d514be52c922144\netty-resolver-4.1.97.Final.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\io.netty\netty-transport-classes-epoll\4.1.97.Final\795da37ded759e862457a82d9d92c4d39ce8ecee\netty-transport-classes-epoll-4.1.97.Final.jar because it was already located earlier 
+[03:12:41] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\io.netty\netty-transport-native-unix-common\4.1.97.Final\d469d84265ab70095b01b40886cabdd433b6e664\netty-transport-native-unix-common-4.1.97.Final.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\io.netty\netty-transport\4.1.97.Final\f37380d23c9bb079bc702910833b2fd532c9abd0\netty-transport-4.1.97.Final.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\it.unimi.dsi\fastutil\8.5.12\c24946d46824bd528054bface3231d2ecb7e95e8\fastutil-8.5.12.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.java.dev.jna\jna-platform\5.14.0\28934d48aed814f11e4c584da55c49fa7032b31b\jna-platform-5.14.0.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\net.java.dev.jna\jna\5.14.0\67bf3eaea4f0718cb376a181a629e5f88fa1c9dd\jna-5.14.0.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.apache.commons\commons-compress\1.26.0\659feffdd12280201c8aacb8f7be94f9a883c824\commons-compress-1.26.0.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.apache.httpcomponents\httpclient\4.5.13\e5f6cae5ca7ecaac1ec2827a9e2d65ae2869cada\httpclient-4.5.13.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.apache.httpcomponents\httpcore\4.4.16\51cf043c87253c9f58b539c9f7e44c8894223850\httpcore-4.4.16.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.jcraft\jorbis\0.0.17\8872d22b293e8f5d7d56ff92be966e6dc28ebdc6\jorbis-0.0.17.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.joml\joml\1.10.5\22566d58af70ad3d72308bab63b8339906deb649\joml-1.10.5.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-freetype\3.3.3\a0db6c84a8becc8ca05f9dbfa985edc348a824c7\lwjgl-freetype-3.3.3.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-freetype\3.3.3\15a8c1de7f51d07a92eae7ce1222557073a0c0c3\lwjgl-freetype-3.3.3-natives-windows-x86.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-glfw\3.3.3\efa1eb78c5ccd840e9f329717109b5e892d72f8e\lwjgl-glfw-3.3.3.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-glfw\3.3.3\32334f3fd5270a59bad9939a93115acb6de36dcf\lwjgl-glfw-3.3.3-natives-windows-x86.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-jemalloc\3.3.3\b543467b7ff3c6920539a88ee602d34098628be5\lwjgl-jemalloc-3.3.3.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-jemalloc\3.3.3\426222fc027602a5f21b9c0fe79cde6a4c7a011f\lwjgl-jemalloc-3.3.3-natives-windows.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-openal\3.3.3\daada81ceb5fc0c291fbfdd4433cb8d9423577f2\lwjgl-openal-3.3.3.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-openal\3.3.3\87b8d5050e3adb46bb58fe1cb2669a4a48fce10d\lwjgl-openal-3.3.3-natives-windows-x86.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-opengl\3.3.3\2f6b0147078396a58979125a4c947664e98293a\lwjgl-opengl-3.3.3.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-opengl\3.3.3\65e956d3735a1abdc82eff4baec1b61174697d4b\lwjgl-opengl-3.3.3-natives-windows-arm64.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-stb\3.3.3\25dd6161988d7e65f71d5065c99902402ee32746\lwjgl-stb-3.3.3.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-stb\3.3.3\1d9facdf6541de114b0f963be33505b7679c78cb\lwjgl-stb-3.3.3-natives-windows.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-tinyfd\3.3.3\82d755ca94b102e9ca77283b9e2dc46d1b15fbe5\lwjgl-tinyfd-3.3.3.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl-tinyfd\3.3.3\a6697981b0449a5087c1d546fc08b4f73e8f98c9\lwjgl-tinyfd-3.3.3-natives-windows.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl\3.3.3\29589b5f87ed335a6c7e7ee6a5775f81f97ecb84\lwjgl-3.3.3.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lwjgl\lwjgl\3.3.3\9e670718e050aeaeea0c2d5b907cffb142f2e58f\lwjgl-3.3.3-natives-windows-x86.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.lz4\lz4-java\1.8.0\4b986a99445e49ea5fbf5d149c4b63f6ed6c6780\lz4-java-1.8.0.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.jline\jline-terminal\3.20.0\d0ddcc708ddf527a3454c941b7b9225cc83a15ff\jline-terminal-3.20.0.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.google.guava\listenablefuture\9999.0-empty-to-avoid-conflict-with-guava\b421526c5f297295adef1c886e5246c39d4ac629\listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.google.code.findbugs\jsr305\3.0.2\25ea2e8b0c338a877313bd4672d3fe056ea78f0d\jsr305-3.0.2.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\org.checkerframework\checker-qual\3.33.0\de2b60b62da487644fc11f734e73c8b0b431238f\checker-qual-3.33.0.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.google.errorprone\error_prone_annotations\2.18.0\89b684257096f548fa39a7df9fdaa409d4d4df91\error_prone_annotations-2.18.0.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\com.google.j2objc\j2objc-annotations\2.8\c85270e307e7b822f1086b93689124b89768e273\j2objc-annotations-2.8.jar because it was already located earlier 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.UniqueModListBuilder/]: Found 2 mods for first modid neoforge, selecting most recent based on version data 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.UniqueModListBuilder/]: Selected file neoforge-21.1.77.jar for modid neoforge with version 21.1.77 
+[03:12:42] [main/WARN] [ne.ne.ja.se.JarSelector/]: Attempted to select a dependency jar for JarJar which was passed in as source: library:mixinextras.neoforge. Using Mod File: C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\io.github.llamalad7\mixinextras-neoforge\0.5.1\b407994962c9f0b48f66eb4fc67fa75682e10797\mixinextras-neoforge-0.5.1.jar 
+[03:12:42] [main/INFO] [ne.ne.fm.lo.mo.lo.JarInJarDependencyLocator/]: Found 1 dependencies adding them to mods collection 
+[03:12:42] [main/INFO] [ne.ne.fm.lo.mo.ModDiscoverer/]:  
+     Mod List: 
+        Name Version (Mod Id) 
+        Deep Lucky Block 2.3 (deep_lucky_block) 
+        Minecraft 1.21.1 (minecraft) 
+        NeoForge 21.1.77 (neoforge) 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file neoforge-21.1.77.jar with {minecraft} mods - versions {1.21.1} 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Loading mod file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\moddev\artifacts\neoforge-21.1.77.jar with languages [LanguageSpec[languageName=minecraft, acceptedVersions=1]] 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\classes\java\main 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file main with {deep_lucky_block} mods - versions {2.3} 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Loading mod file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\classes\java\main with languages [LanguageSpec[languageName=javafml, acceptedVersions=[4,)]] 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Found mixin config deep_lucky_block.mixins.json 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\moddev\artifacts\neoforge-21.1.77.jar 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file neoforge-21.1.77.jar with {neoforge} mods - versions {21.1.77} 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Loading mod file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\build\moddev\artifacts\neoforge-21.1.77.jar with languages [LanguageSpec[languageName=javafml, acceptedVersions=[3,]]] 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Found mixin config neoforge.mixins.json 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Loading mod file C:\Users\Nazario Delucci\.mcreator\gradle\caches\modules-2\files-2.1\io.github.llamalad7\mixinextras-neoforge\0.5.1\b407994962c9f0b48f66eb4fc67fa75682e10797\mixinextras-neoforge-0.5.1.jar with languages [] 
+[03:12:42] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: End scan trigger - transformation service fml 
+[03:12:42] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: Found 3 implementations of IModLanguageLoader: 
+[03:12:42] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]:     net.neoforged.fml.javafmlmod.FMLJavaModLanguageProvider from loader-4.0.31.jar 
+[03:12:42] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]:     net.neoforged.fml.lowcodemod.LowCodeModLanguageProvider from loader-4.0.31.jar 
+[03:12:42] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]:     net.neoforged.fml.mclanguageprovider.MinecraftModLanguageProvider from loader-4.0.31.jar 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.LanguageProviderLoader/CORE]: Found language provider javafml, version 4.0.31 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.LanguageProviderLoader/CORE]: Found language provider lowcodefml, version 4.0.31 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.LanguageProviderLoader/CORE]: Found language provider minecraft, version 4.0.31 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.ModSorter/]: Configured system mods: [minecraft, neoforge] 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.ModSorter/]: Found system mod: minecraft 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.ModSorter/]: Found system mod: neoforge 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.ModSorter/LOADING]: Found 2 mod requirements (2 mandatory, 0 optional) 
+[03:12:42] [main/DEBUG] [ne.ne.fm.lo.ModSorter/LOADING]: Found 0 mod requirements missing (0 mandatory, 0 optional) 
+[03:12:43] [main/DEBUG] [mixin/]: Adding mixin platform agents for container net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@40368a46 
+[03:12:43] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@40368a46 
+[03:12:43] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@40368a46 
+[03:12:43] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@40368a46 
+[03:12:43] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@40368a46 
+[03:12:43] [main/DEBUG] [mixin/]: Instancing new FMLMixinPlatformAgent for net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@40368a46 
+[03:12:43] [main/DEBUG] [mixin/]: FMLMixinPlatformAgent accepted container net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@40368a46 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services loading transformers 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformers for transformation service mixin 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformers for transformation service mixin 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformers for transformation service fml 
+[03:12:43] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/LOADING]: Loading coremod transformers 
+[03:12:43] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Not loading coremod script-engine since no mod requested it 
+[03:12:43] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: Found 1 implementations of ICoreMod: 
+[03:12:43] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]:     net.neoforged.neoforge.coremods.NeoForgeCoreMod from neoforge-21.1.77.jar > neoforge-coremods-21.1.77.jar 
+[03:12:43] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Adding [Target[className=net.minecraft.world.level.biome.Biome, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe]] transformer from core-mod net.neoforged.neoforge.coremods.NeoForgeCoreMod@7b3315a5 in neoforge-21.1.77.jar > neoforge-coremods-21.1.77.jar 
+[03:12:43] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Adding [Target[className=net.minecraft.world.level.levelgen.structure.Structure, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe]] transformer from core-mod net.neoforged.neoforge.coremods.NeoForgeCoreMod@7b3315a5 in neoforge-21.1.77.jar > neoforge-coremods-21.1.77.jar 
+[03:12:43] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Adding [Target[className=net.minecraft.world.level.block.FlowerPotBlock, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe]] transformer from core-mod net.neoforged.neoforge.coremods.NeoForgeCoreMod@7b3315a5 in neoforge-21.1.77.jar > neoforge-coremods-21.1.77.jar 
+[03:12:43] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Adding [Target[className=net/minecraft/server/commands/RaidCommand, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/level/levelgen/PatrolSpawner, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/monster/ZombieVillager, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/monster/Evoker$EvokerSummonSpellGoal, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/ai/village/VillageSiege, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/level/levelgen/structure/structures/SwampHutPiece, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/animal/frog/Tadpole, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/level/levelgen/structure/structures/OceanRuinPieces$OceanRuinPiece, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/level/levelgen/PhantomSpawner, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/npc/Villager, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/level/levelgen/structure/structures/WoodlandMansionPieces$WoodlandMansionPiece, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/server/commands/SummonCommand, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/monster/Strider, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/npc/CatSpawner, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/EntityType, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/animal/horse/SkeletonTrapGoal, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/level/NaturalSpawner, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/level/levelgen/structure/structures/OceanMonumentPieces$OceanMonumentPiece, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/monster/Spider, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/monster/Zombie, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe], Target[className=net/minecraft/world/entity/raid/Raid, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@d3957fe]] transformer from core-mod net.neoforged.neoforge.coremods.NeoForgeCoreMod@7b3315a5 in neoforge-21.1.77.jar > neoforge-coremods-21.1.77.jar 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.ReplaceFieldWithGetterAccess@9255c05 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/level/biome/Biome;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.ReplaceFieldWithGetterAccess@7c3ebc6b to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/level/levelgen/structure/Structure;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.ReplaceFieldWithGetterAccess@1931d99 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/level/block/FlowerPotBlock;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/server/commands/RaidCommand;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/level/levelgen/PatrolSpawner;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/monster/ZombieVillager;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/monster/Evoker$EvokerSummonSpellGoal;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/ai/village/VillageSiege;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/level/levelgen/structure/structures/SwampHutPiece;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/animal/frog/Tadpole;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/level/levelgen/structure/structures/OceanRuinPieces$OceanRuinPiece;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/level/levelgen/PhantomSpawner;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/npc/Villager;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/level/levelgen/structure/structures/WoodlandMansionPieces$WoodlandMansionPiece;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/server/commands/SummonCommand;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/monster/Strider;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/npc/CatSpawner;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/EntityType;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/animal/horse/SkeletonTrapGoal;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/level/NaturalSpawner;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/level/levelgen/structure/structures/OceanMonumentPieces$OceanMonumentPiece;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/monster/Spider;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/monster/Zombie;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@6a9950f1 to Target : cpw.mods.modlauncher.api.TargetType@d3957fe {Lnet/minecraft/world/entity/raid/Raid;} {} {V} 
+[03:12:43] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformers for transformation service fml 
+[03:12:44] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:ModLauncher Root Container(ModLauncher:4f56a0a2)] 
+[03:12:44] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@40368a46] 
+[03:12:44] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[FMLMixinPlatformAgent:null] 
+[03:12:44] [main/DEBUG] [mixin/]: Compatibility level JAVA_21 specified by deep_lucky_block.mixins.json is higher than the maximum level supported by this version of mixin (JAVA_13). 
+[03:12:44] [main/INFO] [mixin/]: Compatibility level set to JAVA_21 
+[03:12:44] [main/DEBUG] [mixin/]: Processing launch tasks for PlatformAgent[MixinPlatformAgentDefault:ModLauncher Root Container(ModLauncher:4f56a0a2)] 
+[03:12:44] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(mixin_synthetic) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(mixin_synthetic) 
+[03:12:44] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(mixin_synthetic) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(mixin_synthetic) 
+[03:12:44] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(mixin_synthetic) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new FMLMixinPlatformAgent for SecureJarResource(mixin_synthetic) 
+[03:12:44] [main/DEBUG] [mixin/]: FMLMixinPlatformAgent rejected container SecureJarResource(mixin_synthetic) 
+[03:12:44] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(mixin_synthetic)] 
+[03:12:44] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(minecraft) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(minecraft) 
+[03:12:44] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(minecraft) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(minecraft) 
+[03:12:44] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(minecraft) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new FMLMixinPlatformAgent for SecureJarResource(minecraft) 
+[03:12:44] [main/DEBUG] [mixin/]: FMLMixinPlatformAgent rejected container SecureJarResource(minecraft) 
+[03:12:44] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(minecraft)] 
+[03:12:44] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(deep_lucky_block) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(deep_lucky_block) 
+[03:12:44] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(deep_lucky_block) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(deep_lucky_block) 
+[03:12:44] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(deep_lucky_block) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new FMLMixinPlatformAgent for SecureJarResource(deep_lucky_block) 
+[03:12:44] [main/DEBUG] [mixin/]: FMLMixinPlatformAgent rejected container SecureJarResource(deep_lucky_block) 
+[03:12:44] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(deep_lucky_block)] 
+[03:12:44] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(mixinextras.neoforge) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(mixinextras.neoforge) 
+[03:12:44] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(mixinextras.neoforge) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(mixinextras.neoforge) 
+[03:12:44] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(mixinextras.neoforge) 
+[03:12:44] [main/DEBUG] [mixin/]: Instancing new FMLMixinPlatformAgent for SecureJarResource(mixinextras.neoforge) 
+[03:12:44] [main/DEBUG] [mixin/]: FMLMixinPlatformAgent rejected container SecureJarResource(mixinextras.neoforge) 
+[03:12:44] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(mixinextras.neoforge)] 
+[03:12:44] [main/DEBUG] [mixin/]: Registering mixin config: mixinextras.init.mixins.json source=SecureJarResource(mixinextras.neoforge) 
+[03:12:44] [main/DEBUG] [mixin/]: inject() running with 6 agents 
+[03:12:44] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:ModLauncher Root Container(ModLauncher:4f56a0a2)] 
+[03:12:44] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@40368a46] 
+[03:12:44] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[FMLMixinPlatformAgent:null] 
+[03:12:44] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(mixin_synthetic)] 
+[03:12:44] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(minecraft)] 
+[03:12:44] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(deep_lucky_block)] 
+[03:12:44] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(mixinextras.neoforge)] 
+[03:12:44] [main/INFO] [cp.mo.mo.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeclientuserdev' with arguments [--version, 21.1.77, --gameDir, ., --assetsDir, C:\Users\Nazario Delucci\.mcreator\gradle\caches\neoformruntime\assets, --assetIndex, 17] 
+[03:12:44] [main/DEBUG] [mixin/]: Preparing mixins for MixinEnvironment[DEFAULT] 
+[03:12:44] [main/DEBUG] [mixin/]: Selecting config deep_lucky_block.mixins.json 
+[03:12:44] [main/WARN] [mixin/]: Reference map 'deep_lucky_block.refmap.json' for deep_lucky_block.mixins.json could not be read. If this is a development environment you can ignore this message 
+[03:12:44] [main/DEBUG] [mixin/]: Selecting config neoforge.mixins.json 
+[03:12:44] [main/DEBUG] [mixin/]: Selecting config mixinextras.init.mixins.json 
+[03:12:45] [main/DEBUG] [MixinExtras|Service/]: com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.1) is taking over from null 
+[03:12:45] [main/DEBUG] [mixin/]: Registering new injector for @Inject with org.spongepowered.asm.mixin.injection.struct.CallbackInjectionInfo 
+[03:12:45] [main/DEBUG] [mixin/]: Registering new injector for @ModifyArg with org.spongepowered.asm.mixin.injection.struct.ModifyArgInjectionInfo 
+[03:12:45] [main/DEBUG] [mixin/]: Registering new injector for @ModifyArgs with org.spongepowered.asm.mixin.injection.struct.ModifyArgsInjectionInfo 
+[03:12:45] [main/DEBUG] [mixin/]: Registering new injector for @Redirect with org.spongepowered.asm.mixin.injection.struct.RedirectInjectionInfo 
+[03:12:45] [main/DEBUG] [mixin/]: Registering new injector for @ModifyVariable with org.spongepowered.asm.mixin.injection.struct.ModifyVariableInjectionInfo 
+[03:12:45] [main/DEBUG] [mixin/]: Registering new injector for @ModifyConstant with org.spongepowered.asm.mixin.injection.struct.ModifyConstantInjectionInfo 
+[03:12:45] [main/DEBUG] [mixin/]: Preparing deep_lucky_block.mixins.json (5) 
+[03:12:45] [main/DEBUG] [mixin/]: Preparing neoforge.mixins.json (2) 
+[03:12:45] [main/DEBUG] [mixin/]: Preparing mixinextras.init.mixins.json (0) 
+[03:12:45] [main/DEBUG] [mixin/]: Prepared 7 mixins in 0.875 sec (125.0ms avg) (0ms load, 0ms transform, 0ms plugin) 
+[03:12:46] [main/DEBUG] [io.ne.ut.in.lo.InternalLoggerFactory/]: Using SLF4J as the default logging framework 
+[03:12:46] [main/DEBUG] [io.ne.ut.ResourceLeakDetector/]: -Dio.netty.leakDetection.level: simple 
+[03:12:46] [main/DEBUG] [io.ne.ut.ResourceLeakDetector/]: -Dio.netty.leakDetection.targetRecords: 4 
+[03:12:48] [main/DEBUG] [os.ut.FileUtil/]: No oshi.properties file found from ClassLoader cpw.mods.modlauncher.TransformingClassLoader@28348c6 
+[03:12:49] [main/DEBUG] [os.ut.FileUtil/]: No oshi.architecture.properties file found from ClassLoader cpw.mods.modlauncher.TransformingClassLoader@28348c6 
+[03:12:49] [Datafixer Bootstrap/INFO] [mojang/DataFixerBuilder]: 229 Datafixer optimizations took 1185 milliseconds 
+[03:12:49] [pool-7-thread-1/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.1). 
+[03:12:49] [pool-7-thread-1/DEBUG] [mixin/]: Registering new injector for @SugarWrapper with com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo 
+[03:12:49] [pool-7-thread-1/DEBUG] [mixin/]: Registering new injector for @FactoryRedirectWrapper with com.llamalad7.mixinextras.wrapper.factory.FactoryRedirectWrapperInjectionInfo 
+[03:12:49] [pool-7-thread-1/DEBUG] [mixin/]: Registering new injector for @ExpressionInjectorWrapper with com.llamalad7.mixinextras.expression.impl.wrapper.ExpressionInjectorWrapperInjectionInfo 
+[03:12:49] [pool-7-thread-1/DEBUG] [mixin/]: Mixing MappedRegistryAccessor from neoforge.mixins.json into net.minecraft.core.MappedRegistry 
+[03:12:52] [pool-7-thread-1/DEBUG] [mixin/]: Mixing BlockEntityTypeAccessor from neoforge.mixins.json into net.minecraft.world.level.block.entity.BlockEntityType 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent0/]: -Dio.netty.noUnsafe: false 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent0/]: Java version: 21 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent0/]: sun.misc.Unsafe.theUnsafe: available 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent0/]: sun.misc.Unsafe.copyMemory: available 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent0/]: sun.misc.Unsafe.storeFence: available 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent0/]: java.nio.Buffer.address: available 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent0/]: direct buffer constructor: unavailable: Reflective setAccessible(true) disabled 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent0/]: java.nio.Bits.unaligned: available, true 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent0/]: jdk.internal.misc.Unsafe.allocateUninitializedArray(int): unavailable: class io.netty.util.internal.PlatformDependent0$7 (in module io.netty.common) cannot access class jdk.internal.misc.Unsafe (in module java.base) because module java.base does not export jdk.internal.misc to module io.netty.common 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent0/]: java.nio.DirectByteBuffer.<init>(long, {int,long}): unavailable 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent/]: sun.misc.Unsafe: available 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent/]: maxDirectMemory: 4265607168 bytes (maybe) 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.tmpdir: C:\Users\NAZARI~1\AppData\Local\Temp (java.io.tmpdir) 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.bitMode: 64 (sun.arch.data.model) 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent/]: Platform: Windows 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.maxDirectMemory: -1 bytes 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.uninitializedArrayAllocationThreshold: -1 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.CleanerJava9/]: java.nio.ByteBuffer.cleaner(): available 
+[03:12:55] [pool-7-thread-1/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.noPreferDirect: false 
+[03:13:01] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0] 
+[03:13:01] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0] 
+[03:13:01] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498] 
+[03:13:01] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498] 
+[03:13:01] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0] 
+[03:13:01] [Render thread/WARN] [minecraft/VanillaPackResourcesBuilder]: Assets URL 'union:/C:/Users/Nazario%20Delucci/MCreatorWorkspaces/deep_lucky_block-neoforge-1.21.1/build/moddev/artifacts/neoforge-21.1.77.jar%23183!/assets/.mcassetsroot' uses unexpected schema 
+[03:13:01] [Render thread/WARN] [minecraft/VanillaPackResourcesBuilder]: Assets URL 'union:/C:/Users/Nazario%20Delucci/MCreatorWorkspaces/deep_lucky_block-neoforge-1.21.1/build/moddev/artifacts/neoforge-21.1.77.jar%23183!/data/.mcassetsroot' uses unexpected schema 
+[03:13:01] [Render thread/INFO] [mojang/YggdrasilAuthenticationService]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD] 
+[03:13:01] [Render thread/INFO] [minecraft/Minecraft]: Setting user: Dev 
+[03:13:01] [Render thread/INFO] [minecraft/Minecraft]: Backend library: LWJGL version 3.3.3+5 
+[03:13:02] [Render thread/DEBUG] [ne.ne.fm.ModWorkManager/LOADING]: Using 8 threads for parallel mod-loading 
+[03:13:02] [Render thread/DEBUG] [ne.ne.fm.ja.FMLModContainer/LOADING]: Creating FMLModContainer instance for [deepluckyblock.DeepLuckyBlockMod] 
+[03:13:02] [Render thread/DEBUG] [ne.ne.fm.ja.FMLModContainer/LOADING]: Creating FMLModContainer instance for [net.neoforged.neoforge.common.NeoForgeMod, net.neoforged.neoforge.client.ClientNeoForgeMod] 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.ne.in.ve.ne.NeoForgeVersion/CORE]: Found NeoForge version 21.1.77 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.ne.in.ve.ne.NeoForgeVersion/CORE]: Found FML version 4.0.31 
+[03:13:02] [modloading-worker-0/INFO] [ne.ne.ne.co.NeoForgeMod/NEOFORGE-MOD]: NeoForge mod loading, version 21.1.77, for MC 1.21.1 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file neoforge-client.toml for neoforge tracking 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file neoforge-server.toml for neoforge tracking 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file neoforge-common.toml for neoforge tracking 
+[SLB-V8] ??????????????????????????????????????????????????? ]: ] 
+[SLB-V8] Deep Lucky Block v8 (2026-09-05) charge ]: ] 
+[SLB-V8] - armures : material avec Layer (rendu custom NeoForge) ]: ] 
+[SLB-V8] - coffres : NeoForgeData + BLOCK_ENTITY_DATA + transfert a la pose ]: ] 
+[SLB-V8] - traces : [SLB-V8] POSE / CASSE / COFFRE dans ce log ]: ] 
+[SLB-V8] ??????????????????????????????????????????????????? ]: ] 
+[03:13:02] [modloading-worker-0/INFO] [de.co.DeepMixinBootstrap/]: [DeepMixinBootstrap] deep_lucky_block.mixins.json est embarqué (union), non modifiable. 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-tillage_boot.toml for deep_lucky_block tracking 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Attempting to inject @EventBusSubscriber classes into the eventbus for neoforge 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-core_collection.toml for deep_lucky_block tracking 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-crop_harvest.toml for deep_lucky_block tracking 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.server.command.ConfigCommand to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.network.filters.GenericPacketSplitter to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-ore_detector.toml for deep_lucky_block tracking 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-range_foot_block.toml for deep_lucky_block tracking 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-transfer.toml for deep_lucky_block tracking 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-weed_removal.toml for deep_lucky_block tracking 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-lucky_drop.toml for deep_lucky_block tracking 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Attempting to inject @EventBusSubscriber classes into the eventbus for deep_lucky_block 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.advancements.DeepLuckyBlockAdvancementIntegration to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.advancements.DeepLuckyBlockAdvancements to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.client.ClientTranslationInjector to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.client.DeepEnchantmentDescriptionCompatibility to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.client.DeepRadarDropBonusOverlay to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.client.ElementalHeartOverlay to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.client.EnchantmentTooltipHandler to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.client.EternalAuraParticles to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.AbstractByteBuf/]: -Dio.netty.buffer.checkAccessible: true 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.AbstractByteBuf/]: -Dio.netty.buffer.checkBounds: true 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.ut.ResourceLeakDetectorFactory/]: Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@7b3988f2 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.client.ImmediatelyFastGlintCompat to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.compat.LuckyToolsCompatibility to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.enchantments.EquipmentExpansionHandler to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.ut.in.InternalThreadLocalMap/]: -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.ut.in.InternalThreadLocalMap/]: -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.numHeapArenas: 16 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.numDirectArenas: 16 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.pageSize: 8192 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.maxOrder: 9 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.chunkSize: 4194304 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.smallCacheSize: 256 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.normalCacheSize: 64 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.maxCachedBufferCapacity: 32768 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.cacheTrimInterval: 8192 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.cacheTrimIntervalMillis: 0 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.useCacheForAllThreads: false 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.maxCachedByteBuffersPerChunk: 1023 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.enchantments.FishingTridentElytraHandler to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.ByteBufUtil/]: -Dio.netty.allocator.type: pooled 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.ByteBufUtil/]: -Dio.netty.threadLocalDirectBufferSize: 0 
+[03:13:02] [modloading-worker-0/DEBUG] [io.ne.bu.ByteBufUtil/]: -Dio.netty.maxThreadLocalCharBufferSize: 16384 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.enchantments.RealAttributeModifierHandler to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.enchantments.UniversalEnchantmentHandler to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.network.NetworkInitialization to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.network.ConfigurationInitialization to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.common.MonsterRoomHooks to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.common.DeferredSpawnEggItem$CommonHandler to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.common.DeferredSpawnEggItem$ColorRegisterHandler to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.client.model.data.ModelDataManager to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.init.DeepLuckyBlockModEntities to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.client.ParticleBoundsDebugRenderer to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.init.DeepLuckyBlockModEntityRenderers to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.init.DeepLuckyBlockModModels to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.client.ClientHooks$ClientEvents to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.init.DeepLuckyBlockModTabs to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.init.SpawnPlacementRegistration to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.network.DeepLuckyBlockModVariables$EventBusVariableHandlers to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.client.BlockEntityRenderBoundsDebugRenderer to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing net.neoforged.neoforge.attachment.AttachmentInternals to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.network.DeepLuckyBlockModVariables to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.network.DeepPayloads to MOD 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.BobFishingHookProcedure to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.CrimsonLakeStructureSpawnProcedure to GAME 
+[03:13:02] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.EnchantmentAuditCommand to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.EnchantmentTooltipFixProcedure to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.FeatherFallingFixProcedure to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.GenerateBadProcedure to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.GenerateLuckyItemProcedure to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.GlintCommand to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.HeartTestCommand to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.LuckyChestAutofillProcedure to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.SanctuarySpawnerEquipProcedure to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.SpawnBobCommand$Registration to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.Structures4Procedure to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.Structures5Procedure to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.SupremeLuckyBlockDropProcedure to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.procedures.TestProcedure to GAME 
+[03:13:03] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Auto-subscribing deepluckyblock.SlbDiagnostics to GAME 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loading configs type CLIENT 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.ne.co.NeoForgeConfig/FORGEMOD]: Loaded NeoForge config file neoforge-client.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\neoforge-client.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\neoforge-client.toml for changes 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loading configs type COMMON 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.ne.co.NeoForgeConfig/FORGEMOD]: Loaded NeoForge config file neoforge-common.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\neoforge-common.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\neoforge-common.toml for changes 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-tillage_boot.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-tillage_boot.toml for changes 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-core_collection.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-core_collection.toml for changes 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-crop_harvest.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-crop_harvest.toml for changes 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-ore_detector.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-ore_detector.toml for changes 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-range_foot_block.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-range_foot_block.toml for changes 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-transfer.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-transfer.toml for changes 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-weed_removal.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-weed_removal.toml for changes 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-lucky_drop.toml 
+[03:13:03] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\deep_lucky_block-lucky_drop.toml for changes 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Mixing RenderTypeEnchantMixin from deep_lucky_block.mixins.json into net.minecraft.client.renderer.RenderType 
+[03:13:04] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:RenderTypeEnchantMixin from mod deep_lucky_block->@Inject::enchantGlint(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V does use it's CallbackInfoReturnable 
+[03:13:04] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:RenderTypeEnchantMixin from mod deep_lucky_block->@Inject::enchantGlintTranslucent(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V does use it's CallbackInfoReturnable 
+[03:13:04] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:RenderTypeEnchantMixin from mod deep_lucky_block->@Inject::enchantEntityGlint(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V does use it's CallbackInfoReturnable 
+[03:13:04] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:RenderTypeEnchantMixin from mod deep_lucky_block->@Inject::enchantEntityGlintDirect(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V does use it's CallbackInfoReturnable 
+[03:13:04] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:RenderTypeEnchantMixin from mod deep_lucky_block->@Inject::enchantArmorEntityGlint(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V does use it's CallbackInfoReturnable 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Mixing RenderStateShardConstantAccessor from deep_lucky_block.mixins.json into net.minecraft.client.renderer.RenderStateShard 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_glintTransparency()Lnet/minecraft/client/renderer/RenderStateShard$TransparencyStateShard; to deepen_glintTransparency$deep_lucky_block_$md$645835$0 in deep_lucky_block.mixins.json:RenderStateShardConstantAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_colorWrite()Lnet/minecraft/client/renderer/RenderStateShard$WriteMaskStateShard; to deepen_colorWrite$deep_lucky_block_$md$645835$1 in deep_lucky_block.mixins.json:RenderStateShardConstantAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_noCull()Lnet/minecraft/client/renderer/RenderStateShard$CullStateShard; to deepen_noCull$deep_lucky_block_$md$645835$2 in deep_lucky_block.mixins.json:RenderStateShardConstantAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_equalDepthTest()Lnet/minecraft/client/renderer/RenderStateShard$DepthTestStateShard; to deepen_equalDepthTest$deep_lucky_block_$md$645835$3 in deep_lucky_block.mixins.json:RenderStateShardConstantAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_glintTexturing()Lnet/minecraft/client/renderer/RenderStateShard$TexturingStateShard; to deepen_glintTexturing$deep_lucky_block_$md$645835$4 in deep_lucky_block.mixins.json:RenderStateShardConstantAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_entityGlintTexturing()Lnet/minecraft/client/renderer/RenderStateShard$TexturingStateShard; to deepen_entityGlintTexturing$deep_lucky_block_$md$645835$5 in deep_lucky_block.mixins.json:RenderStateShardConstantAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_itemEntityTarget()Lnet/minecraft/client/renderer/RenderStateShard$OutputStateShard; to deepen_itemEntityTarget$deep_lucky_block_$md$645835$6 in deep_lucky_block.mixins.json:RenderStateShardConstantAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_viewOffsetZLayering()Lnet/minecraft/client/renderer/RenderStateShard$LayeringStateShard; to deepen_viewOffsetZLayering$deep_lucky_block_$md$645835$7 in deep_lucky_block.mixins.json:RenderStateShardConstantAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Mixing RenderStateShardShaderAccessor from deep_lucky_block.mixins.json into net.minecraft.client.renderer.RenderStateShard 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_glintShader()Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard; to deepen_glintShader$deep_lucky_block_$md$645835$8 in deep_lucky_block.mixins.json:RenderStateShardShaderAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_glintTranslucentShader()Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard; to deepen_glintTranslucentShader$deep_lucky_block_$md$645835$9 in deep_lucky_block.mixins.json:RenderStateShardShaderAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_entityGlintShader()Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard; to deepen_entityGlintShader$deep_lucky_block_$md$645835$a in deep_lucky_block.mixins.json:RenderStateShardShaderAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_entityGlintDirectShader()Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard; to deepen_entityGlintDirectShader$deep_lucky_block_$md$645835$b in deep_lucky_block.mixins.json:RenderStateShardShaderAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Renaming @Accessor method deepen_armorEntityGlintShader()Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard; to deepen_armorEntityGlintShader$deep_lucky_block_$md$645835$c in deep_lucky_block.mixins.json:RenderStateShardShaderAccessor from mod deep_lucky_block 
+[03:13:04] [Render thread/DEBUG] [mixin/]: Mixing ItemRendererEnchantMixin from deep_lucky_block.mixins.json into net.minecraft.client.renderer.entity.ItemRenderer 
+[03:13:04] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:ItemRendererEnchantMixin from mod deep_lucky_block->@Inject::dlbCapture(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/client/resources/model/BakedModel;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V doesn't use it's CallbackInfo 
+[03:13:04] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:ItemRendererEnchantMixin from mod deep_lucky_block->@Inject::dlbCapture(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/client/resources/model/BakedModel;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V has 0 override(s) in child classes 
+[03:13:04] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:ItemRendererEnchantMixin from mod deep_lucky_block->@Inject::dlbCapture(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/client/resources/model/BakedModel;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V won't be passed a CallbackInfo as a result 
+[03:13:04] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:ItemRendererEnchantMixin from mod deep_lucky_block->@Inject::dlbClear(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/client/resources/model/BakedModel;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V doesn't use it's CallbackInfo 
+[03:13:04] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:ItemRendererEnchantMixin from mod deep_lucky_block->@Inject::dlbClear(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/client/resources/model/BakedModel;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V has 0 override(s) in child classes 
+[03:13:04] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:ItemRendererEnchantMixin from mod deep_lucky_block->@Inject::dlbClear(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/client/resources/model/BakedModel;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V won't be passed a CallbackInfo as a result 
+[03:13:05] [Render thread/INFO] [ne.ne.ne.ga.GameTestHooks/]: Enabled Gametest Namespaces: [] 
+[03:13:05] [Render thread/DEBUG] [mixin/]: Mixing HumanoidArmorLayerEnchantMixin from deep_lucky_block.mixins.json into net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer 
+[03:13:05] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:HumanoidArmorLayerEnchantMixin from mod deep_lucky_block->@Inject::deepEnchant_captureArmor(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;ILnet/minecraft/client/model/HumanoidModel;FFFFFFLorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V doesn't use it's CallbackInfo 
+[03:13:05] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:HumanoidArmorLayerEnchantMixin from mod deep_lucky_block->@Inject::deepEnchant_captureArmor(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;ILnet/minecraft/client/model/HumanoidModel;FFFFFFLorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V has 0 override(s) in child classes 
+[03:13:05] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:HumanoidArmorLayerEnchantMixin from mod deep_lucky_block->@Inject::deepEnchant_captureArmor(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;ILnet/minecraft/client/model/HumanoidModel;FFFFFFLorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V won't be passed a CallbackInfo as a result 
+[03:13:05] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:HumanoidArmorLayerEnchantMixin from mod deep_lucky_block->@Inject::deepEnchant_clearArmor(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;ILnet/minecraft/client/model/HumanoidModel;FFFFFFLorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V doesn't use it's CallbackInfo 
+[03:13:05] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:HumanoidArmorLayerEnchantMixin from mod deep_lucky_block->@Inject::deepEnchant_clearArmor(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;ILnet/minecraft/client/model/HumanoidModel;FFFFFFLorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V has 0 override(s) in child classes 
+[03:13:05] [Render thread/DEBUG] [mixin/]: deep_lucky_block.mixins.json:HumanoidArmorLayerEnchantMixin from mod deep_lucky_block->@Inject::deepEnchant_clearArmor(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;ILnet/minecraft/client/model/HumanoidModel;FFFFFFLorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V won't be passed a CallbackInfo as a result 
+[03:13:06] [Render thread/INFO] [minecraft/ReloadableResourceManager]: Reloading ResourceManager: vanilla, mod_resources, mod/deep_lucky_block, mod/neoforge 
+[03:13:06] [Render thread/DEBUG] [ne.ne.fm.DeferredWorkQueue/LOADING]: Dispatching synchronous work for work queue Common setup: 2 jobs 
+[03:13:06] [Render thread/DEBUG] [ne.ne.fm.DeferredWorkQueue/LOADING]: Synchronous work queue completed in 2.224 ms 
+[03:13:06] [Render thread/DEBUG] [ne.ne.fm.DeferredWorkQueue/LOADING]: Dispatching synchronous work for work queue Sided setup: 1 jobs 
+[03:13:06] [Render thread/DEBUG] [ne.ne.fm.DeferredWorkQueue/LOADING]: Synchronous work queue completed in 13.59 ms 
+[03:13:07] [Worker-Main-1/INFO] [minecraft/UnihexProvider]: Found unifont_all_no_pua-15.1.05.hex, loading 
+[03:13:07] [Worker-Main-4/INFO] [minecraft/UnihexProvider]: Found unifont_jp_patch-15.1.05.hex, loading 
+[03:13:08] [Worker-Main-6/WARN] [minecraft/SpriteLoader]: Texture deep_lucky_block:item/lunettesdupatron with size 169x169 limits mip level from 2 to 0 
+[03:13:11] [Render thread/WARN] [minecraft/SoundEngine]: Missing sound for event: minecraft:item.goat_horn.play 
+[03:13:11] [Render thread/WARN] [minecraft/SoundEngine]: Missing sound for event: minecraft:entity.goat.screaming.horn_break 
+[03:13:11] [Render thread/INFO] [mojang/Library]: OpenAL initialized on device OpenAL Soft on Haut-parleurs (Realtek High Definition Audio(SST)) 
+[03:13:11] [Render thread/INFO] [minecraft/SoundEngine]: Sound engine started 
+[03:13:12] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 2048x1024x2 minecraft:textures/atlas/blocks.png-atlas 
+[03:13:12] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 256x256x2 minecraft:textures/atlas/signs.png-atlas 
+[03:13:12] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 512x512x2 minecraft:textures/atlas/shield_patterns.png-atlas 
+[03:13:12] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 512x512x2 minecraft:textures/atlas/banner_patterns.png-atlas 
+[03:13:12] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 1024x1024x2 minecraft:textures/atlas/armor_trims.png-atlas 
+[03:13:12] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 256x256x2 minecraft:textures/atlas/chest.png-atlas 
+[03:13:12] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 128x64x2 minecraft:textures/atlas/decorated_pot.png-atlas 
+[03:13:12] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 512x256x2 minecraft:textures/atlas/beds.png-atlas 
+[03:13:12] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 512x256x2 minecraft:textures/atlas/shulker_boxes.png-atlas 
+[03:13:13] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas 
+[03:13:13] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas 
+[03:13:13] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 256x128x0 minecraft:textures/atlas/mob_effects.png-atlas 
+[03:13:13] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 64x64x0 minecraft:textures/atlas/map_decorations.png-atlas 
+[03:13:13] [Render thread/INFO] [minecraft/TextureAtlas]: Created: 1024x512x0 minecraft:textures/atlas/gui.png-atlas 
+[03:13:14] [Render thread/WARN] [minecraft/ShaderInstance]: Shader rendertype_entity_translucent_emissive could not find sampler named Sampler2 in the specified shader program. 
+[03:13:15] [Render thread/INFO] [ne.ne.ne.cl.en.an.js.AnimationLoader/]: Loaded 0 entity animations 
+[03:14:15] [Render thread/INFO] [minecraft/RecipeManager]: Loaded 1320 recipes 
+[03:14:16] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 1450 advancements 
+[03:14:20] [Render thread/DEBUG] [ne.ne.ne.co.CommonHooks/WP]: Gathered mod list to write to world save New World 
+[03:14:20] [Server thread/INFO] [minecraft/IntegratedServer]: Starting integrated minecraft server version 1.21.1 
+[03:14:20] [Server thread/INFO] [minecraft/MinecraftServer]: Generating keypair 
+[03:14:20] [Server thread/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loading configs type SERVER 
+[03:14:20] [Server thread/DEBUG] [ne.ne.ne.co.NeoForgeConfig/FORGEMOD]: Loaded NeoForge config file neoforge-server.toml 
+[03:14:20] [Server thread/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\neoforge-server.toml 
+[03:14:20] [Server thread/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file C:\Users\Nazario Delucci\MCreatorWorkspaces\deep_lucky_block-neoforge-1.21.1\run\config\neoforge-server.toml for changes 
+[03:14:35] [Server thread/INFO] [minecraft/MinecraftServer]: Preparing start region for dimension minecraft:overworld 
+[03:14:35] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2% 
+[03:14:36] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2% 
+[03:14:36] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2% 
+[03:14:37] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2% 
+[03:14:37] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2% 
+[03:14:38] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2% 
+[03:14:38] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2% 
+[03:14:39] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 18% 
+[03:14:39] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 18% 
+[03:14:40] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 18% 
+[03:14:40] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 18% 
+[03:14:41] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 18% 
+[03:14:41] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 18% 
+[03:14:42] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 51% 
+[03:14:42] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 51% 
+[03:14:43] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 51% 
+[03:14:43] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 51% 
+[03:14:44] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 51% 
+[03:14:44] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 51% 
+[03:14:45] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 51% 
+[03:14:45] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 53% 
+[03:14:46] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 67% 
+[03:14:46] [progressListener/INFO] [minecraft/LoggerChunkProgressListener]: Time elapsed: 11223 ms 
+[03:14:46] [Server thread/INFO] [ne.ne.ne.se.pe.PermissionAPI/]: Successfully initialized permission handler neoforge:default_handler 
+[03:14:47] [Server thread/INFO] [minecraft/IntegratedServer]: Changing view distance to 17, from 10 
+[03:14:47] [Server thread/INFO] [minecraft/IntegratedServer]: Changing simulation distance to 17, from 0 
+[03:14:47] [Render thread/DEBUG] [io.ne.ch.MultithreadEventLoopGroup/]: -Dio.netty.eventLoopThreads: 16 
+[03:14:47] [Render thread/DEBUG] [io.ne.ut.co.GlobalEventExecutor/]: -Dio.netty.globalEventExecutor.quietPeriodSeconds: 1 
+[03:14:47] [Render thread/DEBUG] [io.ne.ch.ni.NioEventLoop/]: -Dio.netty.noKeySetOptimization: false 
+[03:14:47] [Render thread/DEBUG] [io.ne.ch.ni.NioEventLoop/]: -Dio.netty.selectorAutoRebuildThreshold: 512 
+[03:14:47] [Render thread/DEBUG] [io.ne.ut.in.PlatformDependent/]: org.jctools-core.MpscChunkedArrayQueue: available 
+[03:14:47] [Render thread/DEBUG] [io.ne.ch.DefaultChannelId/]: -Dio.netty.processId: 15364 (auto-detected) 
+[03:14:47] [Render thread/DEBUG] [io.ne.ut.NetUtil/]: -Djava.net.preferIPv4Stack: false 
+[03:14:47] [Render thread/DEBUG] [io.ne.ut.NetUtil/]: -Djava.net.preferIPv6Addresses: system 
+[03:14:47] [Render thread/DEBUG] [io.ne.ut.NetUtilInitializations/]: Loopback interface: loopback_0 (Software Loopback Interface 1, 0:0:0:0:0:0:0:1) 
+[03:14:47] [Render thread/DEBUG] [io.ne.ut.NetUtil/]: Failed to get SOMAXCONN from sysctl and file \proc\sys\net\core\somaxconn. Default: 200 
+[03:14:47] [Render thread/DEBUG] [io.ne.ch.DefaultChannelId/]: -Dio.netty.machineId: 98:29:a6:ff:fe:3f:43:df (auto-detected) 
+[03:14:47] [Render thread/DEBUG] [io.ne.ut.Recycler/]: -Dio.netty.recycler.maxCapacityPerThread: 4096 
+[03:14:47] [Render thread/DEBUG] [io.ne.ut.Recycler/]: -Dio.netty.recycler.ratio: 8 
+[03:14:47] [Render thread/DEBUG] [io.ne.ut.Recycler/]: -Dio.netty.recycler.chunkSize: 32 
+[03:14:47] [Render thread/DEBUG] [io.ne.ut.Recycler/]: -Dio.netty.recycler.blocking: false 
+[03:14:47] [Render thread/DEBUG] [io.ne.ut.Recycler/]: -Dio.netty.recycler.batchFastThreadLocalOnly: true 
+[03:14:48] [Netty Server IO #1/DEBUG] [ne.ne.ne.ne.fi.NetworkFilters/]: Injected net.neoforged.neoforge.network.filters.GenericPacketSplitter@6a52f54a into net.minecraft.network.Connection@6d988ef1 
+[03:14:48] [Netty Local Client IO #0/DEBUG] [ne.ne.ne.ne.fi.NetworkFilters/]: Injected net.neoforged.neoforge.network.filters.GenericPacketSplitter@784c10fe into net.minecraft.network.Connection@6c06f852 
+[03:14:49] [Netty Server IO #1/DEBUG] [ne.ne.ne.ne.fi.NetworkFilters/]: Injected net.neoforged.neoforge.network.filters.GenericPacketSplitter@3db8a290 into net.minecraft.network.Connection@6d988ef1 
+[03:14:49] [Server thread/INFO] [minecraft/PlayerList]: Dev[local:E:f54201e7] logged in with entity id 9 at (-29.5, 95.0, 0.5) 
+[03:14:49] [Server thread/INFO] [minecraft/MinecraftServer]: Dev joined the game 
+[03:14:50] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 2 advancements 
+[03:14:51] [Server thread/INFO] [minecraft/IntegratedServer]: Saving and pausing game... 
+[03:14:51] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[New World]'/minecraft:overworld 
+[03:14:52] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[New World]'/minecraft:the_end 
+[03:14:52] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[New World]'/minecraft:the_nether 
+[03:14:52] [Server thread/DEBUG] [ne.ne.ne.co.CommonHooks/WP]: Gathered mod list to write to world save New World 
+[03:33:27] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 2842ms or 56 ticks behind 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-29, y=94, z=6} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-29, y=94, z=5} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-29, y=95, z=5} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-29, y=95, z=4} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-30, y=94, z=2} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-30, y=94, z=1} ]: ] 
+[03:33:40] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Lucky Maniac] 
+[03:33:40] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Deep's Lucky Block] 
+[03:33:40] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Getting Started] 
+[03:33:40] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Lucky Explorer] 
+[03:33:40] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [First Break] 
+[03:33:40] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has reached the goal [Lucky Master] 
+[03:33:40] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has completed the challenge [LUCKY LEGEND] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-30, y=95, z=1} ]: ] 
+[03:33:40] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Lucky Maniac] 
+[03:33:40] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Deep's Lucky Block] 
+[03:33:40] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Getting Started] 
+[03:33:40] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Lucky Explorer] 
+[03:33:40] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [First Break] 
+[03:33:40] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has reached the goal [Lucky Master] 
+[03:33:40] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has completed the challenge [LUCKY LEGEND] 
+[03:33:41] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 28 advancements 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-30, y=95, z=2} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-29, y=95, z=3} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-29, y=95, z=4} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-29, y=95, z=5} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-29, y=95, z=6} ]: ] 
+[03:33:55] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [The Zenith] 
+[03:33:55] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has completed the challenge [Crucible of the Mighty] 
+[03:33:55] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Grade: Legendary] 
+[03:33:55] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [The Zenith] 
+[03:33:55] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has completed the challenge [Crucible of the Mighty] 
+[03:33:55] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Grade: Legendary] 
+[03:33:55] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 43 advancements 
+[03:33:55] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [The Creators' Syndicate] 
+[03:33:55] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [A Web Legend] 
+[03:33:55] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has completed the challenge [Forge of the Gods] 
+[03:33:55] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Grade: Masterwork] 
+[03:33:55] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [The Creators' Syndicate] 
+[03:33:55] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [A Web Legend] 
+[03:33:55] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has completed the challenge [Forge of the Gods] 
+[03:33:55] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Grade: Masterwork] 
+[03:33:55] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 46 advancements 
+[03:33:56] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Grade: Exceptional] 
+[03:33:56] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Grade: Exceptional] 
+[03:33:56] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 46 advancements 
+[03:33:56] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Grade: Epic] 
+[03:33:56] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Grade: Epic] 
+[03:33:56] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 46 advancements 
+[03:33:58] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 16587ms or 331 ticks behind 
+[03:34:23] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> gros probleme, les achievement sont totalement cassés, lucky explorer etc au premier bloc casé wtf ? 
+[03:34:23] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> gros probleme, les achievement sont totalement cassés, lucky explorer etc au premier bloc casé wtf ? 
+[03:35:02] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> faut bien re lister, re mettre les codes qui detectent pour chaque achievement, revoir les compatibilités 1.21.1 neoforge 
+[03:35:02] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> faut bien re lister, re mettre les codes qui detectent pour chaque achievement, revoir les compatibilités 1.21.1 neoforge 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=94, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=95, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=96, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=97, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=98, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=99, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=99, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=99, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=99, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=99, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=100, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=101, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=102, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=103, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=104, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=105, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=106, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=107, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=108, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=109, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=110, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=111, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=112, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=113, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=114, z=18} ]: ] 
+[SLB-V8] POSE (avant) : item luck=100 a BlockPos{x=-78, y=115, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=116, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=115, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=114, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=113, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=112, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=111, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=110, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=109, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=108, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=107, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=106, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=105, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=104, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=103, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=102, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=101, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=100, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=99, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=98, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=97, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=96, z=18} ]: ] 
+[SLB-V8] CASSE : beLuck=100 persistentDataLuck=0 beType=net.minecraft.world.level.block.entity.BlockEntityType@6b4129b2 a BlockPos{x=-78, y=95, z=18} ]: ] 
+[03:35:38] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has reached the goal [Creator Collector] 
+[03:35:38] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has reached the goal [Creator Collector] 
+[03:35:38] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 46 advancements 
+[03:35:39] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Grade: Mythic] 
+[03:35:39] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Fate] 
+[03:35:39] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has reached the goal [Lucky Streak!] 
+[03:35:39] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Grade: Mythic] 
+[03:35:39] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Fate] 
+[03:35:39] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has reached the goal [Lucky Streak!] 
+[03:35:39] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 46 advancements 
+[03:35:39] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has completed the challenge [Grade: ETERNAL] 
+[03:35:39] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has completed the challenge [First ULTIMATE] 
+[03:35:39] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has completed the challenge [Grade: ETERNAL] 
+[03:35:39] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has completed the challenge [First ULTIMATE] 
+[03:35:39] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 47 advancements 
+[03:35:39] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] execute() ID=1, origin=-78, 95, 18 
+[03:35:39] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [The Explorer] 
+[03:35:39] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has reached the goal [Fae Observatory] 
+[03:35:39] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has reached the goal [The Verdant Way] 
+[03:35:39] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] === PASTE observatory === off=[0,-5,0] dist=0 facing=north 
+[03:35:39] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [The Explorer] 
+[03:35:39] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has reached the goal [Fae Observatory] 
+[03:35:39] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has reached the goal [The Verdant Way] 
+[03:35:45] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 37,-87 (candidat #1/12) : flat=87%, pente=16 (score=748, terrain reel verifie) 
+[03:35:45] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] observatory -> 37, 81, -20 (baseY=94, minRelY=8, rot=COUNTERCLOCKWISE_90, 5932ms) 
+[03:35:45] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] observatory : 14972 blocs (118 verre supprime) 
+[03:35:49] [Server thread/INFO] [de.ut.DebugLog/]: [DLB-STRUCTURE] prepZone : build 47x59, ring=29 -> zone 105x117, 219 arbres sauves (prep AVANT paste) 
+[03:35:49] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 9705ms or 194 ticks behind 
+[03:35:49] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 53 advancements 
+[03:35:49] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has reached the goal [Anvil of the Curious] 
+[03:35:49] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Grade: Outstanding] 
+[03:35:49] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has reached the goal [Anvil of the Curious] 
+[03:35:49] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Grade: Outstanding] 
+[03:35:49] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 53 advancements 
+[03:35:50] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Grade: Relic] 
+[03:35:50] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Grade: Relic] 
+[03:35:50] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 53 advancements 
+[03:35:50] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Best Friends Forever] 
+[03:35:50] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Best Friends Forever] 
+[03:35:50] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 59 advancements 
+[03:35:51] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has completed the challenge [Grand Master of the Web] 
+[03:35:51] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] execute() ID=4, origin=-78, 95, 18 
+[03:35:51] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has reached the goal [Ghost Ship] 
+[03:35:51] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has reached the goal [The Frozen Edge] 
+[03:35:51] [Server thread/INFO] [de.pr.Structures4Procedure/]: [STRUCT4] === SPAWN SHIPDEAD === 
+[03:35:51] [Server thread/INFO] [de.pr.Structures4Procedure/]: [STRUCT4] === PASTE shipdead === off=[-20,0,0] dist=0 facing=south followSurf=true flatArea=true presInt=true 
+[03:35:51] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has completed the challenge [Grand Master of the Web] 
+[03:35:51] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has reached the goal [Ghost Ship] 
+[03:35:51] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has reached the goal [The Frozen Edge] 
+[03:36:32] [Server thread/INFO] [de.pr.Structures4Procedure/]: [STRUCT4] Taille : 113x87x173 
+[03:36:32] [Server thread/WARN] [de.pr.Structures4Procedure/]: [STRUCT4-FLAT] Pas assez plat (min diff=37, max=10), utilise le moins pentu (verifie) 
+[03:36:32] [Server thread/INFO] [de.pr.Structures4Procedure/]: [STRUCT4-SAFETY] Zone OK 
+[03:36:33] [Server thread/INFO] [de.pr.Structures4Procedure/]: [STRUCT4] shipdead -> pos=-163, 84, 180 (baseY=84, minRelY=0, rot=COUNTERCLOCKWISE_90, 42347ms) 
+[03:36:33] [Server thread/INFO] [de.pr.Structures4Procedure/]: [STRUCT4] shipdead -> 71858 solides + 179 air int = 72037 total (skip 1628701 air ext, 0 laggy, 25 verre) 
+[03:36:33] [Server thread/INFO] [de.pr.Structures4Procedure/]: [STRUCT4] shipdead : modif terrain DESACTIVEE (paste brut, ni prep ni carve) 
+[03:36:33] [Server thread/INFO] [minecraft/MinecraftServer]: [Dev: Set own game mode to Survival Mode] 
+[03:36:33] [Server thread/INFO] [minecraft/MinecraftServer]: [Dev: Set own game mode to Creative Mode] 
+[03:36:33] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Set own game mode to Survival Mode 
+[03:36:33] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Set own game mode to Creative Mode 
+[03:36:33] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 59 advancements 
+[03:36:37] [Server thread/INFO] [de.pr.Structures4Procedure/]: [STRUCT4] shipdead finie en 46791ms (72037 blocs) 
+[03:36:37] [Server thread/INFO] [de.pr.Structures4Procedure/]: [STRUCT4] shipdead : pas de carve/decorate (modif terrain desactivee) 
+[03:36:38] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] ✓ shipdead en 46791ms 
+[03:36:50] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has made the advancement [Grade: Rare] 
+[03:36:51] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 60 advancements 
+[03:36:51] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has made the advancement [Grade: Rare] 
+[03:36:53] [Server thread/INFO] [de.pr.Structures4Procedure/]: [STRUCT4] Post-process de shipdead terminé 
+[03:36:57] [Server thread/INFO] [minecraft/MinecraftServer]: Dev has completed the challenge [Cover Me in Debris] 
+[03:36:57] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 60 advancements 
+[03:36:57] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Dev has completed the challenge [Cover Me in Debris] 
+[03:37:00] [Render thread/INFO] [minecraft/AdvancementTree]: Loaded 63 advancements 
+[03:37:02] [Server thread/INFO] [de.ut.DebugLog/]: [DLB-STRUCTURE] placeWaterDams (AVANT smooth, zone elargie ring=61) : 236235 blocs de grass_block places 
+[03:37:02] [Server thread/INFO] [de.ut.DebugLog/]: [DLB-STRUCTURE] smooth : pré-chargement de 144 chunks (zone 169x181) 
+[03:37:12] [Server thread/INFO] [de.ut.DebugLog/]: [DLB-STRUCTURE] smooth : pré-chargement de 144 chunks (zone 169x181) 
+[03:37:17] [Server thread/INFO] [de.ut.DebugLog/]: [DLB-STRUCTURE] verifyGrassSurface : 19162 grass, 0 snow layers 
+[03:37:17] [Server thread/INFO] [de.ut.DebugLog/]: [DLB-STRUCTURE] naturalize : 1576 herbes, 812 fleurs, 27 champignons places (zone 201x213) 
+[03:37:17] [Server thread/INFO] [de.ut.DebugLog/]: [DLB-STRUCTURE] cleanupZone : 934 blocs retires (lave/feuilles volantes), 1 eau fixee 
+[03:37:17] [Server thread/INFO] [de.ut.DebugLog/]: [DLB-STRUCTURE] terrain pret (double smooth + grass + veg + cleanup) AVANT paste 
+[03:37:17] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5] observatory : deltaY anormal apres smooth (94 -> 89, brut=-5) BORNE a -4 - possible bug d'ancrage 
+[03:37:18] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] observatory en 98108ms (14972 blocs) 
+[03:37:18] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] ✓ observatory en 98108ms 
+[03:37:18] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] ✦ STRUCTURE DISCOVERED ✦ Fae Observatory has spawned! Center coordinates: [62, 116, -50] ✦ 
+[03:37:18] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] carve observatory programmee (1473 colonnes, 14972 blocs occupes, bottomY=85) 
+[03:37:18] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] observatory termine : 357 blocs supprimes, 7 blocs de motte (bottomY=85) 
+[03:37:18] [Server thread/INFO] [de.ut.DebugLog/]: [DLB-STRUCTURE] naturalize : 1441 herbes, 727 fleurs, 22 champignons places (zone 201x213) 
+[03:37:19] [Server thread/INFO] [de.ut.DebugLog/]: [DLB-STRUCTURE] replant : 196 arbres reels replantes 
+[03:37:19] [Server thread/INFO] [de.ut.DebugLog/]: [DLB-STRUCTURE] decorate termine (naturalize bord exact + replant arbres) 
+[03:37:19] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] decorate + post de observatory termine 
+[03:37:20] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] Post-process de observatory termine 
+[03:37:24] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 79887ms or 1597 ticks behind 
+[03:37:55] [Server thread/INFO] [minecraft/MinecraftServer]: [Dev: Teleported Dev to 62.500000, 116.000000, -49.500000] 
+[03:37:55] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] Teleported Dev to 62.500000, 116.000000, -49.500000 
+[03:38:36] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> pour les structures on est bon, plus de montagnes ! 
+[03:38:36] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> pour les structures on est bon, plus de montagnes ! 
+[03:39:20] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> seulement, maintenant elles flottent parfois en l'air, et les structures se retrouvent parfois dans des montagnes ou rasées ! il faut d'abord trouver la zone, puis 
+[03:39:20] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> seulement, maintenant elles flottent parfois en l'air, et les structures se retrouvent parfois dans des montagnes ou rasées ! il faut d'abord trouver la zone, puis 
+[03:40:09] [Server thread/DEBUG] [ne.ne.ne.co.CommonHooks/WP]: Gathered mod list to write to world save New World 
+[03:41:13] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> on enregistre tout les arbres etc, et les retirent, on vide toute la zone pour pas que la structure soit prise dedans par erreur (y+0 de la structure) mettre de la grass bloc au sol pour applanir, parfois avec des etages de 1 ou deux blocs, puis 
+[03:41:13] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> on enregistre tout les arbres etc, et les retirent, on vide toute la zone pour pas que la structure soit prise dedans par erreur (y+0 de la structure) mettre de la grass bloc au sol pour applanir, parfois avec des etages de 1 ou deux blocs, puis 
+[03:41:23] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> proceder au smmoths 
+[03:41:23] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> proceder au smmoths 
+[03:41:28] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> aux verrifications d'eau 
+[03:41:28] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> aux verrifications d'eau 
+[03:42:07] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> puis on regarde si c'est trop plat et pas naturel, dans ce cas la on ajoute des petits denivelés dans le terrain, gors zone ou sera la structure exacte 
+[03:42:07] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> puis on regarde si c'est trop plat et pas naturel, dans ce cas la on ajoute des petits denivelés dans le terrain, gors zone ou sera la structure exacte 
+[03:42:12] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> puis re smooth 
+[03:42:12] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> puis re smooth 
+[03:42:22] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> ensuite on replante tout, fait tout pousser etc 
+[03:42:22] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> ensuite on replante tout, fait tout pousser etc 
+[03:42:31] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> et ENFIN on paste la structure. 
+[03:42:31] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> et ENFIN on paste la structure. 
+[03:43:14] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] <Dev> attention, je vois des grass qui volent parfois, des petites grass et des grandes, quelques fleurs, etc.. je parle pas de grass block, mais bien de l'herbe la plante 
+[03:43:14] [Render thread/INFO] [minecraft/ChatComponent]: [CHAT] <Dev> attention, je vois des grass qui volent parfois, des petites grass et des grandes, quelques fleurs, etc.. je parle pas de grass block, mais bien de l'herbe la plante 
+aussi, gros probleme, dans mes structures j'avais des coffres reliés a notre systeme de coffre de common a ultimate, mais maintenant ils ne fonctionent plus ! faut trouer la cause et le reparer ! 
+et aussi, lorsque tu spawn l'everest, tu etais sencé supprimer des coffres et n'en laisser que 3 MAX random, la ils sont encore tous la ! et profites en pour augmenter les prix de manish random de son prix actuel x0.75 a x5. 
+second probleme, j'ai deux casques avec un protection 1 et l'autre protection 6, pourtant, toi dans les lignes when on head, tu marque pour les deux les memes valeur +3 armor et +3 armor thoughness ! ca n'a pas trop de sens ! et pleins d'encantements font pareil !
+il faut tous les revoir, offensif, defensif, attaque, heal, etc ! pour constamment mettre a jour les données bleues et vertes incluant enchantements vanilla.
+aussi, je troue que c'est bizzare, tes enchantements coeurs, je les aient direct level 3 ! il faut bien que tu repartisse par level rank de luck, par enchantement certains sont peut etre dispo au level 1 dans des ranks tres bas, etc ! revois tout !
+fais en sorte que le max de degats de l'arme et le max d'armure soit gérée par le rank de luck, c'est bete mais parfois je recevais du legendaire plus fort qu'un rang au dessus ! il faut tout bien qualibrer, oir les output des enchantements, selectionner l'enchantements selon 
+le nombre de degats ou de protection MAX, combler, etc. 
