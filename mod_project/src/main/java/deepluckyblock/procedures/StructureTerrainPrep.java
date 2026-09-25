@@ -2003,7 +2003,7 @@ public class StructureTerrainPrep {
      * possible : une passe de 40 000 colonnes se termine en quelques secondes
      * (reparties sur le temps de jeu) au lieu de bloquer un seul tick.
      */
-    private static final long SLICE_BUDGET_MS = 8;
+    private static final long SLICE_BUDGET_MS = 12;
     /** Colonnes capturees d'un coup lors d'une lecture de heightmap (jamais tout d'un bloc). */
     private static final int BAND_COLUMNS = 4096;
 
@@ -2033,7 +2033,7 @@ public class StructureTerrainPrep {
         else if (mspt <= 25) factor = 1.75;   // serveur tranquille : on accelere
         else                 factor = 1.0;
         long ms = Math.round(SLICE_BUDGET_MS * factor);
-        return Math.max(2L, Math.min(16L, ms));
+        return Math.max(2L, Math.min(24L, ms));
     }
 
     /** Etiquette unique d'une chaine terrain (nom de structure + zone). */

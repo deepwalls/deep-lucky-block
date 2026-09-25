@@ -78,7 +78,7 @@ public class Structures4Procedure {
     private static final int MIN_CHUNKS_NORMAL = 4;
     private static final int MIN_CHUNKS_EVEREST = 6;
     private static final int PROGRESS_LOG_INTERVAL = 20;
-    private static final int EVEREST_FLAG = 2 | 16 | 64;
+    private static final int EVEREST_FLAG = FAST_FLAG;
     private static final int FLAT_AREA_SIZE = 10;
     private static final int MAX_HEIGHT_DIFF = 3;
 
@@ -961,6 +961,7 @@ public class Structures4Procedure {
         if (level == null || origin == null) return false;
         if (!templateReadyOrDefer(level, origin, 5, EVEREST_NBT)) return true;
         long t0 = System.currentTimeMillis();
+        StructureTerrainPrep.setStructureName(EVEREST_NBT);
         // FIX (freeze serveur au chargement à froid d'un gros NBT) : cache
         // mod-wide partagé (voir StructureTemplateCache) au lieu d'un appel
         // direct au StructureTemplateManager.
