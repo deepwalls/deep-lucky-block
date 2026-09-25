@@ -145,3 +145,5 @@ finally:
     (Path(os.environ['RUNNER_TEMP']) / 'server-summary.txt').write_text(report)
     annotate(report, failed)
 raise SystemExit(1 if failed else 0)
+
+# Full-session rerun authorized after the raw-paste and water fixes.
