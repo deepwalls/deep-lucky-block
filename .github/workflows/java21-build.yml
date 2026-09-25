@@ -7,6 +7,7 @@ on:
       - '.github/workflows/java21-build.yml'
       - 'deep_lucky_block_mcreator.zip'
       - 'mod_project/src/**'
+      - 'ci/server_check.py'
   workflow_dispatch:
 
 permissions:
@@ -45,6 +46,11 @@ jobs:
           set -euo pipefail
           cd "$RUNNER_TEMP/mod-project"
           ./gradlew build --console=plain --max-workers=2 2>&1 | tee "$RUNNER_TEMP/java21-build.log"
+      - name: Verify structures in one dedicated server session
+        if: contains(github.event.head_commit.message, '[server-check]')
+        env:
+          JAVA_TOOL_OPTIONS: '-Xmx2g -XX:ActiveProcessorCount=2'
+        run: python3 ci/server_check.py
       - name: Publish failure excerpt as annotations
         if: failure()
         shell: bash
@@ -65,6 +71,8 @@ jobs:
           name: java21-build-diagnostics
           path: |
             ${{ runner.temp }}/java21-build.log
+            ${{ runner.temp }}/server-check.log
+            ${{ runner.temp }}/server-summary.txt
             ${{ runner.temp }}/mod-project/build/reports/
           if-no-files-found: warn
           retention-days: 7
