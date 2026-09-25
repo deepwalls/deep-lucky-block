@@ -4800,7 +4800,7 @@ public class StructureTerrainPrep {
     private static final int FIXLIQ_CHUNKS_PER_TICK = 24;
 
     /** Plafonds de volume : on ne noie pas la carte si le rayon est enorme. */
-    private static final int FIXLIQ_MAX_FILL = 40_000;
+    // Water is bounded spatially per job, rather than cut off at an arbitrary volume.
     private static final int FIXLIQ_MAX_LAVA_FILL = 4_000;
 
     /** Entrees de propagation traitees au maximum par tick (garde-fou memoire). */
@@ -4854,25 +4854,24 @@ public class StructureTerrainPrep {
         LIQ_WATER.clear(); LIQ_LAVA.clear(); LIQ_QUEUE.clear();
         LIQ_SRC.set(0); LIQ_FILL.set(0); LIQ_LAVA_FILL.set(0); LIQ_FILL_COLS.set(0);
         final int cx = (min.getX() + max.getX()) / 2, cz = (min.getZ() + max.getZ()) / 2;
-        // T75 : boite « anneau proche » -- seule zone ou l'on force le chargement.
-        final int fx0 = (Math.min(min.getX(), max.getX()) - FIXLIQ_FORCE_MARGIN) >> 4;
-        final int fx1 = (Math.max(min.getX(), max.getX()) + FIXLIQ_FORCE_MARGIN) >> 4;
-        final int fz0 = (Math.min(min.getZ(), max.getZ()) - FIXLIQ_FORCE_MARGIN) >> 4;
-        final int fz1 = (Math.max(min.getZ(), max.getZ()) + FIXLIQ_FORCE_MARGIN) >> 4;
+        // Repair the edited terrain plus one chunk of natural shoreline. Never flood
+        // arbitrary loaded chunks elsewhere in the old 1000-block search radius.
+        int margin = Math.max(FIXLIQ_FORCE_MARGIN, terrainRing() + 16);
+        int x0 = Math.max(cx - FIXLIQ_RADIUS, min.getX() - margin);
+        int x1 = Math.min(cx + FIXLIQ_RADIUS, max.getX() + margin);
+        int z0 = Math.max(cz - FIXLIQ_RADIUS, min.getZ() - margin);
+        int z1 = Math.min(cz + FIXLIQ_RADIUS, max.getZ() + margin);
+        int fx0 = x0 >> 4, fx1 = x1 >> 4, fz0 = z0 >> 4, fz1 = z1 >> 4;
         List<int[]> chunks = new ArrayList<>();
-        for (int ccx = (cx - FIXLIQ_RADIUS) >> 4; ccx <= (cx + FIXLIQ_RADIUS) >> 4; ccx++)
-            for (int ccz = (cz - FIXLIQ_RADIUS) >> 4; ccz <= (cz + FIXLIQ_RADIUS) >> 4; ccz++)
-                chunks.add(new int[]{ccx, ccz});
+        for (int ccx = fx0; ccx <= fx1; ccx++)
+            for (int ccz = fz0; ccz <= fz1; ccz++) chunks.add(new int[]{ccx, ccz});
+        deepluckyblock.util.ChunkKeeper.track(level,
+                new BlockPos(x0, min.getY(), z0), new BlockPos(x1, max.getY(), z1));
         deepluckyblock.util.DebugLog.structure(
-                "fixLiquids : rayon demande {} blocs ({} chunks candidats) autour de {},{} -- T75 : les chunks "
-                        + "ABSENTS de la memoire sont demandes et reessayes (c'est dans ceux-la que restaient les "
-                        + "murs d'eau figes aux frontieres du terrain)",
-                FIXLIQ_RADIUS, chunks.size(), cx, cz);
-        deepluckyblock.util.DebugLog.structure(
-                "fixLiquids : anneau proche (emprise + {} blocs = chunks {}..{} / {}..{}) charge a la demande ; "
-                        + "au-dela, seuls les chunks deja en memoire sont traites (T75)",
-                FIXLIQ_FORCE_MARGIN, fx0, fx1, fz0, fz1);
-        LiquidJob job = new LiquidJob(level, cx, cz, chunks, label, onDone, fx0, fx1, fz0, fz1);
+                "fixLiquids: bounded repair {}..{} / {}..{}, {} chunks, footprint excluded",
+                x0, x1, z0, z1, chunks.size());
+        LiquidJob job = new LiquidJob(level, cx, cz, chunks, label, onDone,
+                fx0, fx1, fz0, fz1, min, max, x0, x1, z0, z1);
         TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1, job::slice);
         step("fixLiquids : passe /fixwater + /fixlava planifiee (rayon " + FIXLIQ_RADIUS + ")");
     }
@@ -4895,6 +4894,9 @@ public class StructureTerrainPrep {
     private static final class LiquidJob {
         final ServerLevel level;
         final int cx, cz;
+        final BlockPos structureMin, structureMax;
+        final int x0, x1, z0, z1, waterFillLimit;
+        int capped = 0;
         final int fx0, fx1, fz0, fz1;    // T75 : anneau proche (chargement a la demande)
         final List<int[]> chunks;
         final String label;
@@ -4910,9 +4912,21 @@ public class StructureTerrainPrep {
         final long started = System.currentTimeMillis();
 
         LiquidJob(ServerLevel l, int cx, int cz, List<int[]> chunks, String label, Runnable onDone,
-                  int fx0, int fx1, int fz0, int fz1) {
+                  int fx0, int fx1, int fz0, int fz1, BlockPos min, BlockPos max,
+                  int x0, int x1, int z0, int z1) {
             this.level = l; this.cx = cx; this.cz = cz; this.chunks = chunks; this.label = label; this.onDone = onDone;
             this.fx0 = fx0; this.fx1 = fx1; this.fz0 = fz0; this.fz1 = fz1;
+            this.structureMin = min; this.structureMax = max;
+            this.x0 = x0; this.x1 = x1; this.z0 = z0; this.z1 = z1;
+            this.waterFillLimit = (int) Math.min(Integer.MAX_VALUE,
+                    (long) (x1 - x0 + 1) * (z1 - z0 + 1) * FIXLIQ_MAX_GAP);
+        }
+
+        private boolean canRepair(int x, int z) {
+            return x >= x0 && x <= x1 && z >= z0 && z <= z1
+                    && !(x >= structureMin.getX() && x <= structureMax.getX()
+                    && z >= structureMin.getZ() && z <= structureMax.getZ())
+                    && !isProtected(x, z);
         }
 
         /** T75 : ce chunk est-il dans l'anneau proche (donc a charger si absent) ? */
@@ -4921,6 +4935,8 @@ public class StructureTerrainPrep {
         }
 
         void slice() {
+            deepluckyblock.util.ChunkKeeper.keep(level);
+            deepluckyblock.util.TerrainChain.heartbeat();
             long t0 = System.currentTimeMillis();
             try {
                 if (phase == 0) { sliceScan(t0); return; }
@@ -4984,6 +5000,7 @@ public class StructureTerrainPrep {
 
         /** Une colonne : conversion + memorisation du niveau haut du liquide. */
         private void scanColumn(int x, int z) {
+            if (!canRepair(x, z)) return;
             // SafeSurface returns the first free Y, not the top occupied Y.
             int surface = Math.min(level.getMaxBuildHeight(),
                     deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z));
@@ -5035,14 +5052,14 @@ public class StructureTerrainPrep {
                 long packed = LIQ_QUEUE.poll();
                 int x = BlockPos.getX(packed), lvl = BlockPos.getY(packed), z = BlockPos.getZ(packed);
                 boolean lava = LIQ_LAVA.containsKey(packed);
-                refilled++;
+                refilled++; n++;
                 if (LIQ_WATER.size() + LIQ_LAVA.size() > FIXLIQ_QUEUE_MAX) { dropped++; continue; }
                 for (int d = 0; d < 4; d++) {
                     int nx = x + (d == 0 ? 1 : d == 1 ? -1 : 0);
                     int nz = z + (d == 2 ? 1 : d == 3 ? -1 : 0);
                     long nk = BlockPos.asLong(nx, lvl, nz);
                     if (LIQ_WATER.containsKey(nk) || LIQ_LAVA.containsKey(nk)) continue;
-                    if (isProtected(nx, nz)) continue;
+                    if (!canRepair(nx, nz)) continue;
                     if (level.getChunkSource().getChunkNow(nx >> 4, nz >> 4) == null) {
                         // T75 : le voisin n'est pas en memoire. Dans l'anneau proche on le
                         // demande et on RETENTE ce point (avant, la propagation s'arretait net
@@ -5053,11 +5070,11 @@ public class StructureTerrainPrep {
                         if (refillRound < FIXLIQ_PENDING_ROUNDS) retry.add(packed); else stalled++;
                         continue;
                     }
-                    int top = topSolidAt(nx, nz, lvl, lvl - FIXLIQ_MAX_GAP);
+                    int top = topSolidAt(nx, nz, lvl, lvl - FIXLIQ_MAX_GAP, lava);
                     if (top == Integer.MIN_VALUE || top >= lvl) continue;    // pas de fond proche / deja plein
                     int need = lvl - top;
-                    int cap = lava ? FIXLIQ_MAX_LAVA_FILL : FIXLIQ_MAX_FILL;
-                    if ((lava ? LIQ_LAVA_FILL.get() : LIQ_FILL.get()) + need > cap) continue;
+                    int cap = lava ? FIXLIQ_MAX_LAVA_FILL : waterFillLimit;
+                    if ((lava ? LIQ_LAVA_FILL.get() : LIQ_FILL.get()) + need > cap) { capped++; continue; }
                     BlockState floor = level.getBlockState(mut.set(nx, top, nz));
                     if (isSurfaceDecor(floor) || !floor.blocksMotion()) continue;   // fond naturel solide uniquement
                     boolean free = true;
@@ -5065,7 +5082,7 @@ public class StructureTerrainPrep {
                         BlockState cur = level.getBlockState(mut.set(nx, y, nz));
                         if (cur.isAir()) continue;
                         var fs = cur.getFluidState();
-                        if (fs.is(net.minecraft.tags.FluidTags.WATER) || fs.is(net.minecraft.tags.FluidTags.LAVA)) continue;
+                        if (cur.is(lava ? Blocks.LAVA : Blocks.WATER)) continue;
                         free = false;                                            // bloc plein dans la colonne -> creux non vide
                     }
                     if (!free) continue;
@@ -5102,13 +5119,15 @@ public class StructureTerrainPrep {
          * fenetre (creux trop profond : on ne remplit pas, ce serait noyer une
          * vallee entiere).
          */
-        private int topSolidAt(int x, int z, int high, int low) {
+        private int topSolidAt(int x, int z, int high, int low, boolean lava) {
             int y0 = Math.max(low, level.getMinBuildHeight());
             for (int y = Math.min(high, level.getMaxBuildHeight() - 1); y >= y0; y--) {
                 BlockState s = level.getBlockState(mut.set(x, y, z));
                 if (s.isAir()) continue;
-                if (s.getFluidState().is(net.minecraft.tags.FluidTags.WATER)
-                        || s.getFluidState().is(net.minecraft.tags.FluidTags.LAVA)) return y;
+                // A partially filled column is not a solid floor. Continue through
+                // the same liquid, but never overwrite the other liquid or waterlogged blocks.
+                if (s.is(lava ? Blocks.LAVA : Blocks.WATER)) continue;
+                if (!s.getFluidState().isEmpty()) return high;
                 if (s.blocksMotion()) return y;
             }
             return Integer.MIN_VALUE;
@@ -5116,6 +5135,9 @@ public class StructureTerrainPrep {
 
         private void finish() {
             RUNNING_PASSES.remove(label);
+            if (capped > 0 || dropped > 0 || unloaded > 0 || stalled > 0)
+                LOGGER.warn("[DLB-FIXLIQ] incomplete repair: capped={}, queueLimit={}, unloaded={}, stalled={}",
+                        capped, dropped, unloaded, stalled);
             if (stalled > 0)
                 deepluckyblock.util.DebugLog.structure(
                         "fixLiquids : {} point(s) non traites (chunk voisin jamais charge) -- T75", stalled);
