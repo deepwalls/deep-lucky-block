@@ -4000,7 +4000,7 @@ public class StructureTerrainPrep {
         var featureOpt = getConfiguredTreeFeature(level, type);
         if (featureOpt.isEmpty()) return false;
 
-        Holder<ConfiguredFeature<TreeConfiguration, ?>> feature = featureOpt.get();
+        Holder<ConfiguredFeature<?, ?>> feature = featureOpt.get();
         // Place the tree feature at the target position
         boolean placed = feature.value().place(level, level.getChunkSource().getGenerator(), random, pos);
         if (placed) {
@@ -4009,10 +4009,10 @@ public class StructureTerrainPrep {
         return placed;
     }
 
-    /** Returns the vanilla ConfiguredFeature<TreeConfiguration> for the given tree type.
+    /** Returns the configured feature using the registry's actual generic type.
      * Uses registry lookup to find the correct configured feature (e.g. minecraft:oak, minecraft:birch).
      * Falls back to oak if type is unknown. */
-    private static java.util.Optional<Holder<ConfiguredFeature<TreeConfiguration, ?>>> getConfiguredTreeFeature(ServerLevel level, String type) {
+    private static java.util.Optional<Holder.Reference<ConfiguredFeature<?, ?>>> getConfiguredTreeFeature(ServerLevel level, String type) {
         String featureId = switch (type == null ? "oak" : type.toLowerCase(java.util.Locale.ROOT)) {
             case "oak" -> "minecraft:oak";
             case "birch" -> "minecraft:birch";
@@ -4028,8 +4028,7 @@ public class StructureTerrainPrep {
         };
         var registry = level.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE);
         var key = ResourceKey.create(Registries.CONFIGURED_FEATURE, ResourceLocation.parse(featureId));
-        return registry.getHolder(key)
-                .map(h -> (Holder<ConfiguredFeature<TreeConfiguration, ?>>) h);
+        return registry.getHolder(key);
     }
 
     // =========================================================================
