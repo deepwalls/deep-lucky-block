@@ -78,6 +78,7 @@ recent = deque(maxlen=25)
 
 
 def wait_for(marker, timeout):
+    pending = set(marker if isinstance(marker, list) else [marker])
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         try:
@@ -87,9 +88,12 @@ def wait_for(marker, timeout):
                 raise RuntimeError(f'Server exited: {proc.returncode}')
             continue
         recent.append(line.strip())
-        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF']):
+        if '[DLBVERIFY] FAIL' in line:
+            raise RuntimeError(line.strip())
+        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair']):
             phases.append(line.strip())
-        if marker in line:
+        pending = {item for item in pending if item not in line}
+        if not pending:
             return
     raise TimeoutError(f'No completion marker within {timeout}s: {marker}')
 
@@ -98,16 +102,23 @@ failed = False
 try:
     wait_for('Done (', 240)
     annotate('Dedicated server started successfully.')
-    for name, x in [('citadel', 0), ('observatory', 600), ('dragon', 1200)]:
+    annotate('Running targeted water, loot and terrain fixtures.')
+    rcon('dlbverify')
+    wait_for('[DLBVERIFY] ALL PASS', 240)
+    summary.append('Targeted regression checks: ALL PASS')
+    annotate('\n'.join(line for line in phases if '[DLBVERIFY]' in line))
+    for name, x in [('citadel', 0), ('observatory', 600), ('dragon', 1200),
+                    ('circus', 1800), ('ship', 2400), ('everest', 3000), ('crimsonlake', 3800)]:
         while not lines.empty():
             lines.get_nowait()
         phases.clear()
         start = time.monotonic()
         response = rcon(f'execute positioned {x} 90 0 run dlbtest {name}')
         annotate(f'{name}: command submitted; response: {response}')
-        wait_for('decorate TERMINE', 240)
+        marker = ['EVEREST TERMINÉ', 'Post-process de everest terminé'] if name == 'everest' else 'decorate TERMINE'
+        wait_for(marker, 360 if name == 'crimsonlake' else 240)
         duration = time.monotonic() - start
-        summary.append(f'{name}: {duration:.2f}s from command to final decoration marker')
+        summary.append(f'{name}: {duration:.2f}s from command to completion marker ({marker})')
         annotate(summary[-1] + '\n' + '\n'.join(phases[-20:]))
 except Exception as exc:
     failed = True

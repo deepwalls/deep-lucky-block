@@ -7,7 +7,7 @@ on:
       - '.github/workflows/java21-build.yml'
       - 'deep_lucky_block_mcreator.zip'
       - 'mod_project/src/**'
-      - 'ci/server_check.py'
+      - 'ci/**'
   workflow_dispatch:
 
 permissions:
@@ -38,6 +38,9 @@ jobs:
           chmod +x "$RUNNER_TEMP/mod-project/gradlew"
           java -version
           javac -version
+      - name: Install CI-only fixture checks
+        if: contains(github.event.head_commit.message, '[server-check]')
+        run: cp ci/StructureRegressionChecks.java "$RUNNER_TEMP/mod-project/src/main/java/deepluckyblock/procedures/"
       - name: Build mod
         shell: bash
         env:
