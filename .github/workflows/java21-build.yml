@@ -45,6 +45,19 @@ jobs:
           set -euo pipefail
           cd "$RUNNER_TEMP/mod-project"
           ./gradlew build --console=plain --max-workers=2 2>&1 | tee "$RUNNER_TEMP/java21-build.log"
+      - name: Publish failure excerpt as annotations
+        if: failure()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          log = Path(os.environ['RUNNER_TEMP']) / 'java21-build.log'
+          if log.exists():
+              text = '\n'.join(log.read_text(errors='replace').splitlines()[-100:])
+              text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+              print('::error title=Build diagnostics::' + text)
+          PY
       - name: Save build diagnostics
         if: always()
         uses: actions/upload-artifact@v4
