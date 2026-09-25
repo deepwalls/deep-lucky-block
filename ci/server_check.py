@@ -115,7 +115,14 @@ try:
         start = time.monotonic()
         response = rcon(f'execute positioned {x} 90 0 run dlbtest {name}')
         annotate(f'{name}: command submitted; response: {response}')
-        marker = ['EVEREST TERMINÉ', 'Post-process de everest terminé'] if name == 'everest' else 'decorate TERMINE'
+        if name == 'everest':
+            marker = ['EVEREST TERMINÉ', 'Post-process de everest terminé']
+        elif name in ('circus', 'ship'):
+            marker = 'Post-process de ' + ('shipdead' if name == 'ship' else name) + ' terminé'
+        elif name == 'crimsonlake':
+            marker = 'decorate TERMINE'
+        else:
+            marker = ['decorate TERMINE', 'Post-process de ' + name + ' terminé']
         wait_for(marker, 360 if name == 'crimsonlake' else 240)
         duration = time.monotonic() - start
         summary.append(f'{name}: {duration:.2f}s from command to completion marker ({marker})')
