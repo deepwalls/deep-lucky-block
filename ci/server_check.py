@@ -26,9 +26,9 @@ assert 'eula=true' in (run / 'eula.txt').read_text()
 ]))
 
 
-def rcon(command):
+def rcon(command, timeout=15):
     with socket.create_connection(('127.0.0.1', 25575), timeout=15) as sock:
-        sock.settimeout(15)
+        sock.settimeout(timeout)
         def exact(n):
             data = b''
             while len(data) < n:
@@ -90,7 +90,7 @@ def wait_for(marker, timeout):
         recent.append(line.strip())
         if '[DLBVERIFY] FAIL' in line:
             raise RuntimeError(line.strip())
-        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair']):
+        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair', 'DLB-LAKE', 'STRUCT4', 'Post-process']):
             phases.append(line.strip())
         pending = {item for item in pending if item not in line}
         if not pending:
@@ -113,7 +113,8 @@ try:
             lines.get_nowait()
         phases.clear()
         start = time.monotonic()
-        response = rcon(f'execute positioned {x} 90 0 run dlbtest {name}')
+        annotate(f'{name}: starting command-to-final-completion measurement')
+        response = rcon(f'execute positioned {x} 90 0 run dlbtest {name}', timeout=120)
         annotate(f'{name}: command submitted; response: {response}')
         if name == 'everest':
             marker = ['EVEREST TERMINÉ', 'Post-process de everest terminé']
@@ -126,8 +127,15 @@ try:
         wait_for(marker, 360 if name == 'crimsonlake' else 240)
         duration = time.monotonic() - start
         summary.append(f'{name}: {duration:.2f}s from command to completion marker ({marker})')
-        annotate(summary[-1] + '\n' + '\n'.join(phases[-20:]))
+        limit = 120 if name == 'crimsonlake' else 30
+        within_budget = duration <= limit and (name != 'crimsonlake' or duration >= 10)
+        failed = failed or not within_budget
+        summary.append(f'{name}: latency budget {"PASS" if within_budget else "FAIL"} (limit {limit}s)')
+        annotate('\n'.join(summary[-2:]) + '\n' + '\n'.join(phases[-30:]), not within_budget)
 except Exception as exc:
+    # Drain actual current logs even when the command's RCON response times out.
+    while not lines.empty():
+        recent.append(lines.get_nowait().strip())
     failed = True
     annotate(str(exc) + '\n' + '\n'.join(phases[-15:] + list(recent)[-10:]), True)
 finally:

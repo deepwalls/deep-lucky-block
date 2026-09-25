@@ -179,8 +179,36 @@ public final class StructureRegressionChecks {
                                     level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), FLAGS);
                         StructureTerrainPrep.resetNaturalReference();
                         LOG.info("[DLBVERIFY] PASS smooth: footprint unchanged and six-block surroundings not excavated");
-                        LOG.info("[DLBVERIFY] ALL PASS");
+                        lakeClear(level);
                     } catch (Throwable error) { fail(error); }
                 });
     }
+    private static void lakeClear(ServerLevel level) {
+        BlockPos origin = CrimsonLakeStructureSpawnProcedure.lakeOrigin(0, 0, 251, 7, 5, 5);
+        require(origin.getY() + 7 == 242, "Lake must sink ten blocks below first free ground level");
+        BlockPos min = new BlockPos(-2, 242, -2), max = new BlockPos(2, 250, 2);
+        for (int x = -3; x <= 3; x++)
+            for (int z = -3; z <= 3; z++)
+                for (int y = 241; y <= 270; y++)
+                    level.setBlock(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState(), FLAGS);
+        CrimsonLakeStructureSpawnProcedure.clearBuildVolume(level, min, max, () -> {
+            try {
+                for (int x = -3; x <= 3; x++)
+                    for (int z = -3; z <= 3; z++)
+                        for (int y = 241; y <= 270; y++) {
+                            boolean interior = Math.abs(x) <= 2 && Math.abs(z) <= 2 && y >= 242;
+                            var state = level.getBlockState(new BlockPos(x, y, z));
+                            require(interior ? state.isAir() : state.is(Blocks.STONE),
+                                    "Lake clearance changed wrong cell: " + x + "," + y + "," + z);
+                        }
+                for (int x = -3; x <= 3; x++)
+                    for (int z = -3; z <= 3; z++)
+                        for (int y = 241; y <= 270; y++)
+                            level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), FLAGS);
+                LOG.info("[DLBVERIFY] PASS lake: sink=10 with template padding; mountain above roof cleared; sides/floor preserved");
+                LOG.info("[DLBVERIFY] ALL PASS");
+            } catch (Throwable error) { fail(error); }
+        });
+    }
+
 }
