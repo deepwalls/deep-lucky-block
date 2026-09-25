@@ -2,6 +2,19 @@
 
 Cette branche est une proposition incomplète, à ne pas fusionner ni installer en production.
 
+## État actuel — compilation débloquée
+
+Les sections suivantes conservent l’historique des blocages ; elles ne décrivent plus toutes l’état actuel.
+
+- Typage des features d’arbres corrigé sans cast forcé : build complet réussi sur GitHub Actions (run 36198252292).
+- Mini-structures : multiplicateur par site entre ×1,2 et ×2,9 appliqué à la cible et au quota naturel ; le terrain et les protections peuvent réduire le nombre effectivement posé.
+- Rotations 0/90/180/270 et miroir conservés ; origine transformée corrigée pour correspondre à l’emprise vérifiée. Protection contre le chevauchement de l’ensemble du décor avec la structure principale ; rejet des emprises non chargées.
+- Coffres vides des templates : attribution différée d’une table vanilla de village avec graine aléatoire. Tables et inventaires existants préservés. Liste explicite : maisons des cinq biomes, pêcheur, berger, tanneur et cartographe. Aucun ajout de table bastion, Nether, End ou manoir.
+- Build complet après ces changements réussi : https://github.com/deepwalls/deep-lucky-block/actions/runs/36198392966
+- Ces résultats valident la compilation, pas le comportement en jeu. Fixwater, creux du terrain, chronométrage et test serveur restent à traiter. Aucun ZIP de livraison produit.
+
+
+
 ## Contenu
 
 Le dépôt versionne actuellement le projet dans `deep_lucky_block_mcreator.zip`, pas dans un arbre source. Le fichier `mod_project/src/main/java/deepluckyblock/procedures/StructureTerrainPrep.java` est ajouté explicitement pour rendre le travail extrait accessible à la revue. Il contient aussi les modifications déjà présentes dans le workspace avant cette reprise, notamment le placement des arbres par feature vanilla et l'appel de correction d'eau avant lissage. Ces modifications ne sont pas validées.
