@@ -11,7 +11,7 @@ Dernières corrections : suppression des méthodes dupliquées et du chemin acci
 ## Validation
 
 - `./gradlew build` : échec avant compilation, Java absent et JAVA_HOME non défini.
-- Installation système : permission refusée.
+- Première tentative d’installation système : permission refusée sans sudo. À la reprise, `sudo -n` fonctionne, mais les dépôts APT sont injoignables.
 - Téléchargement du JDK via api.adoptium.net : échec TLS SSL_ERROR_SYSCALL.
 - Aucun serveur lancé ; aucune structure générée dans cette session ; aucune mesure de temps disponible.
 - Aucune garantie de compilation ou de résultat visuel.
@@ -27,3 +27,14 @@ Dernières corrections : suppression des méthodes dupliquées et du chemin acci
 - Produire ensuite un ZIP contenant uniquement les fichiers modifiés sous `src/...`, sans caches ni projet complet.
 
 Aucun ZIP livré avant le test serveur demandé. Aucun changement de dépendances, gradle.properties ou settings.gradle.
+
+## Reprise : installation de Java 21
+
+- `sudo -n true` réussit : les droits administrateur ne sont plus le blocage.
+- La consultation des releases Temurin via l’API GitHub réussit.
+- Le téléchargement de l’archive Temurin échoue sur `release-assets.githubusercontent.com` avec `SSL_ERROR_SYSCALL`.
+- Les endpoints Azul, Oracle, OpenJDK et Corretto échouent également à établir TLS.
+- `sudo -n apt-get update` ne parvient pas à joindre les dépôts Debian ; `apt-get install openjdk-21-jdk-headless` ne trouve donc pas le paquet. Sa disponibilité dans les dépôts configurés reste à vérifier une fois l’accès rétabli.
+- Java n’est toujours pas installé. Aucun nouveau build ni serveur lancé. Aucun correctif fonctionnel supplémentaire ajouté.
+
+Reprise possible après rétablissement de l’accès réseau aux distributions Java et aux dépôts Gradle/Maven, ou mise à disposition d’un JDK 21 Linux x86_64 dans le workspace. Ne pas confondre une tentative de téléchargement avec une installation réussie.
