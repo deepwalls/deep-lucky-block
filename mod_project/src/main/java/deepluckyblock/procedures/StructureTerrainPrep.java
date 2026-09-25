@@ -2378,9 +2378,18 @@ public class StructureTerrainPrep {
     private static boolean[][] waterColumns(ServerLevel level, int x0, int z0, int w, int h) {
         boolean[][] mask = new boolean[w][h];
         int n = 0;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
-                if (deepluckyblock.util.WaterDam.frozenColumn(level, x0 + i, z0 + j)) {
+                int x = x0 + i, z = z0 + j;
+                // The active pipeline no longer freezes water: inspect real surface water too.
+                boolean wet = false;
+                if (deepluckyblock.util.SafeSurface.isLoadedAt(level, x, z)) {
+                    int y = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+                    wet = level.getBlockState(pos.set(x, y, z)).getFluidState()
+                            .is(net.minecraft.tags.FluidTags.WATER);
+                }
+                if (wet || deepluckyblock.util.WaterDam.frozenColumn(level, x, z)) {
                     mask[i][j] = true; n++;
                 }
             }
@@ -4962,8 +4971,9 @@ public class StructureTerrainPrep {
 
         /** Une colonne : conversion + memorisation du niveau haut du liquide. */
         private void scanColumn(int x, int z) {
-            int surface = Math.min(level.getMaxBuildHeight() - 1,
-                    deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z) + 1);
+            // SafeSurface returns the first free Y, not the top occupied Y.
+            int surface = Math.min(level.getMaxBuildHeight(),
+                    deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z));
             BlockState top = level.getBlockState(mut.set(x, surface - 1, z));
             var topFluid = top.getFluidState();
             boolean waterTop = topFluid.is(net.minecraft.tags.FluidTags.WATER);
