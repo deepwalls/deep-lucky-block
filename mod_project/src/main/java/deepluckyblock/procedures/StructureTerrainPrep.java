@@ -2945,6 +2945,9 @@ public class StructureTerrainPrep {
             for (int j = 0; j < h; j++) {
                 if (waterMask[i][j] || (i >= sMinI && i <= sMaxI && j >= sMinJ && j <= sMaxJ)) {
                     target[i][j] = orig[i][j];
+                } else if (i >= sMinI - 6 && i <= sMaxI + 6 && j >= sMinJ - 6 && j <= sMaxJ + 6) {
+                    // Do not create a two-block trench around the anchored structure.
+                    target[i][j] = Math.max(target[i][j], orig[i][j]);
                 }
             }
         }
@@ -3676,6 +3679,9 @@ public class StructureTerrainPrep {
         int sameSide = 0;
         for (int k = 0; k < n; k++) if ((nbh[k] - v) * d > 0) sameSide++;
         int x = st.x0 + i, z = st.z0 + j;
+        // The final pass must not undo the no-excavation collar of the main smooth.
+        if (d < 0 && x >= st.min.getX() - 6 && x <= st.max.getX() + 6
+                && z >= st.min.getZ() - 6 && z <= st.max.getZ() + 6) return;
         if (Math.abs(d) <= FINAL_MAX_DELTA) {
             // Cuvette : simple majorite de voisines plus hautes. Saillie : exigence
             // stricte (presque tout le voisinage plus bas) -- sinon on effacerait
