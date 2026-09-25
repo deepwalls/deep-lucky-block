@@ -122,7 +122,7 @@ try:
         elif name == 'crimsonlake':
             marker = 'decorate TERMINE'
         else:
-            marker = ['decorate TERMINE', 'Post-process de ' + name + ' terminé']
+            marker = ['decorate TERMINE', 'Post-process de ' + name + ' termine']
         wait_for(marker, 360 if name == 'crimsonlake' else 240)
         duration = time.monotonic() - start
         summary.append(f'{name}: {duration:.2f}s from command to completion marker ({marker})')
