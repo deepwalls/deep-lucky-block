@@ -1,6 +1,12 @@
-# Correctifs terrain — travail non validé
+# Correctifs terrain — compilation et session serveur vérifiées
 
-Cette branche est une proposition incomplète, à ne pas fusionner ni installer en production.
+Cette branche reste en brouillon : compilation et génération serveur vérifiées, mais validation visuelle et restauration complète de l’eau encore ouvertes.
+
+## Dernier résultat
+
+Run serveur réussi : https://github.com/deepwalls/deep-lucky-block/actions/runs/36199003753 . Une session, trois structures : citadelle 51,10 s, observatoire 23,90 s, dragon 31,20 s de bout en bout. Fixwater actif, mais plafond de 40 000 blocs atteint sur la citadelle ; aucun coffre vide admissible rencontré dans ces tirages. Aucun contrôle visuel effectué.
+
+Les deux fichiers Java ont été regroupés dans `livraison/correctifs-src-testes-serveur.zip` (archive de livraison non versionnée). Voir `RAPPORT_TEST_SERVEUR.md` pour les mesures, les réserves et les instructions. Les sections ci-dessous sont historiques.
 
 ## État actuel — compilation débloquée
 
