@@ -3149,7 +3149,8 @@ public class StructureTerrainPrep {
         SealLeaksPass(ServerLevel level, BlockPos min, BlockPos max, int maxIter, Runnable onDone) {
             this.level = level; this.min = min; this.max = max;
             this.maxIter = maxIter; this.onDone = onDone;
-            int ring = terrainRing();
+            // Only protect the building; exterior cut ponds are restored by fixLiquids.
+            int ring = 6;
             this.x0 = min.getX() - ring; this.x1 = max.getX() + ring;
             this.z0 = min.getZ() - ring; this.z1 = max.getZ() + ring;
             this.scanX = x0; this.scanZ = z0;
@@ -4093,7 +4094,8 @@ public class StructureTerrainPrep {
     private static void guardWaterEdges(ServerLevel level, BlockPos min, BlockPos max, Runnable onDone) {
         final int[] placed = {0};
         startColumnPass(level, "guardWaterEdges (berges anti-fuite)",
-                columnsOf(min, max, terrainRing()), BATCH_COLS, col -> {
+                // Banks belong at the building, not across the exterior pond to be restored.
+                columnsOf(min, max, 6), BATCH_COLS, col -> {
                     placed[0] += guardWaterColumn(level, col[0], col[1]);
                 }, () -> {
                     if (placed[0] > 0)
