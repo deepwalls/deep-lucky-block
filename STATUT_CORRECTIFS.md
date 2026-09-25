@@ -38,3 +38,18 @@ Aucun ZIP livré avant le test serveur demandé. Aucun changement de dépendance
 - Java n’est toujours pas installé. Aucun nouveau build ni serveur lancé. Aucun correctif fonctionnel supplémentaire ajouté.
 
 Reprise possible après rétablissement de l’accès réseau aux distributions Java et aux dépôts Gradle/Maven, ou mise à disposition d’un JDK 21 Linux x86_64 dans le workspace. Ne pas confondre une tentative de téléchargement avec une installation réussie.
+
+## Validation distante sur GitHub Actions
+
+Le blocage réseau local est contourné en exécutant le build sur un runner GitHub, sans désactiver TLS ni modifier les dépendances du projet.
+
+- Workflow : `.github/workflows/java21-build.yml` ; déclenché par push sur la branche de cette session.
+- Java 21 installé avec succès via `actions/setup-java` (Temurin).
+- Projet extrait depuis le ZIP versionné, puis recouvert par les sources suivies de `mod_project/src`.
+- Gradle et les artefacts Minecraft/NeoForge téléchargés avec succès.
+- Deux builds distants échouent ; arrêt conformément à la consigne des deux échecs consécutifs.
+- Diagnostic confirmé au second run : `StructureTerrainPrep.java:4032`, conversion générique illégale de `Reference<ConfiguredFeature<?,?>>` en `Holder<ConfiguredFeature<TreeConfiguration,?>>`. Le correctif devra conserver le type générique fourni par le registre plutôt que forcer ce cast.
+- Run avec diagnostic accessible dans les annotations : https://github.com/deepwalls/deep-lucky-block/actions/runs/36196091397
+- Aucun serveur Minecraft lancé ; aucune performance mesurée ; aucun ZIP validé livré.
+
+L’environnement de build distant fonctionne désormais. Java reste absent du sandbox local ; ce n’est plus bloquant pour compiler sur GitHub. Le lancement manuel du workflow via l’intégration renvoie 403, mais son déclenchement automatique par push fonctionne.
