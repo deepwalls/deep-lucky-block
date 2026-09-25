@@ -118,7 +118,7 @@ public class Structures4Procedure {
     private static final int ALT_SEARCH_RADIUS = 60;
     private static final int ALT_SEARCH_STEP = 10;
     private static final int VEG_RADIUS = 3;        // T23 : rayon de nettoyage vegetal
-    private static final int VEG_PER_TICK = 64;     // T23 : blocs de structure traites par tick
+    private static final long VEG_SLICE_NANOS = 12_000_000L;
     private static final int CARVE_COLS_PER_TICK = 600;
     private static final int CARVE_CANOPY = 8;
     private static final int RING_PER_TICK = 6000;
@@ -467,6 +467,7 @@ public class Structures4Procedure {
         int carved, grounded;
         boolean vegetationOnly;   // T23 : structures a terrain desactive -> on retire au moins la vegetation
         int vegIdx = 0, vegRemoved = 0;
+        long vegetationCursor;
         CarveJob(ServerLevel l, List<int[]> cols, List<Long> occ, Set<Long> occSet, Set<Long> base, BlockPos mn, BlockPos mx, String n, int by, int bl) {
             level = l; columns = cols; occList = occ; occupied = occSet; baseCols = base; min = mn; max = mx; name = n; bottomY = by; baseLevel = bl;
             idx = 0; ringIdx = occ.size(); groundIdx = 0; groundDone = false; carved = 0; grounded = 0;
@@ -680,24 +681,44 @@ public class Structures4Procedure {
                 // T23 : retire la vegetation naturelle (feuilles, troncs, plantes, lianes,
                 // bambous) qui n'appartient PAS a la structure, dans un rayon de 3 blocs
                 // autour de chacun de ses blocs.
-                int end = Math.min(cj.vegIdx + VEG_PER_TICK, cj.occList.size());
-                for (int i = cj.vegIdx; i < end; i++) {
-                    long pos = cj.occList.get(i);
-                    int px = BlockPos.getX(pos), py = BlockPos.getY(pos), pz = BlockPos.getZ(pos);
+                // Visit each cell once, rather than its 343 overlapping neighborhoods.
+                int x0 = cj.min.getX() - VEG_RADIUS, z0 = cj.min.getZ() - VEG_RADIUS;
+                int y0 = Math.max(minBuild, cj.min.getY() - VEG_RADIUS);
+                int width = cj.max.getX() - cj.min.getX() + 1 + 2 * VEG_RADIUS;
+                int depth = cj.max.getZ() - cj.min.getZ() + 1 + 2 * VEG_RADIUS;
+                int height = Math.min(cj.level.getMaxBuildHeight() - 1,
+                        cj.max.getY() + VEG_RADIUS) - y0 + 1;
+                long volume = (long) width * depth * height;
+                long deadline = System.nanoTime() + VEG_SLICE_NANOS;
+                while (cj.vegetationCursor < volume && System.nanoTime() < deadline) {
+                    long i = cj.vegetationCursor;
+                    int px = x0 + (int) (i % width);
+                    int pz = z0 + (int) ((i / width) % depth);
+                    int py = y0 + (int) (i / ((long) width * depth));
+                    var chunk = cj.level.getChunkSource().getChunkNow(px >> 4, pz >> 4);
+                    if (chunk == null) {
+                        deepluckyblock.util.SafeSurface.reRequest(cj.level, px >> 4, pz >> 4);
+                        break; // Retry this cell; never silently skip cleanup.
+                    }
+                    cj.vegetationCursor++;
+                    if (cj.occupied.contains(BlockPos.asLong(px, py, pz))) continue;
+                    BlockState st = chunk.getBlockState(mut.set(px, py, pz));
+                    if (!isTreePart(st) && !StructureTerrainPrep.isVegetation(st)) continue;
+                    boolean nearby = false;
+                    search:
                     for (int dx = -VEG_RADIUS; dx <= VEG_RADIUS; dx++)
                         for (int dy = -VEG_RADIUS; dy <= VEG_RADIUS; dy++)
-                            for (int dz = -VEG_RADIUS; dz <= VEG_RADIUS; dz++) {
-                                if (cj.occupied.contains(BlockPos.asLong(px + dx, py + dy, pz + dz))) continue;
-                                BlockState st = cj.level.getBlockState(mut.set(px + dx, py + dy, pz + dz));
-                                if (st.isAir()) continue;
-                                if (isTreePart(st) || StructureTerrainPrep.isVegetation(st)) {
-                                    cj.level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
-                                    cj.vegRemoved++;
+                            for (int dz = -VEG_RADIUS; dz <= VEG_RADIUS; dz++)
+                                if (cj.occupied.contains(BlockPos.asLong(px + dx, py + dy, pz + dz))) {
+                                    nearby = true;
+                                    break search;
                                 }
-                            }
+                    if (nearby) {
+                        cj.level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
+                        cj.vegRemoved++;
+                    }
                 }
-                cj.vegIdx = end;
-                if (cj.vegIdx >= cj.occList.size()) {
+                if (cj.vegetationCursor >= volume) {
                     CARVE_QUEUE.poll();
                     LOGGER.info("[STRUCT4] {} : vegetation nettoyee autour de la structure : {} bloc(s) retires",
                             cj.name, cj.vegRemoved);
@@ -988,8 +1009,8 @@ public class Structures4Procedure {
         // le carre couvrant sa plus grande dimension : 296/2 + 16 = 164 blocs de rayon
         // (plafond volontaire 176, soit ~529 chunks epingles -- tres en dessous du
         // MAX_PINNED de ChunkKeeper).
-        final int preRing = Math.min(EVEREST_PRELOAD_MAX_RING,
-                Math.max(Math.abs(size.getX()), Math.abs(size.getZ())) / 2 + 16);
+        // Probe the anchor first; the exact rotated footprint is loaded below.
+        final int preRing = 16;
         StructureTerrainPrep.preloadBox(level,
                 new BlockPos(origin.getX() - preRing, level.getMinBuildHeight(), origin.getZ() - preRing),
                 new BlockPos(origin.getX() + preRing, level.getMaxBuildHeight() - 1, origin.getZ() + preRing),
@@ -1058,9 +1079,16 @@ public class Structures4Procedure {
                     baseY + EVEREST_OFFSET_Y - fMinRelY - EVEREST_SINK_BLOCKS, everestSpot.getZ() + EVEREST_OFFSET_Z);
             final Rotation rotation = computeFacingRotation(finalPos, nearestPlayer, EVEREST_NATIVE_FACING);
             final BlockPos rotatedPos = adjustForRotation(finalPos, template, rotation);
-            final BlockPos eMin = new BlockPos(Math.min(rotatedPos.getX(), rotatedPos.getX() + size.getX()),
-                    rotatedPos.getY(), Math.min(rotatedPos.getZ(), rotatedPos.getZ() + size.getZ()));
-            final BlockPos eMax = eMin.offset(Math.abs(size.getX()), size.getY(), Math.abs(size.getZ()));
+            StructurePlaceSettings footprintSettings = new StructurePlaceSettings().setRotation(rotation);
+            int ex0 = Integer.MAX_VALUE, ez0 = Integer.MAX_VALUE;
+            int ex1 = Integer.MIN_VALUE, ez1 = Integer.MIN_VALUE;
+            for (var block : fEverestBlocks) {
+                BlockPos rel = StructureTemplate.calculateRelativePosition(footprintSettings, block.pos());
+                ex0 = Math.min(ex0, rel.getX()); ex1 = Math.max(ex1, rel.getX());
+                ez0 = Math.min(ez0, rel.getZ()); ez1 = Math.max(ez1, rel.getZ());
+            }
+            final BlockPos eMin = rotatedPos.offset(ex0, 0, ez0);
+            final BlockPos eMax = rotatedPos.offset(ex1, size.getY() - 1, ez1);
             StructureTerrainPrep.preloadBox(level,
                     new BlockPos(eMin.getX(), level.getMinBuildHeight(), eMin.getZ()),
                     new BlockPos(eMax.getX(), level.getMaxBuildHeight() - 1, eMax.getZ()),
