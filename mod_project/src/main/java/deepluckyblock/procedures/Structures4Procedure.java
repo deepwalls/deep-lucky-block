@@ -1523,10 +1523,18 @@ public class Structures4Procedure {
         // T14 : groupe par section 16x16x16 + spirale (guide sections 42/43) au
         // lieu du tri « layer par layer ».
         filtered = orderBySectionSpiral(filtered, bboxRs, rotatedPos);
-        final BlockPos fRotPos = rotatedPos; final Player fPlayer = nearestPlayer;
-        Runnable onComplete = () -> { if (callback != null) callback.onComplete(fRotPos, level, fPlayer); };
+        final BlockPos selectedSite = targetXZ;
         final List<StructureTemplate.StructureBlockInfo> fFiltered = filtered;
-        Runnable offerPaste = () -> PASTE_QUEUE.offer(new PasteJob(level, fFiltered, rotatedPos, rotation, Mirror.NONE, nbtName, tGlobal, nearestPlayer, onComplete, min, max, skipTerrain));
+        Runnable offerPaste = () -> {
+            // Read the real ground after preload, not the fallback used on a cold chunk.
+            int dy = skipTerrain && followSurface
+                    ? deepluckyblock.util.SafeSurface.groundY(level, selectedSite.getX(), selectedSite.getZ(), baseY) - baseY
+                    : 0;
+            BlockPos pasteOrigin = rotatedPos.offset(0, dy, 0);
+            Runnable onComplete = () -> { if (callback != null) callback.onComplete(pasteOrigin, level, nearestPlayer); };
+            PASTE_QUEUE.offer(new PasteJob(level, fFiltered, pasteOrigin, rotation, Mirror.NONE,
+                    nbtName, tGlobal, nearestPlayer, onComplete, min.offset(0, dy, 0), max.offset(0, dy, 0), skipTerrain));
+        };
         // T27 : emprise enregistree des maintenant (voir StructureSites).
         deepluckyblock.util.StructureSites.register(level, nbtName, min.getX(), min.getZ(), max.getX(), max.getZ());
         if (skipTerrain) {
