@@ -1,3 +1,32 @@
+## Mise à jour — validation finale en attente
+
+La livraison ZIP précédente correspond à **0fefe6d**, pas aux derniers correctifs.
+Ne pas la présenter comme une livraison finale des travaux ci-dessous.
+
+- Session serveur `36200434878` (8cee194) : fixtures eau (45 120 sources),
+  coffres/rotations et protection du sol **réussies** ; citadelle **43,40 s**,
+  observatoire **24,60 s**, dragon **30,20 s**. Échec global : cirque bloqué
+  au-delà de 240 s ; bateau, Everest et Crimson Lake non atteints.
+- `6a9aaca` : sources d’eau existantes ignorées dans le quota et les écritures,
+  arrêt de la recherche de fond lorsque le niveau demandé est déjà une source,
+  anticipation du chargement de la rive. `./gradlew build` Java 21 réussi,
+  run `36201069741`.
+- `50c2de0` : préchargement de l’emprise des poses brutes (cirque/bateau),
+  finitions différées jusqu’à la fin des files de pose/nettoyage, libération
+  des chunks différée pendant la chaîne de décoration de la même emprise.
+  `./gradlew build` Java 21 réussi, run `36201193872`.
+- Harness : attente des véritables marqueurs de fin des deux pipelines,
+  y compris le post-traitement ; syntaxe Python vérifiée.
+
+Ces deux derniers correctifs sont **compilés mais pas encore validés en jeu**.
+Une nouvelle session serveur nécessite confirmation de la dérogation à la
+consigne initiale « une seule vérification ». Aucun nouveau serveur lancé pour
+ces deux correctifs. L’objectif inférieur à 60 s pour les sept structures et
+la restauration des océans naturels ne sont pas encore démontrés.
+Le ZIP final devra contenir trois sources modifiées, dont Structures4Procedure.java.
+
+---
+
 # Correctifs terrain — compilation et session serveur vérifiées
 
 Cette branche reste en brouillon : compilation et génération serveur vérifiées, mais validation visuelle et restauration complète de l’eau encore ouvertes.
