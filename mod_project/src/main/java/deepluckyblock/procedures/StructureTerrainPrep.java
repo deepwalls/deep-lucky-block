@@ -1518,10 +1518,8 @@ public class StructureTerrainPrep {
     // =========================================================================
 
     /**
-     * FIX: Proper terrain flattening instead of Gaussian blur.
-     * The original smoothPass used Gaussian blur which creates valleys and "digs" the terrain.
-     * This new algorithm finds the dominant height in the kernel and flattens toward it,
-     * preserving the highest points (ridges) and filling low areas.
+     * Smooth the surrounding heightmap while preserving the structure footprint.
+     * Use rounded averages instead of repeatedly truncating heights downwards.
      */
     private static void smoothPass(ServerLevel level, BlockPos structMin, BlockPos structMax,
                                     int kernelSize, int passes, Runnable onDone) {
@@ -2687,7 +2685,8 @@ public class StructureTerrainPrep {
         // terrain ont ete mal geres"). Comble les ravins ETROITS et PROFONDS
         // avant le flou : sans cela, le blur etale la crevasse en une large
         // depression molle au lieu de la supprimer.
-        orig = fillCrevasses(orig, w, h);
+        // Keep measured heights intact: reconstruction must fill the actual missing blocks.
+        int[][] filled = fillCrevasses(orig, w, h);
 
         int sMinI = structMin.getX() - x0, sMaxI = structMax.getX() - x0;
         int sMinJ = structMin.getZ() - z0, sMaxJ = structMax.getZ() - z0;
@@ -2730,7 +2729,7 @@ public class StructureTerrainPrep {
         // rivage vers le bas et ne sont pas reconstruites par-dessus l'eau.
         boolean[][] waterMask = waterColumns(level, x0, z0, w, h);
 
-        int[][] hm = orig;
+        int[][] hm = filled;
         int[][] tmp = new int[w][h];
         int[][] dst = new int[w][h];
         for (int pass = 0; pass < passes; pass++) {
@@ -2743,7 +2742,7 @@ public class StructureTerrainPrep {
                 }
                 for (int i = 0; i < w; i++) {
                     tmp[i][j] = (waterMask[i][j] || count == 0) ? orig[i][j]
-                            : (int) (sum / count);
+                            : (int) Math.round((double) sum / count);
                     int out = i - half, in = i + half + 1;
                     if (out >= 0 && !waterMask[out][j]) { sum -= hm[out][j]; count--; }
                     if (in < w  && !waterMask[in][j])  { sum += hm[in][j];  count++; }
@@ -2758,13 +2757,17 @@ public class StructureTerrainPrep {
                 }
                 for (int j = 0; j < h; j++) {
                     dst[i][j] = (waterMask[i][j] || count == 0) ? orig[i][j]
-                            : Math.max(1, (int) (sum / count));
+                            : (int) Math.round((double) sum / count);
                     int out = j - half, in = j + half + 1;
                     if (out >= 0 && !waterMask[i][out]) { sum -= tmp[i][out]; count--; }
                     if (in < h  && !waterMask[i][in])  { sum += tmp[i][in];  count++; }
                 }
             }
-            int[][] swap = hm; hm = dst; dst = (swap == orig) ? new int[w][h] : swap;
+            // Do not repeat identical heightmap passes or accumulate truncation towards zero.
+            boolean changed = false;
+            for (int i = 0; i < w && !changed; i++) changed = !Arrays.equals(hm[i], dst[i]);
+            int[][] swap = hm; hm = dst; dst = swap;
+            if (!changed) break;
         }
         // === T21 : GARDE-FOU D'AMPLITUDE ===
         // Meme avec le masque, un relief extreme peut encore faire deriver une
@@ -2936,6 +2939,15 @@ public class StructureTerrainPrep {
         // La relaxation a pu deplacer des colonnes au-dela de la fenetre du lissage :
         // on reapplique la borne pour rester coherent avec la mesure finale.
         target = clampSmoothDelta(level, target, orig, waterMask, x0, z0, w, h);
+
+        // Noise and slope relaxation must never alter water columns or the anchored footprint.
+        for (int i = 0; i < w; i++) {
+            for (int j = 0; j < h; j++) {
+                if (waterMask[i][j] || (i >= sMinI && i <= sMaxI && j >= sMinJ && j <= sMaxJ)) {
+                    target[i][j] = orig[i][j];
+                }
+            }
+        }
 
         // Reconstruire en batch (toute la zone ; les cols sans changement sont skipees).
         // On passe aussi la heightmap CAPTUREE (despecklee) pour que rebuildColumn ne
@@ -3319,7 +3331,8 @@ public class StructureTerrainPrep {
                 //
                 // SEULE exception : les smooths rejoues APRES le paste
                 // protegent l'emprise du batiment (voir protectFootprint).
-                if (isProtected(x0 + i, z0 + j)) continue;
+                if (isProtected(x0 + i, z0 + j) || hm[i][j] == orig[i][j]) continue;
+                if (!deepluckyblock.util.SafeSurface.isLoadedAt(level, x0 + i, z0 + j)) continue;
                 cols.add(new int[]{x0 + i, z0 + j, hm[i][j], orig[i][j]});
             }
         int total = (cols.size() + CLEAR_BATCH_COLS - 1) / CLEAR_BATCH_COLS;
