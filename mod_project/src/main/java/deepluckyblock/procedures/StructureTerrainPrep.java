@@ -258,8 +258,8 @@ public class StructureTerrainPrep {
         SMOOTH_RING = computeSmoothRing(min, max);
         // === T9 : la zone est TENUE EN MEMOIRE pendant tout le pipeline ===
         deepluckyblock.util.ChunkKeeper.track(level,
-                new BlockPos(min.getX() - terrainRing(), min.getY(), min.getZ() - terrainRing()),
-                new BlockPos(max.getX() + terrainRing(), max.getY(), max.getZ() + terrainRing()));
+                new BlockPos(min.getX() - (terrainRing() + NATURALIZE_EXTRA_RING), min.getY(), min.getZ() - (terrainRing() + NATURALIZE_EXTRA_RING)),
+                new BlockPos(max.getX() + (terrainRing() + NATURALIZE_EXTRA_RING), max.getY(), max.getZ() + (terrainRing() + NATURALIZE_EXTRA_RING)));
         final int topY = Math.min(max.getY() + 10, level.getMaxBuildHeight() - 1);
         int buildW = max.getX() - min.getX() + 1, buildD = max.getZ() - min.getZ() + 1;
 
@@ -5080,23 +5080,27 @@ public class StructureTerrainPrep {
                     }
                     int top = topSolidAt(nx, nz, lvl, lvl - FIXLIQ_MAX_GAP, lava);
                     if (top == Integer.MIN_VALUE || top >= lvl) continue;    // pas de fond proche / deja plein
-                    int need = lvl - top;
+                    int need = 0;
                     int cap = lava ? FIXLIQ_MAX_LAVA_FILL : waterFillLimit;
-                    if ((lava ? LIQ_LAVA_FILL.get() : LIQ_FILL.get()) + need > cap) { capped++; continue; }
                     BlockState floor = level.getBlockState(mut.set(nx, top, nz));
                     if (isSurfaceDecor(floor) || !floor.blocksMotion()) continue;   // fond naturel solide uniquement
                     boolean free = true;
                     for (int y = top + 1; y <= lvl && free; y++) {
                         BlockState cur = level.getBlockState(mut.set(nx, y, nz));
-                        if (cur.isAir()) continue;
-                        var fs = cur.getFluidState();
-                        if (cur.is(lava ? Blocks.LAVA : Blocks.WATER)) continue;
+                        if (cur.isAir()) { need++; continue; }
+                        if (cur.is(lava ? Blocks.LAVA : Blocks.WATER)) {
+                            if (!cur.getFluidState().isSource()) need++;
+                            continue;
+                        }
                         free = false;                                            // bloc plein dans la colonne -> creux non vide
                     }
-                    if (!free) continue;
-                    for (int y = top + 1; y <= lvl; y++)
-                        level.setBlock(mut.set(nx, y, nz),
-                                lava ? Blocks.LAVA.defaultBlockState() : Blocks.WATER.defaultBlockState(), FAST_FLAG);
+                    if (!free || need == 0) continue;
+                    if ((lava ? LIQ_LAVA_FILL.get() : LIQ_FILL.get()) + need > cap) { capped++; continue; }
+                    BlockState source = lava ? Blocks.LAVA.defaultBlockState() : Blocks.WATER.defaultBlockState();
+                    for (int y = top + 1; y <= lvl; y++) {
+                        mut.set(nx, y, nz);
+                        if (!level.getBlockState(mut).equals(source)) level.setBlock(mut, source, FAST_FLAG);
+                    }
                     if (lava) LIQ_LAVA_FILL.addAndGet(need); else LIQ_FILL.addAndGet(need);
                     LIQ_FILL_COLS.incrementAndGet();
                     if (lava) LIQ_LAVA.put(nk, lvl); else LIQ_WATER.put(nk, lvl);
@@ -5134,7 +5138,10 @@ public class StructureTerrainPrep {
                 if (s.isAir()) continue;
                 // A partially filled column is not a solid floor. Continue through
                 // the same liquid, but never overwrite the other liquid or waterlogged blocks.
-                if (s.is(lava ? Blocks.LAVA : Blocks.WATER)) continue;
+                if (s.is(lava ? Blocks.LAVA : Blocks.WATER)) {
+                    if (y == high && s.getFluidState().isSource()) return high;
+                    continue;
+                }
                 if (!s.getFluidState().isEmpty()) return high;
                 if (s.blocksMotion()) return y;
             }
