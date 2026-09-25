@@ -1,3 +1,58 @@
+# Résultat actuel — livraison partiellement validée
+
+Sources : **e53deb1**, session autorisée **36201610297**, check **108289262141**.
+Compilation Java 21 réussie. Validation globale **ÉCHEC** ; arrêt après deux
+échecs consécutifs, conformément à la consigne. Aucun essai supplémentaire lancé.
+
+| Vérification | Résultat |
+|---|---|
+| Bassin traversant les chunks, colonne partielle, emprise sèche | PASS — 45 120 sources |
+| Rotations / miroirs | PASS — 8 variantes |
+| Butin village et préservation des coffres existants | PASS — 16 inventaires générés |
+| Emprise inchangée et bande extérieure de 6 blocs non creusée | PASS sur fixture |
+| Citadelle, commande → décoration et post-traitement | **42,50 s** |
+| Observatoire, commande → décoration et post-traitement | **23,90 s** |
+| Dragon, commande → décoration et post-traitement | **35,50 s** |
+| Cirque | Délai d’attente RCON dépassé à l’envoi ; fin non vérifiée |
+| Bateau, Everest, Crimson Lake | Non atteints |
+
+Le délai réseau RCON est de 15 s. La dernière erreur est `timed out`, avant
+l’accusé de réception de la commande cirque ; les annotations disponibles
+contiennent encore les traces du dragon. Elle ne prouve pas une récurrence du
+blocage des blocs différés, ni sa résolution. À examiner après autorisation :
+logs serveur complets et durée synchrone de la commande, puis instrumenter le
+harnais pour conserver les logs pendant l’attente RCON avant un nouvel essai.
+
+## Eau et terrain : portée des résultats
+
+Sur cette session : citadelle **41 352** blocs remis à niveau, observatoire
+**6 644**, dragon **14 577**, sans chunks manquants ni signalement de plafond.
+Le surcomptage de 648 768 écritures observé sur le dragon lors du précédent
+essai n’apparaît plus. Aucun avant/après visuel client : pas de garantie de
+restauration générale des océans équivalente à Axiom/WorldEdit.
+Le journal du dragon signale encore **163 colonnes creusées de plus d’un bloc**
+et un écart négatif maximal de **9 blocs** dans son échantillon hors emprise/eau.
+La protection testée de six blocs ne démontre donc pas l’absence d’excavation
+sur toute la zone extérieure. Ce point reste ouvert, ainsi que l’objectif
+moins de 60 s pour chacune des sept structures.
+
+## Archive disponible
+
+`livraison/correctifs-src-validation-partielle.zip` — **129 325 octets**.
+SHA-256 : `180d07487a2afbbc78be90f76888fbf877aa4ccde21136298bdd8f3f09c9c47e`.
+Exactement trois sources, sous leur arborescence `src/main/java/deepluckyblock/procedures/` :
+`StructureTerrainPrep.java`, `StructureScatterDecor.java`, `Structures4Procedure.java`.
+Pas de fixture CI, rapport, cache, dépendance ni projet complet dans le ZIP.
+Archive relue et comparée octet par octet aux sources ; extraction à la racine
+contenant `src`, après sauvegarde, puis recompilation. Ce ZIP n’est pas un JAR.
+Il remplace l’ancienne archive pour les sources, **pas une certification finale**.
+
+La PR reste en brouillon : https://github.com/deepwalls/deep-lucky-block/pull/1.
+Les sections suivantes sont l’historique ; les mentions de validation en attente
+ou les anciens chiffres ne remplacent pas le résultat actuel ci-dessus.
+
+---
+
 ## Mise à jour — validation finale en attente
 
 La livraison ZIP précédente correspond à **0fefe6d**, pas aux derniers correctifs.
