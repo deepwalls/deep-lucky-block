@@ -251,6 +251,7 @@ public class Structures4Procedure {
         for (int dx = -SAFETY_CHECK_RADIUS; dx <= SAFETY_CHECK_RADIUS; dx += 3) {
             for (int dz = -SAFETY_CHECK_RADIUS; dz <= SAFETY_CHECK_RADIUS; dz += 3) {
                 int px = center.getX() + dx, pz = center.getZ() + dz;
+                if (level.getChunkSource().getChunkNow(px >> 4, pz >> 4) == null) continue;
                 int surfY = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, px, pz) - 1;
                 if (surfY < minY) minY = surfY; if (surfY > maxY) maxY = surfY;
                 for (int dy = 0; dy >= -SAFETY_CHECK_DEPTH; dy--) {
@@ -265,6 +266,7 @@ public class Structures4Procedure {
                 }
             }
         }
+        if (totalFluidChecks == 0) return result;
         result.waterRatio = (double) waterCount / totalFluidChecks;
         result.lavaRatio = (double) lavaCount / totalFluidChecks;
         result.minY = minY; result.maxY = maxY; result.heightDiff = maxY - minY;
@@ -1280,7 +1282,7 @@ public class Structures4Procedure {
             // gros consommateur de temps du mod sur un monde neuf. On demande la
             // zone en tache de fond et on ne verifie le candidat que lorsqu'elle
             // est REELLEMENT en memoire.
-            deepluckyblock.util.SafeSurface.requestZone(level, ccx0, ccz0, ccx1, ccz1);
+            // Load only the selected footprint through the bounded preload queue.
             if (!deepluckyblock.util.SafeSurface.zoneLoaded(level, ccx0, ccz0, ccx1, ccz1)) {
                 LOGGER.info("[STRUCT4-FLAT] Candidat #{}/{} a {},{} : zone pas encore en memoire -- verification differee (tache de fond, aucun blocage)",
                         i + 1, maxVerified, c.cx(), c.cz());
@@ -1320,7 +1322,7 @@ public class Structures4Procedure {
             // T49 : on DEMANDE la zone (tache de fond) sans jamais bloquer ; si elle
             // n'est pas prete, la position mesuree est conservee telle quelle et
             // l'emprise sera de toute facon pre-chargee avant la pose (T43).
-            deepluckyblock.util.SafeSurface.requestZone(level, ccx0, ccz0, ccx1, ccz1);
+            // Load only the selected footprint through the bounded preload queue.
             int realBdY = deepluckyblock.util.SafeSurface.surfaceY(level, bdX, bdZ, origin.getY());
             LOGGER.warn("[STRUCT4-FLAT] Pas assez plat (min diff={}, max={}), utilise le moins pentu (verifie)", bestDiff, maxDiff);
             return new BlockPos(bdX, realBdY, bdZ);
@@ -1339,8 +1341,11 @@ public class Structures4Procedure {
         for (int dx = -radius; dx <= radius; dx += step) {
             for (int dz = -radius; dz <= radius; dz += step) {
                 int x = cx + dx, z = cz + dz;
-                int y = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-                BlockState state = level.getBlockState(p.set(x, y, z));
+                var chunk = level.getChunkSource().getChunkNow(x >> 4, z >> 4);
+                if (chunk == null) return -1;
+                int y = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x & 15, z & 15);
+                if (y <= level.getMinBuildHeight()) return -1;
+                BlockState state = chunk.getBlockState(p.set(x, y, z));
                 if (state.isAir() || !state.getFluidState().isEmpty() || !state.blocksMotion()) return -1;
                 if (y < minY) minY = y; if (y > maxY) maxY = y;
             }
@@ -1357,7 +1362,7 @@ public class Structures4Procedure {
     private static boolean isEverestNbt(String nbt) { return "everest".equalsIgnoreCase(nbt); }
     private static boolean isChunkAreaLoaded(ServerLevel level, BlockPos center, int minChunks, Player nearest) {
         int cx = center.getX() >> 4, cz = center.getZ() >> 4, loaded = 0, radius = (int) Math.ceil(Math.sqrt(minChunks));
-        for (int dx = -radius; dx <= radius; dx++) for (int dz = -radius; dz <= radius; dz++) { net.minecraft.world.level.chunk.ChunkAccess chunk = level.getChunkSource().getChunk(cx + dx, cz + dz, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, false); if (chunk != null) loaded++; }
+        for (int dx = -radius; dx <= radius; dx++) for (int dz = -radius; dz <= radius; dz++) { net.minecraft.world.level.chunk.ChunkAccess chunk = level.getChunkSource().getChunkNow(cx + dx, cz + dz); if (chunk != null) loaded++; }
         return loaded >= minChunks;
     }
     private static BlockPos findFarthestLoadedPos(ServerLevel level, BlockPos origin, int dist, int minChunksReq) {

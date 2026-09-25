@@ -128,7 +128,7 @@ public class Structures5Procedure {
         // puisqu'un appel bloquant ne s'interrompt pas.
         // Desormais : demande en tache de fond, puis on dit si la zone est DEJA
         // entierement en memoire (l'appelant differera le candidat sinon).
-        deepluckyblock.util.SafeSurface.requestZone(lvl, ccx0, ccz0, ccx1, ccz1);
+        // Candidate verification is read-only; preload only the selected footprint.
         return deepluckyblock.util.SafeSurface.zoneLoaded(lvl, ccx0, ccz0, ccx1, ccz1);
     }
     private static final int SEARCH_S = 5;
@@ -264,7 +264,7 @@ public class Structures5Procedure {
         int radius = (int) Math.ceil(Math.sqrt(minChunks));
         for (int dx = -radius; dx <= radius; dx++)
             for (int dz = -radius; dz <= radius; dz++)
-                if (level.getChunkSource().getChunk(cx + dx, cz + dz, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, false) != null) loaded++;
+                if (level.getChunkSource().getChunkNow(cx + dx, cz + dz) != null) loaded++;
         return loaded >= minChunks;
     }
 
@@ -1271,7 +1271,7 @@ public class Structures5Procedure {
             FlatQuality realFq = qualityOnReady(lvl, c.cx(), c.cz(), checkR);
             if (realFq == null) {
                 // Zone pas encore prete : on demande en tache de fond et on differe le candidat.
-                deepluckyblock.util.SafeSurface.requestZone(lvl, ccx0, ccz0, ccx1, ccz1);
+                // Candidate verification is read-only; preload only the selected footprint.
                 LOGGER.info("[STRUCT5-FLAT] Candidat #{}/{} a {},{} : zone pas encore en memoire -- verification differee (tache de fond, aucun blocage)",
                         i + 1, maxVerified, c.cx(), c.cz());
                 pendingVerif.add(c);
@@ -1572,12 +1572,16 @@ public class Structures5Procedure {
         int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
         for (int dx = -radius; dx <= radius; dx += step) {
             for (int dz = -radius; dz <= radius; dz += step) {
-                int y = deepluckyblock.util.SafeSurface.height(l, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx + dx, cz + dz) - 1;
+                int x = cx + dx, z = cz + dz;
+                var chunk = l.getChunkSource().getChunkNow(x >> 4, z >> 4);
+                if (chunk == null) continue;
+                int y = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x & 15, z & 15);
+                if (y <= l.getMinBuildHeight()) continue;
                 if (y < minY) minY = y;
                 if (y > maxY) maxY = y;
             }
         }
-        return maxY - minY;
+        return minY > maxY ? Integer.MAX_VALUE : maxY - minY;
     }
 
     private static int sc(int cx, int cz, BlockPos pp, double lx, double lz) {
