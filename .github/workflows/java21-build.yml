@@ -1,0 +1,81 @@
+name: Java 21 build
+
+on:
+  push:
+    branches: [arena/01a0da6a-deep-lucky-block]
+    paths:
+      - '.github/workflows/java21-build.yml'
+      - 'deep_lucky_block_mcreator.zip'
+      - 'mod_project/src/**'
+      - 'ci/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: java21-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Extract project and apply tracked source overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/mod-project"
+          unzip -q deep_lucky_block_mcreator.zip -d "$RUNNER_TEMP/mod-project"
+          cp -a mod_project/src/. "$RUNNER_TEMP/mod-project/src/"
+          chmod +x "$RUNNER_TEMP/mod-project/gradlew"
+          java -version
+          javac -version
+      - name: Install CI-only fixture checks
+        if: contains(github.event.head_commit.message, '[server-check]')
+        run: cp ci/StructureRegressionChecks.java "$RUNNER_TEMP/mod-project/src/main/java/deepluckyblock/procedures/"
+      - name: Build mod
+        shell: bash
+        env:
+          JAVA_TOOL_OPTIONS: '-Xmx2g -XX:ActiveProcessorCount=2'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/mod-project"
+          ./gradlew build --console=plain --max-workers=2 2>&1 | tee "$RUNNER_TEMP/java21-build.log"
+      - name: Verify structures in one dedicated server session
+        if: contains(github.event.head_commit.message, '[server-check]')
+        env:
+          JAVA_TOOL_OPTIONS: '-Xmx2g -XX:ActiveProcessorCount=2'
+        run: python3 ci/server_check.py
+      - name: Publish failure excerpt as annotations
+        if: failure()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          log = Path(os.environ['RUNNER_TEMP']) / 'java21-build.log'
+          if log.exists():
+              text = '\n'.join(log.read_text(errors='replace').splitlines()[-100:])
+              text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+              print('::error title=Build diagnostics::' + text)
+          PY
+      - name: Save build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: java21-build-diagnostics
+          path: |
+            ${{ runner.temp }}/java21-build.log
+            ${{ runner.temp }}/server-check.log
+            ${{ runner.temp }}/server-summary.txt
+            ${{ runner.temp }}/mod-project/build/reports/
+          if-no-files-found: warn
+          retention-days: 7
