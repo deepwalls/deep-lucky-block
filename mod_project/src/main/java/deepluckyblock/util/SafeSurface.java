@@ -315,19 +315,34 @@ public final class SafeSurface {
                 return thread;
             });
 
+    private static final net.minecraft.server.level.TicketType<Long> ASYNC_TICKET =
+            net.minecraft.server.level.TicketType.create("dlb_async_request", Long::compare, 300);
+    private static long nextRequestTicket;
+
     private static void requestAsync(ServerLevel level, int cx, int cz, long key, Runnable whenDone) {
+        var chunkPos = new net.minecraft.world.level.ChunkPos(cx, cz);
+        long ticket = ++nextRequestTicket;
+        // UNKNOWN tickets installed by getChunkFuture expire between ticks. Keep this
+        // request alive until the normal chunk holder has published its FULL state.
+        level.getChunkSource().addRegionTicket(ASYNC_TICKET, chunkPos, 0, ticket);
         java.util.concurrent.CompletableFuture.supplyAsync(
                 () -> level.getChunkSource().getChunkFuture(cx, cz, ChunkStatus.FULL, true), CHUNK_REQUESTS)
                 .thenCompose(future -> future)
-                .whenComplete((result, error) -> level.getServer().execute(() -> {
+                .whenComplete((result, error) -> level.getServer().execute(() ->
+                        deepluckyblock.procedures.TestProcedure.schedule(level,
+                                deepluckyblock.procedures.TestProcedure.currentTick(level) + 1, () -> {
                     try {
                         if (error == null && level.getChunkSource().getChunkNow(cx, cz) != null) READY.add(key);
                         else READY.remove(key);
                     } finally {
                         PENDING.remove(key);
+                        // Give ChunkKeeper a tick to take over, without sharing its ticket key.
+                        deepluckyblock.procedures.TestProcedure.schedule(level,
+                                deepluckyblock.procedures.TestProcedure.currentTick(level) + 2,
+                                () -> level.getChunkSource().removeRegionTicket(ASYNC_TICKET, chunkPos, 0, ticket));
                         whenDone.run();
                     }
-                }));
+                })));
     }
 
     /** Demande la generation d'un chunk en TACHE DE FOND (jamais bloquant). */
