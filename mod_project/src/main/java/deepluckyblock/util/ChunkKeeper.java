@@ -151,7 +151,7 @@ public final class ChunkKeeper {
          * pre-chargement S'ARRETAIT (bug silencieux : plus aucune demande, sans erreur).
          */
         final java.util.concurrent.atomic.AtomicInteger inFlight = new java.util.concurrent.atomic.AtomicInteger();
-        int reqCursor;   // T46 : position de la demande dans `pending` (round-robin)
+        final java.util.Set<ChunkPos> activeRequests = new java.util.HashSet<>();
         int refreshCursor;   // T53 : position du rafraichissement de tickets (round-robin)
         int retryCursor;     // T66 : position de la re-demande des chunks absents (round-robin)
         long lastRetry;      // T66 : derniere salve de re-demandes
@@ -288,11 +288,16 @@ public final class ChunkKeeper {
         int budget = Math.min(REQUEST_PER_TICK, MAX_IN_FLIGHT - z.inFlight.get());
         if (budget > 0 && !z.pending.isEmpty()) {
             int n = z.pending.size();
-            if (z.reqCursor >= n) z.reqCursor = 0;
-            for (int i = 0; i < budget; i++) {
-                ChunkPos cp = z.pending.get(z.reqCursor % n);
-                z.reqCursor = (z.reqCursor + 1) % n;
-                if (level.getChunkSource().getChunkNow(cp.x, cp.z) != null) continue;   // deja charge : rien a demander
+            // Removal from pending used to shift the round-robin cursor past chunks
+            // that had never been requested. Scan the compact spatial queue instead;
+            // loaded or in-flight entries must not consume a submission slot.
+            int submitted = 0;
+            for (int i = 0; i < n && submitted < budget; i++) {
+                ChunkPos cp = z.pending.get(i);
+                if (z.activeRequests.contains(cp)
+                        || level.getChunkSource().getChunkNow(cp.x, cp.z) != null) continue;
+                z.activeRequests.add(cp);
+                submitted++;
                 z.requested++;
                 // T60 : la demande passe par SafeSurface, qui tient le registre PENDING/READY.
                 // Sans ca, les chunks demandes ici etaient "en vol" du point de vue du registre :
@@ -300,7 +305,10 @@ public final class ChunkKeeper {
                 // source, qui ATTENDAIT la fin de la generation (7,7 ms par lecture mesurees,
                 // 17 s pour une grille de 2 209 cellules).
                 z.inFlight.incrementAndGet();
-                deepluckyblock.util.SafeSurface.requestThen(level, cp.x, cp.z, () -> z.inFlight.decrementAndGet());
+                deepluckyblock.util.SafeSurface.requestThen(level, cp.x, cp.z, () -> {
+                    z.activeRequests.remove(cp);
+                    z.inFlight.decrementAndGet();
+                });
             }
         }
 
@@ -370,14 +378,16 @@ public final class ChunkKeeper {
      * unrelated frontier points. Base bounds remain unchanged: a later track() can
      * still expand the full rectangular terrain zone normally. Server thread only.
      */
-    public static void trackAdditionalChunk(ServerLevel level, int cx, int cz) {
+    public static boolean trackAdditionalChunk(ServerLevel level, int cx, int cz) {
         Zone z = ZONES.get(level);
         ChunkPos cp = new ChunkPos(cx, cz);
         if (z == null) {
             track(level, cp.getWorldPosition(), cp.getWorldPosition());
-            return;
+            return true;
         }
-        if (!z.pinned.contains(cp) && !z.pending.contains(cp)) z.pending.add(cp);
+        if (z.pinned.contains(cp) || z.pending.contains(cp)) return false;
+        z.pending.add(cp);
+        return true;
     }
 
     /** Vrai si une zone est actuellement tenue pour ce niveau. */
@@ -464,11 +474,17 @@ public final class ChunkKeeper {
         // si la zone atteignait le plafond de 4096 chunks).
         java.util.Set<ChunkPos> known = new java.util.HashSet<>(z.pinned);
         known.addAll(z.pending);
-        for (int cx = z.cx0; cx <= z.cx1; cx++) {
-            for (int cz = z.cz0; cz <= z.cz1; cz++) {
-                ChunkPos cp = new ChunkPos(cx, cz);
-                if (!known.add(cp)) continue;
-                z.pending.add(cp);
+        // A compact 4x4 wave shares world-generation dependencies better than a
+        // sixteen-chunk strip. Keep exactly the same coverage and concurrency.
+        for (int bx = z.cx0; bx <= z.cx1; bx += 4) {
+            for (int bz = z.cz0; bz <= z.cz1; bz += 4) {
+                for (int cx = bx; cx <= Math.min(bx + 3, z.cx1); cx++) {
+                    for (int cz = bz; cz <= Math.min(bz + 3, z.cz1); cz++) {
+                        ChunkPos cp = new ChunkPos(cx, cz);
+                        if (!known.add(cp)) continue;
+                        z.pending.add(cp);
+                    }
+                }
             }
         }
     }

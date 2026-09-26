@@ -128,6 +128,10 @@ public final class StructureRegressionChecks {
     }
 
     private static void basin(ServerLevel level) {
+        basin(level, false);
+    }
+
+    private static void basin(ServerLevel level, boolean onDemand) {
         // 87x87x6 interior = 45,414 blocks: exceeds the previous 40,000 cutoff.
         // It crosses both positive and negative chunk boundaries.
         for (int x = -44; x <= 44; x++) {
@@ -143,7 +147,7 @@ public final class StructureRegressionChecks {
         // An existing lower water surface must not stop refill at its old level.
         level.setBlock(new BlockPos(-10, 241, -10), Blocks.WATER.defaultBlockState(), FLAGS);
         BlockPos min = new BlockPos(-2, 240, -2), max = new BlockPos(2, 246, 2);
-        StructureTerrainPrep.fixLiquidsPass(level, min, max, () -> {
+        Runnable done = () -> {
             try {
                 int restored = 0;
                 for (int x = -43; x <= 43; x++) {
@@ -162,15 +166,18 @@ public final class StructureRegressionChecks {
                     }
                 }
                 require(restored == 45120, "Unexpected basin volume " + restored);
-                LOG.info("[DLBVERIFY] PASS water: {} source blocks, chunk borders, partial column and dry footprint verified", restored);
+                LOG.info("[DLBVERIFY] PASS water (onDemand={}): {} source blocks, chunk borders, partial column and dry footprint verified", onDemand, restored);
                 for (int x = -44; x <= 44; x++)
                     for (int z = -44; z <= 44; z++)
                         for (int y = 240; y <= 246; y++)
                             level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), FLAGS);
                 deepluckyblock.util.ChunkKeeper.release(level);
-                lazyLiquidBoundary(level);
+                if (onDemand) lazyLiquidBoundary(level);
+                else basin(level, true);
             } catch (Throwable error) { fail(error); }
-        });
+        };
+        if (onDemand) StructureTerrainPrep.fixLiquidsPassOnDemand(level, min, max, done);
+        else StructureTerrainPrep.fixLiquidsPass(level, min, max, done);
     }
 
     private static void lazyLiquidBoundary(ServerLevel level) {

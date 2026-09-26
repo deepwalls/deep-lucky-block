@@ -5073,7 +5073,7 @@ public class StructureTerrainPrep {
                         if (onDemand) {
                             // Keep the frontier sparse: no rectangular dry halo expansion.
                             // The next slice waits until these chunks are loaded AND pinned.
-                            deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, nx >> 4, nz >> 4);
+                            if (deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, nx >> 4, nz >> 4)) requested++;
                             retry.add(packed);
                         } else {
                             deepluckyblock.util.SafeSurface.request(level, nx >> 4, nz >> 4);
