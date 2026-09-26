@@ -485,29 +485,15 @@ public class StructureTerrainPrep {
     // Clear le footprint : supprime le terrain naturel AU-DESSUS du sol (pas de cratere,
     // on ne creuse jamais sous la surface). Batche via schedule.
     private static void clearFootprint(ServerLevel level, BlockPos min, BlockPos max, int topY, Runnable onDone) {
-        List<int[]> cols = new ArrayList<>();
-        for (int x = min.getX(); x <= max.getX(); x++)
-            for (int z = min.getZ(); z <= max.getZ(); z++)
-                cols.add(new int[]{x, z});
-        int total = (cols.size() + CLEAR_BATCH_COLS - 1) / CLEAR_BATCH_COLS;
-        if (total == 0) { if (onDone != null) onDone.run(); return; }
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
-        for (int b = 0; b < total; b++) {
-            final int bi = b, bt = total;
-            TestProcedure.schedule(level, TestProcedure.currentTick(level) + b + 1, () -> {
-                int start = bi * CLEAR_BATCH_COLS, end = Math.min(start + CLEAR_BATCH_COLS, cols.size());
-                deepluckyblock.util.DebugLog.setPhase("clearFootprint " + (bi + 1) + "/" + bt);
-                for (int i = start; i < end; i++) {
-                    int cx = cols.get(i)[0], cz = cols.get(i)[1];
-                    int surfY = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx, cz);
-                    for (int y = topY; y > surfY; y--) {
-                        BlockState s = level.getBlockState(mut.set(cx, y, cz));
-                        if (!s.isAir() && isNaturalTerrain(s)) level.setBlock(mut, Blocks.AIR.defaultBlockState(), 2);
-                    }
-                }
-                if (bi == bt - 1 && onDone != null) onDone.run();
-            });
-        }
+        startColumnPass(level, "clearFootprint", columnsOf(min, max, 0), BATCH_COLS, col -> {
+            int x = col[0], z = col[1];
+            int surface = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            for (int y = topY; y > surface; y--) {
+                BlockState state = level.getBlockState(mut.set(x, y, z));
+                if (!state.isAir() && isNaturalTerrain(state)) level.setBlock(mut, Blocks.AIR.defaultBlockState(), 2);
+            }
+        }, onDone);
     }
 
     // Avant le smooth : remplit les vides SOUS la structure (emprise + 3 radius)
@@ -515,39 +501,24 @@ public class StructureTerrainPrep {
     // solide. Garantit qu'il n'y a aucun vide sous la structure (pas de flottaison).
     // Batche via schedule.
     private static void prefillFoundation(ServerLevel level, BlockPos min, BlockPos max, int foundationBaseY, Runnable onDone) {
-        List<int[]> cols = new ArrayList<>();
-        for (int x = min.getX() - 3; x <= max.getX() + 3; x++)
-            for (int z = min.getZ() - 3; z <= max.getZ() + 3; z++)
-                cols.add(new int[]{x, z});
-        int total = (cols.size() + CLEAR_BATCH_COLS - 1) / CLEAR_BATCH_COLS;
-        if (total == 0) { if (onDone != null) onDone.run(); return; }
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         int minBuild = level.getMinBuildHeight();
-        for (int b = 0; b < total; b++) {
-            final int bi = b, bt = total;
-            TestProcedure.schedule(level, TestProcedure.currentTick(level) + b + 1, () -> {
-                int start = bi * CLEAR_BATCH_COLS, end = Math.min(start + CLEAR_BATCH_COLS, cols.size());
-                deepluckyblock.util.DebugLog.setPhase("prefillFoundation " + (bi + 1) + "/" + bt);
-                int filled = 0;
-                for (int i = start; i < end; i++) {
-                    int cx = cols.get(i)[0], cz = cols.get(i)[1];
-                    int surfaceY = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx, cz) - 1;
-                    if (foundationBaseY > surfaceY) continue; // base au-dessus du sol -> pas de pilier
-                    int y = foundationBaseY;
-                    int depth = 0;
-                    while (y >= minBuild && depth < 64) {
-                        BlockState cur = level.getBlockState(mut.set(cx, y, cz));
-                        if (!cur.isAir() && cur.blocksMotion()) break;
-                        level.setBlock(mut, Blocks.GRASS_BLOCK.defaultBlockState(), FAST_FLAG);
-                        filled++; y--; depth++;
-                    }
-                }
-                if (bi == bt - 1) {
-                    if (filled > 0) deepluckyblock.util.DebugLog.structure("prefillFoundation : {} blocs de grass_block (vides remplis)", filled);
-                    if (onDone != null) onDone.run();
-                }
-            });
-        }
+        int[] filled = {0};
+        startColumnPass(level, "prefillFoundation", columnsOf(min, max, 3), BATCH_COLS, col -> {
+            int x = col[0], z = col[1];
+            int surface = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+            if (foundationBaseY > surface) return;
+            int y = foundationBaseY, depth = 0;
+            while (y >= minBuild && depth < 64) {
+                BlockState state = level.getBlockState(mut.set(x, y, z));
+                if (!state.isAir() && state.blocksMotion()) break;
+                level.setBlock(mut, Blocks.GRASS_BLOCK.defaultBlockState(), FAST_FLAG);
+                filled[0]++; y--; depth++;
+            }
+        }, () -> {
+            if (filled[0] > 0) deepluckyblock.util.DebugLog.structure("prefillFoundation: {} blocks filled", filled[0]);
+            if (onDone != null) onDone.run();
+        });
     }
 
     // FIX CRITIQUE (rapporte en jeu : structure "Sylvan Citadel" spawnee a
@@ -733,43 +704,19 @@ public class StructureTerrainPrep {
     // neige, vignes...) sur toute la zone GIGA. Sinon le smooth abaisse le terrain
     // et ces decors se retrouvent a flotter a leur ancienne position. Batche.
     private static void clearSurfaceDecor(ServerLevel level, BlockPos min, BlockPos max, Runnable onDone) {
-        int x0 = min.getX() - terrainRing(), x1 = max.getX() + terrainRing();
-        int z0 = min.getZ() - terrainRing(), z1 = max.getZ() + terrainRing();
-        List<int[]> cols = new ArrayList<>();
-        for (int x = x0; x <= x1; x++)
-            for (int z = z0; z <= z1; z++)
-                cols.add(new int[]{x, z});
-        int total = (cols.size() + CLEAR_BATCH_COLS - 1) / CLEAR_BATCH_COLS;
-        if (total == 0) { if (onDone != null) onDone.run(); return; }
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
-        for (int b = 0; b < total; b++) {
-            final int bi = b, bt = total;
-            TestProcedure.schedule(level, TestProcedure.currentTick(level) + b + 1, () -> {
-                int start = bi * CLEAR_BATCH_COLS, end = Math.min(start + CLEAR_BATCH_COLS, cols.size());
-                deepluckyblock.util.DebugLog.setPhase("clearSurfaceDecor " + (bi + 1) + "/" + bt);
-                for (int i = start; i < end; i++) {
-                    int cx = cols.get(i)[0], cz = cols.get(i)[1];
-                    int surfY = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx, cz);
-                    // On scanne large en hauteur : canopie au-dessus + tronc en dessous.
-                    // FIX : +18 ne suffisait pas. Un chene noir, un sapin de
-                    // taiga geante ou un arbre modde depasse largement, et le
-                    // sommet non nettoye se retrouvait a flotter apres le
-                    // remodelage. On balaie desormais jusqu'au sommet REEL de
-                    // la colonne (heightmap toutes categories), plafonne a
-                    // +64 pour ne pas scanner le ciel inutilement.
-                    int topScan = Math.max(
-                            deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING, cx, cz) + 2,
-                            surfY + 18);
-                    topScan = Math.min(topScan, surfY + 64);
-                    for (int y = topScan; y >= surfY - 25; y--) {
-                        if (y < level.getMinBuildHeight()) break;
-                        BlockState s = level.getBlockState(mut.set(cx, y, cz));
-                        if (!s.isAir() && isSurfaceDecor(s)) level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
-                    }
-                }
-                if (bi == bt - 1 && onDone != null) onDone.run();
-            });
-        }
+        startColumnPass(level, "clearSurfaceDecor", columnsOf(min, max, terrainRing()), BATCH_COLS, col -> {
+            int x = col[0], z = col[1];
+            int surface = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            // Keep the same canopy/trunk scan; only its scheduling changes.
+            int top = Math.min(surface + 64, Math.max(surface + 18,
+                    deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING, x, z) + 2));
+            for (int y = top; y >= surface - 25; y--) {
+                if (y < level.getMinBuildHeight()) break;
+                BlockState state = level.getBlockState(mut.set(x, y, z));
+                if (!state.isAir() && isSurfaceDecor(state)) level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
+            }
+        }, onDone);
     }
 
     /**
