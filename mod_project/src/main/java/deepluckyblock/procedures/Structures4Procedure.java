@@ -1090,7 +1090,7 @@ public class Structures4Procedure {
             }
             final BlockPos eMin = rotatedPos.offset(ex0, 0, ez0);
             final BlockPos eMax = rotatedPos.offset(ex1, size.getY() - 1, ez1);
-            StructureTerrainPrep.preloadBox(level,
+            StructureTerrainPrep.preloadTerrainAndLiquids(level,
                     new BlockPos(eMin.getX(), level.getMinBuildHeight(), eMin.getZ()),
                     new BlockPos(eMax.getX(), level.getMaxBuildHeight() - 1, eMax.getZ()),
                     () -> {

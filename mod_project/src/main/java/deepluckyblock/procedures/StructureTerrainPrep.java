@@ -1667,6 +1667,23 @@ public class StructureTerrainPrep {
      * le paste et le post-traitement ne declenchent donc plus aucune
      * generation de chunk.
      */
+    /** Load the final terrain/liquid border once, before any Everest terrain pass. */
+    public static void preloadTerrainAndLiquids(ServerLevel level, BlockPos min, BlockPos max, Runnable onReady) {
+        SMOOTH_RING = computeSmoothRing(min, max);
+        int margin = Math.max(48, terrainRing() + NATURALIZE_EXTRA_RING);
+        BlockPos loadMin = min.offset(-margin, 0, -margin);
+        BlockPos loadMax = max.offset(margin, 0, margin);
+        preloadBox(level, loadMin, loadMax, () -> {
+            if (deepluckyblock.util.ChunkKeeper.zoneLoaded(level, loadMin, loadMax)) {
+                if (onReady != null) onReady.run();
+            } else {
+                // A time budget is not permission to skip the unloaded border.
+                TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1,
+                        () -> preloadTerrainAndLiquids(level, min, max, onReady));
+            }
+        });
+    }
+
     public static void preloadBox(ServerLevel level, BlockPos min, BlockPos max, Runnable onReady) {
         preloadBox(level, min, max, PRELOAD_TOTAL_BUDGET_MS, onReady);
     }
