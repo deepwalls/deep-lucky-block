@@ -52,9 +52,10 @@ réellement utilisées sont vérifiées par compilation Java 21 sur le projet.
    proximité avec la structure. Même rayon et même exclusion des blocs du
    modèle. Suppression du quota de 64 blocs/tick qui imposait ~30 s au seul
    nettoyage d’un cirque de 39 088 blocs. Tranches de 12 ms.
-3. **Everest** : petite sonde autour de l’ancrage, puis chargement de l’emprise
-   réellement transformée, plutôt que deux grandes boîtes redondantes ou mal
-   positionnées après rotation.
+3. **Everest** : calcul de l’emprise réellement transformée avant la lecture
+   d’altitude, chargement de cette emprise et de son ancrage, puis lecture du sol.
+   La petite sonde indépendante n’est conservée que pour la recherche distante
+   configurée, pas pour le placement direct par défaut.
 4. **Chargement borné** : budget partagé par tick, défaut 8 demandes/tick et
    16 demandes en vol ; propriétés de diagnostic bornées. Les appels multiples
    de `keep` dans un tick ne multiplient plus le budget.
@@ -79,8 +80,8 @@ réellement utilisées sont vérifiées par compilation Java 21 sur le projet.
   dépassant le toit ; volume intérieur vidé ; côtés et sol inférieur préservés.
 - Fixtures antérieures conservées : eau inter-chunks, coffre existant/butin,
   rotations/miroirs, absence d’excavation sur la bande protégée de six blocs.
-- La session complète sur `b12f48d` doit fournir les mesures définitives ; consulter
-  `RAPPORT_TEST_SERVEUR.md` pour le résultat, sans assimiler compilation et performance.
+- La session complète sur `b12f48d` est la première mesure de cette série ; consulter
+  `RAPPORT_TEST_SERVEUR.md` pour le dernier résultat, sans assimiler compilation et performance.
 
 ## Diagnostic issu de la première mesure
 
@@ -107,7 +108,7 @@ Compilations réussies : `36203338979` et `36203479414`.
 Ces deux correctifs restent à mesurer en jeu ; une nouvelle session est demandée
 explicitement pour respecter la limite initiale sur les relances serveur.
 
-## Résultat au terme des cinq essais supplémentaires
+## Résultat au terme de la première autorisation de cinq essais
 
 Voir `RAPPORT_TEST_SERVEUR.md` : six plafonds respectés, Everest encore à 39,40 s.
 Les correctifs ont été complétés par des tickets temporaires distincts et un
@@ -117,6 +118,64 @@ du découpage au temps existant pour trois passes auparavant bloquées à 600
 colonnes/tick. L’Everest conserve une marge de réparation d’eau de 48 blocs ;
 son nettoyage local ne reprend plus l’anneau de 96 blocs des grands plateaux.
 
-Les cinq cycles autorisés sont consommés. Aucune nouvelle validation ne doit
-être lancée sans confirmation. Les paragraphes précédents décrivant des essais
-« à mesurer » sont l’historique de la recherche, pas le statut actuel.
+Ces cinq premiers cycles ont été consommés. L’utilisateur a ensuite explicitement
+accordé cinq nouveaux cycles, détaillés ci-dessous. Les paragraphes précédents
+« à mesurer » sont l’historique, pas le statut actuel.
+
+
+## Deuxième autorisation : cinq cycles réalisés, résultat encore partiel
+
+Dernières sources `79d3edd`, run `36209068656` : compilation et fixtures PASS,
+Everest **35,39 s**, Crimson Lake **101,80 s**, les cinq autres sous 30 s.
+Aucun sixième cycle de cette autorisation n’a été lancé.
+
+### Choix conservant le travail nécessaire
+
+- Tous les chunks du terrain Everest travaillé sont préchargés/épinglés. Le halo
+  liquide intact est exploré à la demande, sans réduire la limite de réparation
+  de 48 blocs. La propagation attend les nouveaux chunks plutôt que d’épuiser
+  six tentatives et d’abandonner des points.
+- Les sources de départ sont recherchées dans la boîte du terrain et de sa
+  bordure ; les bandes supplémentaires dues à l’arrondi aux chunks ne créent
+  plus de fronts artificiels. Une fixture vérifie expressément que le remplissage
+  peut dépasser cette boîte, et qu’un vrai voisin froid est chargé/épinglé.
+- La liste mutable des demandes ne fait plus dériver son curseur lors des retraits.
+  Les requêtes suivent des groupes 4×4 compacts ; la dernière variante les classe
+  depuis le centre. La couverture est comparée sur 10 000 rectangles. Concurrence
+  et budget de dépôt inchangés. Le gain pour Everest de la variante centrée n’est
+  pas démontré par ce seul essai : 35,39 s contre 32,40 s au précédent.
+- L’altitude est lue sur l’ancrage disponible après le chargement final, et non
+  sur une hauteur de repli à conserver pendant toute la construction.
+- Les tickets sont renouvelés en place. Le retrait préalable provoquait des
+  mises à jour inutiles des graphes de distance. La fixture vérifie l’identité du
+  ticket, son âge renouvelé, le maintien après 360 ticks et sa disparition à la libération.
+
+### Vérification de l’API de tickets
+
+Consultation des mappings **1.21.1** :
+[Ticket](https://mappings.dev/1.21.1/net/minecraft/server/level/Ticket.html),
+[ServerChunkCache](https://mappings.dev/1.21.1/net/minecraft/server/level/ServerChunkCache.html).
+Lecture du patch NeoForge ciblé :
+[DistanceManager, branche 1.21.1](https://github.com/neoforged/NeoForge/blob/1.21.1/patches/net/minecraft/server/level/DistanceManager.java.patch).
+Le comportement de renouvellement sans retrait est surtout confirmé par la
+fixture exécutée sur **NeoForge 21.1.77**, et non supposé à partir d’une version ancienne.
+Aucune dépendance ajoutée, aucune modification de `gradle.properties` ou `settings.gradle`.
+
+### Mesure du coût restant
+
+Everest : **368 chunks en 31,449 s** ; eau **863 ms**, aucun chargement extérieur
+supplémentaire sur ce site ; **52 979 blocs** toujours posés.
+L’inspection du NBT a identifié deux blocs de neige isolés aux bornes : ils n’ont
+pas été supprimés pour réduire artificiellement l’emprise.
+
+Instantanés CPU CI : workers **33,003 s**, serveur **4,450 s**, autres threads Java
+**0,026 s**, pour **35,397 s murales** ; collecteurs JVM **315 ms** rapportées.
+Ces durées se chevauchent. Les snapshots ne changent ni les threads du moteur ni
+la mémoire ni les seuils du benchmark. Ils ne profilent pas les méthodes et ne
+prouvent pas que chaque milliseconde worker relève de la génération ; ils orientent
+vers le travail moteur de génération/éclairage plutôt que vers de longs GC ou
+un simple quota de pose. Il reste à réduire ce coût sans omettre du terrain utile.
+
+Les deux bassins de 45 120 sources, la frontière froide, la propagation au-delà
+des amorces, les tickets, les coffres et le dégagement du lac passent. Cela ne
+remplace pas une inspection visuelle des océans et des entrées en jeu.
