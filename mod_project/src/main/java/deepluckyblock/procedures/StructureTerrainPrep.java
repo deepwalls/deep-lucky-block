@@ -4929,6 +4929,8 @@ public class StructureTerrainPrep {
         final Runnable onDone;
         final BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         int idx = 0, phase = 0, loaded = 0, refilled = 0, dropped = 0;
+        boolean repairChunksPinned;
+        long lastLoadReport;
         // T75 : chunks absents (demandes) / jamais chargeables (abandonnes), et
         // points de propagation dont un voisin n'etait pas encore en memoire.
         final List<int[]> pending = new ArrayList<>();
@@ -4963,6 +4965,22 @@ public class StructureTerrainPrep {
         void slice() {
             deepluckyblock.util.ChunkKeeper.keep(level);
             deepluckyblock.util.TerrainChain.heartbeat();
+            if (!repairChunksPinned) {
+                // Real async loading can outlive the old six retry rounds. Do not scan
+                // or flood-fill a partially loaded basin: retain the entire bounded zone.
+                if (!deepluckyblock.util.ChunkKeeper.zoneComplete(level)) {
+                    long now = System.currentTimeMillis();
+                    if (now - lastLoadReport >= 5000) {
+                        lastLoadReport = now;
+                        deepluckyblock.util.DebugLog.structure("fixLiquids waiting for pinned repair chunks: {}",
+                                deepluckyblock.util.ChunkKeeper.stats(level));
+                    }
+                    TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1, this::slice);
+                    return;
+                }
+                repairChunksPinned = true;
+                deepluckyblock.util.SafeSurface.clearCache();
+            }
             long t0 = System.currentTimeMillis();
             try {
                 if (phase == 0) { sliceScan(t0); return; }
