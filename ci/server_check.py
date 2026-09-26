@@ -52,8 +52,10 @@ def rcon(command, timeout=15):
 
 
 def annotate(text, failure=False):
-    text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
-    print(f'::{"error" if failure else "notice"} title=Server verification::{text}', flush=True)
+    # The annotations API truncates large messages; preserve phase diagnostics in chunks.
+    for start in range(0, max(1, len(text)), 3000):
+        part = text[start:start + 3000].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+        print(f'::{"error" if failure else "notice"} title=Server verification::{part}', flush=True)
 
 
 lines = queue.Queue()
@@ -131,7 +133,7 @@ try:
         within_budget = duration <= limit and (name != 'crimsonlake' or duration >= 10)
         failed = failed or not within_budget
         summary.append(f'{name}: latency budget {"PASS" if within_budget else "FAIL"} (limit {limit}s)')
-        annotate('\n'.join(summary[-2:]) + '\n' + '\n'.join(phases[-30:]), not within_budget)
+        annotate('\n'.join(summary[-2:]) + '\n' + '\n'.join(phases), not within_budget)
 except Exception as exc:
     # Drain actual current logs even when the command's RCON response times out.
     while not lines.empty():

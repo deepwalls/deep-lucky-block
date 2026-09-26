@@ -31,8 +31,7 @@ public final class StructureRegressionChecks {
                 .executes(ctx -> {
                     ServerLevel level = ctx.getSource().getLevel();
                     try {
-                        loot(level);
-                        basin(level);
+                        asyncChunks(level);
                     } catch (Throwable error) { fail(error); }
                     return 1;
                 }));
@@ -43,6 +42,29 @@ public final class StructureRegressionChecks {
     }
 
     private static void fail(Throwable error) { LOG.error("[DLBVERIFY] FAIL: " + error, error); }
+
+    private static void asyncChunks(ServerLevel level) {
+        boolean[] returned = {false};
+        int[] completed = {0};
+        long started = System.nanoTime();
+        for (int i = 0; i < 8; i++) {
+            int cx = 600 + i, cz = 600;
+            deepluckyblock.util.SafeSurface.requestThen(level, cx, cz, () -> {
+                try {
+                    require(returned[0], "Chunk request waited inline on server thread");
+                    require(level.getServer().isSameThread(), "Chunk callback outside server thread");
+                    require(level.getChunkSource().getChunkNow(cx, cz) != null, "Completed chunk not available");
+                    if (++completed[0] == 8) {
+                        LOG.info("[DLBVERIFY] PASS async: eight cold chunks, no inline wait, callbacks on server thread");
+                        loot(level);
+                        basin(level);
+                    }
+                } catch (Throwable error) { fail(error); }
+            });
+        }
+        returned[0] = true;
+        LOG.info("[DLBVERIFY] async request dispatch took {} ms", (System.nanoTime() - started) / 1_000_000.0);
+    }
 
     private static void loot(ServerLevel level) throws Exception {
         BlockPos source = new BlockPos(0, 280, 0);

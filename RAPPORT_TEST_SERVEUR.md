@@ -1,3 +1,40 @@
+# Objectif 30 s / lac 10–120 s — état courant
+
+Première session d’optimisation : run **36202755287**, sources **b12f48d**.
+Java 21 / NeoForge 21.1.77 / Minecraft 1.21.1, 2 CPU et 2 Go, graine 123456789.
+Compilation et toutes les fixtures réussies, sept constructions terminées.
+**Objectifs de durée non tous atteints** :
+
+| Structure | Commande → dernières finitions | Objectif |
+|---|---:|---:|
+| Citadelle | 29,80 s | ≤30 s : PASS |
+| Observatoire | 19,90 s | ≤30 s : PASS |
+| Dragon | 32,70 s | ≤30 s : FAIL |
+| Cirque | 6,40 s | ≤30 s : PASS |
+| Bateau | 11,50 s | ≤30 s : PASS |
+| Everest | 66,10 s | ≤30 s : FAIL |
+| Crimson Lake | 129,20 s | 10–120 s : FAIL |
+
+Nouvelle fixture lac : décalage de 10 blocs avec padding NBT, montagne au-dessus
+du toit dégagée, sol inférieur/côtés préservés. Sur le vrai lac : **1 419 961**
+blocs retirés avant la pose. Pas de validation visuelle du chemin d’accès.
+Everest : scan d’eau encore incomplet (43 chunks absents).
+
+Correctifs suivants **compilés, pas encore chronométrés** :
+- `982ad28`, build `36203338979` : éviter le `managedBlock` caché de
+  `getChunkFuture` appelé sur le thread principal ; dispatcher asynchrone,
+  retours/lectures sur thread serveur, défaut borné 4 demandes/tick, 8 en vol.
+- `ca90834`, build `36203479414` : précharger les rives de l’Everest avant le
+  terrain, et attendre leur couverture réelle.
+
+Une seconde session de ce cycle nécessite confirmation. Ne pas assimiler les
+anciens ZIP à ces nouveaux correctifs. Recherche et décisions détaillées dans
+`RECHERCHE_OPTIMISATION_30S.md`.
+
+---
+
+## Historique des validations précédentes
+
 # Résultat actuel — livraison partiellement validée
 
 Sources : **e53deb1**, session autorisée **36201610297**, check **108289262141**.
