@@ -975,50 +975,9 @@ public class Structures4Procedure {
         LOGGER.info("[STRUCT4-EVEREST] Taille : {}x{}x{} = {}", size.getX(), size.getY(), size.getZ(), totalVolume);
         if (totalVolume > MAX_EVEREST_BLOCKS) { LOGGER.error("[STRUCT4-EVEREST] TROP GROS"); return false; }
         Player nearestPlayer = level.getNearestPlayer(origin.getX() + .5, origin.getY() + .5, origin.getZ() + .5, 128, false);
-        // ==================================================================
-        // T11 : PRE-CHARGEMENT DE LA ZONE DE RECHERCHE (ANTI-GEL MESURE)
-        // ==================================================================
-        // MESURE (test 20/09, everest a 4000,90,4000, monde neuf, zone jamais
-        // generee) : entre « Taille : 174x123x278 » et « -> pos=... », le scan
-        // de placement prenait 2 435 ms DANS UN SEUL TICK
-        // (« Can't keep up! Running 2387ms or 47 ticks behind »).
-        // CAUSE : findFlatArea() mesure tous les candidats sans forcer la
-        // generation, puis VERIFIE le meilleur en forcant la generation du
-        // chunk (SafeSurface.primeChunkAbs). Sur une zone neuve, cette
-        // verification genere un chunk complet sur le thread serveur : c'est
-        // exactement le mecanisme du gel de 19,2 s corrige par T9, mais en
-        // amont du pipeline (hors de la zone que prepZone pre-chargeait).
-        // CORRECTIF : la zone de recherche est pre-chargee par paquets AVANT
-        // le scan (aucune generation dans un tick). Le scan retrouve alors des
-        // chunks deja en memoire : MEMES choix de placement, plus de gel. La
-        // zone reste tenue en memoire pendant tout le pipeline (T9) et est
-        // rendue a la fin du post-traitement.
-        // Boite = emprise de la structure + 16 blocs de marge, PLAFONNEE a 88
-        // blocs de rayon (=> 11x11 = 121 chunks au maximum, l'emprise reelle
-        // d'une grosse structure). Mesure du 20/09 : pre-charger le rayon de
-        // RECHERCHE complet (±179 blocs = 576 chunks) demandait la generation de
-        // 576 chunks neufs pour une structure qui n'en occupe que ~120 : trois
-        // fois trop de travail, et le serveur prenait 38 s de retard accumule
-        // (« Running 38576ms or 771 ticks behind »). On ne pre-charge donc que
-        // ce que la structure va reellement occuper (elle est posee a l'origine
-        // demandee dans le cas normal) ; le reste de la zone est etendu par le
-        // prepZone()/ChunkKeeper des que la position finale est connue.
-        // === T32 : l'everest pre-charge TOUTE son emprise, pas seulement 88 blocs ===
-        // Mesure du 22/09 00:01 : apres le T30, le paste de l'everest gelait encore le
-        // serveur 4 211 ms, toujours pendant la phase etiquetee « pre-chargement des
-        // chunks ». Cause : le plafond de 88 blocs (T11) a ete choisi pour la zone de
-        // RECHERCHE des structures generiques, or l'everest mesure 192 x 296 blocs : les
-        // chunks au-dela de +/-88 n'etaient pas epingles et se generaient PENDANT la
-        // pose (getChunk(..., require=true), bloc par bloc). L'everest pre-charge donc
-        // le carre couvrant sa plus grande dimension : 296/2 + 16 = 164 blocs de rayon
-        // (plafond volontaire 176, soit ~529 chunks epingles -- tres en dessous du
-        // MAX_PINNED de ChunkKeeper).
-        // Probe the anchor first; the exact rotated footprint is loaded below.
-        final int preRing = 16;
-        StructureTerrainPrep.preloadBox(level,
-                new BlockPos(origin.getX() - preRing, level.getMinBuildHeight(), origin.getZ() - preRing),
-                new BlockPos(origin.getX() + preRing, level.getMaxBuildHeight() - 1, origin.getZ() + preRing),
-                () -> {
+        // Rotation and horizontal bounds do not depend on terrain height. Plan them
+        // first, load the final area once, then read Y from the pinned anchor chunk.
+        Runnable planEverest = () -> {
             BlockPos targetXZ;
             if (EVEREST_DISTANCE > 0) {
                 targetXZ = findFarthestLoadedPos(level, origin, EVEREST_DISTANCE, MIN_CHUNKS_EVEREST);
@@ -1031,9 +990,6 @@ public class Structures4Procedure {
             // Deplacement borne (6 anneaux de 48 blocs = 288 blocs max) AVANT la
             // lecture de hauteur, pour que l'ancrage suive le site reel.
             targetXZ = deepluckyblock.util.StructureSites.freeOffset(level, targetXZ, 6, 48);
-            int baseY = EVEREST_FOLLOW_SURFACE
-                    ? deepluckyblock.util.SafeSurface.surfaceY(level, targetXZ.getX(), targetXZ.getZ(), origin.getY())
-                    : origin.getY();
             // T73 : liste compactee (l'air exterieur n'est plus materialise).
             List<StructureTemplate.StructureBlockInfo> rawBlocks =
                     deepluckyblock.util.StructureTemplateCache.compactBlocks(EVEREST_NBT);
@@ -1079,10 +1035,10 @@ public class Structures4Procedure {
             // PENDANT la phase de pose (tick de 9 145 ms, 6 268 blocs differes).
             // On calcule maintenant la position finale et l'emprise AVANT de
             // pre-charger, et on pre-charge EXACTEMENT cette emprise.
-            final BlockPos finalPos = new BlockPos(everestSpot.getX() + EVEREST_OFFSET_X,
-                    baseY + EVEREST_OFFSET_Y - fMinRelY - EVEREST_SINK_BLOCKS, everestSpot.getZ() + EVEREST_OFFSET_Z);
-            final Rotation rotation = computeFacingRotation(finalPos, nearestPlayer, EVEREST_NATIVE_FACING);
-            final BlockPos rotatedPos = adjustForRotation(finalPos, template, rotation);
+            final BlockPos plannedPos = new BlockPos(everestSpot.getX() + EVEREST_OFFSET_X,
+                    0, everestSpot.getZ() + EVEREST_OFFSET_Z);
+            final Rotation rotation = computeFacingRotation(plannedPos, nearestPlayer, EVEREST_NATIVE_FACING);
+            final BlockPos plannedRotatedPos = adjustForRotation(plannedPos, template, rotation);
             StructurePlaceSettings footprintSettings = new StructurePlaceSettings().setRotation(rotation);
             int ex0 = Integer.MAX_VALUE, ez0 = Integer.MAX_VALUE;
             int ex1 = Integer.MIN_VALUE, ez1 = Integer.MIN_VALUE;
@@ -1091,12 +1047,19 @@ public class Structures4Procedure {
                 ex0 = Math.min(ex0, rel.getX()); ex1 = Math.max(ex1, rel.getX());
                 ez0 = Math.min(ez0, rel.getZ()); ez1 = Math.max(ez1, rel.getZ());
             }
-            final BlockPos eMin = rotatedPos.offset(ex0, 0, ez0);
-            final BlockPos eMax = rotatedPos.offset(ex1, size.getY() - 1, ez1);
+            final BlockPos plannedMin = plannedRotatedPos.offset(ex0, 0, ez0);
+            final BlockPos plannedMax = plannedRotatedPos.offset(ex1, size.getY() - 1, ez1);
             StructureTerrainPrep.preloadEditedTerrain(level,
-                    new BlockPos(eMin.getX(), level.getMinBuildHeight(), eMin.getZ()),
-                    new BlockPos(eMax.getX(), level.getMaxBuildHeight() - 1, eMax.getZ()),
-                    () -> {
+                    new BlockPos(plannedMin.getX(), level.getMinBuildHeight(), plannedMin.getZ()),
+                    new BlockPos(plannedMax.getX(), level.getMaxBuildHeight() - 1, plannedMax.getZ()),
+                    everestSpot, () -> {
+            int baseY = EVEREST_FOLLOW_SURFACE
+                    ? deepluckyblock.util.SafeSurface.surfaceY(level, everestSpot.getX(), everestSpot.getZ(), origin.getY())
+                    : origin.getY();
+            int pasteY = baseY + EVEREST_OFFSET_Y - fMinRelY - EVEREST_SINK_BLOCKS;
+            final BlockPos rotatedPos = plannedRotatedPos.offset(0, pasteY, 0);
+            final BlockPos eMin = plannedMin.offset(0, pasteY, 0);
+            final BlockPos eMax = plannedMax.offset(0, pasteY, 0);
             // === T28 : EVEREST ENFONCE DANS LE TERRAIN (consigne du 20/09 : « l'everest
             // etait sencé s'enfoncer dans le terrain ») : on retire EVEREST_SINK_BLOCKS
             // de plus que l'offset de base, pour que la montagne entre dans le relief.
@@ -1142,8 +1105,15 @@ public class Structures4Procedure {
                     });
                 }))));
                     });   // T30 : fin du pre-chargement de l'emprise finale
-            return;
-                });
+        };
+        if (EVEREST_DISTANCE > 0) {
+            // Preserve the configured distant-site search; only its default direct
+            // placement can skip the independent origin probe.
+            StructureTerrainPrep.preloadBox(level,
+                    origin.offset(-16, 0, -16), origin.offset(16, 0, 16), planEverest);
+        } else {
+            planEverest.run();
+        }
         return true;
     }
 

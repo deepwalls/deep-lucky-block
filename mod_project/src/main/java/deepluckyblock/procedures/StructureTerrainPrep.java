@@ -1615,11 +1615,16 @@ public class StructureTerrainPrep {
      * generation de chunk.
      */
     /** Pin every edited terrain column; the untouched liquid halo is explored on demand. */
-    public static void preloadEditedTerrain(ServerLevel level, BlockPos min, BlockPos max, Runnable onReady) {
+    public static void preloadEditedTerrain(ServerLevel level, BlockPos min, BlockPos max,
+                                             BlockPos heightAnchor, Runnable onReady) {
         SMOOTH_RING = computeSmoothRing(min, max);
         int margin = terrainRing() + NATURALIZE_EXTRA_RING;
         BlockPos loadMin = min.offset(-margin, 0, -margin);
         BlockPos loadMax = max.offset(margin, 0, margin);
+        // The configurable offset may put the height anchor outside the build. Pin
+        // that single chunk too, without generating a corridor to the footprint.
+        deepluckyblock.util.ChunkKeeper.track(level, loadMin, loadMax);
+        deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, heightAnchor.getX() >> 4, heightAnchor.getZ() >> 4);
         // preloadBox adds eight blocks itself; the requested halo already includes them.
         preloadBox(level, loadMin.offset(8, 0, 8), loadMax.offset(-8, 0, -8), () -> {
             if (deepluckyblock.util.ChunkKeeper.zoneLoaded(level, loadMin, loadMax)) {
@@ -1627,7 +1632,7 @@ public class StructureTerrainPrep {
             } else {
                 // A time budget is not permission to skip the unloaded border.
                 TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1,
-                        () -> preloadEditedTerrain(level, min, max, onReady));
+                        () -> preloadEditedTerrain(level, min, max, heightAnchor, onReady));
             }
         });
     }
