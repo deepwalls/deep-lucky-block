@@ -1673,7 +1673,8 @@ public class StructureTerrainPrep {
         int margin = Math.max(48, terrainRing() + NATURALIZE_EXTRA_RING);
         BlockPos loadMin = min.offset(-margin, 0, -margin);
         BlockPos loadMax = max.offset(margin, 0, margin);
-        preloadBox(level, loadMin, loadMax, () -> {
+        // preloadBox adds eight blocks itself; the requested halo already includes them.
+        preloadBox(level, loadMin.offset(8, 0, 8), loadMax.offset(-8, 0, -8), () -> {
             if (deepluckyblock.util.ChunkKeeper.zoneLoaded(level, loadMin, loadMax)) {
                 if (onReady != null) onReady.run();
             } else {

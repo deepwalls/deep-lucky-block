@@ -962,6 +962,9 @@ public class Structures4Procedure {
         if (!templateReadyOrDefer(level, origin, 5, EVEREST_NBT)) return true;
         long t0 = System.currentTimeMillis();
         StructureTerrainPrep.setStructureName(EVEREST_NBT);
+        // Everest only shapes its six-block collar, not a broad building plateau.
+        // Keep a local cleanup border; fixLiquids retains its minimum 48-block halo.
+        StructureTerrainPrep.setTerrainRingScalePercent(25);
         // FIX (freeze serveur au chargement à froid d'un gros NBT) : cache
         // mod-wide partagé (voir StructureTemplateCache) au lieu d'un appel
         // direct au StructureTemplateManager.
