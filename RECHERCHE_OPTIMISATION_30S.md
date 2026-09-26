@@ -55,8 +55,8 @@ réellement utilisées sont vérifiées par compilation Java 21 sur le projet.
 3. **Everest** : petite sonde autour de l’ancrage, puis chargement de l’emprise
    réellement transformée, plutôt que deux grandes boîtes redondantes ou mal
    positionnées après rotation.
-4. **Chargement borné** : budget partagé par tick, défaut 4 demandes/tick et
-   8 demandes en vol ; propriétés de diagnostic bornées. Les appels multiples
+4. **Chargement borné** : budget partagé par tick, défaut 8 demandes/tick et
+   16 demandes en vol ; propriétés de diagnostic bornées. Les appels multiples
    de `keep` dans un tick ne multiplient plus le budget.
 5. **Terrain** : tranches adaptatives à partir de 12 ms, plafond 24 ms au lieu
    de 16 ms, réduction conservée quand le serveur est déjà en retard.
@@ -106,3 +106,17 @@ avec attente de couverture réelle, plutôt qu’au début de `fixLiquids`.
 Compilations réussies : `36203338979` et `36203479414`.
 Ces deux correctifs restent à mesurer en jeu ; une nouvelle session est demandée
 explicitement pour respecter la limite initiale sur les relances serveur.
+
+## Résultat au terme des cinq essais supplémentaires
+
+Voir `RAPPORT_TEST_SERVEUR.md` : six plafonds respectés, Everest encore à 39,40 s.
+Les correctifs ont été complétés par des tickets temporaires distincts et un
+rappel au tick suivant, une attente de tous les chunks épinglés avant réparation
+d’eau, l’attente de couverture complète avant le terrain, et la réutilisation
+du découpage au temps existant pour trois passes auparavant bloquées à 600
+colonnes/tick. L’Everest conserve une marge de réparation d’eau de 48 blocs ;
+son nettoyage local ne reprend plus l’anneau de 96 blocs des grands plateaux.
+
+Les cinq cycles autorisés sont consommés. Aucune nouvelle validation ne doit
+être lancée sans confirmation. Les paragraphes précédents décrivant des essais
+« à mesurer » sont l’historique de la recherche, pas le statut actuel.
