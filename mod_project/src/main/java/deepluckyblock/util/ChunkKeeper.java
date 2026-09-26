@@ -475,16 +475,23 @@ public final class ChunkKeeper {
         // si la zone atteignait le plafond de 4096 chunks).
         java.util.Set<ChunkPos> known = new java.util.HashSet<>(z.pinned);
         known.addAll(z.pending);
-        // A compact 4x4 wave shares world-generation dependencies better than a
-        // sixteen-chunk strip. Keep exactly the same coverage and concurrency.
-        for (int bx = z.cx0; bx <= z.cx1; bx += 4) {
-            for (int bz = z.cz0; bz <= z.cz1; bz += 4) {
-                for (int cx = bx; cx <= Math.min(bx + 3, z.cx1); cx++) {
-                    for (int cz = bz; cz <= Math.min(bz + 3, z.cz1); cz++) {
-                        ChunkPos cp = new ChunkPos(cx, cz);
-                        if (!known.add(cp)) continue;
-                        z.pending.add(cp);
-                    }
+        // Grow a compact region from the center. Long strips make each wave
+        // expose a large new world-generation dependency border. Tile sorting
+        // changes only order: coverage, request limits and pinning stay identical.
+        List<int[]> tiles = new ArrayList<>();
+        for (int bx = z.cx0; bx <= z.cx1; bx += 4)
+            for (int bz = z.cz0; bz <= z.cz1; bz += 4) tiles.add(new int[]{bx, bz});
+        tiles.sort(java.util.Comparator.<int[]>comparingLong(tile -> {
+            long dx = (long) tile[0] + Math.min(tile[0] + 3, z.cx1) - z.cx0 - z.cx1;
+            long dz = (long) tile[1] + Math.min(tile[1] + 3, z.cz1) - z.cz0 - z.cz1;
+            return dx * dx + dz * dz;
+        }).thenComparingInt(tile -> tile[0]).thenComparingInt(tile -> tile[1]));
+        for (int[] tile : tiles) {
+            for (int cx = tile[0]; cx <= Math.min(tile[0] + 3, z.cx1); cx++) {
+                for (int cz = tile[1]; cz <= Math.min(tile[1] + 3, z.cz1); cz++) {
+                    ChunkPos cp = new ChunkPos(cx, cz);
+                    if (!known.add(cp)) continue;
+                    z.pending.add(cp);
                 }
             }
         }

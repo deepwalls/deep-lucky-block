@@ -92,7 +92,7 @@ def wait_for(marker, timeout):
         recent.append(line.strip())
         if '[DLBVERIFY] FAIL' in line:
             raise RuntimeError(line.strip())
-        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair', 'DLB-LAKE', 'STRUCT4', 'Post-process', 'pre-chargement', 'DLB-CHUNKS']):
+        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair', 'DLB-LAKE', 'STRUCT4', 'Post-process', 'pre-chargement', 'DLB-CHUNKS', 'DLB-CPU']):
             phases.append(line.strip())
         pending = {item for item in pending if item not in line}
         if not pending:
@@ -114,6 +114,8 @@ try:
         while not lines.empty():
             lines.get_nowait()
         phases.clear()
+        if name == 'everest':
+            rcon('dlbcpubegin')
         start = time.monotonic()
         print(f'{name}: starting command-to-final-completion measurement', flush=True)
         response = rcon(f'execute positioned {x} 90 0 run dlbtest {name}', timeout=120)
@@ -128,6 +130,11 @@ try:
             marker = ['decorate TERMINE', 'Post-process de ' + name + ' termine']
         wait_for(marker, 360 if name == 'crimsonlake' else 240)
         duration = time.monotonic() - start
+        if name == 'everest':
+            # Snapshot commands do not generate chunks or alter benchmark limits.
+            # Measure construction first; collect CPU diagnostics after completion.
+            rcon('dlbcpuend')
+            wait_for('[DLB-CPU]', 15)
         summary.append(f'{name}: {duration:.2f}s from command to completion marker ({marker})')
         limit = 120 if name == 'crimsonlake' else 30
         within_budget = duration <= limit and (name != 'crimsonlake' or duration >= 10)
@@ -138,7 +145,7 @@ try:
             # Preserve the useful timing proof without exhausting Actions' annotation quota.
             diagnostics = [line for line in phases if any(key in line for key in (
                 'pre-chargement TERMINE', 'TACHE COMPLETE', 'incomplete repair',
-                'fixLiquids TERMINE', 'CLEAR COMPLETE', '[DLB-LAKE] anchor', 'EVEREST TERMINÉ'))]
+                'fixLiquids TERMINE', 'CLEAR COMPLETE', '[DLB-LAKE] anchor', 'EVEREST TERMINÉ', '[DLB-CPU]'))]
             annotate('\n'.join(summary[-2:]) + '\n' + '\n'.join(diagnostics), not within_budget)
 except Exception as exc:
     # Drain actual current logs even when the command's RCON response times out.

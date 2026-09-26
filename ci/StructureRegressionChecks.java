@@ -27,6 +27,10 @@ public final class StructureRegressionChecks {
 
     @SubscribeEvent
     public static void register(RegisterCommandsEvent event) {
+        event.getDispatcher().register(Commands.literal("dlbcpubegin").requires(s -> s.hasPermission(2))
+                .executes(ctx -> cpuSnapshot(true)));
+        event.getDispatcher().register(Commands.literal("dlbcpuend").requires(s -> s.hasPermission(2))
+                .executes(ctx -> cpuSnapshot(false)));
         event.getDispatcher().register(Commands.literal("dlbverify").requires(s -> s.hasPermission(2))
                 .executes(ctx -> {
                     ServerLevel level = ctx.getSource().getLevel();
@@ -35,6 +39,47 @@ public final class StructureRegressionChecks {
                     } catch (Throwable error) { fail(error); }
                     return 1;
                 }));
+    }
+
+    private static final java.util.Map<Long, Long> CPU_START = new java.util.HashMap<>();
+    private static long cpuStartNs, gcStartMs, heapStartMiB;
+
+    private static long gcMillis() {
+        return java.lang.management.ManagementFactory.getGarbageCollectorMXBeans().stream()
+                .mapToLong(bean -> Math.max(0L, bean.getCollectionTime())).sum();
+    }
+
+    private static long heapMiB() {
+        Runtime runtime = Runtime.getRuntime();
+        return (runtime.totalMemory() - runtime.freeMemory()) / (1024L * 1024L);
+    }
+
+    private static int cpuSnapshot(boolean begin) {
+        var bean = java.lang.management.ManagementFactory.getThreadMXBean();
+        if (!bean.isThreadCpuTimeSupported()) {
+            LOG.info("[DLB-CPU] Thread CPU measurement unsupported");
+            return 1;
+        }
+        if (!bean.isThreadCpuTimeEnabled()) bean.setThreadCpuTimeEnabled(true);
+        if (begin) {
+            CPU_START.clear();
+            for (long id : bean.getAllThreadIds()) CPU_START.put(id, Math.max(0L, bean.getThreadCpuTime(id)));
+            cpuStartNs = System.nanoTime(); gcStartMs = gcMillis(); heapStartMiB = heapMiB();
+        } else {
+            long workers = 0, server = 0, other = 0;
+            for (long id : bean.getAllThreadIds()) {
+                var info = bean.getThreadInfo(id);
+                if (info == null) continue;
+                long delta = Math.max(0L, bean.getThreadCpuTime(id) - CPU_START.getOrDefault(id, 0L));
+                if (info.getThreadName().equals("Server thread")) server += delta;
+                else if (info.getThreadName().toLowerCase(java.util.Locale.ROOT).contains("worker")) workers += delta;
+                else other += delta;
+            }
+            LOG.info("[DLB-CPU] wall={}s; workers={}s; server={}s; other={}s; collectors={}ms; heap={} -> {} MiB",
+                    (System.nanoTime() - cpuStartNs) / 1e9, workers / 1e9, server / 1e9, other / 1e9,
+                    gcMillis() - gcStartMs, heapStartMiB, heapMiB());
+        }
+        return 1;
     }
 
     private static void require(boolean condition, String message) {
