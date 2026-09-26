@@ -298,7 +298,51 @@ public final class StructureRegressionChecks {
                         for (int y = 241; y <= 270; y++)
                             level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), FLAGS);
                 LOG.info("[DLBVERIFY] PASS lake: sink=10 with template padding; mountain above roof cleared; sides/floor preserved");
-                LOG.info("[DLBVERIFY] ALL PASS");
+                ticketRefresh(level);
+            } catch (Throwable error) { fail(error); }
+        });
+    }
+
+    private static net.minecraft.server.level.Ticket<?> portalTicket(ServerLevel level, long key) throws Exception {
+        var managerField = net.minecraft.server.level.ServerChunkCache.class.getDeclaredField("distanceManager");
+        managerField.setAccessible(true);
+        var ticketsField = net.minecraft.server.level.DistanceManager.class.getDeclaredField("tickets");
+        ticketsField.setAccessible(true);
+        var tickets = (it.unimi.dsi.fastutil.longs.Long2ObjectMap<?>) ticketsField.get(managerField.get(level.getChunkSource()));
+        var bucket = (Iterable<?>) tickets.get(key);
+        if (bucket != null) for (Object value : bucket) {
+            var ticket = (net.minecraft.server.level.Ticket<?>) value;
+            if (ticket.getType() == net.minecraft.server.level.TicketType.PORTAL) return ticket;
+        }
+        return null;
+    }
+
+    private static void ticketRefresh(ServerLevel level) {
+        deepluckyblock.util.ChunkKeeper.release(level);
+        final int cx = 1450, cz = 1450;
+        deepluckyblock.util.SafeSurface.requestThen(level, cx, cz, () -> {
+            try {
+                var cp = new net.minecraft.world.level.ChunkPos(cx, cz);
+                deepluckyblock.util.ChunkKeeper.track(level, cp.getWorldPosition(), cp.getWorldPosition());
+                deepluckyblock.util.ChunkKeeper.keep(level);
+                var original = portalTicket(level, cp.toLong());
+                require(original != null, "Missing retention ticket");
+                var created = net.minecraft.server.level.Ticket.class.getDeclaredField("createdTick");
+                created.setAccessible(true);
+                long stamp = created.getLong(original);
+                TestProcedure.schedule(level, TestProcedure.currentTick(level) + 360, () -> {
+                    try {
+                        var current = portalTicket(level, cp.toLong());
+                        require(current == original, "Retention ticket removed/replaced instead of refreshed");
+                        require(created.getLong(current) > stamp, "Retention ticket age not refreshed");
+                        require(level.getChunkSource().getChunkNow(cx, cz) != null,
+                                "Chunk unloaded after the original 300-tick ticket lifetime");
+                        deepluckyblock.util.ChunkKeeper.release(level);
+                        require(portalTicket(level, cp.toLong()) == null, "Retention ticket leaked after release");
+                        LOG.info("[DLBVERIFY] PASS tickets: same ticket renewed in place, chunk held past 300 ticks, release verified");
+                        LOG.info("[DLBVERIFY] ALL PASS");
+                    } catch (Throwable error) { fail(error); }
+                });
             } catch (Throwable error) { fail(error); }
         });
     }

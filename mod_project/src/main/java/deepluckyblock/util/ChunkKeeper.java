@@ -365,7 +365,8 @@ public final class ChunkKeeper {
                 if (z.refreshCursor >= n) z.refreshCursor = 0;
                 ChunkPos cp = z.pinned.get(z.refreshCursor++);
                 try {
-                    level.getChunkSource().removeRegionTicket(TicketType.PORTAL, cp, 0, cp.getWorldPosition());
+                    // Re-adding the same ticket refreshes its creation tick in place.
+                    // Removing it first needlessly invalidates both distance trackers.
                     level.getChunkSource().addRegionTicket(TicketType.PORTAL, cp, 0, cp.getWorldPosition());
                 } catch (Throwable ignored) { }
             }
