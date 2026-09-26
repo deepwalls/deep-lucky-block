@@ -157,3 +157,5 @@ finally:
 raise SystemExit(1 if failed else 0)
 
 # Full-session rerun authorized after the raw-paste and water fixes.
+
+# Five further optimization cycles authorized; validate true asynchronous chunk requests.
