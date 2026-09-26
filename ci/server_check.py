@@ -92,7 +92,7 @@ def wait_for(marker, timeout):
         recent.append(line.strip())
         if '[DLBVERIFY] FAIL' in line:
             raise RuntimeError(line.strip())
-        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair', 'DLB-LAKE', 'STRUCT4', 'Post-process']):
+        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair', 'DLB-LAKE', 'STRUCT4', 'Post-process', 'pre-chargement', 'DLB-CHUNKS']):
             phases.append(line.strip())
         pending = {item for item in pending if item not in line}
         if not pending:
@@ -115,9 +115,9 @@ try:
             lines.get_nowait()
         phases.clear()
         start = time.monotonic()
-        annotate(f'{name}: starting command-to-final-completion measurement')
+        print(f'{name}: starting command-to-final-completion measurement', flush=True)
         response = rcon(f'execute positioned {x} 90 0 run dlbtest {name}', timeout=120)
-        annotate(f'{name}: command submitted; response: {response}')
+        print(f'{name}: command submitted; response: {response}', flush=True)
         if name == 'everest':
             marker = ['EVEREST TERMINÉ', 'Post-process de everest terminé']
         elif name in ('circus', 'ship'):
@@ -133,7 +133,13 @@ try:
         within_budget = duration <= limit and (name != 'crimsonlake' or duration >= 10)
         failed = failed or not within_budget
         summary.append(f'{name}: latency budget {"PASS" if within_budget else "FAIL"} (limit {limit}s)')
-        annotate('\n'.join(summary[-2:]) + '\n' + '\n'.join(phases), not within_budget)
+        print('\n'.join(summary[-2:]) + '\n' + '\n'.join(phases), flush=True)
+        if not within_budget or name in ('everest', 'crimsonlake'):
+            # Preserve the useful timing proof without exhausting Actions' annotation quota.
+            diagnostics = [line for line in phases if any(key in line for key in (
+                'pre-chargement TERMINE', 'TACHE COMPLETE', 'incomplete repair',
+                'fixLiquids TERMINE', 'CLEAR COMPLETE', '[DLB-LAKE] anchor', 'EVEREST TERMINÉ'))]
+            annotate('\n'.join(summary[-2:]) + '\n' + '\n'.join(diagnostics), not within_budget)
 except Exception as exc:
     # Drain actual current logs even when the command's RCON response times out.
     while not lines.empty():
