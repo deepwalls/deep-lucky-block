@@ -182,15 +182,36 @@ public final class StructureRegressionChecks {
 
     private static void lazyLiquidBoundary(ServerLevel level) {
         final int cx = 1300, cz = 1300;
-        deepluckyblock.util.SafeSurface.requestThen(level, cx, cz, () -> {
+        deepluckyblock.util.SafeSurface.requestThen(level, cx, cz, () ->
+            deepluckyblock.util.SafeSurface.requestThen(level, cx + 2, cz, () -> {
             try {
                 require(level.getChunkSource().getChunkNow(cx + 1, cz) == null,
                         "Liquid frontier fixture is not cold");
                 BlockPos seed = new BlockPos((cx << 4) + 15, 241, (cz << 4) + 8);
                 BlockPos footprint = new BlockPos((cx << 4) + 1, 240, (cz << 4) + 1);
+                BlockPos padding = new BlockPos(((cx + 2) << 4) + 15, 241, (cz << 4) + 8);
+                require(level.getChunkSource().getChunkNow(cx + 3, cz) == null, "Padding frontier is not cold");
+                // Default ring 80 * 25% + 16 = 36. The second source is 46 blocks
+                // from the footprint: inside the 48-block repair halo, outside the
+                // edited terrain border, in the last column of a loaded chunk.
+                StructureTerrainPrep.setTerrainRingScalePercent(25);
                 deepluckyblock.util.ChunkKeeper.track(level, seed, seed);
+                // Freeze the fixture water too; native ticks must not load the
+                // padding frontier and invalidate the cold-chunk assertions.
+                deepluckyblock.util.TerrainEditClamp.start(level, cx << 4, 230, cz << 4,
+                        ((cx + 2) << 4) + 15, 250, (cz << 4) + 15);
                 level.setBlock(seed.below(), Blocks.STONE.defaultBlockState(), FLAGS);
                 level.setBlock(seed, Blocks.WATER.defaultBlockState(), FLAGS);
+                // A channel crosses the seed boundary at x=footprint+36. Refill
+                // must reach its end in the padding, but stop at the intact source.
+                for (int x = (cx + 2) << 4; x <= padding.getX(); x++) {
+                    level.setBlock(new BlockPos(x, 240, seed.getZ()), Blocks.STONE.defaultBlockState(), FLAGS);
+                    level.setBlock(new BlockPos(x, 241, seed.getZ() - 1), Blocks.STONE.defaultBlockState(), FLAGS);
+                    level.setBlock(new BlockPos(x, 241, seed.getZ() + 1), Blocks.STONE.defaultBlockState(), FLAGS);
+                }
+                level.setBlock(new BlockPos((cx + 2) << 4, 241, seed.getZ()), Blocks.STONE.defaultBlockState(), FLAGS);
+                level.setBlock(new BlockPos(((cx + 2) << 4) + 1, 241, seed.getZ()), Blocks.WATER.defaultBlockState(), FLAGS);
+                level.setBlock(padding, Blocks.WATER.defaultBlockState(), FLAGS);
                 StructureTerrainPrep.fixLiquidsPassOnDemand(level, footprint, footprint, () -> {
                     try {
                         require(level.getChunkSource().getChunkNow(cx + 1, cz) != null,
@@ -199,16 +220,27 @@ public final class StructureRegressionChecks {
                                 "Water repair finished before frontier pinning");
                         require(level.getChunkSource().getChunkNow(cx, cz - 2) == null,
                                 "Water repair generated unrelated dry halo");
+                        require(level.getChunkSource().getChunkNow(cx + 3, cz) == null,
+                                "Chunk-rounded padding seeded an unrelated frontier");
                         require(level.getBlockState(seed).getFluidState().isSource(), "Lost original source");
+                        require(level.getBlockState(padding).getFluidState().isSource(), "Changed untouched padding source");
+                        for (int x = ((cx + 2) << 4) + 1; x <= padding.getX(); x++)
+                            require(level.getBlockState(new BlockPos(x, 241, seed.getZ())).getFluidState().isSource(),
+                                    "Refill stopped at seed boundary: " + x);
+                        for (int x = (cx + 2) << 4; x <= padding.getX(); x++)
+                            for (int y = 240; y <= 241; y++)
+                                for (int z = seed.getZ() - 1; z <= seed.getZ() + 1; z++)
+                                    level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), FLAGS);
+                        StructureTerrainPrep.setTerrainRingScalePercent(100);
                         level.setBlock(seed, Blocks.AIR.defaultBlockState(), FLAGS);
                         level.setBlock(seed.below(), Blocks.AIR.defaultBlockState(), FLAGS);
                         deepluckyblock.util.ChunkKeeper.release(level);
-                        LOG.info("[DLBVERIFY] PASS lazy water: cold frontier loaded and pinned, unrelated halo untouched");
+                        LOG.info("[DLBVERIFY] PASS lazy water: cold frontier pinned, refill beyond seed bounds, unrelated padding frontier untouched");
                         smooth(level);
                     } catch (Throwable error) { fail(error); }
                 });
             } catch (Throwable error) { fail(error); }
-        });
+        }));
     }
 
     private static void smooth(ServerLevel level) throws Exception {

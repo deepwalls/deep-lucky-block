@@ -4885,6 +4885,7 @@ public class StructureTerrainPrep {
         final int cx, cz;
         final BlockPos structureMin, structureMax;
         final int x0, x1, z0, z1, waterFillLimit;
+        final int seedMargin;
         int capped = 0;
         final int fx0, fx1, fz0, fz1;    // T75 : anneau proche (chargement a la demande)
         final List<int[]> chunks;
@@ -4907,6 +4908,7 @@ public class StructureTerrainPrep {
                   int fx0, int fx1, int fz0, int fz1, BlockPos min, BlockPos max,
                   int x0, int x1, int z0, int z1, boolean onDemand) {
             this.onDemand = onDemand;
+            this.seedMargin = terrainRing() + NATURALIZE_EXTRA_RING;
             this.level = l; this.cx = cx; this.cz = cz; this.chunks = chunks; this.label = label; this.onDone = onDone;
             this.fx0 = fx0; this.fx1 = fx1; this.fz0 = fz0; this.fz1 = fz1;
             this.structureMin = min; this.structureMax = max;
@@ -5010,6 +5012,15 @@ public class StructureTerrainPrep {
         /** Une colonne : conversion + memorisation du niveau haut du liquide. */
         private void scanColumn(int x, int z) {
             if (!canRepair(x, z)) return;
+            // Chunk rounding includes untouched strips outside the edited terrain
+            // border. Do not seed them just because they happen to be in memory:
+            // their far edges otherwise demand another row of untouched chunks.
+            // Only seed discovery is bounded here; BFS still uses the full repair
+            // bounds, and loads/pins any further chunk reached by an actual refill.
+            if (onDemand && (x < structureMin.getX() - seedMargin
+                    || x > structureMax.getX() + seedMargin
+                    || z < structureMin.getZ() - seedMargin
+                    || z > structureMax.getZ() + seedMargin)) return;
             // SafeSurface returns the first free Y, not the top occupied Y.
             int surface = Math.min(level.getMaxBuildHeight(),
                     deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z));
