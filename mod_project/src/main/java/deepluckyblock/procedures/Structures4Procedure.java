@@ -1093,7 +1093,7 @@ public class Structures4Procedure {
             }
             final BlockPos eMin = rotatedPos.offset(ex0, 0, ez0);
             final BlockPos eMax = rotatedPos.offset(ex1, size.getY() - 1, ez1);
-            StructureTerrainPrep.preloadTerrainAndLiquids(level,
+            StructureTerrainPrep.preloadEditedTerrain(level,
                     new BlockPos(eMin.getX(), level.getMinBuildHeight(), eMin.getZ()),
                     new BlockPos(eMax.getX(), level.getMaxBuildHeight() - 1, eMax.getZ()),
                     () -> {
@@ -1130,7 +1130,7 @@ public class Structures4Procedure {
             StructureTerrainPrep.sweepFloatingNaturalPass(level, min, max, () ->   // T41
             StructureTerrainPrep.sealUndergroundGaps(level, min, max, () ->   // T40
             StructureTerrainPrep.finalTerrainPass(level, min, max, 6, () ->
-                StructureTerrainPrep.fixLiquidsPass(level, min, max, () -> {   // T38
+                StructureTerrainPrep.fixLiquidsPassOnDemand(level, min, max, () -> {   // T38
                     // T43 : re-scellement de l'emprise juste avant la pose (les passes
                     // de terrain ont travaille plusieurs dizaines de secondes depuis le
                     // pre-chargement T37 : sans ca, la pose reclamait des chunks).

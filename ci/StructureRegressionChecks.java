@@ -168,7 +168,38 @@ public final class StructureRegressionChecks {
                         for (int y = 240; y <= 246; y++)
                             level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), FLAGS);
                 deepluckyblock.util.ChunkKeeper.release(level);
-                smooth(level);
+                lazyLiquidBoundary(level);
+            } catch (Throwable error) { fail(error); }
+        });
+    }
+
+    private static void lazyLiquidBoundary(ServerLevel level) {
+        final int cx = 1300, cz = 1300;
+        deepluckyblock.util.SafeSurface.requestThen(level, cx, cz, () -> {
+            try {
+                require(level.getChunkSource().getChunkNow(cx + 1, cz) == null,
+                        "Liquid frontier fixture is not cold");
+                BlockPos seed = new BlockPos((cx << 4) + 15, 241, (cz << 4) + 8);
+                BlockPos footprint = new BlockPos((cx << 4) + 1, 240, (cz << 4) + 1);
+                deepluckyblock.util.ChunkKeeper.track(level, seed, seed);
+                level.setBlock(seed.below(), Blocks.STONE.defaultBlockState(), FLAGS);
+                level.setBlock(seed, Blocks.WATER.defaultBlockState(), FLAGS);
+                StructureTerrainPrep.fixLiquidsPassOnDemand(level, footprint, footprint, () -> {
+                    try {
+                        require(level.getChunkSource().getChunkNow(cx + 1, cz) != null,
+                                "Water repair skipped cold frontier chunk");
+                        require(deepluckyblock.util.ChunkKeeper.zoneComplete(level),
+                                "Water repair finished before frontier pinning");
+                        require(level.getChunkSource().getChunkNow(cx, cz - 2) == null,
+                                "Water repair generated unrelated dry halo");
+                        require(level.getBlockState(seed).getFluidState().isSource(), "Lost original source");
+                        level.setBlock(seed, Blocks.AIR.defaultBlockState(), FLAGS);
+                        level.setBlock(seed.below(), Blocks.AIR.defaultBlockState(), FLAGS);
+                        deepluckyblock.util.ChunkKeeper.release(level);
+                        LOG.info("[DLBVERIFY] PASS lazy water: cold frontier loaded and pinned, unrelated halo untouched");
+                        smooth(level);
+                    } catch (Throwable error) { fail(error); }
+                });
             } catch (Throwable error) { fail(error); }
         });
     }

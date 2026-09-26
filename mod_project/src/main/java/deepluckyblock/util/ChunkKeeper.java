@@ -365,6 +365,21 @@ public final class ChunkKeeper {
         }
     }
 
+    /**
+     * Retain a liquid frontier chunk without generating the rectangular area between
+     * unrelated frontier points. Base bounds remain unchanged: a later track() can
+     * still expand the full rectangular terrain zone normally. Server thread only.
+     */
+    public static void trackAdditionalChunk(ServerLevel level, int cx, int cz) {
+        Zone z = ZONES.get(level);
+        ChunkPos cp = new ChunkPos(cx, cz);
+        if (z == null) {
+            track(level, cp.getWorldPosition(), cp.getWorldPosition());
+            return;
+        }
+        if (!z.pinned.contains(cp) && !z.pending.contains(cp)) z.pending.add(cp);
+    }
+
     /** Vrai si une zone est actuellement tenue pour ce niveau. */
     public static boolean held(ServerLevel level) {
         return level != null && ZONES.containsKey(level);

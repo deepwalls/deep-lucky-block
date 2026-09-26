@@ -1614,10 +1614,10 @@ public class StructureTerrainPrep {
      * le paste et le post-traitement ne declenchent donc plus aucune
      * generation de chunk.
      */
-    /** Load the final terrain/liquid border once, before any Everest terrain pass. */
-    public static void preloadTerrainAndLiquids(ServerLevel level, BlockPos min, BlockPos max, Runnable onReady) {
+    /** Pin every edited terrain column; the untouched liquid halo is explored on demand. */
+    public static void preloadEditedTerrain(ServerLevel level, BlockPos min, BlockPos max, Runnable onReady) {
         SMOOTH_RING = computeSmoothRing(min, max);
-        int margin = Math.max(48, terrainRing() + NATURALIZE_EXTRA_RING);
+        int margin = terrainRing() + NATURALIZE_EXTRA_RING;
         BlockPos loadMin = min.offset(-margin, 0, -margin);
         BlockPos loadMax = max.offset(margin, 0, margin);
         // preloadBox adds eight blocks itself; the requested halo already includes them.
@@ -1627,7 +1627,7 @@ public class StructureTerrainPrep {
             } else {
                 // A time budget is not permission to skip the unloaded border.
                 TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1,
-                        () -> preloadTerrainAndLiquids(level, min, max, onReady));
+                        () -> preloadEditedTerrain(level, min, max, onReady));
             }
         });
     }
@@ -4811,6 +4811,20 @@ public class StructureTerrainPrep {
      * </ol>
      */
     public static void fixLiquidsPass(ServerLevel level, BlockPos min, BlockPos max, Runnable onDone) {
+        fixLiquidsPass(level, min, max, false, onDone);
+    }
+
+    /**
+     * Requires all edited terrain and its cleanup border to be pinned beforehand.
+     * Seed from that loaded region, then follow water into the unchanged repair halo.
+     * This avoids generating unrelated dry land without shortening the repair bounds.
+     */
+    static void fixLiquidsPassOnDemand(ServerLevel level, BlockPos min, BlockPos max, Runnable onDone) {
+        fixLiquidsPass(level, min, max, true, onDone);
+    }
+
+    private static void fixLiquidsPass(ServerLevel level, BlockPos min, BlockPos max,
+                                       boolean onDemand, Runnable onDone) {
         final String label = "fixLiquids (/fixwater + /fixlava)";
         if (!RUNNING_PASSES.add(label)) {
             deepluckyblock.util.DebugLog.structure("{} : deja en cours, doublon ignore", label);
@@ -4830,14 +4844,18 @@ public class StructureTerrainPrep {
         int fx0 = x0 >> 4, fx1 = x1 >> 4, fz0 = z0 >> 4, fz1 = z1 >> 4;
         List<int[]> chunks = new ArrayList<>();
         for (int ccx = fx0; ccx <= fx1; ccx++)
-            for (int ccz = fz0; ccz <= fz1; ccz++) chunks.add(new int[]{ccx, ccz});
-        deepluckyblock.util.ChunkKeeper.track(level,
+            for (int ccz = fz0; ccz <= fz1; ccz++) {
+                if (onDemand && level.getChunkSource().getChunkNow(ccx, ccz) == null) continue;
+                chunks.add(new int[]{ccx, ccz});
+                if (onDemand) deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, ccx, ccz);
+            }
+        if (!onDemand) deepluckyblock.util.ChunkKeeper.track(level,
                 new BlockPos(x0, min.getY(), z0), new BlockPos(x1, max.getY(), z1));
         deepluckyblock.util.DebugLog.structure(
                 "fixLiquids: bounded repair {}..{} / {}..{}, {} chunks, footprint excluded",
                 x0, x1, z0, z1, chunks.size());
         LiquidJob job = new LiquidJob(level, cx, cz, chunks, label, onDone,
-                fx0, fx1, fz0, fz1, min, max, x0, x1, z0, z1);
+                fx0, fx1, fz0, fz1, min, max, x0, x1, z0, z1, onDemand);
         TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1, job::slice);
         step("fixLiquids : passe /fixwater + /fixlava planifiee (rayon " + FIXLIQ_RADIUS + ")");
     }
@@ -4870,6 +4888,7 @@ public class StructureTerrainPrep {
         final BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         int idx = 0, phase = 0, loaded = 0, refilled = 0, dropped = 0;
         boolean repairChunksPinned;
+        final boolean onDemand;
         long lastLoadReport;
         // T75 : chunks absents (demandes) / jamais chargeables (abandonnes), et
         // points de propagation dont un voisin n'etait pas encore en memoire.
@@ -4881,7 +4900,8 @@ public class StructureTerrainPrep {
 
         LiquidJob(ServerLevel l, int cx, int cz, List<int[]> chunks, String label, Runnable onDone,
                   int fx0, int fx1, int fz0, int fz1, BlockPos min, BlockPos max,
-                  int x0, int x1, int z0, int z1) {
+                  int x0, int x1, int z0, int z1, boolean onDemand) {
+            this.onDemand = onDemand;
             this.level = l; this.cx = cx; this.cz = cz; this.chunks = chunks; this.label = label; this.onDone = onDone;
             this.fx0 = fx0; this.fx1 = fx1; this.fz0 = fz0; this.fz1 = fz1;
             this.structureMin = min; this.structureMax = max;
@@ -4905,7 +4925,7 @@ public class StructureTerrainPrep {
         void slice() {
             deepluckyblock.util.ChunkKeeper.keep(level);
             deepluckyblock.util.TerrainChain.heartbeat();
-            if (!repairChunksPinned) {
+            if (!repairChunksPinned || !deepluckyblock.util.ChunkKeeper.zoneComplete(level)) {
                 // Real async loading can outlive the old six retry rounds. Do not scan
                 // or flood-fill a partially loaded basin: retain the entire bounded zone.
                 if (!deepluckyblock.util.ChunkKeeper.zoneComplete(level)) {
@@ -5050,8 +5070,15 @@ public class StructureTerrainPrep {
                         // a la frontiere des chunks charges : c'est le « mur d'eau ») ; plus
                         // loin on ne force rien.
                         if (!inForceRing(nx >> 4, nz >> 4)) continue;
-                        deepluckyblock.util.SafeSurface.request(level, nx >> 4, nz >> 4);
-                        if (refillRound < FIXLIQ_PENDING_ROUNDS) retry.add(packed); else stalled++;
+                        if (onDemand) {
+                            // Keep the frontier sparse: no rectangular dry halo expansion.
+                            // The next slice waits until these chunks are loaded AND pinned.
+                            deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, nx >> 4, nz >> 4);
+                            retry.add(packed);
+                        } else {
+                            deepluckyblock.util.SafeSurface.request(level, nx >> 4, nz >> 4);
+                            if (refillRound < FIXLIQ_PENDING_ROUNDS) retry.add(packed); else stalled++;
+                        }
                         continue;
                     }
                     int top = topSolidAt(nx, nz, lvl, lvl - FIXLIQ_MAX_GAP, lava);
