@@ -1765,28 +1765,21 @@ public class StructureTerrainPrep {
         }
         deepluckyblock.util.DebugLog.setPhase("pre-chargement des chunks " + ready + "/" + st.total);
 
-        if (ready >= st.total) { preloadDone(st, ready, coreReady, elapsed, true); return; }
+        if (ready >= st.total && deepluckyblock.util.ChunkKeeper.zoneComplete(st.level)) {
+            preloadDone(st, ready, coreReady, elapsed, true);
+            return;
+        }
 
         boolean coreDone = coreReady >= st.coreTotal;
         boolean totalDeadline = elapsed >= st.coreBudgetMs + st.ringBudgetMs
                 || elapsed >= st.budgetMs;
         boolean ringDeadline = coreDone && elapsed >= st.coreBudgetMs;
 
-        if (totalDeadline) {
+        // A soft deadline is diagnostic only. Starting with missing chunks causes
+        // serial getBlockState loads and repeated recovery passes, not a faster build.
+        if ((totalDeadline || ringDeadline) && now - st.lastReport >= PRELOAD_REPORT_MS) {
             deepluckyblock.util.DebugLog.structure(
-                    "pre-chargement : BUDGET DE TEMPS ATTEINT ({} s) -- demarrage du pipeline avec {}/{} chunks "
-                            + "(coeur {}/{}), {} chunk(s) laisses au chunk system : leurs colonnes seront sautees "
-                            + "par les passes, aucune generation synchrone",
-                    elapsed / 1000, ready, st.total, coreReady, st.coreTotal, st.total - ready);
-            preloadDone(st, ready, coreReady, elapsed, false);
-            return;
-        }
-        if (ringDeadline) {
-            deepluckyblock.util.DebugLog.structure(
-                    "pre-chargement : coeur complet ({}/{}) -- l'anneau continue en tache de fond, demarrage du pipeline",
-                    coreReady, st.coreTotal);
-            preloadDone(st, ready, coreReady, elapsed, false);
-            return;
+                    "preload target exceeded: waiting for full pinned coverage ({}/{} chunks)", ready, st.total);
         }
 
         // Repli SYNCHRONE : reserve au COEUR, 1 chunk par tick au maximum.

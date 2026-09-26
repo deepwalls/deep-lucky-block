@@ -95,7 +95,7 @@ public final class ChunkKeeper {
     // c'est le nombre de chunks APPLIQUES dans un tick qu'il faut ramener a 1
     // pour ne plus jamais depasser la seconde. Le debit n'en souffre pas : la
     // generation est parallele, on ne fait que lisser la LIVRAISON.
-    private static final int REQUEST_PER_TICK = Math.max(1, Math.min(8, Integer.getInteger("dlb.requestPerTick", 4)));
+    private static final int REQUEST_PER_TICK = Math.max(1, Math.min(8, Integer.getInteger("dlb.requestPerTick", 8)));
     private static final int PIN_PER_TICK = 8;
     /**
      * Demandes de chargement asynchrones EN VOL, tout au plus.
@@ -110,7 +110,7 @@ public final class ChunkKeeper {
     // 48 datait du diagnostic OOM ; il bornait la MEMOIRE, pas le travail du
     // thread principal -- qui, lui, gelait le jeu. Le debit reste de plusieurs
     // dizaines de chunks par seconde (une generation dure quelques dizaines de ms).
-    private static final int MAX_IN_FLIGHT = Math.max(2, Math.min(32, Integer.getInteger("dlb.maxInFlight", 8)));
+    private static final int MAX_IN_FLIGHT = Math.max(2, Math.min(32, Integer.getInteger("dlb.maxInFlight", 16)));
     /** Le maintien est rafraichi tous les 5 s (le ticket PORTAL dure 15 s). */
     private static final int REFRESH_TICKS = 100;
     /** T66 : intervalle des re-demandes forcees pour les chunks toujours absents (5 s). */
