@@ -1,4 +1,4 @@
 # PERF-MODS charges UNIQUEMENT par la session CI serveur (campagne /2).
 # [TEST 7 -- SOLO] C2ME neoforge alpha.0.116 (pipeline chunk parallele, MIT),
 # Noisium retire pour attribution propre des effets.
-c2me-neoforge-mc1.21.1-0.4.0-alpha.0.116.jar|https://cdn.modrinth.com/data/COlSi5iR/versions/5Q757s3v/c2me-neoforge-mc1.21.1-0.4.0-alpha.0.116.jar|54b5b8026484bf44dc79f46b61965c2d45f4733bb6b580a59d2268c5d4dc11e8ae3fe9238d4ee045292cc3afc80ec9bcfd2e21a4b7433e31dbf1344a52b932f2
+c2me-neoforge-mc1.21.1-0.4.0-alpha.0.116.jar|https://cdn.modrinth.com/data/COlSi5iR/versions/5Q757s3v/c2me-neoforge-mc1.21.1-0.4.0-alpha.0.116.jar|54b5b8026484bf44dc79f46b61965c2d45f4733bb6b580a59d2268c5d4dc11e8ae3fe9238d4ee045292cc3adc80ec9bcfd2e21a4b7433e31dbf1344a52b932f2
