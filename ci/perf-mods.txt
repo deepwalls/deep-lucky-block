@@ -1,4 +1,4 @@
 # PERF-MODS charges UNIQUEMENT par la session CI serveur (campagne /2).
 # Format : fichier|url|sha512  (lignes vides / '#' ignorees)
-# [TEST 4 -- SOLO] NoisiumForked (sampler de bruit optimise, rendu identique)
+# [TEST 4 -- SOLO] mesure OK : everest 24.0s (budget 30 PASS), lake 56.6s (budget 120 PASS), fixtures intactes. Run 5 = confirmation memes seed-coords. Test 4 NoisiumForked (sampler de bruit optimise, rendu identique)
 noisium-neoforge-2.7.0+mc1.21-1.21.1.jar|https://cdn.modrinth.com/data/hasdd01q/versions/VviuomrA/noisium-neoforge-2.7.0%2Bmc1.21-1.21.1.jar|ed05cdcf19f6fe6849204cddf0009b514b3686a0bac0da1d834e80d106b8e28ee2bf7d1e66a6c140d23b6c4cf5bb06558a795b70e31c179bcd1f74d955bd0068
