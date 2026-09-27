@@ -266,3 +266,20 @@ nommes), density/pickPlant (tables de GOUT), plantOn (canSurvive = validite),
 applySnowLayer, sous-sol filler (3 blocs), dressAndPlant en startColumnPass sur
 liste chunk-major. DRESSING_FASTFLAG=false => AUCUN setBlock nouveau possible.
 Branchement + sauvetage plantes = etape suivante, avec [server-check].
+
+### Test 5/10 — T-HABILL.6+7+8 BRANCHEMENT dressAndPlant [server-check]
+- Greffe sauvetage dans scanTrees (bloc deja lu, 0 colonne en plus) : isRescuable
+  (BushBlock filet mods, DoublePlant UPPER exclu, liquides/climbables exclus,
+  naturalize-connus exclus), noteRescue plafonne 64/chunk + 20 000 total.
+- Repose replantAllRescued APRES dressAndPlant (ordre guide : scatter -> arbres
+  -> dressAndPlant -> sauvees ; CACTUS en tout dernier, piles 1..3 deterministes,
+  doubles LOWER+UPPER en FAST_FLAG). Adaptation guide : SafeSurface au lieu du
+  surfCache par chunk (nombre d'essais borne 512/espece/chunk identique).
+- Câblage dressOrLegacy : remplace le couple verifyGrassSurface/naturalize dans
+  decorateFinish (2 sites) ; FAST FLAG OFF = chemin historique intact (D9,
+  methodes conservees). prepZone garde son verifyGrassSurface pre-paste (§66).
+- Dressing FASTFLAG = true. Fixtures attendues : smooth (6-blocs intacts),
+  water ×2+lazy (intact : dress saute eau/glace), async, lake, tickets.
+- Journal attendu : 'dressAndPlant : A rapides / B melanges, S surfaces,
+  F sous-sols, P plantes, K sautees, R replis' + 'palette : N chunks ... dominants'
+  + 'repose des plantes sauvees : X replantees'.

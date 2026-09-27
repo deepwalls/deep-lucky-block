@@ -851,8 +851,10 @@ public class StructureTerrainPrep {
         StructureScatterDecor.scatter(level, min, max, LAST_STRUCTURE_NAME);              // 16
         deepluckyblock.util.DebugLog.structure("decorate 5/5 : decors (scatter) poses");
         replantTrees(level, LAST_TREES, min, max, () -> {                                  // 17
-            verifyGrassSurface(level, min, max, () -> {                                    // 10
-                naturalize(level, min, max, level.getRandom(), () -> {                     // 18 (T77 : decoupee)
+            // T-HABILL.8 : dressAndPlant + repose des sauvees REMPLACENT le couple
+            // verifyGrassSurface/naturalize quand le drapeau est leve (chemins
+            // historiques conserves sinon, D9). Cactus poses en tout dernier.
+            dressOrLegacy(level, min, max, () -> {
                     cleanupZone(level, min, max, () -> {                                   // 19
                         logTerrainDelta(level, min, max);
                         deepluckyblock.util.DebugLog.setPhase("stabilisation puis relachement des chunks");
@@ -864,7 +866,6 @@ public class StructureTerrainPrep {
                             step("decorate TERMINE (decors, arbres, naturalisation -- structure posee en DERNIER, T39)");
                         });
                     });
-                });
             });
         });
     }
@@ -1042,8 +1043,10 @@ public class StructureTerrainPrep {
                             // avant de semer : la surface redevient herbeuse sur
                             // toute la zone, et la naturalisation peut operer
                             // partout.
-                            verifyGrassSurface(level, min, max, () -> {                      // 10
-                                naturalize(level, min, max, level.getRandom(), () -> {       // 18 (T77)
+                            // T-HABILL.8 : dressAndPlant + repose des sauvees
+                            // REMPLACENT le couple verifyGrassSurface/naturalize quand le
+                            // drapeau est leve (chemins historiques conserves sinon, D9).
+                            dressOrLegacy(level, min, max, () -> {
                                 cleanupZone(level, min, max, () -> {                         // 19
                                     // === T13 : DEGEL DE L'EAU (guide, section 27, etape 11) ===
                                     // Le relief est definitif : l'eau gelee est restituee
@@ -1084,7 +1087,6 @@ public class StructureTerrainPrep {
                                     });
                                     }   // T23 : fin du bloc "eau intacte" (ex-fin du degel)
                                 });
-                                });   // T77 : fin de la naturalisation decoupee
                             });
                         });
                         })));
@@ -1338,6 +1340,12 @@ public class StructureTerrainPrep {
                     if (visited.contains(key)) continue;
 
                     BlockState s = level.getBlockState(mut.set(x, y, z));
+                    // T-HABILL.7 : sauvetage des plantes non couvertes, greffe ICI
+                    // sur un bloc DEJA lu (zero colonne, zero descente en plus,
+                    // guide LIVRE VII). On ne compte que l'ESPECE dans l'inventaire
+                    // du chunk : la position d'origine n'a plus de sens, le terrain
+                    // natif sera retaille entre-temps.
+                    if (isRescuable(s)) noteRescue(x, z, s);
                     // Le tronc est teste AVANT l'arret : cime d'epicea, tronc sous
                     // un couvert vegetal, tronc d'un arbre voisin -- tous sont lus
                     // avant que le sol ne soit atteint.
@@ -2651,6 +2659,202 @@ public class StructureTerrainPrep {
     private static void clearDressingCaches() {
         clearPaletteCache();
         clearSnowCellCache();
+        RESCUE.clear();
+        rescueTotal = 0;
+    }
+
+    // ==================================================================
+    // T-HABILL.7 : SAUVETAGE DES PLANTES NON COUVERTES (guide, LIVRE VII)
+    // ==================================================================
+    // naturalize ne refait ni cactus, ni canne a sucre, ni plantes doubles
+    // (tournesols, roses, pivoines), ni lichen, ni plantes moddees : elles
+    // etaient detruites par le remodelage sans remplacement. Le sauvetage
+    // est un INVENTAIRE (Block, quantite) par chunk, rempli au fil de
+    // scanTrees (sur des blocs deja lus) puis repose a la fin de la passe
+    // d'habillage, a des emplacements VALIDES — la seule validite etant
+    // canSurvive, jamais une table sol↔plante ecrite a la main.
+
+    /** Inventaire par chunk (cle ChunkPos.asLong) : espece -> quantite sauvee. */
+    private static final Map<Long, Map<Block, Integer>> RESCUE = new HashMap<>();
+    private static int rescueTotal = 0;
+    private static final int RESCUE_MAX_PER_CHUNK = 64;
+    private static final int RESCUE_MAX_TOTAL = 20_000;
+    private static final int RESCUE_MAX_TRIES = 512;   // par espece et par chunk
+
+    /** Plantes que l'ancien naturalize savait poser — exclues du sauvetage. */
+    private static Set<Block> knownByNaturalize() {
+        Set<Block> s = new HashSet<>();
+        s.add(Blocks.SHORT_GRASS);  s.add(Blocks.TALL_GRASS);
+        s.add(Blocks.FERN);          s.add(Blocks.LARGE_FERN);
+        s.add(Blocks.DANDELION);     s.add(Blocks.POPPY);
+        s.add(Blocks.BROWN_MUSHROOM); s.add(Blocks.RED_MUSHROOM);
+        s.add(Blocks.DEAD_BUSH);
+        return s;
+    }
+
+    /** Plante qui pousse sur le sol (par opposition a mur / plafond / eau). */
+    private static boolean isGroundPlant(BlockState s) {
+        if (!s.getFluidState().isEmpty()) return false;                  // aquatique
+        if (s.is(net.minecraft.tags.BlockTags.CLIMBABLE)) return false;  // lianes, echelles
+        Block b = s.getBlock();
+        if (b == Blocks.SPORE_BLOSSOM || b == Blocks.HANGING_ROOTS) return false;
+        if (b == Blocks.CACTUS || b == Blocks.SUGAR_CANE || b == Blocks.BAMBOO
+                || b == Blocks.DEAD_BUSH || b == Blocks.SWEET_BERRY_BUSH) return true;
+        if (b instanceof net.minecraft.world.level.block.DoublePlantBlock) return true;
+        // Filet general, couvre les mods : une BushBlock se pose sur un sol.
+        return b instanceof net.minecraft.world.level.block.BushBlock;
+    }
+
+    /** Une plante de SOL que naturalize ne sait pas refaire. */
+    private static boolean isRescuable(BlockState s) {
+        Block b = s.getBlock();
+        if (knownByNaturalizeStatic().contains(b)) return false;      // deja couvert
+        if (!isGroundPlant(s)) return false;                          // mur / plafond / eau
+        // Moities HAUTES des plantes doubles : on ne compte que la moitie basse,
+        // sinon chaque tournesol serait compte DEUX fois.
+        if (b instanceof net.minecraft.world.level.block.DoublePlantBlock
+                && s.getValue(net.minecraft.world.level.block.DoublePlantBlock.HALF)
+                   == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER)
+            return false;
+        return true;
+    }
+
+    private static volatile Set<Block> KNOWN_NATURALIZE = null;
+    private static Set<Block> knownByNaturalizeStatic() {
+        Set<Block> s = KNOWN_NATURALIZE;
+        if (s == null) { s = knownByNaturalize(); KNOWN_NATURALIZE = s; }
+        return s;
+    }
+
+    /** Comptabilise, avec les deux plafonds de securite. */
+    private static void noteRescue(int x, int z, BlockState s) {
+        if (rescueTotal >= RESCUE_MAX_TOTAL) return;
+        long key = net.minecraft.world.level.ChunkPos.asLong(x >> 4, z >> 4);
+        Map<Block, Integer> inv = RESCUE.computeIfAbsent(key, k -> new HashMap<>());
+        int already = 0;
+        for (int v : inv.values()) already += v;
+        if (already >= RESCUE_MAX_PER_CHUNK) return;
+        inv.merge(s.getBlock(), 1, Integer::sum);
+        rescueTotal++;
+    }
+
+    /** Ordre de visite deterministe mais disperse (permutation bijective par chunk). */
+    private static int scramble(int n, int cx, int cz) {
+        int k = (int) (posNoise(cx, cz, 0x2C1B) * 251) | 1;   // impair -> bijection
+        return (n * k + (cx * 7 + cz * 13)) & 255;
+    }
+
+    /** Pose une plante sauvee si l'emplacement la supporte (gere piles et doubles). */
+    private static boolean tryPlaceRescued(ServerLevel level, BlockPos.MutableBlockPos mut,
+                                           Block plant, int x, int surfY, int z) {
+        mut.set(x, surfY + 1, z);
+        if (!level.getBlockState(mut).isAir()) return false;
+        BlockState base = plant.defaultBlockState();
+        if (!base.canSurvive(level, mut)) return false;      // LA seule verification
+
+        if (plant instanceof net.minecraft.world.level.block.DoublePlantBlock) {
+            mut.set(x, surfY + 2, z);
+            if (!level.getBlockState(mut).isAir()) return false;
+            // FAST_FLAG (pas de mise a jour de voisinage) : sans lui, poser la
+            // moitie basse declenche une mise a jour qui la casse aussitot.
+            level.setBlock(mut.set(x, surfY + 1, z), base.setValue(
+                    net.minecraft.world.level.block.DoublePlantBlock.HALF,
+                    net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER), FAST_FLAG);
+            level.setBlock(mut.set(x, surfY + 2, z), base.setValue(
+                    net.minecraft.world.level.block.DoublePlantBlock.HALF,
+                    net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER), FAST_FLAG);
+            return true;
+        }
+
+        // Plante en pile : cactus, canne a sucre, bambou. Hauteur deterministe,
+        // jamais au-dela de la hauteur naturelle.
+        int height = 1;
+        if (plant == Blocks.CACTUS || plant == Blocks.SUGAR_CANE)
+            height = 1 + (int) (posNoise(x, z, SALT_STACK) * 3);        // 1..3
+        else if (plant == Blocks.BAMBOO)
+            height = 2 + (int) (posNoise(x, z, SALT_STACK) * 6);        // 2..7
+        for (int h = 0; h < height; h++) {
+            mut.set(x, surfY + 1 + h, z);
+            if (!level.getBlockState(mut).isAir()) break;
+            level.setBlock(mut, base, FAST_FLAG);
+        }
+        return true;
+    }
+
+    /**
+     * Repose les plantes sauvees d'un chunk a des emplacements VALIDES,
+     * jamais a leur position d'origine (le terrain a change).
+     * Le CACTUS passe en DERNIER : il casse si un bloc solide apparait a
+     * cote apres sa pose (guide, section 52.2).
+     */
+    private static int replantRescued(ServerLevel level, int cx, int cz) {
+        long key = net.minecraft.world.level.ChunkPos.asLong(cx, cz);
+        Map<Block, Integer> inv = RESCUE.get(key);
+        if (inv == null || inv.isEmpty()) return 0;
+        List<Map.Entry<Block, Integer>> ordered = new ArrayList<>(inv.entrySet());
+        ordered.sort((a, b) -> Boolean.compare(a.getKey() == Blocks.CACTUS,
+                                               b.getKey() == Blocks.CACTUS));
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        int placed = 0;
+        for (Map.Entry<Block, Integer> e : ordered) {
+            Block plant = e.getKey();
+            int wanted = e.getValue();
+            int tries = 0;
+            for (int n = 0; n < 256 && wanted > 0 && tries < RESCUE_MAX_TRIES; n++) {
+                int idx = scramble(n, cx, cz);
+                int lx = idx & 15, lz = idx >> 4;
+                int x = (cx << 4) + lx, z = (cz << 4) + lz;
+                int surfY = deepluckyblock.util.SafeSurface.height(
+                        level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                if (surfY < 1) continue;
+                tries++;
+                if (tryPlaceRescued(level, mut, plant, x, surfY, z)) { wanted--; placed++; }
+            }
+        }
+        RESCUE.remove(key);
+        return placed;
+    }
+
+    /**
+     * Passe de repose globale : un « colonne » synthetique par chunk porteur,
+     * pilotee par startColumnPass (gardes du mod). Appelee APRES dressAndPlant,
+     * donc APRES les decors disperses et les arbres replantes (ordre voulu
+     * par le guide : le cactus est pose en tout dernier).
+     */
+    private static void replantAllRescued(ServerLevel level, Runnable onDone) {
+        List<int[]> carriers = new ArrayList<>();
+        for (long key : RESCUE.keySet()) {
+            int cx = net.minecraft.world.level.ChunkPos.getX(key);
+            int cz = net.minecraft.world.level.ChunkPos.getZ(key);
+            carriers.add(new int[]{cx, cz});
+        }
+        if (carriers.isEmpty()) { if (onDone != null) onDone.run(); return; }
+        final int[] placed = {0};
+        startColumnPass(level, "repose des plantes sauvees", carriers, 8, col -> {
+            placed[0] += replantRescued(level, col[0], col[1]);
+        }, () -> {
+            if (placed[0] > 0) deepluckyblock.util.DebugLog.structure(
+                    "repose des plantes sauvees : {} replantees sur {} chunks porteurs",
+                    placed[0], carriers.size());
+            RESCUE.clear();
+            rescueTotal = 0;
+            if (onDone != null) onDone.run();
+        });
+    }
+
+    /**
+     * Chemin unique du couple habillage + vegetation (LIVRE IX) :
+     * dressAndPlant + repose des sauvees quand le drapeau est leve ;
+     * verifyGrassSurface + naturalize historiques sinon. Meme onDone.
+     */
+    private static void dressOrLegacy(ServerLevel level, BlockPos min, BlockPos max,
+                                      Runnable onDone) {
+        if (dressingEnabled()) {
+            dressAndPlant(level, min, max, () -> replantAllRescued(level, onDone));
+            return;
+        }
+        verifyGrassSurface(level, min, max,
+                () -> naturalize(level, min, max, level.getRandom(), onDone));
     }
 
     /**
@@ -2714,7 +2918,7 @@ public class StructureTerrainPrep {
     private static boolean dressingEnabled() {
         return DRESSING_FASTFLAG;
     }
-    private static final boolean DRESSING_FASTFLAG = false;
+    private static final boolean DRESSING_FASTFLAG = true;
 
     // ---- Tramage : hash de position (guide §39, qualite mesuree) ----
     private static final int SALT_GROUND = 0x51D0;
