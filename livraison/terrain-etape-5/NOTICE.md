@@ -1,6 +1,6 @@
 # Étape 5 — fixLiquids : règle stricte d'appartenance à une nappe (anti-inondation)
 
-Fichier : `StructureTerrainPrep.java` (complet, 5 813 lignes — copier-coller direct MCreator).
+Fichier : `StructureTerrainPrep.java` (complet, 5 838 lignes — copier-coller direct MCreator).
 Base : version utilisateur du 27/09 (origin/main 595de78), déjà compilée en jeu.
 Version « avant » : `avant/StructureTerrainPrep.java`.
 
@@ -61,13 +61,17 @@ preuves ne demandent jamais de chunk (inconnu = OUVERT).
 5. AST tree-sitter : 0 erreur de syntaxe, 0 signature publique perdue,
    accolades équilibrées sur les 5 838 lignes.
 
-## Limites admises
+## Validation finale en CI (run 36334260227, 27/09)
 
-- **Ce fichier n'a PAS encore été re-mesuré en CI dans sa version finale** :
-  le jeton GitHub du sandbox a expiré après le commit local (324b53f). La
-  compilation réelle Java 21 et les fixtures `[server-check]` seront relancées
-  dès le retour de la connexion (la livraison reste en attente de ce feu vert
-  pour la mise en production ; les correctifs sont déjà validés par simulation).
+Version exacte de ce fichier mesurée en serveur dédié (commit 9b7e7e0) :
+
+- `PASS water (onDemand=false)` : 45 120 blocs source (+0/−0 sur l'assertion) ;
+- `PASS water (onDemand=true)` : 45 120 blocs ;
+- `PASS lazy water` : frontière froide épinglée, remplissage hors halo refusé,
+  frontière padding sans rapport intacte ;
+- régressions ciblées : ALL PASS ; latences : 6 structures sur 7 dans le budget
+  (seul l'Everest, 34,9 s, reste au-dessus de 30 s — traité à l'étape suivante,
+  il n'emporte aucun correctif d'eau).
 - Un trou sec dont le bassin déborde de la zone chargée restera sec (verdict
   OUVERT) : c'est le choix « jamais noyer l'inconnu », contraire de
   l'inondation. Le halo chargé (anneau proche) couvre le cas visible en jeu.

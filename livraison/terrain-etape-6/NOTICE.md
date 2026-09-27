@@ -4,11 +4,11 @@ Fichier : `Structures5Procedure.java` (complet — copier-coller direct MCreator
 Base : version utilisateur du 27/09 (origin/main 8ab74b4), déjà compilée en jeu.
 Version « avant » : `avant/Structures5Procedure.java`.
 
-> Statut : fichier livré EN SECOND (un seul fichier de production par
-> livraison). **Compilé en CI Java 21** (runs 36331359511 / 36332468110 :
-> build OK), comportement pas encore exercé en session serveur (les fixtures
-> eau bloquaient avant le dragon — maintenant corrigées, re-mesure en attente
-> du retour de la connexion GitHub).
+> Statut : **VALIDÉE EN SESSION SERVEUR CI** (run 36334260227, 27/09) :
+> citadel 21,1 s, observatory 20,8 s, dragon 27,0 s — les trois structures
+> passées par `doPaste` terminent dans le budget (30 s) avec le nouvel
+> ancrage ; fixtures « lake » (sink=10, emprise épargnée) et « smooth »
+> (empreinte et anneau de 6 blocs intacts) PASS. Build Java 21 OK.
 
 ## Problème mesuré (test en jeu du 27/09)
 

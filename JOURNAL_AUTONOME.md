@@ -79,3 +79,32 @@ Format : date | hypothèse | mesure | conclusion | décision.
   de la fixture CI) ; plaine ouverte = 0 remplissage, 902 colonnes OUVERTES.
 - AST tree-sitter : 0 erreur, 0 signature perdue. Reste a mesurer en CI
   ( compilation reelle + fixtures + temps ) : BLOQUE par expiration GH_TOKEN.
+
+## 2026-09-27 — Mesure CI #3 (run 36334260227, commit 9b7e7e0) : T77+T76 VALIDES, Everest seul echoue
+
+- Fixtures : ALL PASS — water onDemand=false 45120 blocs (exact), water
+  onDemand=true 45120, lazy water (frontiere froide epinglée, halos intacts),
+  smooth, lake (sink=10), tickets, async, loot. « Targeted regression
+  checks: ALL PASS ».
+- Latences structure par structure (de « demandee » au marqueur de fin,
+  decoration comprise ; budget 30 s / 120 s) :
+  | structure | avant (79d3edd) | run #4 | budget |
+  |---|---|---|---|
+  | citadel | 26,30 s | 21,10 s PASS | 30 |
+  | observatory | 22,00 s | 20,80 s PASS | 30 |
+  | dragon | 27,90 s | 27,00 s PASS | 30 |
+  | circus | 7,90 s | 6,10 s PASS | 30 |
+  | ship | 9,70 s | 7,20 s PASS | 30 |
+  | everest | 35,39 s | 34,89 s FAIL | 30 |
+  | crimsonlake | 101,80 s | 76,90 s PASS | 120 |
+- Postes [DLB-PERF] Everest (total 34,8 s) : pre-chargement chunks 24,5 s
+  (70 %, generation moteur — workers CPU 24,36 s), balayage naturels
+  flottants 8,0 s (23 %), fixLiquids 1,7 s, hole filler 0,6 s, pose 0,0 s.
+  GC 400 ms, heap 1213→709 MiB — ni GC ni memoire en cause.
+- Constat : seul le balayage etendu est du calcul mod-side significatif.
+  Consigne utilisateur : Everest = creuse, sans terrassement, ne doit pas
+  subir les passes lourdes. Correction T78 : spawnEverest saute
+  sweepFloatingNaturalPass (conserve sealUndergroundGaps 0,6 s,
+  finalTerrainPass, fixLiquids 1,7 s). Attendu ~26,9 s → budget tenu.
+- AST Structures4 : 0 erreur, accolades equilibrees. Run #4 = 1 donnee ;
+  il faut 2 mesures meme seed/coords pour conclure un gain (regle).
