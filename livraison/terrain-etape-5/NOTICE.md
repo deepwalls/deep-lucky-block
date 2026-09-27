@@ -40,12 +40,36 @@ preuves re-demandaient des chunks. Désormais : retry onDemand borné à
 FIXLIQ_PENDING_ROUNDS=6 (puis `stalled`, comme la branche request()), et les
 preuves ne demandent jamais de chunk (inconnu = OUVERT).
 
+## Historique des mesures (transparence complète)
+
+1. Run CI 36331233923 : build Java 21 **OK** (compile seule).
+2. Run CI 36331359511 : build OK, session serveur **échouée** — tempête de
+   chunks préexistante (1 360 demandes, retry « tour 43/6 », jamais finie) que
+   le ×4 avait introduite et que personne n'avait jamais mesurée (jamais de
+   `[server-check]` sur les commits utilisateur). Correctifs : retry onDemand
+   borné à 6 tours, preuves sans demande de chunk.
+3. Run CI 36332468110 : build OK, session **échouée** —
+   `Unfilled basin at -43,241,-42` : zéro remplissage. Cause : la file de
+   preuve garait la colonne d'eau (packed) au lieu du candidat sec (nk).
+   Correctifs : candidat garé, type de liquide parent conservé, colonnes
+   remplies exclues des parois, anneau de force pré-×4, frontière onDemand
+   bornée au halo seedMargin.
+4. Simulation `ci/sim_t77.py` (rejoue l'algorithme colonne par colonne, hors
+   JDK) : bassin fermé = **45 113 nouveaux blocs (+ 7 préexistants = 45 120,
+   l'assert EXACTE de la fixture CI)** ; plaine ouverte = **0 remplissage**,
+   902 colonnes prouvées OUVERTES.
+5. AST tree-sitter : 0 erreur de syntaxe, 0 signature publique perdue,
+   accolades équilibrées sur les 5 838 lignes.
+
 ## Limites admises
 
+- **Ce fichier n'a PAS encore été re-mesuré en CI dans sa version finale** :
+  le jeton GitHub du sandbox a expiré après le commit local (324b53f). La
+  compilation réelle Java 21 et les fixtures `[server-check]` seront relancées
+  dès le retour de la connexion (la livraison reste en attente de ce feu vert
+  pour la mise en production ; les correctifs sont déjà validés par simulation).
 - Un trou sec dont le bassin déborde de la zone chargée restera sec (verdict
   OUVERT) : c'est le choix « jamais noyer l'inconnu », contraire de
   l'inondation. Le halo chargé (anneau proche) couvre le cas visible en jeu.
-- Les vérifications locales (tree-sitter, AST avant/après) ne prouvent NI la
-  compilation, NI le comportement en jeu, NI les temps. Seuls le build Java 21
-  CI et les fixtures serveur `[server-check]` mesurent ; le test en jeu reste
-  décisif pour les captures d'écran.
+- Les vérifications locales (tree-sitter, AST, simulation) ne prouvent NI la
+  compilation, NI le comportement en jeu, NI les temps.
