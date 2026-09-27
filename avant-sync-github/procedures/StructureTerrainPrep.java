@@ -220,36 +220,7 @@ public class StructureTerrainPrep {
      *   3. smooth ring (sur terrain NATUREL, donc la structure n'est pas perturbee)
      *   4. onReady -> le code appelant lance le paste
      */
-    /** Compatibility entry point: the old foundation Y includes model offsets.
-     * Never interpret it as the selected terrain floor. */
     public static void prepZone(ServerLevel level, BlockPos min, BlockPos max, int foundationBaseY, Runnable onReady) {
-        prepZoneInternal(level, min, max, foundationBaseY, null, onReady);
-    }
-
-    /** groundY is the selected SOLID ground block, not the first free Y or model bottom.
-     * Example: groundY=12 clears only Y>=13. Callers must pass their selection explicitly. */
-    public static void prepZone(ServerLevel level, BlockPos min, BlockPos max,
-                                int foundationBaseY, int groundY, Runnable onReady) {
-        if (groundY < level.getMinBuildHeight() || groundY >= level.getMaxBuildHeight())
-            throw new IllegalArgumentException("Selected groundY is outside build height: " + groundY);
-        prepZoneInternal(level, min, max, foundationBaseY, groundY, onReady);
-    }
-
-    private record ClearancePlan(ServerLevel level, BlockPos min, BlockPos max, int groundY) {
-        boolean matches(ServerLevel other, BlockPos a, BlockPos b) {
-            return level == other && min.getX() == a.getX() && min.getZ() == a.getZ()
-                    && max.getX() == b.getX() && max.getZ() == b.getZ();
-        }
-        boolean contains(ServerLevel other, int x, int z) {
-            return level == other && x >= min.getX() && x <= max.getX()
-                    && z >= min.getZ() && z <= max.getZ();
-        }
-    }
-    // Accessed on the server thread under the existing terrain-chain lock.
-    private static ClearancePlan CLEARANCE_PLAN;
-
-    private static void prepZoneInternal(ServerLevel level, BlockPos min, BlockPos max,
-                                         int foundationBaseY, Integer groundY, Runnable onReady) {
         // === T6 : UNE SEULE CHAINE TERRAIN A LA FOIS ===
         // Les passes partagent des champs statiques (nom de structure, arbres
         // sauves, colonnes de barrage, emprise protegee). Deux structures qui
@@ -273,7 +244,7 @@ public class StructureTerrainPrep {
                     "{} : chaine terrain occupee par {} -- prepZone reporte de {} ticks",
                     chainKey, deepluckyblock.util.TerrainChain.owner(), CHAIN_WAIT_TICKS);
             TestProcedure.schedule(level, TestProcedure.currentTick(level) + CHAIN_WAIT_TICKS,
-                    () -> prepZoneInternal(level, min, max, foundationBaseY, groundY, onReady));
+                    () -> prepZone(level, min, max, foundationBaseY, onReady));
             return;
         }
         // Ring PROPORTIONNEL au build : petit pour les petites structures (fini la
@@ -284,8 +255,6 @@ public class StructureTerrainPrep {
         // utilisait l'ancien SMOOTH_RING (celui de la structure precedente) et le
         // pre-chargement le nouveau : il attendait donc des chunks de la couronne
         // que personne ne demandait jamais.
-        CLEARANCE_PLAN = groundY == null ? null : new ClearancePlan(level, min.immutable(), max.immutable(), groundY);
-        clearFootprintProtection();
         SMOOTH_RING = computeSmoothRing(min, max);
         // === T9 : la zone est TENUE EN MEMOIRE pendant tout le pipeline ===
         deepluckyblock.util.ChunkKeeper.track(level,
@@ -385,15 +354,12 @@ public class StructureTerrainPrep {
         // blocage invisible (« on ne sait meme pas ce qu'il se passe donc on ne
         // peut pas regler le potentiel fautif »). Chacune annonce desormais sa
         // fin, on peut donc localiser un arret a coup sur.
-        // Clearance precedes foundation work, vegetation cleanup and every smooth.
-        clearFootprint(level, min, max, topY, () -> {
-            step("prepZone : clearFootprint termine AVANT preparation");
-            if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.matches(level, min, max))
-                protectFootprint(min, max);
-            prefillFoundation(level, min, max, foundationBaseY, () -> {
-                step("prepZone 2/11 : prefillFoundation termine");
-                clearSurfaceDecor(level, min, max, () -> {
-                    step("prepZone 3/11 : clearSurfaceDecor termine");
+        prefillFoundation(level, min, max, foundationBaseY, () -> {
+            step("prepZone 2/11 : prefillFoundation termine");
+            clearSurfaceDecor(level, min, max, () -> {
+                step("prepZone 3/11 : clearSurfaceDecor termine");
+                clearFootprint(level, min, max, topY, () -> {
+                    step("prepZone 4/11 : clearFootprint termine");
                     // RETABLI (l'utilisateur a confirme par test en jeu que ce n'etait
                     // PAS la cause du "mur/montagne" - le vrai bug etait dans
                     // despeckleHeightmap(), voir le fix + commentaire au-dessus de
@@ -505,8 +471,6 @@ public class StructureTerrainPrep {
     private static int clearWaterColumn(ServerLevel level, int x, int z, int y0, int y1) {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         int removed = 0;
-        if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.contains(level, x, z))
-            y0 = Math.max(y0, CLEARANCE_PLAN.groundY() + 1);
         for (int y = y1; y >= y0; y--) {
             pos.set(x, y, z);
             BlockState state = level.getBlockState(pos);
@@ -518,33 +482,18 @@ public class StructureTerrainPrep {
         return removed;
     }
 
-    // The new overload clears the whole sky column strictly ABOVE the selected floor.
-    // The legacy overload deliberately retains its old behavior until its caller is migrated.
+    // Clear le footprint : supprime le terrain naturel AU-DESSUS du sol (pas de cratere,
+    // on ne creuse jamais sous la surface). Batche via schedule.
     private static void clearFootprint(ServerLevel level, BlockPos min, BlockPos max, int topY, Runnable onDone) {
-        final ClearancePlan plan = CLEARANCE_PLAN != null && CLEARANCE_PLAN.matches(level, min, max)
-                ? CLEARANCE_PLAN : null;
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
-        final int[] removed = {0};
         startColumnPass(level, "clearFootprint", columnsOf(min, max, 0), BATCH_COLS, col -> {
             int x = col[0], z = col[1];
-            int floor = plan == null
-                    ? deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z)
-                    : plan.groundY();
-            int ceiling = plan == null ? topY : Math.min(level.getMaxBuildHeight() - 1,
-                    deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z) - 1);
-            for (int y = ceiling; y > floor; y--) {
+            int surface = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            for (int y = topY; y > surface; y--) {
                 BlockState state = level.getBlockState(mut.set(x, y, z));
-                if (state.isAir() || state.is(Blocks.BEDROCK)) continue;
-                if (plan == null && !isNaturalTerrain(state)) continue;
-                level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
-                removed[0]++;
+                if (!state.isAir() && isNaturalTerrain(state)) level.setBlock(mut, Blocks.AIR.defaultBlockState(), 2);
             }
-        }, () -> {
-            deepluckyblock.util.SafeSurface.clearCache();
-            deepluckyblock.util.DebugLog.structure("clearFootprint: {} blocks removed; selected solid floor={} (exclusive clearance)",
-                    removed[0], plan == null ? "legacy caller: not provided" : plan.groundY());
-            if (onDone != null) onDone.run();
-        });
+        }, onDone);
     }
 
     // Avant le smooth : remplit les vides SOUS la structure (emprise + 3 radius)
@@ -762,10 +711,7 @@ public class StructureTerrainPrep {
             // Keep the same canopy/trunk scan; only its scheduling changes.
             int top = Math.min(surface + 64, Math.max(surface + 18,
                     deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING, x, z) + 2));
-            int bottom = surface - 25;
-            if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.contains(level, x, z))
-                bottom = Math.max(bottom, CLEARANCE_PLAN.groundY() + 1);
-            for (int y = top; y >= bottom; y--) {
+            for (int y = top; y >= surface - 25; y--) {
                 if (y < level.getMinBuildHeight()) break;
                 BlockState state = level.getBlockState(mut.set(x, y, z));
                 if (!state.isAir() && isSurfaceDecor(state)) level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
@@ -813,7 +759,7 @@ public class StructureTerrainPrep {
         deepluckyblock.util.ChunkKeeper.track(level,
                 new BlockPos(min.getX() - terrainRing(), min.getY(), min.getZ() - terrainRing()),
                 new BlockPos(max.getX() + terrainRing(), max.getY(), max.getZ() + terrainRing()));
-        protectFootprint(min, max);   // keep the pasted building out of cleanup/grass passes
+        clearFootprintProtection();   // plus rien a proteger : la structure est posee
         StructureScatterDecor.scatter(level, min, max, LAST_STRUCTURE_NAME);              // 16
         deepluckyblock.util.DebugLog.structure("decorate 5/5 : decors (scatter) poses");
         replantTrees(level, LAST_TREES, min, max, () -> {                                  // 17
@@ -825,8 +771,6 @@ public class StructureTerrainPrep {
                         deepluckyblock.util.SettleGate.wait(level, min, max, () -> {
                             deepluckyblock.util.TerrainChain.release(chainKey);
                             deepluckyblock.util.ChunkKeeper.release(level);
-                            clearFootprintProtection();
-                            CLEARANCE_PLAN = null;
                             step("decorate TERMINE (decors, arbres, naturalisation -- structure posee en DERNIER, T39)");
                         });
                     });
@@ -851,14 +795,12 @@ public class StructureTerrainPrep {
                     "decorate : chaine terrain occupee par {} -- reporte de {} ticks",
                     deepluckyblock.util.TerrainChain.owner(), CHAIN_WAIT_TICKS);
             TestProcedure.schedule(level, TestProcedure.currentTick(level) + CHAIN_WAIT_TICKS,
-                    () -> decorateChain(level, min, max, terrainPhase, afterTerrain));
+                    () -> decorate(level, min, max));
             return;
         }
         // T23 : les vegetaux rendus flottants par le remodelage sont retires
         // AVANT le reste du decor (consigne « des cocoa qui volent »).
         SWEPT.set(0);
-        SWEEP_ANCHORED.clear();
-        CLUSTER_TIMEOUTS.set(0);
         sweepFloatingDecor(level, min, max, 8, () -> {
         deepluckyblock.util.DebugLog.structure(
                 "balayage des vegetaux flottants : {} bloc(s) de nature retire(s) "
@@ -893,10 +835,7 @@ public class StructureTerrainPrep {
         // n'existe pas encore et le sol doit etre lisse PARTOUT (c'est ce qui
         // supprime la couture « terrain colle a la structure »). En phase
         // post-pose (appel historique complet), l'emprise reste intouchable.
-        // An explicitly cleared footprint must not grow a mountain again before paste.
-        if (terrainPhase && (CLEARANCE_PLAN == null || !CLEARANCE_PLAN.matches(level, min, max)))
-            clearFootprintProtection();
-        else protectFootprint(min, max);
+        if (terrainPhase) clearFootprintProtection(); else protectFootprint(min, max);
 
         // FIX (meme cause que prepZone : passes synchrones sans log = freeze
         // invisible). Chaque groupe est desormais enchaine sur la fin reelle de
@@ -966,14 +905,9 @@ public class StructureTerrainPrep {
                                 // tick). Sans cette liberation, la phase post-pose
                                 // (decorateFinish, en fin de carve) se reportait
                                 // indefiniment : « chaine terrain occupee par ... ».
-                                Runnable terrainReady = () -> {
-                                    deepluckyblock.util.TerrainChain.release(chainKey);
-                                    step("decorate TERRAIN TERMINE : terrain fige, la structure peut etre posee (T39)");
-                                    if (afterTerrain != null) afterTerrain.run();
-                                };
-                                if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.matches(level, min, max))
-                                    clearFootprint(level, min, max, level.getMaxBuildHeight() - 1, terrainReady);
-                                else terrainReady.run();
+                                deepluckyblock.util.TerrainChain.release(chainKey);
+                                step("decorate TERRAIN TERMINE : terrain fige, la structure peut etre posee (T39)");
+                                if (afterTerrain != null) afterTerrain.run();
                             });
                             return;
                         }
@@ -982,7 +916,7 @@ public class StructureTerrainPrep {
                         // BRANCHE POST-POSE (appel historique complet) : finitions
                         // uniquement, plus aucun smooth ni passe de terrain.
                         // ============================================================
-                        protectFootprint(min, max);
+                        clearFootprintProtection();
 
                         StructureScatterDecor.scatter(level, min, max, LAST_STRUCTURE_NAME); // 16
                         deepluckyblock.util.DebugLog.structure("decorate 5/5 : decors (scatter) poses");
@@ -1044,8 +978,6 @@ public class StructureTerrainPrep {
                                     // zone peut etre rendue au chunk system.
                                     deepluckyblock.util.TerrainChain.release(chainKey);
                                     deepluckyblock.util.ChunkKeeper.release(level);
-                                    clearFootprintProtection();
-                                    CLEARANCE_PLAN = null;
                                     step("decorate TERMINE (failles, smooths, fuites, decors, arbres, naturalisation)");
                                     });
                                     }   // T23 : fin du bloc "eau intacte" (ex-fin du degel)
@@ -1094,7 +1026,6 @@ public class StructureTerrainPrep {
 
     /** Une colonne de cleanupZone (met a jour counters[removed, waterFixed]). */
     private static void cleanupColumn(ServerLevel level, int x, int z, int[] counters) {
-        if (isProtected(x, z) || StructureScatterDecor.isInsideDecor(x, z, 1)) return;
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         int minB = level.getMinBuildHeight();
         int surfY = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z);
@@ -1109,8 +1040,8 @@ public class StructureTerrainPrep {
                 if (lvl > 0) { level.setBlock(mut, Blocks.WATER.defaultBlockState(), FAST_FLAG); counters[1]++; }
                 continue;
             }
-            if (isDecoration(s) && !isLooseSurface(s) && isFloatingFoliage(level, mut, x, y, z)) {
-                level.setBlock(mut.set(x, y, z), Blocks.AIR.defaultBlockState(), FAST_FLAG); counters[0]++;
+            if (isDecoration(s) && isFloatingFoliage(level, mut, x, y, z)) {
+                level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG); counters[0]++;
             }
         }
     }
@@ -2286,16 +2217,15 @@ public class StructureTerrainPrep {
             for (int z = min.getZ() - ring; z <= max.getZ() + ring; z += 4) {
                 int i = x - NR_X0, j = z - NR_Z0;
                 if (i < 0 || j < 0 || i >= NR_W || j >= NR_H) continue;
-                if (isProtected(x, z) || (x >= min.getX() && x <= max.getX()
-                        && z >= min.getZ() && z <= max.getZ())
-                        || StructureScatterDecor.isInsideDecor(x, z, 1)) continue;
-                int surf = groundSurfaceY(level, new BlockPos.MutableBlockPos(), x, z);
-                if (surf == Integer.MIN_VALUE) continue; // measure only exposed natural ground
+                if (isProtected(x, z)) continue;
+                int surf = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                BlockState at = level.getBlockState(new BlockPos(x, surf, z));
+                if (at.getFluidState().is(net.minecraft.tags.FluidTags.WATER)) continue;   // plan d'eau
                 int delta = surf - ref[i][j];
                 int d = Math.abs(delta);
                 sum += d; n++;
                 if (d <= 2) near++;
-                if (delta > MAX_SMOOTH_RISE || delta < -MAX_SMOOTH_DROP) over++;
+                if (d > MAX_SMOOTH_RISE || d < -MAX_SMOOTH_DROP) over++;
                 if (d > worst) { worst = d; worstX = x; worstZ = z; }
                 // T23 : distinction CREUSE / REMBLAYE -- la reponse directe a
                 // « tu creuses encore des trous autour de la structure, WTF ! ».
@@ -2472,9 +2402,28 @@ public class StructureTerrainPrep {
      * un surplomb rocheux est un relief legitime.
      */
     private static void sweepColumn(ServerLevel level, int x, int z) {
-        // Use the bottom-up, support-aware sweep. The former top-down scan treated
-        // every grass/dirt surface below the sky as unsupported, stripping it to rock.
-        sweepNaturalColumn(level, x, z);
+        if (isProtected(x, z)) return;          // T25 : l'emprise de la structure est intouchable
+        int top = Math.min(level.getMaxBuildHeight() - 1,
+                deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING, x, z) + 48);
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        boolean grounded = false;
+        for (int y = top; y > level.getMinBuildHeight(); y--) {
+            BlockState st = level.getBlockState(mut.set(x, y, z));
+            if (st.isAir()) { grounded = false; continue; }
+            if (!grounded && isSurfaceDecor(st)) {
+                level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
+                SWEPT.incrementAndGet();
+                continue;
+            }
+            if (isSurfaceDecor(st)) continue;   // vegetal pose sur du solide : on garde
+            if (!grounded && isLooseSurface(st)) {
+                // Debris de terrain en suspension (ilot d'herbe / bloc de terre).
+                level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
+                SWEPT.incrementAndGet();
+                continue;
+            }
+            grounded = true;                    // bloc plein : a partir d'ici tout est porte
+        }
     }
 
     /** T25 : materiaux "meubles" qui ne doivent jamais flotter dans le vide. */
@@ -3787,21 +3736,6 @@ public class StructureTerrainPrep {
         return out;
     }
 
-    /** Solid ground reference in the six-block exterior collar; unknown elsewhere.
-     * The reference is captured before the first smooth and is not lowered by later passes. */
-    private static int collarGroundFloor(int x, int z) {
-        if (NATURAL_REF == null) return Integer.MIN_VALUE;
-        int i = x - NR_X0, j = z - NR_Z0;
-        if (i < 0 || j < 0 || i >= NR_W || j >= NR_H) return Integer.MIN_VALUE;
-        int ring = terrainRing();
-        int minX = NR_X0 + ring, maxX = NR_X0 + NR_W - 1 - ring;
-        int minZ = NR_Z0 + ring, maxZ = NR_Z0 + NR_H - 1 - ring;
-        boolean inside = x >= minX && x <= maxX && z >= minZ && z <= maxZ;
-        if (inside || x < minX - 6 || x > maxX + 6 || z < minZ - 6 || z > maxZ + 6)
-            return Integer.MIN_VALUE;
-        return NATURAL_REF[i][j];
-    }
-
     // Reconstruit une colonne : remet le terrain a la hauteur cible (targetY).
     // currentY = hauteur CAPTUREE (origY, despecklee) au debut du smooth. On ne
     // re-interroge PAS getHeight() : sur certaines colonnes (coins de chunk) la
@@ -3809,7 +3743,6 @@ public class StructureTerrainPrep {
     // stone+dirt+grass a chaque coin de chunk.
     private static void rebuildColumn(ServerLevel level, BlockPos.MutableBlockPos mut, int cx, int cz, int targetY, int origY) {
         int currentY = origY;
-        targetY = Math.max(targetY, collarGroundFloor(cx, cz));
         if (currentY < targetY) {
             for (int y = currentY + 1; y <= targetY; y++) {
                 BlockState fill = (y == targetY) ? Blocks.GRASS_BLOCK.defaultBlockState()
@@ -3913,12 +3846,11 @@ public class StructureTerrainPrep {
 
     /** Une colonne de verifyGrassSurface (met a jour counters[grass, snow]). */
     private static void verifyGrassColumn(ServerLevel level, int x, int z, int[] counters) {
-        if (isProtected(x, z) || StructureScatterDecor.isInsideDecor(x, z, 1)) return;
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         int surfY = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
         if (surfY < 1) return;
         BlockState s = level.getBlockState(mut.set(x, surfY, z));
-        if (s.isAir() || isLog(s) || isLeaf(s)) return;
+        if (s.isAir()) return;
         boolean snowy = isSnowy(level, mut);
         if (s.is(Blocks.SNOW_BLOCK) || s.is(Blocks.PACKED_ICE) || s.is(Blocks.BLUE_ICE)) {
             if (level.getBlockState(mut.set(x, surfY + 1, z)).isAir()) {
@@ -3958,62 +3890,51 @@ public class StructureTerrainPrep {
 
     private static void replantTrees(ServerLevel level, List<SavedTree> trees,
                                       BlockPos structMin, BlockPos structMax, Runnable onDone) {
-        new ReplantJob(level, new ArrayList<>(trees), structMin, structMax, onDone).slice();
-    }
+        RandomSource random = level.getRandom();
+        int count = 0;
 
-    private static final class ReplantJob {
-        private final ServerLevel level;
-        private final List<SavedTree> trees;
-        private final BlockPos min, max;
-        private final Runnable onDone;
-        private final Set<Long> visited = new HashSet<>();
-        private int cursor, planted, duplicates;
-        private boolean done;
+        for (SavedTree tree : trees) {
+            int tx = tree.baseX(), tz = tree.baseZ();
 
-        ReplantJob(ServerLevel level, List<SavedTree> trees, BlockPos min, BlockPos max, Runnable onDone) {
-            this.level = level; this.trees = trees; this.min = min; this.max = max; this.onDone = onDone;
+            // Skip si dans l'emprise de la structure (on ne replante pas dessus)
+            if (tx >= structMin.getX() && tx <= structMax.getX()
+                    && tz >= structMin.getZ() && tz <= structMax.getZ()) continue;
+
+            // FIX (demande utilisateur : "que les arbres spawnent autour et pas
+            // dedans ou dessus des structures (bug possible)").
+            //
+            // Les decors sont poses juste avant, et ils enregistrent leur
+            // emprise. Sans ce test, un arbre pouvait pousser au milieu d'une
+            // ruine ou sur le toit d'une tente : le tronc traverse la
+            // structure et les feuilles l'engloutissent.
+            //
+            // La marge de 1 bloc evite aussi les arbres colles aux murs, dont
+            // le feuillage deborderait a l'interieur.
+            if (StructureScatterDecor.isInsideDecor(tx, tz, 1)) continue;
+
+            // VRAI arbre : on fait pousser une feature d'arbre vanilla a la nouvelle
+            // surface. Fini les demi-arbres inventes dont les feuilles pourrissent.
+            // FIX (rapporte en jeu : "la tu fais un arbre, au dessus du dernier
+            // tronc d'arbre qui a surement pas clear precedement, mais au dessus
+            // un bloc de dirt puis un arbre, et parfois ca se repete 3 fois !").
+            //
+            // CAUSE : Heightmap.MOTION_BLOCKING_NO_LEAVES compte les BUCHES comme
+            // surface (elle n'exclut que les feuilles). Si un tronc subsistait sur
+            // la colonne, getHeight() renvoyait donc le sommet de ce tronc, et
+            // placeRealTree() forcait alors un bloc de terre juste en dessous
+            // avant de planter -> tronc / dirt / arbre empiles, en cascade.
+            //
+            // CORRECTIF : on descend jusqu'au VRAI sol (premier bloc de terrain
+            // naturel), en traversant tout residu vegetal. Le sol est donc
+            // detecte librement pour chaque arbre, comme demande a 04:24:33.
+            int newSurfaceY = findNaturalGroundY(level, tx, tz);
+            if (newSurfaceY <= level.getMinBuildHeight()) continue;
+            BlockPos pos = new BlockPos(tx, newSurfaceY, tz);
+            if (placeRealTree(level, tree.type(), pos, random)) count++;
         }
+        if (count > 0) deepluckyblock.util.DebugLog.structure("replant : {} arbres reels replantes", count);
 
-        void slice() {
-            if (done) return;
-            deepluckyblock.util.ChunkKeeper.keep(level);
-            deepluckyblock.util.TerrainChain.heartbeat();
-            deepluckyblock.util.DebugLog.setPhase("replantTrees " + cursor + "/" + trees.size());
-            long deadline = System.nanoTime() + sliceBudgetMs(level) * 1_000_000L;
-            int attempts = 0;
-            while (cursor < trees.size() && attempts < 8) {
-                SavedTree tree = trees.get(cursor);
-                int x = tree.baseX(), z = tree.baseZ();
-                long key = colKey(x, z);
-                if (visited.contains(key)) { duplicates++; cursor++; }
-                else if ((x >= min.getX() && x <= max.getX() && z >= min.getZ() && z <= max.getZ())
-                        || StructureScatterDecor.isInsideDecor(x, z, 1)) {
-                    visited.add(key); cursor++;
-                } else {
-                    // Vanilla features may read neighbouring chunks. Pin a local halo,
-                    // then yield rather than generating them synchronously during place().
-                    BlockPos a = new BlockPos(x - 16, min.getY(), z - 16);
-                    BlockPos b = new BlockPos(x + 16, max.getY(), z + 16);
-                    for (int cx = a.getX() >> 4; cx <= b.getX() >> 4; cx++)
-                        for (int cz = a.getZ() >> 4; cz <= b.getZ() >> 4; cz++)
-                            deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, cx, cz);
-                    if (!deepluckyblock.util.ChunkKeeper.zoneLoaded(level, a, b)) break;
-                    visited.add(key); cursor++; attempts++;
-                    int y = findNaturalGroundY(level, x, z);
-                    if (y > level.getMinBuildHeight()
-                            && placeRealTree(level, tree.type(), new BlockPos(x, y, z), level.getRandom())) planted++;
-                }
-                // A single vanilla feature is indivisible; check the budget after each attempt.
-                if (System.nanoTime() >= deadline) break;
-            }
-            if (cursor < trees.size()) {
-                TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1, this::slice);
-                return;
-            }
-            done = true;
-            deepluckyblock.util.DebugLog.structure("replantTrees: {} trees planted, {} duplicate columns ignored", planted, duplicates);
-            if (onDone != null) onDone.run();
-        }
+        if (onDone != null) onDone.run();
     }
 
     /**
@@ -4064,10 +3985,8 @@ public class StructureTerrainPrep {
                 && !ground.is(Blocks.PODZOL) && !ground.is(Blocks.MOSS_BLOCK) && !ground.is(Blocks.ROOTED_DIRT)) {
             return false;
         }
-        // Never erase an existing trunk or construction to force another tree here.
-        BlockState existing = level.getBlockState(pos);
-        if (!existing.isAir() && (!isSurfaceDecor(existing) || isLog(existing) || isLeaf(existing))) return false;
-        if (!existing.getFluidState().isEmpty()) return false;
+        // Ensure air space above for trunk + leaves
+        level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
 
         // Get the configured tree feature for this type
         var featureOpt = getConfiguredTreeFeature(level, type);
@@ -4841,7 +4760,6 @@ public class StructureTerrainPrep {
      * structure, ce qui correspond exactement a la zone que le joueur voit.
      */
     public static final int FIXLIQ_RADIUS = 1000;
-    private static final int FIXLIQ_REPAIR_SCALE = 4;
 
     /** Profondeur maximale exploree sous la surface d'une colonne de liquide. */
     private static final int FIXLIQ_SCAN_DEPTH = 40;
@@ -4860,10 +4778,6 @@ public class StructureTerrainPrep {
     private static final int FIXLIQ_QUEUE_PER_TICK = 4_000;
     private static final int FIXLIQ_QUEUE_MAX = 400_000;
 
-    /** T77: max columns a single enclosure proof may explore before the OPEN
-     *  verdict (safety: never drown land not proven enclosed). */
-    private static final int FIXLIQ_ESCAPE_MAX = 200_000;
-
     /** Budget de temps par tick (aucun tick ne doit depasser 40 ms ici). */
     private static final long FIXLIQ_SLICE_MS = 40;
 
@@ -4872,15 +4786,6 @@ public class StructureTerrainPrep {
     private static final java.util.Map<Long, Integer> LIQ_LAVA = new java.util.HashMap<>();
     /** File de propagation du niveau (cles = BlockPos.asLong(x, niveau, z)). */
     private static final java.util.ArrayDeque<Long> LIQ_QUEUE = new java.util.ArrayDeque<>();
-
-    /** T77: liquid surface COLUMNS (column keys = BlockPos.asLong(x, 0, z)): the walls
-     *  an enclosure proof never crosses. Column-level mirror of LIQ_WATER/LIQ_LAVA
-     *  whose keys embed the level Y. */
-    private static final java.util.Set<Long> LIQ_SURF = new java.util.HashSet<>();
-    /** T77: enclosure proof verdicts, by column: level proven OPEN (land component
-     *  reaching the repair region boundary = open land) or ENCLOSED (sealed basin). */
-    private static final java.util.Map<Long, Integer> LIQ_OPEN = new java.util.HashMap<>();
-    private static final java.util.Map<Long, Integer> LIQ_BASIN = new java.util.HashMap<>();
 
     private static final java.util.concurrent.atomic.AtomicInteger LIQ_SRC =
             new java.util.concurrent.atomic.AtomicInteger();   // blocs flowing -> source
@@ -4909,21 +4814,9 @@ public class StructureTerrainPrep {
      *       block »). C'est la reponse a « toute la nouvelle zone vide prevue a
      *       la continuite du lac ... afin de re remplir ».</li>
      * </ol>
-     *
-     * <p><b>T77 -- strict anti-flooding rule</b> (in-game test of 09/27:
-     * 46,539 dry plain columns drowned in 34.3 s after the x4 range expansion):
-     * pure WorldEdit-style propagation fills ANY dry land below the water level
-     * out to the region edges -- plains, marshes, valleys. The rule is now: a
-     * dry column below the nappe level is filled ONLY when a bounded escape
-     * search proves its entire sub-level land component is ENCLOSED inside the
-     * loaded repair area (a truly sealed basin: a dry hole left in water). A
-     * component that reaches the region boundary, an unknown chunk outside the
-     * near ring, or the exploration budget is OPEN = never filled. We plug dry
-     * holes left inside water; we never add water, and never above the level
-     * of the originating nappe.
      */
     public static void fixLiquidsPass(ServerLevel level, BlockPos min, BlockPos max, Runnable onDone) {
-        fixLiquidsPass(level, min, max, true, onDone);
+        fixLiquidsPass(level, min, max, false, onDone);
     }
 
     /**
@@ -4944,29 +4837,19 @@ public class StructureTerrainPrep {
             return;
         }
         LIQ_WATER.clear(); LIQ_LAVA.clear(); LIQ_QUEUE.clear();
-        LIQ_SURF.clear(); LIQ_OPEN.clear(); LIQ_BASIN.clear();
         LIQ_SRC.set(0); LIQ_FILL.set(0); LIQ_LAVA_FILL.set(0); LIQ_FILL_COLS.set(0);
         final int cx = (min.getX() + max.getX()) / 2, cz = (min.getZ() + max.getZ()) / 2;
-        // Start with the former effective bounds, then expand water repair by x4.
-        // Discover from loaded sources and load the connected frontier, not all dry chunks.
+        // Repair the edited terrain plus one chunk of natural shoreline. Never flood
+        // arbitrary loaded chunks elsewhere in the old 1000-block search radius.
         int margin = Math.max(FIXLIQ_FORCE_MARGIN, terrainRing() + 16);
         int x0 = Math.max(cx - FIXLIQ_RADIUS, min.getX() - margin);
         int x1 = Math.min(cx + FIXLIQ_RADIUS, max.getX() + margin);
         int z0 = Math.max(cz - FIXLIQ_RADIUS, min.getZ() - margin);
         int z1 = Math.min(cz + FIXLIQ_RADIUS, max.getZ() + margin);
-        // T77: the near force-ring (inForceRing) is computed BEFORE the x4 repair
-        // expansion. Scaling it inflated the ring to the whole repair area
-        // (measured CI storm: 729+ requested chunks, retry rounds beyond 40).
         int fx0 = x0 >> 4, fx1 = x1 >> 4, fz0 = z0 >> 4, fz1 = z1 >> 4;
-        // Multiply each effective radius by four, including asymmetric odd-sized bounds.
-        x0 = cx + (x0 - cx) * FIXLIQ_REPAIR_SCALE;
-        x1 = cx + (x1 - cx) * FIXLIQ_REPAIR_SCALE;
-        z0 = cz + (z0 - cz) * FIXLIQ_REPAIR_SCALE;
-        z1 = cz + (z1 - cz) * FIXLIQ_REPAIR_SCALE;
-        int sx0 = x0 >> 4, sx1 = x1 >> 4, sz0 = z0 >> 4, sz1 = z1 >> 4;
         List<int[]> chunks = new ArrayList<>();
-        for (int ccx = sx0; ccx <= sx1; ccx++)
-            for (int ccz = sz0; ccz <= sz1; ccz++) {
+        for (int ccx = fx0; ccx <= fx1; ccx++)
+            for (int ccz = fz0; ccz <= fz1; ccz++) {
                 if (onDemand && level.getChunkSource().getChunkNow(ccx, ccz) == null) continue;
                 chunks.add(new int[]{ccx, ccz});
                 if (onDemand) deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, ccx, ccz);
@@ -4979,8 +4862,7 @@ public class StructureTerrainPrep {
         LiquidJob job = new LiquidJob(level, cx, cz, chunks, label, onDone,
                 fx0, fx1, fz0, fz1, min, max, x0, x1, z0, z1, onDemand);
         TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1, job::slice);
-        step("fixLiquids: effective bounds x" + FIXLIQ_REPAIR_SCALE + " X=" + x0 + ".." + x1
-                + " Z=" + z0 + ".." + z1 + "; loaded seeds and connected liquid frontier");
+        step("fixLiquids : passe /fixwater + /fixlava planifiee (rayon " + FIXLIQ_RADIUS + ")");
     }
 
     /** T75 : nombre de tentatives de chargement des chunks voisins absents. */
@@ -5021,15 +4903,6 @@ public class StructureTerrainPrep {
         int scanRound = 0, refillRound = 0, requested = 0, demanded = 0, unloaded = 0, stalled = 0;
         int skippedFar = 0;   // T75 : chunks hors anneau proche, non charges et non forces
         final long started = System.currentTimeMillis();
-        // T77: enclosure-proof machinery (strict anti-flooding rule) -- pending
-        // candidates plus the live escape-BFS state.
-        final java.util.ArrayDeque<Long> verifyQueue = new java.util.ArrayDeque<>();
-        final java.util.Set<Long> verifySet = new java.util.HashSet<>();
-        final java.util.Set<Long> verifyLava = new java.util.HashSet<>();   // parked lava candidates
-        final java.util.ArrayDeque<Long> escQueue = new java.util.ArrayDeque<>();
-        final java.util.Set<Long> escSeen = new java.util.HashSet<>();
-        long escOrigin; int escLvl; boolean escActive, escLava; int escExplored;
-        int openRejected, proofs;
 
         LiquidJob(ServerLevel l, int cx, int cz, List<int[]> chunks, String label, Runnable onDone,
                   int fx0, int fx1, int fz0, int fz1, BlockPos min, BlockPos max,
@@ -5049,11 +4922,6 @@ public class StructureTerrainPrep {
                     && !(x >= structureMin.getX() && x <= structureMax.getX()
                     && z >= structureMin.getZ() && z <= structureMax.getZ())
                     && !isProtected(x, z);
-        }
-
-        private boolean inOriginalLiquidBounds(int x, int z) {
-            return x >= cx + (x0 - cx) / FIXLIQ_REPAIR_SCALE && x <= cx + (x1 - cx) / FIXLIQ_REPAIR_SCALE
-                    && z >= cz + (z0 - cz) / FIXLIQ_REPAIR_SCALE && z <= cz + (z1 - cz) / FIXLIQ_REPAIR_SCALE;
         }
 
         /** T75 : ce chunk est-il dans l'anneau proche (donc a charger si absent) ? */
@@ -5097,11 +4965,6 @@ public class StructureTerrainPrep {
                     && System.currentTimeMillis() - t0 < FIXLIQ_SLICE_MS) {
                 int[] c = chunks.get(idx++);
                 if (level.getChunkSource().getChunkNow(c[0], c[1]) == null) {
-                    // T77: in on-demand mode the scan seeds ONLY from already loaded
-                    // chunks -- requesting the whole x4 scan list here was the chunk
-                    // storm measured in CI. The near-halo frontier is still loaded by
-                    // the refill traversal below, bounded to the seed margin.
-                    if (onDemand) { skippedFar++; continue; }
                     // T75 : dans l'ANNEAU PROCHE, le chunk absent n'est plus ignore (c'est
                     // la que restaient les « murs d'eau » de la frontiere) : on le demande
                     // en tache de fond et on le retente. Au-dela, on ne force RIEN (un
@@ -5149,8 +5012,15 @@ public class StructureTerrainPrep {
         /** Une colonne : conversion + memorisation du niveau haut du liquide. */
         private void scanColumn(int x, int z) {
             if (!canRepair(x, z)) return;
-            // All loaded water in the expanded bounds can seed repair. Unloaded dry
-            // land is not generated speculatively; connected basins are explored below.
+            // Chunk rounding includes untouched strips outside the edited terrain
+            // border. Do not seed them just because they happen to be in memory:
+            // their far edges otherwise demand another row of untouched chunks.
+            // Only seed discovery is bounded here; BFS still uses the full repair
+            // bounds, and loads/pins any further chunk reached by an actual refill.
+            if (onDemand && (x < structureMin.getX() - seedMargin
+                    || x > structureMax.getX() + seedMargin
+                    || z < structureMin.getZ() - seedMargin
+                    || z > structureMax.getZ() + seedMargin)) return;
             // SafeSurface returns the first free Y, not the top occupied Y.
             int surface = Math.min(level.getMaxBuildHeight(),
                     deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z));
@@ -5160,7 +5030,6 @@ public class StructureTerrainPrep {
             boolean lavaTop = topFluid.is(net.minecraft.tags.FluidTags.LAVA);
             // Colonne de terre / roche / vegetal : rien a faire (cout O(1)).
             if (!waterTop && !lavaTop) return;
-            if (lavaTop && !inOriginalLiquidBounds(x, z)) return;
             int depth = Math.min(FIXLIQ_SCAN_DEPTH, surface - level.getMinBuildHeight());
             int hiWater = Integer.MIN_VALUE, hiLava = Integer.MIN_VALUE;
             for (int k = 0; k < depth; k++) {
@@ -5183,14 +5052,8 @@ public class StructureTerrainPrep {
                     break;   // sol atteint : le reste de la colonne n'est plus du liquide
                 }
             }
-            if (hiWater != Integer.MIN_VALUE) {
-                LIQ_WATER.put(BlockPos.asLong(x, hiWater, z), hiWater);
-                LIQ_SURF.add(BlockPos.asLong(x, 0, z));
-            }
-            if (hiLava != Integer.MIN_VALUE) {
-                LIQ_LAVA.put(BlockPos.asLong(x, hiLava, z), hiLava);
-                LIQ_SURF.add(BlockPos.asLong(x, 0, z));
-            }
+            if (hiWater != Integer.MIN_VALUE) LIQ_WATER.put(BlockPos.asLong(x, hiWater, z), hiWater);
+            if (hiLava != Integer.MIN_VALUE) LIQ_LAVA.put(BlockPos.asLong(x, hiLava, z), hiLava);
         }
 
         private void seedRefill() {
@@ -5216,77 +5079,54 @@ public class StructureTerrainPrep {
                     int nz = z + (d == 2 ? 1 : d == 3 ? -1 : 0);
                     long nk = BlockPos.asLong(nx, lvl, nz);
                     if (LIQ_WATER.containsKey(nk) || LIQ_LAVA.containsKey(nk)) continue;
-                    if (!canRepair(nx, nz) || (lava && !inOriginalLiquidBounds(nx, nz))) continue;
+                    if (!canRepair(nx, nz)) continue;
                     if (level.getChunkSource().getChunkNow(nx >> 4, nz >> 4) == null) {
                         // T75 : le voisin n'est pas en memoire. Dans l'anneau proche on le
                         // demande et on RETENTE ce point (avant, la propagation s'arretait net
                         // a la frontiere des chunks charges : c'est le « mur d'eau ») ; plus
                         // loin on ne force rien.
+                        if (!inForceRing(nx >> 4, nz >> 4)) continue;
                         if (onDemand) {
-                            // T77: on-demand frontier loads stay inside the near halo of the
-                            // footprint (seedMargin); even a liquid-connected cold chunk beyond
-                            // it is never requested (fixture: the intact padding source one
-                            // column past its chunk must NOT seed an unrelated frontier).
-                            if (nx < structureMin.getX() - seedMargin || nx > structureMax.getX() + seedMargin
-                                    || nz < structureMin.getZ() - seedMargin || nz > structureMax.getZ() + seedMargin) continue;
                             // Keep the frontier sparse: no rectangular dry halo expansion.
                             // The next slice waits until these chunks are loaded AND pinned.
                             if (deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, nx >> 4, nz >> 4)) requested++;
-                            // T77: same bounded-round discipline as the request() branch.
-                            // An unbounded onDemand retry could never conclude on a cold
-                            // frontier (measured: rounds beyond 40, job never ended).
-                            if (refillRound < FIXLIQ_PENDING_ROUNDS) retry.add(packed); else stalled++;
+                            retry.add(packed);
                         } else {
-                            if (!inForceRing(nx >> 4, nz >> 4)) continue;
                             deepluckyblock.util.SafeSurface.request(level, nx >> 4, nz >> 4);
                             if (refillRound < FIXLIQ_PENDING_ROUNDS) retry.add(packed); else stalled++;
                         }
                         continue;
                     }
-                    // Traverse an already full source column too. Otherwise the BFS
-                    // stops on untouched water and never reaches a dry hole beyond it.
-                    BlockState atLevel = level.getBlockState(mut.set(nx, lvl, nz));
-                    if (atLevel.is(lava ? Blocks.LAVA : Blocks.WATER) && atLevel.getFluidState().isSource()) {
-                        if (onDemand) deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, nx >> 4, nz >> 4);
-                        if (lava) LIQ_LAVA.put(nk, lvl); else LIQ_WATER.put(nk, lvl);
-                        LIQ_SURF.add(BlockPos.asLong(nx, 0, nz));
-                        LIQ_QUEUE.add(nk);
-                        continue;
-                    }
-                    if (onDemand) deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, nx >> 4, nz >> 4);
-                    // T77: STRICT RULE -- never fill a dry column that does not belong to
-                    // a pre-existing connected nappe, and never above the nappe's own
-                    // level. The verdict comes from a bounded escape BFS (drainVerify):
-                    // ENCLOSED -> fill right away, OPEN -> permanent reject at this level,
-                    // unproven -> park the candidate until its proof concludes.
-                    long colKey = BlockPos.asLong(nx, 0, nz);
-                    Integer openAt = LIQ_OPEN.get(colKey);
-                    if (openAt != null && openAt == lvl) { openRejected++; continue; }
-                    Integer basinAt = LIQ_BASIN.get(colKey);
-                    if (basinAt == null || basinAt != lvl) {
-                        // Cheap exact pre-filter so hopeless candidates never start a proof.
-                        int gateTop = topSolidAt(nx, nz, lvl, lvl - FIXLIQ_MAX_GAP, lava);
-                        if (gateTop == Integer.MIN_VALUE || gateTop >= lvl) continue;
-                        // Park the DRY CANDIDATE (nk), never the polled water column:
-                        // the proof must start on land, and the parent liquid type
-                        // rides along in verifyLava (water/lava stay separate).
-                        if (verifySet.add(nk)) {
-                            verifyQueue.add(nk);
-                            if (lava) verifyLava.add(nk);
+                    int top = topSolidAt(nx, nz, lvl, lvl - FIXLIQ_MAX_GAP, lava);
+                    if (top == Integer.MIN_VALUE || top >= lvl) continue;    // pas de fond proche / deja plein
+                    int need = 0;
+                    int cap = lava ? FIXLIQ_MAX_LAVA_FILL : waterFillLimit;
+                    BlockState floor = level.getBlockState(mut.set(nx, top, nz));
+                    if (isSurfaceDecor(floor) || !floor.blocksMotion()) continue;   // fond naturel solide uniquement
+                    boolean free = true;
+                    for (int y = top + 1; y <= lvl && free; y++) {
+                        BlockState cur = level.getBlockState(mut.set(nx, y, nz));
+                        if (cur.isAir()) { need++; continue; }
+                        if (cur.is(lava ? Blocks.LAVA : Blocks.WATER)) {
+                            if (!cur.getFluidState().isSource()) need++;
+                            continue;
                         }
-                        continue;
+                        free = false;                                            // bloc plein dans la colonne -> creux non vide
                     }
-                    tryFillColumn(nx, nz, lvl, lava);
+                    if (!free || need == 0) continue;
+                    if ((lava ? LIQ_LAVA_FILL.get() : LIQ_FILL.get()) + need > cap) { capped++; continue; }
+                    BlockState source = lava ? Blocks.LAVA.defaultBlockState() : Blocks.WATER.defaultBlockState();
+                    for (int y = top + 1; y <= lvl; y++) {
+                        mut.set(nx, y, nz);
+                        if (!level.getBlockState(mut).equals(source)) level.setBlock(mut, source, FAST_FLAG);
+                    }
+                    if (lava) LIQ_LAVA_FILL.addAndGet(need); else LIQ_FILL.addAndGet(need);
+                    LIQ_FILL_COLS.incrementAndGet();
+                    if (lava) LIQ_LAVA.put(nk, lvl); else LIQ_WATER.put(nk, lvl);
+                    LIQ_QUEUE.add(nk);
                 }
             }
             if (!LIQ_QUEUE.isEmpty()) {
-                TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1, this::slice);
-                return;
-            }
-            if (!verifyQueue.isEmpty() || escActive) {
-                // T77: unproven dry candidates remain; conclude their enclosure
-                // proofs (fills re-feed LIQ_QUEUE and are processed next tick).
-                drainVerify(t0);
                 TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1, this::slice);
                 return;
             }
@@ -5302,129 +5142,6 @@ public class StructureTerrainPrep {
                 return;
             }
             finish();
-        }
-
-        /**
-         * T77: fills ONE proven-enclosed column up to the nappe level (never above).
-         * The body is word for word the former inline fill block: every exact
-         * condition (nearby floor, natural solid floor, free pocket, volume caps)
-         * is re-checked at fill time, so a stale candidate can never overfill.
-         */
-        private void tryFillColumn(int nx, int nz, int lvl, boolean lava) {
-            long nk = BlockPos.asLong(nx, lvl, nz);
-            if (LIQ_WATER.containsKey(nk) || LIQ_LAVA.containsKey(nk)) return;   // deja plein
-            int top = topSolidAt(nx, nz, lvl, lvl - FIXLIQ_MAX_GAP, lava);
-            if (top == Integer.MIN_VALUE || top >= lvl) return;    // pas de fond proche / deja plein
-            int need = 0;
-            int cap = lava ? FIXLIQ_MAX_LAVA_FILL : waterFillLimit;
-            BlockState floor = level.getBlockState(mut.set(nx, top, nz));
-            if (isSurfaceDecor(floor) || !floor.blocksMotion()) return;   // fond naturel solide uniquement
-            boolean free = true;
-            for (int y = top + 1; y <= lvl && free; y++) {
-                BlockState cur = level.getBlockState(mut.set(nx, y, nz));
-                if (cur.isAir()) { need++; continue; }
-                if (cur.is(lava ? Blocks.LAVA : Blocks.WATER)) {
-                    if (!cur.getFluidState().isSource()) need++;
-                    continue;
-                }
-                free = false;                                            // bloc plein dans la colonne -> creux non vide
-            }
-            if (!free || need == 0) return;
-            if ((lava ? LIQ_LAVA_FILL.get() : LIQ_FILL.get()) + need > cap) { capped++; return; }
-            BlockState source = lava ? Blocks.LAVA.defaultBlockState() : Blocks.WATER.defaultBlockState();
-            for (int y = top + 1; y <= lvl; y++) {
-                mut.set(nx, y, nz);
-                if (!level.getBlockState(mut).equals(source)) level.setBlock(mut, source, FAST_FLAG);
-            }
-            if (lava) LIQ_LAVA_FILL.addAndGet(need); else LIQ_FILL.addAndGet(need);
-            LIQ_FILL_COLS.incrementAndGet();
-            if (lava) LIQ_LAVA.put(nk, lvl); else LIQ_WATER.put(nk, lvl);
-            // Filled columns are NOT added to LIQ_SURF: only pre-existing nappe
-            // columns wall off escape proofs. A basin raised to one level must
-            // stay traversable by a later proof at a higher connected level.
-            LIQ_QUEUE.add(nk);
-        }
-
-        /**
-         * T77: enclosure-proof engine. Every dry candidate below the nappe level
-         * starts an escape BFS over its sub-level land component (heightmap
-         * MOTION_BLOCKING reads only -- no block scans, no long ticks, the slice
-         * budget is honored). Verdicts: OPEN when the component reaches the
-         * repair-region boundary, an unknown chunk outside the near ring, or the
-         * exploration budget; ENCLOSED when the search fully exhausts INSIDE the
-         * loaded repair area (sealed basin proven).
-         *
-         * @return true once nothing is left awaiting a proof.
-         */
-        private boolean drainVerify(long t0) {
-            while (System.currentTimeMillis() - t0 < FIXLIQ_SLICE_MS) {
-                if (!escActive) {
-                    if (verifyQueue.isEmpty()) return true;
-                    long p = verifyQueue.poll(); verifySet.remove(p);
-                    boolean lv = verifyLava.remove(p);   // parent liquid type rides with the candidate
-                    int px = BlockPos.getX(p), pl = BlockPos.getY(p), pz = BlockPos.getZ(p);
-                    long ck = BlockPos.asLong(px, 0, pz);
-                    Integer oa = LIQ_OPEN.get(ck);
-                    if (oa != null && oa == pl) { openRejected++; continue; }
-                    Integer ba = LIQ_BASIN.get(ck);
-                    if (ba != null && ba == pl) { tryFillColumn(px, pz, pl, lv); continue; }
-                    escOrigin = p; escLvl = pl; escLava = lv;
-                    escSeen.clear(); escQueue.clear();
-                    escSeen.add(ck); escQueue.add(ck);
-                    escExplored = 0; escActive = true; proofs++;
-                }
-                while (escActive && !escQueue.isEmpty()) {
-                    if (System.currentTimeMillis() - t0 >= FIXLIQ_SLICE_MS) return false;
-                    long ck = escQueue.poll();
-                    int ex0 = BlockPos.getX(ck), ez0 = BlockPos.getZ(ck);
-                    for (int d = 0; d < 4; d++) {
-                        int ex = ex0 + (d == 0 ? 1 : d == 1 ? -1 : 0);
-                        int ez = ez0 + (d == 2 ? 1 : d == 3 ? -1 : 0);
-                        long ek = BlockPos.asLong(ex, 0, ez);
-                        if (escSeen.contains(ek)) continue;
-                        // Reaching the repair-region edge = connected to open land.
-                        if (ex < x0 || ex > x1 || ez < z0 || ez > z1) { concludeOpen(); break; }
-                        if (LIQ_SURF.contains(ek)) continue;                    // nappe = paroi
-                        Integer oa = LIQ_OPEN.get(ek);
-                        if (oa != null && oa == escLvl) { concludeOpen(); break; }   // transitivity
-                        if (isProtected(ex, ez)) continue;
-                        if (level.getChunkSource().getChunkNow(ex >> 4, ez >> 4) == null) {
-                            // Unknown land is OPEN land: never drown what we cannot
-                            // see, and never request nor generate a chunk for a
-                            // proof (measured CI storm: 1,360 load requests, retry
-                            // rounds beyond 40, dlbverify timed out at 240 s).
-                            concludeOpen(); break;
-                        }
-                        // Below the nappe level? (heightmap read only, no block scan)
-                        int topY = deepluckyblock.util.SafeSurface.height(level,
-                                Heightmap.Types.MOTION_BLOCKING, ex, ez) - 1;
-                        if (topY >= escLvl) continue;    // emerging ground = wall
-                        Integer ba = LIQ_BASIN.get(ek);
-                        if (ba == null || ba != escLvl) {
-                            // dry land column below the level: the component grows
-                            if (++escExplored > FIXLIQ_ESCAPE_MAX) { concludeOpen(); break; }
-                        }
-                        escSeen.add(ek); escQueue.add(ek);
-                    }
-                }
-                if (escActive) concludeBasin();   // frontier exhausted without an exit: sealed
-            }
-            return false;   // tick budget spent: resume next tick
-        }
-
-        /** T77: verdict OPEN -- the component touches open land; nothing is ever filled. */
-        private void concludeOpen() {
-            for (Long c : escSeen) LIQ_OPEN.put(c, escLvl);
-            openRejected++;
-            escActive = false; escQueue.clear(); escSeen.clear();
-        }
-
-        /** T77: verdict ENCLOSED -- sealed basin proven; members become fillable at this level. */
-        private void concludeBasin() {
-            for (Long c : escSeen) LIQ_BASIN.put(c, escLvl);
-            int px = BlockPos.getX(escOrigin), pz = BlockPos.getZ(escOrigin);
-            escActive = false; escQueue.clear(); escSeen.clear();
-            tryFillColumn(px, pz, escLvl, escLava);
         }
 
         /**
@@ -5460,12 +5177,10 @@ public class StructureTerrainPrep {
                         "fixLiquids : {} point(s) non traites (chunk voisin jamais charge) -- T75", stalled);
             deepluckyblock.util.DebugLog.structure(
                     "fixLiquids TERMINE ({} chunks voisins demandes, {} non chargeables) : {} bloc(s) flowing -> source, "
-                            + "{} colonne(s) / {} bloc(s) d'eau remis a niveau, {} colonne(s) / {} bloc(s) de lave, "
-                            + "{} preuve(s) d'enclave, {} rejet(s) terre ferme ouverte (regle stricte T77), {} ms",
+                            + "{} colonne(s) / {} bloc(s) d'eau remis a niveau, {} colonne(s) / {} bloc(s) de lave, {} ms",
                     requested, unloaded,
                     LIQ_SRC.get(), LIQ_FILL_COLS.get(), LIQ_FILL.get(),
-                    LIQ_LAVA.size(), LIQ_LAVA_FILL.get(), proofs, openRejected,
-                    System.currentTimeMillis() - started);
+                    LIQ_LAVA.size(), LIQ_LAVA_FILL.get(), System.currentTimeMillis() - started);
         LIQ_QUEUE.clear();
         retry.clear();
         pending.clear();
@@ -5704,9 +5419,6 @@ public class StructureTerrainPrep {
             BlockState s = readBlock(level, chunk, mut, x, y, z);
             if (s.isAir()) { supported = false; y++; continue; }
             if (!isSweepableNatural(s)) { supported = true; y++; continue; }   // bloc plein : porteur
-            if (isLooseSurface(s) && y <= collarGroundFloor(x, z)) {
-                supported = true; y++; continue;
-            }
             if (!supported) {
                 // T45 : plus relie au sol DANS CETTE COLONNE -- on ne supprime que
                 // si l'amas entier flotte (bord de canopee = legitime, liane
@@ -5717,17 +5429,14 @@ public class StructureTerrainPrep {
                     SWEPT_NAT.incrementAndGet();
                     SWEPT.incrementAndGet();
                 }
-                supported = !level.getBlockState(mut.set(x, y, z)).isAir();
+                supported = true;   // l'amas est ancre (ou vient d'etre degage) : on ne descend pas plus
                 y++;
                 continue;
             }
-            if (!hasNaturalSupport(level, mut, x, y, z, s)
-                    && isFloatingCluster(level, x, y, z, s)) {
-                // hasNaturalSupport moved mut to the supporting block / last neighbour.
-                level.setBlock(mut.set(x, y, z), Blocks.AIR.defaultBlockState(), FAST_FLAG);
+            if (!hasNaturalSupport(level, mut, x, y, z, s)) {
+                level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
                 SWEPT_NAT.incrementAndGet();
                 SWEPT.incrementAndGet();
-                supported = false;
                 y++;
                 continue;      // ce qui pendait dessous/au-dessus devient non porte a son tour
             }
@@ -5784,7 +5493,6 @@ public class StructureTerrainPrep {
             long[] p = q.poll();
             int x = (int) p[0], y = (int) p[1], z = (int) p[2];
             visited++;
-            if (!deepluckyblock.util.SafeSurface.isLoadedAt(level, x, z)) return false;
             BlockState below = level.getBlockState(m.set(x, y - 1, z));
             if (!below.isAir() && below.blocksMotion()) {
                 // ANCRE : l'amas tient a quelque chose de plein -- on le memorise.
@@ -5795,14 +5503,12 @@ public class StructureTerrainPrep {
                 int nx = x + d.getStepX(), ny = y + d.getStepY(), nz = z + d.getStepZ();
                 long k = BlockPos.asLong(nx, ny, nz);
                 if (!seen.add(k)) continue;
-                if (!deepluckyblock.util.SafeSurface.isLoadedAt(level, nx, nz)) return false;
                 BlockState n = level.getBlockState(m.set(nx, ny, nz));
                 if (n.isAir() || !isSweepableNatural(n)) continue;   // l'amas ne s'etend qu'entre NATURELS
                 q.add(new long[]{nx, ny, nz});
             }
         }
-        // A size limit is not proof of a floating cluster: preserve unexamined blocks.
-        return q.isEmpty();
+        return true;   // aucun appui plein trouve : l'amas flotte
     }
 
     /** Vrai pour tout ce que le balayage a le droit de retirer s'il flotte. */
@@ -5828,9 +5534,7 @@ public class StructureTerrainPrep {
                 || s.getBlock() instanceof net.minecraft.world.level.block.GrowingPlantBlock;
         if (!lateral) return false;
         for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
-            int nx = x + d.getStepX(), nz = z + d.getStepZ();
-            if (!deepluckyblock.util.SafeSurface.isLoadedAt(level, nx, nz)) return true;
-            BlockState n = level.getBlockState(mut.set(nx, y + d.getStepY(), nz));
+            BlockState n = level.getBlockState(mut.set(x + d.getStepX(), y + d.getStepY(), z + d.getStepZ()));
             if (!n.isAir() && n.blocksMotion()) return true;
         }
         return false;

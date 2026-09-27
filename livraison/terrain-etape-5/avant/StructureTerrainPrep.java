@@ -4860,10 +4860,6 @@ public class StructureTerrainPrep {
     private static final int FIXLIQ_QUEUE_PER_TICK = 4_000;
     private static final int FIXLIQ_QUEUE_MAX = 400_000;
 
-    /** T77: max columns a single enclosure proof may explore before the OPEN
-     *  verdict (safety: never drown land not proven enclosed). */
-    private static final int FIXLIQ_ESCAPE_MAX = 200_000;
-
     /** Budget de temps par tick (aucun tick ne doit depasser 40 ms ici). */
     private static final long FIXLIQ_SLICE_MS = 40;
 
@@ -4872,15 +4868,6 @@ public class StructureTerrainPrep {
     private static final java.util.Map<Long, Integer> LIQ_LAVA = new java.util.HashMap<>();
     /** File de propagation du niveau (cles = BlockPos.asLong(x, niveau, z)). */
     private static final java.util.ArrayDeque<Long> LIQ_QUEUE = new java.util.ArrayDeque<>();
-
-    /** T77: liquid surface COLUMNS (column keys = BlockPos.asLong(x, 0, z)): the walls
-     *  an enclosure proof never crosses. Column-level mirror of LIQ_WATER/LIQ_LAVA
-     *  whose keys embed the level Y. */
-    private static final java.util.Set<Long> LIQ_SURF = new java.util.HashSet<>();
-    /** T77: enclosure proof verdicts, by column: level proven OPEN (land component
-     *  reaching the repair region boundary = open land) or ENCLOSED (sealed basin). */
-    private static final java.util.Map<Long, Integer> LIQ_OPEN = new java.util.HashMap<>();
-    private static final java.util.Map<Long, Integer> LIQ_BASIN = new java.util.HashMap<>();
 
     private static final java.util.concurrent.atomic.AtomicInteger LIQ_SRC =
             new java.util.concurrent.atomic.AtomicInteger();   // blocs flowing -> source
@@ -4909,18 +4896,6 @@ public class StructureTerrainPrep {
      *       block »). C'est la reponse a « toute la nouvelle zone vide prevue a
      *       la continuite du lac ... afin de re remplir ».</li>
      * </ol>
-     *
-     * <p><b>T77 -- strict anti-flooding rule</b> (in-game test of 09/27:
-     * 46,539 dry plain columns drowned in 34.3 s after the x4 range expansion):
-     * pure WorldEdit-style propagation fills ANY dry land below the water level
-     * out to the region edges -- plains, marshes, valleys. The rule is now: a
-     * dry column below the nappe level is filled ONLY when a bounded escape
-     * search proves its entire sub-level land component is ENCLOSED inside the
-     * loaded repair area (a truly sealed basin: a dry hole left in water). A
-     * component that reaches the region boundary, an unknown chunk outside the
-     * near ring, or the exploration budget is OPEN = never filled. We plug dry
-     * holes left inside water; we never add water, and never above the level
-     * of the originating nappe.
      */
     public static void fixLiquidsPass(ServerLevel level, BlockPos min, BlockPos max, Runnable onDone) {
         fixLiquidsPass(level, min, max, true, onDone);
@@ -4944,7 +4919,6 @@ public class StructureTerrainPrep {
             return;
         }
         LIQ_WATER.clear(); LIQ_LAVA.clear(); LIQ_QUEUE.clear();
-        LIQ_SURF.clear(); LIQ_OPEN.clear(); LIQ_BASIN.clear();
         LIQ_SRC.set(0); LIQ_FILL.set(0); LIQ_LAVA_FILL.set(0); LIQ_FILL_COLS.set(0);
         final int cx = (min.getX() + max.getX()) / 2, cz = (min.getZ() + max.getZ()) / 2;
         // Start with the former effective bounds, then expand water repair by x4.
@@ -4954,19 +4928,15 @@ public class StructureTerrainPrep {
         int x1 = Math.min(cx + FIXLIQ_RADIUS, max.getX() + margin);
         int z0 = Math.max(cz - FIXLIQ_RADIUS, min.getZ() - margin);
         int z1 = Math.min(cz + FIXLIQ_RADIUS, max.getZ() + margin);
-        // T77: the near force-ring (inForceRing) is computed BEFORE the x4 repair
-        // expansion. Scaling it inflated the ring to the whole repair area
-        // (measured CI storm: 729+ requested chunks, retry rounds beyond 40).
-        int fx0 = x0 >> 4, fx1 = x1 >> 4, fz0 = z0 >> 4, fz1 = z1 >> 4;
         // Multiply each effective radius by four, including asymmetric odd-sized bounds.
         x0 = cx + (x0 - cx) * FIXLIQ_REPAIR_SCALE;
         x1 = cx + (x1 - cx) * FIXLIQ_REPAIR_SCALE;
         z0 = cz + (z0 - cz) * FIXLIQ_REPAIR_SCALE;
         z1 = cz + (z1 - cz) * FIXLIQ_REPAIR_SCALE;
-        int sx0 = x0 >> 4, sx1 = x1 >> 4, sz0 = z0 >> 4, sz1 = z1 >> 4;
+        int fx0 = x0 >> 4, fx1 = x1 >> 4, fz0 = z0 >> 4, fz1 = z1 >> 4;
         List<int[]> chunks = new ArrayList<>();
-        for (int ccx = sx0; ccx <= sx1; ccx++)
-            for (int ccz = sz0; ccz <= sz1; ccz++) {
+        for (int ccx = fx0; ccx <= fx1; ccx++)
+            for (int ccz = fz0; ccz <= fz1; ccz++) {
                 if (onDemand && level.getChunkSource().getChunkNow(ccx, ccz) == null) continue;
                 chunks.add(new int[]{ccx, ccz});
                 if (onDemand) deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, ccx, ccz);
@@ -5021,15 +4991,6 @@ public class StructureTerrainPrep {
         int scanRound = 0, refillRound = 0, requested = 0, demanded = 0, unloaded = 0, stalled = 0;
         int skippedFar = 0;   // T75 : chunks hors anneau proche, non charges et non forces
         final long started = System.currentTimeMillis();
-        // T77: enclosure-proof machinery (strict anti-flooding rule) -- pending
-        // candidates plus the live escape-BFS state.
-        final java.util.ArrayDeque<Long> verifyQueue = new java.util.ArrayDeque<>();
-        final java.util.Set<Long> verifySet = new java.util.HashSet<>();
-        final java.util.Set<Long> verifyLava = new java.util.HashSet<>();   // parked lava candidates
-        final java.util.ArrayDeque<Long> escQueue = new java.util.ArrayDeque<>();
-        final java.util.Set<Long> escSeen = new java.util.HashSet<>();
-        long escOrigin; int escLvl; boolean escActive, escLava; int escExplored;
-        int openRejected, proofs;
 
         LiquidJob(ServerLevel l, int cx, int cz, List<int[]> chunks, String label, Runnable onDone,
                   int fx0, int fx1, int fz0, int fz1, BlockPos min, BlockPos max,
@@ -5097,11 +5058,6 @@ public class StructureTerrainPrep {
                     && System.currentTimeMillis() - t0 < FIXLIQ_SLICE_MS) {
                 int[] c = chunks.get(idx++);
                 if (level.getChunkSource().getChunkNow(c[0], c[1]) == null) {
-                    // T77: in on-demand mode the scan seeds ONLY from already loaded
-                    // chunks -- requesting the whole x4 scan list here was the chunk
-                    // storm measured in CI. The near-halo frontier is still loaded by
-                    // the refill traversal below, bounded to the seed margin.
-                    if (onDemand) { skippedFar++; continue; }
                     // T75 : dans l'ANNEAU PROCHE, le chunk absent n'est plus ignore (c'est
                     // la que restaient les « murs d'eau » de la frontiere) : on le demande
                     // en tache de fond et on le retente. Au-dela, on ne force RIEN (un
@@ -5183,14 +5139,8 @@ public class StructureTerrainPrep {
                     break;   // sol atteint : le reste de la colonne n'est plus du liquide
                 }
             }
-            if (hiWater != Integer.MIN_VALUE) {
-                LIQ_WATER.put(BlockPos.asLong(x, hiWater, z), hiWater);
-                LIQ_SURF.add(BlockPos.asLong(x, 0, z));
-            }
-            if (hiLava != Integer.MIN_VALUE) {
-                LIQ_LAVA.put(BlockPos.asLong(x, hiLava, z), hiLava);
-                LIQ_SURF.add(BlockPos.asLong(x, 0, z));
-            }
+            if (hiWater != Integer.MIN_VALUE) LIQ_WATER.put(BlockPos.asLong(x, hiWater, z), hiWater);
+            if (hiLava != Integer.MIN_VALUE) LIQ_LAVA.put(BlockPos.asLong(x, hiLava, z), hiLava);
         }
 
         private void seedRefill() {
@@ -5222,22 +5172,13 @@ public class StructureTerrainPrep {
                         // demande et on RETENTE ce point (avant, la propagation s'arretait net
                         // a la frontiere des chunks charges : c'est le « mur d'eau ») ; plus
                         // loin on ne force rien.
+                        if (!inForceRing(nx >> 4, nz >> 4)) continue;
                         if (onDemand) {
-                            // T77: on-demand frontier loads stay inside the near halo of the
-                            // footprint (seedMargin); even a liquid-connected cold chunk beyond
-                            // it is never requested (fixture: the intact padding source one
-                            // column past its chunk must NOT seed an unrelated frontier).
-                            if (nx < structureMin.getX() - seedMargin || nx > structureMax.getX() + seedMargin
-                                    || nz < structureMin.getZ() - seedMargin || nz > structureMax.getZ() + seedMargin) continue;
                             // Keep the frontier sparse: no rectangular dry halo expansion.
                             // The next slice waits until these chunks are loaded AND pinned.
                             if (deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, nx >> 4, nz >> 4)) requested++;
-                            // T77: same bounded-round discipline as the request() branch.
-                            // An unbounded onDemand retry could never conclude on a cold
-                            // frontier (measured: rounds beyond 40, job never ended).
-                            if (refillRound < FIXLIQ_PENDING_ROUNDS) retry.add(packed); else stalled++;
+                            retry.add(packed);
                         } else {
-                            if (!inForceRing(nx >> 4, nz >> 4)) continue;
                             deepluckyblock.util.SafeSurface.request(level, nx >> 4, nz >> 4);
                             if (refillRound < FIXLIQ_PENDING_ROUNDS) retry.add(packed); else stalled++;
                         }
@@ -5249,44 +5190,40 @@ public class StructureTerrainPrep {
                     if (atLevel.is(lava ? Blocks.LAVA : Blocks.WATER) && atLevel.getFluidState().isSource()) {
                         if (onDemand) deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, nx >> 4, nz >> 4);
                         if (lava) LIQ_LAVA.put(nk, lvl); else LIQ_WATER.put(nk, lvl);
-                        LIQ_SURF.add(BlockPos.asLong(nx, 0, nz));
                         LIQ_QUEUE.add(nk);
                         continue;
                     }
                     if (onDemand) deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, nx >> 4, nz >> 4);
-                    // T77: STRICT RULE -- never fill a dry column that does not belong to
-                    // a pre-existing connected nappe, and never above the nappe's own
-                    // level. The verdict comes from a bounded escape BFS (drainVerify):
-                    // ENCLOSED -> fill right away, OPEN -> permanent reject at this level,
-                    // unproven -> park the candidate until its proof concludes.
-                    long colKey = BlockPos.asLong(nx, 0, nz);
-                    Integer openAt = LIQ_OPEN.get(colKey);
-                    if (openAt != null && openAt == lvl) { openRejected++; continue; }
-                    Integer basinAt = LIQ_BASIN.get(colKey);
-                    if (basinAt == null || basinAt != lvl) {
-                        // Cheap exact pre-filter so hopeless candidates never start a proof.
-                        int gateTop = topSolidAt(nx, nz, lvl, lvl - FIXLIQ_MAX_GAP, lava);
-                        if (gateTop == Integer.MIN_VALUE || gateTop >= lvl) continue;
-                        // Park the DRY CANDIDATE (nk), never the polled water column:
-                        // the proof must start on land, and the parent liquid type
-                        // rides along in verifyLava (water/lava stay separate).
-                        if (verifySet.add(nk)) {
-                            verifyQueue.add(nk);
-                            if (lava) verifyLava.add(nk);
+                    int top = topSolidAt(nx, nz, lvl, lvl - FIXLIQ_MAX_GAP, lava);
+                    if (top == Integer.MIN_VALUE || top >= lvl) continue;    // pas de fond proche / deja plein
+                    int need = 0;
+                    int cap = lava ? FIXLIQ_MAX_LAVA_FILL : waterFillLimit;
+                    BlockState floor = level.getBlockState(mut.set(nx, top, nz));
+                    if (isSurfaceDecor(floor) || !floor.blocksMotion()) continue;   // fond naturel solide uniquement
+                    boolean free = true;
+                    for (int y = top + 1; y <= lvl && free; y++) {
+                        BlockState cur = level.getBlockState(mut.set(nx, y, nz));
+                        if (cur.isAir()) { need++; continue; }
+                        if (cur.is(lava ? Blocks.LAVA : Blocks.WATER)) {
+                            if (!cur.getFluidState().isSource()) need++;
+                            continue;
                         }
-                        continue;
+                        free = false;                                            // bloc plein dans la colonne -> creux non vide
                     }
-                    tryFillColumn(nx, nz, lvl, lava);
+                    if (!free || need == 0) continue;
+                    if ((lava ? LIQ_LAVA_FILL.get() : LIQ_FILL.get()) + need > cap) { capped++; continue; }
+                    BlockState source = lava ? Blocks.LAVA.defaultBlockState() : Blocks.WATER.defaultBlockState();
+                    for (int y = top + 1; y <= lvl; y++) {
+                        mut.set(nx, y, nz);
+                        if (!level.getBlockState(mut).equals(source)) level.setBlock(mut, source, FAST_FLAG);
+                    }
+                    if (lava) LIQ_LAVA_FILL.addAndGet(need); else LIQ_FILL.addAndGet(need);
+                    LIQ_FILL_COLS.incrementAndGet();
+                    if (lava) LIQ_LAVA.put(nk, lvl); else LIQ_WATER.put(nk, lvl);
+                    LIQ_QUEUE.add(nk);
                 }
             }
             if (!LIQ_QUEUE.isEmpty()) {
-                TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1, this::slice);
-                return;
-            }
-            if (!verifyQueue.isEmpty() || escActive) {
-                // T77: unproven dry candidates remain; conclude their enclosure
-                // proofs (fills re-feed LIQ_QUEUE and are processed next tick).
-                drainVerify(t0);
                 TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1, this::slice);
                 return;
             }
@@ -5302,129 +5239,6 @@ public class StructureTerrainPrep {
                 return;
             }
             finish();
-        }
-
-        /**
-         * T77: fills ONE proven-enclosed column up to the nappe level (never above).
-         * The body is word for word the former inline fill block: every exact
-         * condition (nearby floor, natural solid floor, free pocket, volume caps)
-         * is re-checked at fill time, so a stale candidate can never overfill.
-         */
-        private void tryFillColumn(int nx, int nz, int lvl, boolean lava) {
-            long nk = BlockPos.asLong(nx, lvl, nz);
-            if (LIQ_WATER.containsKey(nk) || LIQ_LAVA.containsKey(nk)) return;   // deja plein
-            int top = topSolidAt(nx, nz, lvl, lvl - FIXLIQ_MAX_GAP, lava);
-            if (top == Integer.MIN_VALUE || top >= lvl) return;    // pas de fond proche / deja plein
-            int need = 0;
-            int cap = lava ? FIXLIQ_MAX_LAVA_FILL : waterFillLimit;
-            BlockState floor = level.getBlockState(mut.set(nx, top, nz));
-            if (isSurfaceDecor(floor) || !floor.blocksMotion()) return;   // fond naturel solide uniquement
-            boolean free = true;
-            for (int y = top + 1; y <= lvl && free; y++) {
-                BlockState cur = level.getBlockState(mut.set(nx, y, nz));
-                if (cur.isAir()) { need++; continue; }
-                if (cur.is(lava ? Blocks.LAVA : Blocks.WATER)) {
-                    if (!cur.getFluidState().isSource()) need++;
-                    continue;
-                }
-                free = false;                                            // bloc plein dans la colonne -> creux non vide
-            }
-            if (!free || need == 0) return;
-            if ((lava ? LIQ_LAVA_FILL.get() : LIQ_FILL.get()) + need > cap) { capped++; return; }
-            BlockState source = lava ? Blocks.LAVA.defaultBlockState() : Blocks.WATER.defaultBlockState();
-            for (int y = top + 1; y <= lvl; y++) {
-                mut.set(nx, y, nz);
-                if (!level.getBlockState(mut).equals(source)) level.setBlock(mut, source, FAST_FLAG);
-            }
-            if (lava) LIQ_LAVA_FILL.addAndGet(need); else LIQ_FILL.addAndGet(need);
-            LIQ_FILL_COLS.incrementAndGet();
-            if (lava) LIQ_LAVA.put(nk, lvl); else LIQ_WATER.put(nk, lvl);
-            // Filled columns are NOT added to LIQ_SURF: only pre-existing nappe
-            // columns wall off escape proofs. A basin raised to one level must
-            // stay traversable by a later proof at a higher connected level.
-            LIQ_QUEUE.add(nk);
-        }
-
-        /**
-         * T77: enclosure-proof engine. Every dry candidate below the nappe level
-         * starts an escape BFS over its sub-level land component (heightmap
-         * MOTION_BLOCKING reads only -- no block scans, no long ticks, the slice
-         * budget is honored). Verdicts: OPEN when the component reaches the
-         * repair-region boundary, an unknown chunk outside the near ring, or the
-         * exploration budget; ENCLOSED when the search fully exhausts INSIDE the
-         * loaded repair area (sealed basin proven).
-         *
-         * @return true once nothing is left awaiting a proof.
-         */
-        private boolean drainVerify(long t0) {
-            while (System.currentTimeMillis() - t0 < FIXLIQ_SLICE_MS) {
-                if (!escActive) {
-                    if (verifyQueue.isEmpty()) return true;
-                    long p = verifyQueue.poll(); verifySet.remove(p);
-                    boolean lv = verifyLava.remove(p);   // parent liquid type rides with the candidate
-                    int px = BlockPos.getX(p), pl = BlockPos.getY(p), pz = BlockPos.getZ(p);
-                    long ck = BlockPos.asLong(px, 0, pz);
-                    Integer oa = LIQ_OPEN.get(ck);
-                    if (oa != null && oa == pl) { openRejected++; continue; }
-                    Integer ba = LIQ_BASIN.get(ck);
-                    if (ba != null && ba == pl) { tryFillColumn(px, pz, pl, lv); continue; }
-                    escOrigin = p; escLvl = pl; escLava = lv;
-                    escSeen.clear(); escQueue.clear();
-                    escSeen.add(ck); escQueue.add(ck);
-                    escExplored = 0; escActive = true; proofs++;
-                }
-                while (escActive && !escQueue.isEmpty()) {
-                    if (System.currentTimeMillis() - t0 >= FIXLIQ_SLICE_MS) return false;
-                    long ck = escQueue.poll();
-                    int ex0 = BlockPos.getX(ck), ez0 = BlockPos.getZ(ck);
-                    for (int d = 0; d < 4; d++) {
-                        int ex = ex0 + (d == 0 ? 1 : d == 1 ? -1 : 0);
-                        int ez = ez0 + (d == 2 ? 1 : d == 3 ? -1 : 0);
-                        long ek = BlockPos.asLong(ex, 0, ez);
-                        if (escSeen.contains(ek)) continue;
-                        // Reaching the repair-region edge = connected to open land.
-                        if (ex < x0 || ex > x1 || ez < z0 || ez > z1) { concludeOpen(); break; }
-                        if (LIQ_SURF.contains(ek)) continue;                    // nappe = paroi
-                        Integer oa = LIQ_OPEN.get(ek);
-                        if (oa != null && oa == escLvl) { concludeOpen(); break; }   // transitivity
-                        if (isProtected(ex, ez)) continue;
-                        if (level.getChunkSource().getChunkNow(ex >> 4, ez >> 4) == null) {
-                            // Unknown land is OPEN land: never drown what we cannot
-                            // see, and never request nor generate a chunk for a
-                            // proof (measured CI storm: 1,360 load requests, retry
-                            // rounds beyond 40, dlbverify timed out at 240 s).
-                            concludeOpen(); break;
-                        }
-                        // Below the nappe level? (heightmap read only, no block scan)
-                        int topY = deepluckyblock.util.SafeSurface.height(level,
-                                Heightmap.Types.MOTION_BLOCKING, ex, ez) - 1;
-                        if (topY >= escLvl) continue;    // emerging ground = wall
-                        Integer ba = LIQ_BASIN.get(ek);
-                        if (ba == null || ba != escLvl) {
-                            // dry land column below the level: the component grows
-                            if (++escExplored > FIXLIQ_ESCAPE_MAX) { concludeOpen(); break; }
-                        }
-                        escSeen.add(ek); escQueue.add(ek);
-                    }
-                }
-                if (escActive) concludeBasin();   // frontier exhausted without an exit: sealed
-            }
-            return false;   // tick budget spent: resume next tick
-        }
-
-        /** T77: verdict OPEN -- the component touches open land; nothing is ever filled. */
-        private void concludeOpen() {
-            for (Long c : escSeen) LIQ_OPEN.put(c, escLvl);
-            openRejected++;
-            escActive = false; escQueue.clear(); escSeen.clear();
-        }
-
-        /** T77: verdict ENCLOSED -- sealed basin proven; members become fillable at this level. */
-        private void concludeBasin() {
-            for (Long c : escSeen) LIQ_BASIN.put(c, escLvl);
-            int px = BlockPos.getX(escOrigin), pz = BlockPos.getZ(escOrigin);
-            escActive = false; escQueue.clear(); escSeen.clear();
-            tryFillColumn(px, pz, escLvl, escLava);
         }
 
         /**
@@ -5460,12 +5274,10 @@ public class StructureTerrainPrep {
                         "fixLiquids : {} point(s) non traites (chunk voisin jamais charge) -- T75", stalled);
             deepluckyblock.util.DebugLog.structure(
                     "fixLiquids TERMINE ({} chunks voisins demandes, {} non chargeables) : {} bloc(s) flowing -> source, "
-                            + "{} colonne(s) / {} bloc(s) d'eau remis a niveau, {} colonne(s) / {} bloc(s) de lave, "
-                            + "{} preuve(s) d'enclave, {} rejet(s) terre ferme ouverte (regle stricte T77), {} ms",
+                            + "{} colonne(s) / {} bloc(s) d'eau remis a niveau, {} colonne(s) / {} bloc(s) de lave, {} ms",
                     requested, unloaded,
                     LIQ_SRC.get(), LIQ_FILL_COLS.get(), LIQ_FILL.get(),
-                    LIQ_LAVA.size(), LIQ_LAVA_FILL.get(), proofs, openRejected,
-                    System.currentTimeMillis() - started);
+                    LIQ_LAVA.size(), LIQ_LAVA_FILL.get(), System.currentTimeMillis() - started);
         LIQ_QUEUE.clear();
         retry.clear();
         pending.clear();

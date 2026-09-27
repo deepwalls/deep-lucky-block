@@ -1449,17 +1449,9 @@ public class Structures4Procedure {
         // AVANT la lecture de hauteur, pour que baseY corresponde au nouveau site.
         // (L'everest a son propre chemin : voir spawnEverest.)
         if (!isEverest) targetXZ = deepluckyblock.util.StructureSites.freeOffset(level, targetXZ, 8, 32);
-        // Terrain preparation needs a SOLID ground Y, not a tree-top/fluid height.
-        // Keep raw placement unchanged: it re-measures ground after its preload below.
         int baseY = followSurface
-                ? (skipTerrain
-                    ? deepluckyblock.util.SafeSurface.surfaceY(level, targetXZ.getX(), targetXZ.getZ(), origin.getY())
-                    : deepluckyblock.util.SafeSurface.groundY(level, targetXZ.getX(), targetXZ.getZ(), origin.getY()))
+                ? deepluckyblock.util.SafeSurface.surfaceY(level, targetXZ.getX(), targetXZ.getZ(), origin.getY())
                 : origin.getY();
-        if (!skipTerrain && (baseY < level.getMinBuildHeight() || baseY >= level.getMaxBuildHeight())) {
-            LOGGER.error("[STRUCT4] {} : selected groundY={} outside build height; terrain placement refused", nbtName, baseY);
-            return false;
-        }
         // T73 : liste compactee (l'air exterieur n'est plus materialise).
         List<StructureTemplate.StructureBlockInfo> rawBlocks = deepluckyblock.util.StructureTemplateCache.compactBlocks(nbtName);
         if (rawBlocks == null) rawBlocks = extractBlocks(template);
@@ -1523,17 +1515,9 @@ public class Structures4Procedure {
             // Establish and retain the final footprint before any asynchronous placement.
             StructureTerrainPrep.preloadBox(level, min, max, offerPaste);
         } else {
-            // Use the same selected plane for clearance and model placement.
-            // offY belongs only to the foundation/model anchor, never to clearance.
-            final int selectedGroundY = baseY;
-            final int foundationBaseY = selectedGroundY + offY;
-            LOGGER.info("[STRUCT4] {} : selected solid groundY={}, clearance starts at Y={}, model offsetY={}, foundationBaseY={}",
-                    nbtName, selectedGroundY, selectedGroundY + 1, offY, foundationBaseY);
-            // No post-smooth re-anchoring on this path (offerPaste uses dy=0).
-            // Wait for ALL terrain work, then verify preload before offering paste.
-            StructureTerrainPrep.prepZone(level, min, max, foundationBaseY, selectedGroundY,
-                    () -> StructureTerrainPrep.decorateTerrainOnly(level, min, max,
-                            () -> StructureTerrainPrep.preloadBox(level, min, max, offerPaste)));
+            // T39 : le paste n'est offert qu'a la fin de la phase TERRAIN.
+            StructureTerrainPrep.prepZone(level, min, max, baseY + offY,
+                    () -> StructureTerrainPrep.decorateTerrainOnly(level, min, max, offerPaste));
         }
         return true;
     }

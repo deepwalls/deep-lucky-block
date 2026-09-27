@@ -176,3 +176,5 @@ raise SystemExit(1 if failed else 0)
 # T77/T76 rerun: strict nappe-membership rule + pre-terrain median anchor; measure fixLiquids and dragon timings.
 
 # T77 follow-up: escape proofs never request chunks (unknown = OPEN); onDemand retry bounded to FIXLIQ_PENDING_ROUNDS.
+
+# T77 third pass: park candidate keys, halo-bounded frontier, pre-expansion force ring.

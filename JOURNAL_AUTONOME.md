@@ -46,3 +46,18 @@ Format : date | hypothèse | mesure | conclusion | décision.
   fp, rp, min, max. Offset appliqué une seule fois (aval inchangé :
   selectedGroundY=baseY, foundationBaseY=baseY+oy).
 - Mesure locale : idem, 0 erreur AST. Validation comportementale → CI.
+
+## 2026-09-27 — Mesure CI #1 (run 36331359511) : ECHEC, blocage basin(onDemand=true)
+
+- Mesure : compilation Java 21 OK. dlbverify jamais terminé (240 s) : fixLiquids
+  en boucle de retry « tour 39..43/6 », « 1360 demandes de chargement »,
+  ~609 chunks épinglés. Constat clé : les 4 commits utilisateur n'ont JAMAIS eu
+  de run [server-check] (le workflow ne suivait que l'ancienne branche) — la
+  tempête préexistait au ×4.
+- Causes : (1) branche retry onDemand sans borne de tours (retry.add
+  inconditionnel, refillRound partagé) ; (2) ma preuve d'évasion re-demandait
+  les chunks manquants → ma contribution au cycle.
+- Décision : (A) l'évasion ne demande jamais de chunk (inconnu = OUVERT,
+  jamais de génération pour une preuve) ; (B) retry onDemand borné à
+  FIXLIQ_PENDING_ROUNDS=6 puis stalled, même discipline que la branche request().
+  Relance run #3.
