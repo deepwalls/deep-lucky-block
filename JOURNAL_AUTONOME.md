@@ -61,3 +61,21 @@ Format : date | hypothèse | mesure | conclusion | décision.
   jamais de génération pour une preuve) ; (B) retry onDemand borné à
   FIXLIQ_PENDING_ROUNDS=6 puis stalled, même discipline que la branche request().
   Relance run #3.
+
+## 2026-09-27 — Mesure CI #2 (run 36332468110) : ECHEC fixture basin, cause trouvee
+
+- Mesure : build OK, session OK, FAIL « Unfilled basin at -43,241,-42 » = ZERO
+  remplissage. Relecture : la porte garait `packed` (colonne d'eau) au lieu de
+  `nk` (candidat sec) ; la preuve demarrait sur la nappe et concludeBasin
+  remplissait... la colonne d'eau (refusee « deja pleine »). Zéro remplissage.
+- Causes associees : type de liquide parent perdu ; colonnes remplies marquees
+  LIQ_SURF (bloquaient une preuve a niveau superieur) ; anneau inForceRing
+  gonfle au x4 (tempete) ; frontiere froide onDemand non bordee par le halo.
+- Correctifs (commit 324b53f) : garer nk + verifyLava ; fills hors LIQ_SURF ;
+  fx calcule AVANT expansion x4 ; scan onDemand = chunks charges seuls ;
+  retry onDemand borne au halo seedMargin et a 6 tours.
+- Mesure sim (ci/sim_t77.py, rejoue l'algo colonne par colonne) : bassin
+  ferme = 45 113 nouveaux blocs (+7 preexistants = 45 120 = assertion exacte
+  de la fixture CI) ; plaine ouverte = 0 remplissage, 902 colonnes OUVERTES.
+- AST tree-sitter : 0 erreur, 0 signature perdue. Reste a mesurer en CI
+  ( compilation reelle + fixtures + temps ) : BLOQUE par expiration GH_TOKEN.
