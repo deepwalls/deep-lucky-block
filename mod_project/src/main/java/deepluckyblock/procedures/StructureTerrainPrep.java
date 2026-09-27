@@ -2914,7 +2914,9 @@ public class StructureTerrainPrep {
     /** PALETTE_FALLBACKS lit dans le journal dressAndPlant. */
     private static int paletteFallbacksSoFar() { return PALETTE_FALLBACKS; }
 
-    /** Drapeau de branchement de l'habillage. FALSE = chemin historique intact. */
+    /** Drapeau de branchement de l'habillage (T-HABILL, programme du guide,
+     *  v1.0 du 27/09/2026 : palette + degrade trame + warping + vegetation
+     *  decidee par le sol final + sauvetage). FALSE = chemin historique intact. */
     private static boolean dressingEnabled() {
         return DRESSING_FASTFLAG;
     }
