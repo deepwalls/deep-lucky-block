@@ -63,6 +63,32 @@ def annotate(text, failure=False):
         print(f'::{"error" if failure else "notice"} title=Server verification::{part}', flush=True)
 
 
+# PERF-MODS (campagne /2, decision utilisateur : tester solo puis combos) --
+# mods d'optimisation de generation charges UNIQUEMENT par la session CI
+# dans run/mods/, jamais embarques dans le jar livre aux joueurs.
+# Spec : ci/perf-mods.txt, lignes "fichier|url|sha512" (lignes '#' ignorees).
+import hashlib
+import urllib.request
+installed_mods = []
+perf_spec = Path('ci/perf-mods.txt')
+if perf_spec.exists():
+    mods_dir = run / 'mods'
+    mods_dir.mkdir(exist_ok=True)
+    def sha512(path):
+        return hashlib.sha512(Path(path).read_bytes()).hexdigest()
+    for raw in perf_spec.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith('#'):
+            continue
+        fname, url, want = (part.strip() for part in line.split('|'))
+        target = mods_dir / fname
+        if not target.exists() or sha512(target) != want:
+            req = urllib.request.Request(url, headers={'User-Agent': 'dlb-ci-check'})
+            target.write_bytes(urllib.request.urlopen(req, timeout=90).read())
+        got = sha512(target)
+        assert got == want, f'PERF-MODS sha512 mismatch sur {fname} (obtenu {got})'
+        installed_mods.append(fname)
+
 lines = queue.Queue()
 log_path = Path(os.environ['RUNNER_TEMP']) / 'server-check.log'
 proc = subprocess.Popen(['./gradlew', 'runServer', '--console=plain', '--max-workers=2'],
@@ -109,6 +135,10 @@ failed = False
 try:
     wait_for('Done (', 240)
     annotate('Dedicated server started successfully.')
+    if installed_mods:
+        annotate('PERF-MODS actifs dans run/mods/ : ' + ', '.join(installed_mods))
+    else:
+        annotate('PERF-MODS : aucun (baseline)')
     annotate('Running targeted water, loot and terrain fixtures.')
     rcon('dlbverify')
     wait_for('[DLBVERIFY] ALL PASS', 240)
