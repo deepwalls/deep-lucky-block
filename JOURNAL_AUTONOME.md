@@ -378,3 +378,30 @@ Preuves mesurees (memes seed/coords, plusieurs runs) :
   surface de risque sur pipeline critique).
 Actions /2 retenues (sans perte de qualite) : instrumentation [DLB-STEP]
 deployee (test 1), puis shaves mod-side valides par fixtures + 2 runs fixes.
+
+## 28/09 (fin) — CAMPAGNE /2 : VERDICT PHYSIQUE DOCUMENTE
+Mesures CI (2 tests nouvelle campagne + 10 precedents, seed 123456789 fixe) :
+- Runtime verrouille : Temurin 21, -Xmx2g, ActiveProcessorCount=2.
+- [DLB-CPU] (run 5) : wall 36.0 s / workers 33.0 s / GC 0.278 s -> les
+  temps sont le travail CPU des workers de generation vanille, pas du vide.
+- Structure-par-structure (decomposition [DLB-PERF], mod-inclus) :
+  everest 368 chunks : 29.4-36.5 s, pre-chargement 28-33 s (92-100 %) ;
+  dragon ~156-180 : 19.2-32.3 s, preload 67-74 % ; sonde 9 chunks : 9.2-9.7 s,
+  preload 100 % avec 1 requete moteur (attente sans achat) ;
+  crimsonlake 756 : 64.5-118.5 s, preload 43.4-76.3 s (57-71 %) + mod-side
+  incompressible sans toucher la qualite (62 passes gauss ~6.5 s, balayage
+  3.4-3.8, decor 3.7-5.1, decorate 4.0-4.2, fix 2.8-2.9, attente/tick 5.2-7.0).
+- Cout unitaire mesure : 74-101 ms/chunk sur cette classe de machine ;
+  litterature (Paper/Purpur docs) : 30-60 ms/chunk best-case hybride ->
+  368 x 0.03 = 11 s > 9 s ; 756 x 0.03 = 23 s vs budget lake 30 s sans
+  AUCUN budget mod-side ; physiquement impossible sur ce harnais impose.
+- Leviers de classe moteur existants mais EXCLUS sans arbitrage explicite :
+  Noisium (gen +20-30 %, dependance a ajouter) ; C2ME (parallele, alpha,
+  risque pipeline critique) ; electrolyseur de lumiere (risque relumination).
+- Ce qui EXISTE deja cote mod et repond au « quasi instantane » EN JEU :
+  pre-chauffage T46/T51 pendant les 60 s d'annonce + demarrage proactif ;
+  mesures en CI = pire cas absolu (a froid) non visible en session joueur.
+Decision documentaire : aucune retouche cachette qualite (interdit), pas de
+report de travail apres le chrono, pas de re-assouplissement des fixtures.
+Journal cloture pour cette campagne ; en attente de l'arbitrage utilisateur
+(Noisium ? C2ME ? tolerance CI 2 CPU ? ou accepter in-game prep as target).
