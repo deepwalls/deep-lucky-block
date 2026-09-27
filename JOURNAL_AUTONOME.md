@@ -198,3 +198,32 @@ Format : date | hypothèse | mesure | conclusion | décision.
   utilisateur sur le verdict Everest (decision par decision) OU nouvelles
   pistes in-game (le pre-chauffage T46/T51 des 60 s d'annonce rend deja le
   chargement quasi nul en jeu reel ; les gains T79 se mesurent en foret).
+
+## 2026-09-27 — Reception du GUIDE COMPLET TERRAIN ET SURFACE (passation, v1.0)
+
+- L'utilisateur transmet le guide d'habillage de surface (dressAndPlant), qui
+  absorbe 5 documents precedents. Fichier joint « a lire !.txt » INACCESSIBLE
+  dans le sable (dossier uploads absent) — signale ; le contenu du guide est
+  dans le message, sauvegarde dans docs/GUIDE_COMPLET_TERRAIN_ET_SURFACE.md.
+- Verification des faits vs code actuel (son avertissement §3) : le fichier fait
+  5 863 lignes (guide : 5 650, soit avant T77) ; readBlock 6 / getBlockState 62
+  (guide 5/63 ; T79 en a ajoute un) ; columnsOf 13 sites (conforme) ;
+  verifyGrassSurface + naturalize toujours APPELEES (3 sites : prepZone 10/11,
+  decorateChain post-pose, et un appel direct ligne 3920) ; dressAndPlant /
+  ChunkMajorZone absents -> le programme du guide est bien a ecrire.
+- Recouvrements deja faits par moi (ne pas refaire) : reco #1 verrous eau =
+  T77 (jamais remplir a sec / jamais au-dessus de la nappe, valide x4 CI) ;
+  reco #2 ancrage mediane mesuree = T76 (valide x4 CI) ; reco #3 Everest
+  exclu = T78 (valide 2x) ; reco #7 clearSurfaceDecor = T79 (sections T71,
+  valide, gain vise = foret en jeu) ; dragon = engine-bound demontre.
+- Verifications API 1.21.1 (4 recherches) : WORLD_SURFACE_WG existe MAIS c'est
+  un instantane de worldgen (wiki + mappings) : pour l'habillage POST-edition
+  on utilisera SafeSurface (heightmap securisee, garde T7) et NON brut _WG ;
+  coldEnoughToSnow(BlockPos) OK 1.21.x (change en int en 1.21.2, hors sujet) ;
+  LevelAccessor.hasChunk OK ; les heightmaps d'un chunk FULL sont maintenues
+  par ses setBlock (sets registeres) — donc une heightmap primee reste juste.
+- Plan applique : le plan 8 commits du guide, adapte aux gardes du mod
+  (ChunkKeeper.keep + TerrainChain.heartbeat + report zoneComplete +
+  sliceBudgetMs adaptatif + anti-doublon — le ChunkPass du guide, avec
+  server.execute, violerait I6 et T13). Push groupes, commits 1 tache = 1
+  commit dans l'historique, run CI compile seul tant que zero changement visuel.

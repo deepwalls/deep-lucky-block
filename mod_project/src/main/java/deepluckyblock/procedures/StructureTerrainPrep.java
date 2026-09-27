@@ -2426,6 +2426,98 @@ public class StructureTerrainPrep {
     /** Libelle des passes actuellement en cours (voir startColumnPass). */
     private static final Set<String> RUNNING_PASSES = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
+    // ==================================================================
+    // T-HABILL.1 : ZONE ORDONNEE PAR CHUNK + NEIGE PAR CHUNK (scaffolding)
+    // ==================================================================
+    // Programme d'habillage de surface (docs/GUIDE_COMPLET_TERRAIN_ET_SURFACE.md,
+    // livres IV et VIII, commits 1 et 2 du plan). Ce bloc est du SCAFFOLDING :
+    // rien n'est encore appele, aucun comportement ne change. Deux ecarts
+    // ASSUMES par rapport au texte du guide (consignes dans le journal du
+    // 27/09) : (1) pas de nouvelle classe ChunkPass -- les gardes du mod
+    // (ChunkKeeper.keep, TerrainChain.heartbeat, zoneReady, reprise T70,
+    // budget adaptatif) vivent dans ColumnPass/startColumnPass, qui pilotera
+    // l'habillage avec la liste chunk-major ci-dessous ; (2) pas de
+    // WORLD_SURFACE_WG pour l'habillage post-edition -- c'est un instantane
+    // de worldgen, on garde SafeSurface (garde T7).
+
+    /**
+     * Region d'habillage ordonnee PAR CHUNK : la zone (etendue de outerRing,
+     * centre-inclus) est decoupee en 256-colonnes par chunk, dans l'ordre
+     * x/z croissant. Le guide motive l'ordre chunk-major par (a) la lisibilite
+     * des compteurs au grappe, (b) les caches par chunk (palette D5, neige,
+     * plantes sauvees) -- une action par colonne de startColumnPass y accede
+     * en O(1). Jamais d'attente : un chunk absent est simplement saute (pile).
+     */
+    private static final class ChunkMajorZone {
+        final ServerLevel level;
+        final BlockPos centre;
+        final int outerRing;
+        final int x0, z0, x1, z1;
+        private final List<int[]> chunkMajorCols = new ArrayList<>();
+        private final Map<Long, List<int[]>> byChunk = new LinkedHashMap<>();
+
+        ChunkMajorZone(ServerLevel level, BlockPos centre, BlockPos min, BlockPos max, int outerRing) {
+            this.level = level; this.centre = centre; this.outerRing = outerRing;
+            x0 = Math.min(centre.getX(), min.getX() - outerRing);
+            z0 = Math.min(centre.getZ(), min.getZ() - outerRing);
+            x1 = Math.max(centre.getX(), max.getX() + outerRing);
+            z1 = Math.max(centre.getZ(), max.getZ() + outerRing);
+            int cx0 = x0 >> 4, cz0 = z0 >> 4, cx1 = x1 >> 4, cz1 = z1 >> 4;
+            for (int cx = cx0; cx <= cx1; cx++)
+                for (int cz = cz0; cz <= cz1; cz++) {
+                    if (!level.hasChunk(cx, cz)) continue;   // pile : jamais attendre un chunk
+                    java.util.List<int[]> cols = new ArrayList<>(256);
+                    for (int bx = 0; bx < 16; bx++)
+                        for (int bz = 0; bz < 16; bz++) {
+                            int x = (cx << 4) | bx, z = (cz << 4) | bz;
+                            if (x < x0 || x > x1 || z < z0 || z > z1) continue;
+                            int[] c = {x, z};
+                            cols.add(c);
+                            chunkMajorCols.add(c);
+                        }
+                    if (!cols.isEmpty()) byChunk.put(net.minecraft.world.level.ChunkPos.asLong(cx, cz), cols);
+                }
+        }
+
+        /** Colonnes de la zone, ordre chunk-major (pour startColumnPass). */
+        List<int[]> chunkMajorColumns() { return chunkMajorCols; }
+        /** Découpe par chunk (cle = ChunkPos.asLong), pour les compteurs par chunk. */
+        Map<Long, List<int[]>> byChunk() { return byChunk; }
+        int size() { return chunkMajorCols.size(); }
+        boolean isInside(int x, int z) { return x >= x0 && x <= x1 && z >= z0 && z <= z1; }
+    }
+
+    /**
+     * T-HABILL.2 : neige prise une seule fois par CHUNK puis servie du cache
+     * (le guide chiffre le cout de l'ancienne lecture a ~37 microsecondes par
+     * colonne, soit ~1,05 s sur 28 444 colonnes -- la dette T71). Utilise
+     * coldEnoughToSnow (API 1.21.1 verifiee) ; l'ile aux champignons reste
+     * un cas special (biome froid sans neige). Cache memoire d'une visite :
+     * invalide (clearSnowCellCache) entre deux passes d'habillage.
+     */
+    private static final Map<Long, Boolean> SNOWY_CELL_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static boolean isSnowyCell(ServerLevel level, BlockPos pos) {
+        long key = net.minecraft.world.level.ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
+        Boolean cached = SNOWY_CELL_CACHE.get(key);
+        if (cached != null) return cached;
+        boolean snowy;
+        try {
+            var biome = level.getBiome(pos);
+            snowy = !biome.is(net.minecraft.world.level.biome.Biomes.MUSHROOM_FIELDS)
+                    && biome.value().coldEnoughToSnow(pos);
+        } catch (Throwable t) {
+            snowy = false;   // pile : jamais planter sur un biome illisible
+        }
+        SNOWY_CELL_CACHE.put(key, snowy);
+        return snowy;
+    }
+
+    /** Invalide le cache de neige (entre deux habillages, avant reprise). */
+    private static void clearSnowCellCache() {
+        SNOWY_CELL_CACHE.clear();
+    }
+
     /** Suite de smoothPass, executee une fois tous les chunks charges. */
     /** Variation maximale autorisee du lissage, en blocs, par colonne (T21). */
     private static final int MAX_SMOOTH_DELTA = 8;
