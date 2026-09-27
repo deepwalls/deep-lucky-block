@@ -1,4 +1,9 @@
-"""Single headless server session with bounded structure timings and retained logs."""
+"""Single headless server session with bounded structure timings and retained logs.
+
+Session de mesure no 7 (T78+T79+T80) : confirmation sur memes seed/coords et
+tentative de verdict Everest sur machine CI rapide (30,19 s au run precedent,
+budget 30 s -- le reste depend du debit de generation vanilla du runner).
+"""
 import os
 from collections import deque
 from pathlib import Path
