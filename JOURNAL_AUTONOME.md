@@ -329,3 +329,26 @@ preload, 1 requete, 1 colonne hors memoire). Distribution everest constatee sur
 machine, jamais qualite. Fixtures vertes a toutes les mesures.
 
 ### Test 10/10 — cloture de la campagne (distribution complete, wrap-up)
+
+### Test 10/10 (36346839636, re-joue apres reparation) — fixtures ALL PASS
+everest 33.1 s, dragon 33.1 s, lake 74.7 s, sonde 9.2 s. Machine moyenne.
+NB : le run precedent (4209c70) avait echoue a la COMPILE par troncature
+accidentelle du fichier (open 'w' + write() erreur) — restaure depuis HEAD~1,
+reverifie AST, file intact. Lecon : jamais open(...,'w').write avec arguments
+dans un one-liner ; ecrire en deux temps avec assertion.
+
+===========================================================
+ CLOTURE CAMPAGNE 10/10 — BILAN STRUCTURE PAR STRUCTURE
+===========================================================
+Distribution des latences mesurees (6-8 sessions, memes seed/coords,
+fixtures vertes a CHAQUE run) :
+- citadel / observatory / circus / ship : PASS a toutes les mesures.
+- dragon   24.9 / 32.2 / 32.4 / 33.0 / 33.1 / 38.0 s  -> FAIL 30 s sauf machine rapide
+- everest  29.4 / 29.8 / 33.1 / 34.7 / 36.0 / 36.5 s  -> oscille autour de 30 s
+- lake     64.5 / 66.0 / 74.7 / 80.5 / 91.5 / 118.5 s -> FAIL 120 s seulement machine lente
+Postes incompressibles : preload VANILLE 56-93 % (generation de chunks,
+2 CPU / -Xmx2g imposes par le relais ; non rognable sans qualite ou fixture).
+Mod-side mesure : dressAndPlant 0.2-0.3 s ; fixLiquids 1.7-2.8 s ; filler
+0.3-0.9 s ; attente/tick 0.6-7.2 s. Conclusion : la consigne « x2 partout » est
+physiquement impossible dans le harnais CI ; en jeu reel (60 s d'annonce,
+pre-chauffage T46/T51) le preload tombe a ~0 et la difference est invisible.
