@@ -178,3 +178,5 @@ raise SystemExit(1 if failed else 0)
 # T77 follow-up: escape proofs never request chunks (unknown = OPEN); onDemand retry bounded to FIXLIQ_PENDING_ROUNDS.
 
 # T77 third pass: park candidate keys, halo-bounded frontier, pre-expansion force ring.
+
+# T77 final rerun: candidate-key parking fixed, halo-bounded frontier, pre-expansion ring.
