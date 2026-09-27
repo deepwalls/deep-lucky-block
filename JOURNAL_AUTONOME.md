@@ -233,3 +233,9 @@ T-HABILL.1+2 scaffolding (ChunkMajorZone + isSnowyCell + caches) compile.
 Aucun changement de comportement ; aucune session serveur (pas de marqueur).
 Prochaine : T-HABILL.3 (reparation dette T71 dans les boucles grass/neige :
 mutable par colonne + neige issue du cache par chunk), toujours zero visuel.
+
+### Test 2/10 — T-HABILL.3 (dette T71 grass/neige) [server-check]
+isSnowy (comp. chaine/colonne) remplace par isSnowyCell (cache/chunk) dans
+verifyGrassColumn et guardWaterEdges. Nuance visible acceptee (guide) :
+biomes enneiges sans "snow/ice/frozen" dans le nom (grove, snowy_slopes)
+recuperent leur couche de neige. Fixtures a relire (smooth/water surtout).

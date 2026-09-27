@@ -697,7 +697,7 @@ public class StructureTerrainPrep {
                 }
                 targetY = Math.max(minBuild + 1, Math.min(maxBuild - 1, targetY));
 
-                boolean snowy = isSnowy(level, mut.set(x, targetY, z));
+                boolean snowy = isSnowyCell(level, mut.set(x, targetY, z));   // T-HABILL.3 : cache par chunk (T71)
                 BlockState capBlock = Blocks.GRASS_BLOCK.defaultBlockState();
 
                 int curSurfaceY = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
@@ -4036,7 +4036,11 @@ public class StructureTerrainPrep {
         if (surfY < 1) return;
         BlockState s = level.getBlockState(mut.set(x, surfY, z));
         if (s.isAir() || isLog(s) || isLeaf(s)) return;
-        boolean snowy = isSnowy(level, mut);
+        // T-HABILL.3 : neige une fois par chunk (cache) au lieu d'une comparaison
+        // de chaine par colonne. Nuance assume vs l'ancienne chaine : grove/
+        // snowy_slopes (biomes enneiges sans "snow/ice/frozen" dans le nom)
+        // recoivent desormais la couche de neige -- correction voulue par le guide.
+        boolean snowy = isSnowyCell(level, mut);
         if (s.is(Blocks.SNOW_BLOCK) || s.is(Blocks.PACKED_ICE) || s.is(Blocks.BLUE_ICE)) {
             if (level.getBlockState(mut.set(x, surfY + 1, z)).isAir()) {
                 level.setBlock(mut, Blocks.SNOW.defaultBlockState(), 3); counters[1]++;
