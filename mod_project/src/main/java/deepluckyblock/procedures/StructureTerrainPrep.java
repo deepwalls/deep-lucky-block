@@ -2887,6 +2887,10 @@ public class StructureTerrainPrep {
     }
 
     // ==================================================================
+    // BILAN 27/09 (tests 5-6/10, CI memes seed/coords) : dressAndPlant 0,2-0,3 s
+    // par structure (budget guide 1 s), fixtures ALL PASS x4, latence des
+    // structures = bruit machine (+-20 %), preload vanille 60-93 % du chrono.
+    // ==================================================================
     // T-HABILL.5 : dressAndPlant -- HABILLAGE + VEGETATION EN UNE PASSE
     // ==================================================================
     // Programme du guide (docs/a-lire-guide-complet.txt, LIVRES IV a VIII).
