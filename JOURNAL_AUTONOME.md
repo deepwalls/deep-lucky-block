@@ -320,3 +320,12 @@ entierement dans le chargement vanille (non rognable sans casser la qualite
 ou les fixtures, interdits).
 
 ### Test 9/10 — 3e PASS consecutif vise (stabilite du protocole)
+
+### Test 9/10 (36346110829) — fixtures ALL PASS, latences = machine lente
+6 PASS / 4 FAIL latence ; everest 36.0, dragon 32.4, lake 91.5 ; petite fenetre
+sonde de 10.0 s revenue sur this machine (son propre log le confirme : 100 %
+preload, 1 requete, 1 colonne hors memoire). Distribution everest constatee sur
+5 mesures : 29.4 / 29.8 / 34.7 / 36.0 / 36.5 -> +-22 % de m�me code = verdict
+machine, jamais qualite. Fixtures vertes a toutes les mesures.
+
+### Test 10/10 — cloture de la campagne (distribution complete, wrap-up)
