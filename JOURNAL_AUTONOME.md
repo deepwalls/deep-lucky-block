@@ -161,3 +161,22 @@ Format : date | hypothèse | mesure | conclusion | décision.
   T46 de 48). fillPending trie deja du centre vers l'exterieur (priorite
   coeur effective). Reste comme leviers post-T80 : regles eau strictes
   conservees, seuils conserves, harnais conserve.
+
+## 2026-09-27 — Mesure CI #6 (run 36337674163, commit 2c7fead) : T80 integre, fixtures vertes ; Everest a 0,2 s
+
+- Fixtures : ALL PASS, lac compris (sink=10, ancrage ground=47 IDENTIQUE avec
+  la sonde 9 chunks mesuree a 0,235 s — contre 340 chunks en 23,2 s avant).
+- Latences (machine moyenne-lente) : citadel 24,2 / obs 21,2 / dragon 27,4
+  PASS / circus 6,5 / ship 10,3 / everest 30,19 FAIL de 0,19 s / lake 114,1 PASS.
+- Arbre de causes Everest (run #7) : pre-chargement 368 chunks 26,3-27,8 s
+  (~71-76 ms/chunk) + fix 1,7 + filler 0,6 + 0,7 divers ; machine #5/#6 lente
+  (~91 ms/chunk) -> 36 s ; machine #4 rapide (~67 ms) -> ~28 s attendu. Verdict
+  devenu LOTO DE MACHINE CI : mod-side residuel ~2,3-2,6 s.
+- Fausse piste documentee : la « tache 10,2 s 100% preload » qui precede
+  EVEREST TERMINÉ est le SHIP (fenetre 17:42:08->17:42:18 = ship PASS 10,3 s),
+  pas un gel de sonde Everest — timestamps concordants, piste refermee sans
+  correctif (verifier avant d'agir = regle).
+- T80 ne retire aucune generation au total (756 chunks uniques dans les deux
+  versions) : il supprime une attente redondante de 340 chunks reutilises par
+  la suite ; gain reel 0-10 s selon machine, non mesurable au-dessus du bruit.
+- Budget runs du message : 6 consommes (4 sessions + 2 compiles/ce rerun).
