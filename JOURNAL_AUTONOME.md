@@ -293,3 +293,4 @@ Branchement + sauvetage plantes = etape suivante, avec [server-check].
 
 ### Test 6/10 — CONFIRMATION (memes seed/coords, aucun changement de code)
 Methode : 2 executions identiques avant de conclure (bruit CI ~30 %).
+(Le push precedent n'a pas declenche de run visible -- relance explicite.)
