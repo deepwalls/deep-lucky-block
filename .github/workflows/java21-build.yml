@@ -63,7 +63,9 @@ jobs:
           from pathlib import Path
           log = Path(os.environ['RUNNER_TEMP']) / 'java21-build.log'
           if log.exists():
-              text = '\n'.join(log.read_text(errors='replace').splitlines()[-100:])
+              lines = log.read_text(errors='replace').splitlines()
+              errs = [l for l in lines if 'error' in l.lower()]
+              text = '\n'.join(errs[:40] + ['---tail---'] + lines[-60:])
               text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
               print('::error title=Build diagnostics::' + text)
           PY
