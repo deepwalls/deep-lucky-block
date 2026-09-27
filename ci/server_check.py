@@ -185,18 +185,12 @@ try:
 except Exception as exc:
     # Campagne PERF-MODS : un crash au boot (mod externe) se lit dans le log
     # serveur, pas dans les phases. On publie les lignes d'erreur filtrees.
-    crash_lines = []
     try:
         if log_path.exists():
-            for ln in log_path.read_text(errors='replace').splitlines():
-                if ('exception' in ln.lower() or 'caused by' in ln.lower()
-                        or '[error' in ln.lower() or 'failed to' in ln.lower()
-                        or 'mixin' in ln.lower() and 'error' in ln.lower()):
-                    crash_lines.append(ln[-220:])
+            tail = log_path.read_text(errors='replace').splitlines()[-120:]
+            annotate('SERVER-LOG TAIL\n' + '\n'.join(tail), True)
     except Exception:
         pass
-    if crash_lines:
-        annotate('CRASH tail\n' + '\n'.join(crash_lines[-40:]), True)
     # Drain actual current logs even when the command's RCON response times out.
     while not lines.empty():
         recent.append(lines.get_nowait().strip())
