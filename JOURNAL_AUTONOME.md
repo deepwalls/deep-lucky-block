@@ -413,3 +413,6 @@ Journal cloture pour cette campagne ; en attente de l'arbitrage utilisateur
 - Technique lumiere (Starlight/ScalableLux) : AUCUN port NeoForge 1.21.1
   -> cul-de-sac documente, ne pas relancer.
 - Run 13 : A/B Noisiumed 3.0.6 (fork alternatif) vs NoisiumForked 2.7.0.
+- ERREUR + REPARATION : snapshot local perime commis dans b9af8e8 (Structure-
+  TerrainPrep regressait, 30 symboles T-HABILL perdus). Restauration integrale
+  depuis aa4577a. Le commit b9af8e8 est conserve dans l'historique comme preuve.
