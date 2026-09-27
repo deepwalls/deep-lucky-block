@@ -1,4 +1,4 @@
 # PERF-MODS charges UNIQUEMENT par la session CI serveur (campagne /2).
-# [TEST 7 -- SOLO] C2ME neoforge alpha.0.116 (pipeline chunk parallele, MIT),
-# Noisium retire pour attribution propre des effets.
-c2me-neoforge-mc1.21.1-0.4.0-alpha.0.116.jar|https://cdn.modrinth.com/data/COlSi5iR/versions/5Q757s3v/c2me-neoforge-mc1.21.1-0.4.0-alpha.0.116.jar|54b5b8026484bf44dc79f46b61965c2d45f4733bb6b580a59d2268c5d4dc11e8ae3fe9238d4ee045292cc3adc80ec9bcfd2e21a4b7433e31dbf1344a52b932f2
+# [TEST FINAL] NoisiumForked seul (mesure ok, fixtures vertes, rendu identique).
+# C2ME ecarte : devbuilds Java 25 (major 69), incompatible Temurin 21 imposee.
+noisium-neoforge-2.7.0+mc1.21-1.21.1.jar|https://cdn.modrinth.com/data/hasdd01q/versions/VviuomrA/noisium-neoforge-2.7.0%2Bmc1.21-1.21.1.jar|ed05cdcf19f6fe6849204cddf0009b514b3686a0bac0da1d834e80d106b8e28ee2bf7d1e66a6c140d23b6c4cf5bb06558a795b70e31c179bcd1f74d955bd0068
