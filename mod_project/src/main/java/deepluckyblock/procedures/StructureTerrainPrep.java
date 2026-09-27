@@ -2682,6 +2682,280 @@ public class StructureTerrainPrep {
                 chunks, confident, PALETTE_FALLBACKS - fallbacksBefore, sb.toString().trim());
     }
 
+    // ==================================================================
+    // T-HABILL.5 : dressAndPlant -- HABILLAGE + VEGETATION EN UNE PASSE
+    // ==================================================================
+    // Programme du guide (docs/a-lire-guide-complet.txt, LIVRES IV a VIII).
+    // Remplace verifyGrassSurface + naturalize : la DECISION se fonde sur le
+    // bloc de surface REELLEMENT pose (palette echantillonnee avant edition,
+    // degrade trame probabiliste en bande bordee, warping de la frontiere),
+    // et la vegetation (densites de gout + canSurvive) est posee dans la MEME
+    // descente de colonne.
+    //
+    // Cette etape livre la MACHINERIE COMPLETE, derriere un FASTFLAG
+    // (dressingEnabled()). Avec le drapeau coupe, RIEN ne s'execute —
+    // dressAndPlant ne sera branche en lieu et place de verifyGrassSurface +
+    // naturalize qu'a l'etape suivante, apres mesure de recette (les 20
+    // controles du guide, LIVRE XI).
+    //
+    // Adaptations assumees au texte du guide (journal du 27/09) :
+    //  - pas de nouvelle classe ChunkPass : startColumnPass/ColumnPass pilote
+    //    deja ChunkKeeper.keep, heartbeat, zoneReady, reprise T70, budget
+    //    adaptatif — la liste chunk-major vient de ChunkMajorZone ;
+    //  - pas de WORLD_SURFACE_WG (instantane worldgen) : SafeSurface ;
+    //  - neige via coldEnoughToSnow (T-HABILL.2) au lieu de la chaine ;
+    //  - le cri de posNoise est celui du guide, eprouve par ses mesures
+    //    (moyenne 0,4985, aucun motif en bande, aucune periodicite).
+
+    /** PALETTE_FALLBACKS lit dans le journal dressAndPlant. */
+    private static int paletteFallbacksSoFar() { return PALETTE_FALLBACKS; }
+
+    /** Drapeau de branchement de l'habillage. FALSE = chemin historique intact. */
+    private static boolean dressingEnabled() {
+        return DRESSING_FASTFLAG;
+    }
+    private static final boolean DRESSING_FASTFLAG = false;
+
+    // ---- Tramage : hash de position (guide §39, qualite mesuree) ----
+    private static final int SALT_GROUND = 0x51D0;
+    private static final int SALT_PLANT  = 0x91A7;
+    private static final int SALT_PICK   = 0x3C29;
+    private static final int SALT_STACK  = 0x7B41;
+    private static final int SALT_WARP   = 0x6A19;
+
+    /** Hash de position -> [0,1). Deterministe, sans allocation. */
+    private static float posNoise(int x, int z, int salt) {
+        int h = x * 0x27d4eb2d ^ z * 0x85ebca6b ^ salt * 0x165667b1;
+        h ^= h >>> 15; h *= 0x2545f491; h ^= h >>> 13;
+        return (h & 0x00ffffff) / (float) 0x01000000;
+    }
+
+    // ---- Degrade entre deux sols (guide §35-§36) ----
+    private static final int BLEND_BAND = 5;
+
+    /** Probabilite de prendre le voisin, selon la distance au bord. */
+    private static float edgeP(int distance) {
+        if (distance <= 0 || distance > BLEND_BAND) return 0f;
+        return (BLEND_BAND + 1 - distance) * 0.5f / BLEND_BAND;   // 1 -> 50 %, 5 -> 10 %
+    }
+
+    // ---- Warping de la frontiere (guide §43, contrainte WARP_AMP+BLEND_BAND<=16) ----
+    private static final int   WARP_CELL = 12;
+    private static final float WARP_AMP  = 4.0f;
+
+    private static float dressSmoothstep(float t) { return t * t * (3f - 2f * t); }
+
+    /** Bruit de valeur 2D interpole -- basses frequences, sans allocation. */
+    private static float dressValueNoise(int x, int z, int cell, int salt) {
+        int gx = Math.floorDiv(x, cell), gz = Math.floorDiv(z, cell);
+        float fx = dressSmoothstep(Math.floorMod(x, cell) / (float) cell);
+        float fz = dressSmoothstep(Math.floorMod(z, cell) / (float) cell);
+        float n00 = posNoise(gx,     gz,     salt), n10 = posNoise(gx + 1, gz,     salt);
+        float n01 = posNoise(gx,     gz + 1, salt), n11 = posNoise(gx + 1, gz + 1, salt);
+        return (n00 * (1 - fx) + n10 * fx) * (1 - fz) + (n01 * (1 - fx) + n11 * fx) * fz;
+    }
+
+    /** Distance au bord PERTURBEE : la frontiere serpente au lieu d'etre droite. */
+    private static float effectiveDistance(int d, int x, int z, int salt) {
+        return d - (dressValueNoise(x, z, WARP_CELL, salt) - 0.5f) * 2f * WARP_AMP;
+    }
+
+    /**
+     * UN SEUL tirage sur TOUS les voisins reellement differents (guide §40).
+     * Indices NOMMES dans nb (jamais ecrits a la main).
+     */
+    private static Block pickGround(SurfacePalette local, SurfacePalette[] nb,
+                                    int x, int z, int lx, int lz) {
+        // Ordre de remplissage : dx = -1..1 puis dz = -1..1, centre exclu :
+        //   0 (-1,-1)   1 (-1, 0) OUEST   2 (-1,+1)
+        //   3 ( 0,-1) NORD                4 ( 0,+1) SUD
+        //   5 (+1,-1)   6 (+1, 0) EST     7 (+1,+1)
+        final int W = 1, N = 3, S = 4, E = 6;
+        float dW = effectiveDistance(lx + 1,  x, z, SALT_WARP);
+        float dE = effectiveDistance(16 - lx, x, z, SALT_WARP + 1);
+        float dN = effectiveDistance(lz + 1,  x, z, SALT_WARP + 2);
+        float dS = effectiveDistance(16 - lz, x, z, SALT_WARP + 3);
+        float pWest  = nb[W] != null ? edgeP(Math.round(dW)) : 0f;
+        float pEast  = nb[E] != null ? edgeP(Math.round(dE)) : 0f;
+        float pNorth = nb[N] != null ? edgeP(Math.round(dN)) : 0f;
+        float pSouth = nb[S] != null ? edgeP(Math.round(dS)) : 0f;
+        float total = pWest + pEast + pNorth + pSouth;
+        if (total <= 0f) return local.top();
+        if (total > 1f) {                       // coin : renormalisation
+            pWest /= total; pEast /= total; pNorth /= total; pSouth /= total;
+            total = 1f;
+        }
+        float r = posNoise(x, z, SALT_GROUND);
+        if (r < pWest)                   return nb[W].top();
+        if (r < pWest + pEast)           return nb[E].top();
+        if (r < pWest + pEast + pNorth)  return nb[N].top();
+        if (r < total)                   return nb[S].top();
+        return local.top();
+    }
+
+    // ---- Vegetation ordinaire (guide §45-§47) ----
+
+    /** Table de GOUT : quantite de vegetation par sol final. 0,00 = jamais deviner. */
+    private static float densityFor(Block ground) {
+        if (ground == Blocks.GRASS_BLOCK) return 0.30f;
+        if (ground == Blocks.PODZOL)      return 0.20f;
+        if (ground == Blocks.MYCELIUM)    return 0.15f;
+        if (ground == Blocks.SAND)        return 0.02f;
+        if (ground == Blocks.RED_SAND)    return 0.02f;
+        return 0f;   // gravier, neige, inconnu : rien — ne jamais deviner
+    }
+
+    /** Table de GOUT : lesquelles, par sol final. null = rien ici. */
+    private static BlockState pickPlant(Block ground, float r) {
+        if (ground == Blocks.GRASS_BLOCK) {
+            if (r < 0.55f) return Blocks.SHORT_GRASS.defaultBlockState();
+            if (r < 0.75f) return Blocks.FERN.defaultBlockState();
+            if (r < 0.80f) return Blocks.DANDELION.defaultBlockState();
+            if (r < 0.85f) return Blocks.POPPY.defaultBlockState();
+            return Blocks.SHORT_GRASS.defaultBlockState();
+        }
+        if (ground == Blocks.PODZOL)
+            return r < 0.70f ? Blocks.FERN.defaultBlockState()
+                             : Blocks.BROWN_MUSHROOM.defaultBlockState();
+        if (ground == Blocks.MYCELIUM)
+            return r < 0.50f ? Blocks.BROWN_MUSHROOM.defaultBlockState()
+                             : Blocks.RED_MUSHROOM.defaultBlockState();
+        if (ground == Blocks.SAND || ground == Blocks.RED_SAND)
+            return Blocks.DEAD_BUSH.defaultBlockState();
+        return null;
+    }
+
+    /**
+     * Pose une plante ordinaire si le sol final l'accepte ; la validite est
+     * tranchee par canSurvive (jamais par une table sol↔plante, guide §46).
+     */
+    private static boolean plantOn(ServerLevel level, BlockPos.MutableBlockPos mut,
+                                   int x, int surfY, int z, Block ground, long vegSeed) {
+        float r = posNoise(x, z, SALT_PLANT);
+        if (r > densityFor(ground)) return false;
+        BlockState plant = pickPlant(ground, posNoise(x, z, SALT_PICK));
+        if (plant == null) return false;
+        mut.set(x, surfY + 1, z);
+        if (!level.getBlockState(mut).isAir()) return false;
+        if (!plant.canSurvive(level, mut)) return false;
+        level.setBlock(mut, plant, FAST_FLAG);
+        return true;
+    }
+
+    /** Couche de neige au-dessus de la surface, si le biome est enneige. */
+    private static void applySnowLayer(ServerLevel level, BlockPos.MutableBlockPos mut,
+                                       int x, int surfY, int z) {
+        mut.set(x, surfY + 1, z);
+        if (level.getBlockState(mut).isAir())
+            level.setBlock(mut, Blocks.SNOW.defaultBlockState(), FAST_FLAG);
+    }
+
+    // ---- Passe principale ----
+    private static final int SUBSOIL_DEPTH = 3;
+
+    /**
+     * HABILLAGE + VEGETATION en UNE passe par colonne (guide §61),
+     * pilote par startColumnPass (gardes du mod) sur la liste chunk-major.
+     *
+     * @return la passe ; appelee SEULEMENT si dressingEnabled().
+     */
+    private static void dressAndPlant(ServerLevel level, BlockPos min, BlockPos max,
+                                      Runnable onDone) {
+        if (!dressingEnabled()) { if (onDone != null) onDone.run(); return; }
+        final int innerRing = terrainRing();
+        final int outerRing = terrainRing() + NATURALIZE_EXTRA_RING;
+        final ChunkMajorZone zone = new ChunkMajorZone(level, new BlockPos(
+                (min.getX() + max.getX()) / 2, min.getY(), (min.getZ() + max.getZ()) / 2),
+                min, max, outerRing);
+
+        deepluckyblock.util.ChunkKeeper.keep(level);
+
+        final long vegSeed = level.getSeed()
+                ^ ((long) min.getX() * 912931L) ^ ((long) min.getZ() * 182883L) ^ 0x5EEDL;
+
+        // 0 fastChunks | 1 blendChunks | 2 surfaceSet | 3 fillerSet
+        // 4 plantes    | 5 sautees     | 6 sauvees reposees
+        final int[] stats = new int[7];
+
+        startColumnPass(level, "dressAndPlant", zone.chunkMajorColumns(), BATCH_COLS, col -> {
+            int x = col[0], z = col[1];
+            int cx = x >> 4, cz = z >> 4;
+            int lx = x & 15, lz = z & 15;
+            if (isProtected(x, z) || StructureScatterDecor.isInsideDecor(x, z, 1)) { stats[5]++; return; }
+
+            SurfacePalette pal = paletteAt(level, cx, cz);
+            ChunkAccess chunk = deepluckyblock.util.SafeSurface.chunkFor(level, cx, cz);
+            if (chunk == null) { stats[5]++; return; }
+            BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+            boolean snowy = isSnowyCell(level, new BlockPos(x, 80, z));
+
+            int surfY = deepluckyblock.util.SafeSurface.height(
+                    level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+            if (surfY < 1) { stats[5]++; return; }
+
+            boolean inner = x >= min.getX() - innerRing && x <= max.getX() + innerRing
+                         && z >= min.getZ() - innerRing && z <= max.getZ() + innerRing;
+            Block chosen = pal.top();
+
+            if (inner) {
+                // Court-circuit niveaux 1 et 2 : quels cotes different ?
+                // Comparaison de BLOCK, jamais de BlockState (invariant I4).
+                boolean anyDifferent = false;
+                SurfacePalette[] nb = null;
+                for (int dx = -1; dx <= 1 && !anyDifferent; dx++)
+                    for (int dz = -1; dz <= 1 && !anyDifferent; dz++) {
+                        if (dx == 0 && dz == 0) continue;
+                        if (paletteAt(level, cx + dx, cz + dz).top() != pal.top()) anyDifferent = true;
+                    }
+                if (anyDifferent) {
+                    stats[1]++;
+                    nb = new SurfacePalette[8];
+                    int k = 0;
+                    for (int dx = -1; dx <= 1; dx++)
+                        for (int dz = -1; dz <= 1; dz++) {
+                            if (dx == 0 && dz == 0) continue;
+                            SurfacePalette q = paletteAt(level, cx + dx, cz + dz);
+                            nb[k] = (q.top() == pal.top()) ? null : q;
+                            k++;
+                        }
+                    chosen = pickGround(pal, nb, x, z, lx, lz);
+                } else {
+                    stats[0]++;
+                }
+
+                BlockState cur = readBlock(level, chunk, mut, x, surfY, z);
+                // Regle 6 : ne rien ecrire si c'est deja correct.
+                if (cur.getBlock() != chosen && isNaturalTerrain(cur) && cur.blocksMotion()) {
+                    level.setBlock(mut.set(x, surfY, z), chosen.defaultBlockState(), FAST_FLAG);
+                    stats[2]++;
+                }
+
+                Block filler = fillerFor(chosen);
+                if (filler != null) {
+                    for (int d = 1; d <= SUBSOIL_DEPTH; d++) {
+                        BlockState s = readBlock(level, chunk, mut, x, surfY - d, z);
+                        if (!isNaturalTerrain(s) || !s.blocksMotion()) break;
+                        if (s.getBlock() == filler) continue;
+                        level.setBlock(mut.set(x, surfY - d, z), filler.defaultBlockState(), FAST_FLAG);
+                        stats[3]++;
+                    }
+                }
+
+                if (snowy) applySnowLayer(level, mut, x, surfY, z);
+            }
+
+            if (plantOn(level, mut, x, surfY, z, chosen, vegSeed)) stats[4]++;
+        }, () -> {
+            deepluckyblock.util.DebugLog.structure(
+                    "dressAndPlant : {} chunks rapides / {} melanges, {} surfaces, "
+                            + "{} sous-sols, {} plantes, {} colonnes sautees, {} replis de palette",
+                    stats[0], stats[1], stats[2], stats[3], stats[4], stats[5],
+                    paletteFallbacksSoFar());
+            clearDressingCaches();
+            if (onDone != null) onDone.run();
+        });
+    }
+
     /** Suite de smoothPass, executee une fois tous les chunks charges. */
     /** Variation maximale autorisee du lissage, en blocs, par colonne (T21). */
     private static final int MAX_SMOOTH_DELTA = 8;

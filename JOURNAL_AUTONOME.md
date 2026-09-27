@@ -258,3 +258,11 @@ journalise AVANT toute edition en prepZone 1b/11 (invariant I1). Aucun setBlock
 ### Test 3/10 (36342357682, T-HABILL.4) — SUCCESS (compile seule)
 Palette + journal prepZone 1b/11 compiles. Prochain : T-HABILL.5 dressAndPlant
 (machinerie complete, flag dressingEnabled()=false : AUCUN appel d'abord).
+
+### Test 4/10 — T-HABILL.5 dressAndPlant (machinerie, FASTFLAG OFF, compile only)
+Tout l'habillage du guide est ecrit : posNoise (sel par usage), edgeP, warping
+(WARP_CELL 12, WARP_AMP 4, contrainte <=16 respectee), pickGround (indices
+nommes), density/pickPlant (tables de GOUT), plantOn (canSurvive = validite),
+applySnowLayer, sous-sol filler (3 blocs), dressAndPlant en startColumnPass sur
+liste chunk-major. DRESSING_FASTFLAG=false => AUCUN setBlock nouveau possible.
+Branchement + sauvetage plantes = etape suivante, avec [server-check].
