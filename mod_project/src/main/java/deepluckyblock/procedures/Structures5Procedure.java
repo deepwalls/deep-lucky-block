@@ -1652,6 +1652,12 @@ public class Structures5Procedure {
         int baseY = followSurf
                 ? deepluckyblock.util.SafeSurface.groundY(level, txz.getX(), txz.getZ(), origin.getY())
                 : origin.getY();
+        // Reject an invalid selection before any terrain edit. The clearance API
+        // expects the solid ground block Y, never a model offset or a heightmap's free Y.
+        if (baseY < level.getMinBuildHeight() || baseY >= level.getMaxBuildHeight()) {
+            LOGGER.error("[STRUCT5] {} : selected groundY={} outside build height; placement refused", nbt, baseY);
+            return false;
+        }
         // T73 : liste COMPACTEE du cache (blocs reels + air interieur seulement).
         // L'air exterieur du .nbt (91 a 96 % des entrees de nos structures !) n'est
         // plus ni materialise, ni parcouru : il etait de toute facon rejete par le
@@ -1736,153 +1742,53 @@ public class Structures5Procedure {
         LOGGER.info("[STRUCT5] {} : {} a poser ({} verre supprime, air exterieur deja ecarte au chargement) -- T73",
                 nbt, filt.size(), glassSkipped);
         final List<StructureTemplate.StructureBlockInfo> fFilt = filt;
-        final BlockPos fTxz = txz;   // XZ ou baseY a ete mesure (AVANT smooth)
-        final int fBaseY = baseY;    // surface AVANT smooth
-        final BlockPos fRp = rp, fMin = min, fMax = max;
+        // Keep one selected ground plane throughout clearance, terrain and paste.
+        // SafeSurface.groundY returns the SOLID block Y (no +/-1 conversion here).
+        final int selectedGroundY = baseY;
+        final int foundationBaseY = selectedGroundY + oy;
+        final BlockPos pasteRp = rp, pasteMin = min, pasteMax = max;
         StructureTerrainPrep.setTerrainRingScalePercent(ringScaleFor(nbt));
-        StructureTerrainPrep.prepZone(level, min, max, fBaseY + oy, () -> {
-            // RE-mesurer la surface APRES le smooth : la structure doit rentrer dans
-            // le sol du terrain LISSE (pas l'ancien). On ne touche que Y (X/Z = idem,
-            // donc l'alignement smooth/structure reste parfait).
-            // FIX T7 : re-mesure sur un chunk dont la heightmap est GARANTIE
-            // initialisee (voir SafeSurface) -- c'est cette mesure qui pilote le
-            // placement final, elle ne doit jamais pouvoir renvoyer -65.
-            // T75 : l'ancrage post-smooth ne lit plus UNE colonne mais le SOL MEDIAN
-            // de toute l'emprise. Une cime, un pilier ou un pic de 2x2 blocs sur la
-            // colonne du centre suffisait a decaler la structure dans le vide (c'est
-            // la cause directe du re-ancrage "baseY 88 -> 87" inoperant en jeu).
-            int[] gs = deepluckyblock.util.SafeSurface.groundStats(level,
-                    fMin.getX(), fMin.getZ(), fMax.getX(), fMax.getZ(), 4, fBaseY,
-                    deepluckyblock.util.SafeSurface.groundY(level, fTxz.getX(), fTxz.getZ(), fBaseY));
-            int newBaseY = gs[0];
-            LOGGER.info("[STRUCT5] {} : ancrage T75 -- sol median de l'emprise={} (min={}, max={}, {} colonnes mesurees)",
-                    nbt, gs[0], gs[1], gs[2], gs[3]);
-            if (gs[3] > 0 && (gs[2] - gs[1]) > 8)
-                LOGGER.warn("[STRUCT5] {} : sol de l'emprise tres irregulier (min={}, max={}, ecart={}) -- ancrage sur la mediane {} (T75)",
-                        nbt, gs[1], gs[2], gs[2] - gs[1], gs[0]);
-            // ================================================================
-            // T74 : VERIFICATION ANTI-VOL (consigne utilisateur du 23/09 22:42 :
-            // « les structures sont dans le ciel ! elles vollent au dessus de la
-            // terre c'est pas normal ! »)
-            // ================================================================
-            // Le sol REEL est re-mesure BLOC PAR BLOC sous toute l'emprise (jamais
-            // la heightmap : elle rend la cime des arbres) et compare au BAS DE LA
-            // STRUCTURE tel qu'il sera pose, offset `oy` compris. Si ce bas est
-            // au-dessus du sol de plus d'un bloc, la structure flotterait : on la
-            // descend exactement de l'ecart. Aucune structure ne peut plus voler.
-            if (newBaseY > level.getMinBuildHeight()) {
-                int[] g2 = deepluckyblock.util.SafeSurface.groundStats(level,
-                        fMin.getX(), fMin.getZ(), fMax.getX(), fMax.getZ(), 6, newBaseY, newBaseY);
-                int structBase = newBaseY + oy;              // bas de la structure (offset inclus)
-                if (g2[3] > 0) {
-                    if (g2[0] < structBase - 1) {
-                        int fix = (g2[0] - 1) - structBase;   // negatif : on descend
-                        LOGGER.warn("[STRUCT5] {} : structure SUSPENDUE de {} bloc(s) (bas de structure={}, "
-                                        + "sol reel median={}, {} colonnes mesurees) -- ancrage corrige de {} bloc(s) (T74)",
-                                nbt, structBase - g2[0], structBase, g2[0], g2[3], fix);
-                        newBaseY += fix;
-                    } else {
-                        LOGGER.info("[STRUCT5] {} : controle anti-vol OK -- bas de structure={}, sol reel median={} "
-                                        + "(marge={} bloc(s) d'enfoncement, {} colonnes mesurees, T74)",
-                                nbt, structBase, g2[0], g2[0] - structBase, g2[3]);
-                    }
-                }
-            }
-            // GARDE-FOU : si la mesure est impossible (chunk pas encore genere), on
-            // NE deplace PAS la structure (deltaY=0) au lieu de la deplacer vers
-            // une hauteur inventee. C'est le filet de securite qui remplace
-            // l'ancien bornage : en cas de doute, on ne touche a rien.
-            boolean surfaceUnreliable = newBaseY <= level.getMinBuildHeight();
-            if (surfaceUnreliable) {
-                LOGGER.error("[STRUCT5] {} : hauteur post-smooth ILLISIBLE en {},{} (chunk pas encore genere) -- "
-                                + "structure laissee a sa position initiale (baseY={})", nbt, fTxz.getX(), fTxz.getZ(), fBaseY);
-            }
-            int rawDeltaY = surfaceUnreliable ? 0 : newBaseY - fBaseY;
-            // ================================================================
-            // RE-ANCRAGE APRES SMOOTH (reecrit en T7)
-            // ================================================================
-            //
-            // HISTORIQUE DU BUG (3 versions successives, toutes fausses) :
-            //   v1 : la structure suivait TOUJOURS la re-mesure -> avec une
-            //        mesure "fantome" (-65 au lieu de 71) elle remontait de 136
-            //        blocs et ecrasait l'offset manuel oy (plainte utilisateur :
-            //        « la structure est en partie DANS le sol, la ca fonctionne
-            //        plus du tout »).
-            //   v2 : correction descendante uniquement -> la structure restait
-            //        figee a -78 pendant que le smooth construisait le vrai sol
-            //        a 71 : ENTERREE de 149 blocs (le fameux "deltaY anormal
-            //        BORNE a 0").
-            //   v3 (celle-ci) : le vrai probleme n'etait ni le sens ni le
-            //        bornage, mais la MESURE. La heightmap du chunk n'etait pas
-            //        initialisee (-65 = minBuildHeight), donc fBaseY etait faux
-            //        et le "delta" corrigeait une erreur... vers une autre
-            //        erreur. Desormais fBaseY (avant smooth) ET newBaseY (apres
-            //        smooth) sont lus via SafeSurface : chunk force en FULL +
-            //        heightmap initialisee. Les deux mesures decrivent donc le
-            //        MEME sol reel, et le delta qui les separe est petit et
-            //        legitime.
-            //
-            // La structure suit ce delta dans les DEUX sens (plus de bornage) :
-            //   - c'est ce qui garantit qu'elle reste posee sur le sol du
-            //     terrain LISSE, et non sur celui d'avant le smooth ;
-            //   - l'offset manuel oy reste applique par-dessus
-            //     (fp = baseY + oy - minRelY), donc les structures volontairement
-            //     enfoncees dans le sol (citadel -35, dragon -34, observatory -5)
-            //     sont de nouveau respectees ;
-            //   - au-dela de MAX_POST_SMOOTH_DELTA_Y on log un WARN bien visible :
-            //     signe qu'une mesure a encore menti, a diagnostiquer.
-            int deltaY = rawDeltaY;
-            // T75 : PREUVE chiffree dans le log -- ecart entre le 1er bloc reel de la
-            // structure et le sol median mesure. <= 0 : la structure touche/s'enfonce
-            // dans le sol. > +2 : elle flotte (c'est ce qu'on interdit).
-            LOGGER.info("[STRUCT5] {} : ancrage FINAL -- baseY={} et 1er bloc reel a Y={} (ecart au sol = {}, "
-                    + "deltaY={}) : <=0 = pose sur le sol, >+2 = SUSPENDU (T75)",
-                    nbt, newBaseY, fRp.getY() + deltaY + floorRelYFinal,
-                    (fRp.getY() + deltaY + floorRelYFinal) - newBaseY, deltaY);
-            BlockPos pasteRp = fRp.offset(0, deltaY, 0);
-            BlockPos pasteMin = fMin.offset(0, deltaY, 0);
-            BlockPos pasteMax = fMax.offset(0, deltaY, 0);
-            if (Math.abs(rawDeltaY) > MAX_POST_SMOOTH_DELTA_Y)
-                LOGGER.warn("[STRUCT5] {} : ecart de sol avant/apres smooth = {} blocs ({} -> {}) -- la structure suit le sol REEL "
-                                + "(ancien comportement : borne a 0 = structure enterree/suspendue). Si ce chiffre est enorme, "
-                                + "c'est qu'une lecture de hauteur a encore menti : voir les lignes [DLB-SURFACE] ci-dessus.", nbt, rawDeltaY, fBaseY, newBaseY);
-            else if (deltaY != 0)
-                LOGGER.info("[STRUCT5] {} : re-ancrage Y apres smooth (baseY {} -> {}, deltaY={})", nbt, fBaseY, newBaseY, deltaY);
-
-            // Controle de coherence : si le sol de l'emprise n'est pas au niveau
-            // du point de mesure, on le signale (diagnostic, pas de correction
-            // automatique -- le smooth est cense avoir aplani l'emprise).
-            int halfSpan = Math.max(Math.abs(fMax.getX() - fMin.getX()), Math.abs(fMax.getZ() - fMin.getZ())) / 2;
-            int medianY = deepluckyblock.util.SafeSurface.medianSurfaceY(level, fTxz.getX(), fTxz.getZ(), Math.min(24, halfSpan), 4);
-            if (medianY != Integer.MIN_VALUE && Math.abs(medianY - newBaseY) > 8)
-                LOGGER.warn("[STRUCT5] {} : sol de l'emprise irregulier apres smooth (median={} contre {} au centre) -- la structure est ancree au centre", nbt, medianY, newBaseY);
-
-            // NOTE (T7) : l'ancien filet de securite backfillVoidGap() (plateau
-            // + rampe qui NIVELAIT tout le terrain au-dessus de l'emprise --
-            // 279795 blocs detruits sur la citadelle) n'est plus appele : il ne
-            // corrigeait que l'ecart vide cree par l'ANCIEN bornage de deltaY.
-            // La structure suivant desormais le sol reel, cet ecart ne peut plus
-            // apparaitre. La methode reste disponible dans StructureTerrainPrep.
-            // T27 : emprise enregistree AVANT la pose -- une structure qui demarrerait
-            // pendant ce paste la verrait et partirait ailleurs.
-            // ================================================================
-            // T39 : TOUT LE TERRAIN D'ABORD, LA STRUCTURE EN ABSOLU DERNIER
-            // ================================================================
-            // Consigne dev (23/09) : « la structure doit paste en absolu dernier,
-            // apres tous les smooths ». Le paste n'est donc plus offert ici : il
-            // part du rappel de fin de la phase terrain (smooths, failles, eau,
-            // /fixwater + /fixlava compris).
+        LOGGER.info("[STRUCT5] {} : selected solid groundY={}, clearance starts at Y={}, model offsetY={}, foundationBaseY={}",
+                nbt, selectedGroundY, selectedGroundY + 1, oy, foundationBaseY);
+        StructureTerrainPrep.prepZone(level, pasteMin, pasteMax, foundationBaseY, selectedGroundY, () -> {
+            // Do NOT re-anchor to the post-smooth median. In the reported Dragon
+            // case it lowered the model by another six blocks (78 -> 72), on top
+            // of its calibrated -34 offset. The clearance floor and the paste
+            // must refer to the same selected plane. Low ground is diagnosed,
+            // not hidden by sinking the model or by digging down to its bottom.
             StructureTerrainPrep.decorateTerrainOnly(level, pasteMin, pasteMax, () ->
-                // T43 : l'emprise du paste est RE-SCELLEE juste avant la pose (le
-                // terrain a travaille ~40 s depuis le pre-chargement de prepZone :
-                // sans ce rappel, la pose reclamait 160 chunks et gelait le jeu).
                 StructureTerrainPrep.preloadBox(level, pasteMin, pasteMax, () -> {
+                    // Measure only AFTER all terrain passes, final clearance and
+                    // water repair. These samples are diagnostics, not a new Y anchor.
+                    int[] ground = deepluckyblock.util.SafeSurface.groundStats(level,
+                            pasteMin.getX(), pasteMin.getZ(), pasteMax.getX(), pasteMax.getZ(),
+                            4, selectedGroundY, selectedGroundY);
+                    int firstBlockY = pasteRp.getY() + floorRelYFinal;
+                    LOGGER.info("[STRUCT5] {} : final fixed anchor groundY={}, offsetY={}, first model blockY={}, deltaY=0; "
+                                    + "sampled ground median={}, min={}, max={}, samples={}",
+                            nbt, selectedGroundY, oy, firstBlockY,
+                            ground[0], ground[1], ground[2], ground[3]);
+                    if (ground[3] == 0) {
+                        LOGGER.warn("[STRUCT5] {} : no usable ground samples; support and entrance accessibility NOT verified", nbt);
+                    } else {
+                        if (Math.abs(ground[0] - selectedGroundY) > MAX_POST_SMOOTH_DELTA_Y
+                                || ground[2] - ground[1] > 8) {
+                            LOGGER.warn("[STRUCT5] {} : uneven ground remains (selected={}, median={}, min={}, max={}); "
+                                            + "model anchor and manual offset preserved, visual inspection required",
+                                    nbt, selectedGroundY, ground[0], ground[1], ground[2]);
+                        }
+                        if (firstBlockY > ground[0] + 1) {
+                            LOGGER.warn("[STRUCT5] {} : possible unsupported model (first blockY={}, median ground={}); "
+                                            + "no automatic sinking or excavation applied", nbt, firstBlockY, ground[0]);
+                        }
+                    }
+                    // The lowest model block is not its entrance: no accessibility
+                    // guarantee can be inferred from this diagnostic alone.
                     deepluckyblock.util.StructureSites.register(level, nbt,
                             Math.min(pasteMin.getX(), pasteMax.getX()), Math.min(pasteMin.getZ(), pasteMax.getZ()),
                             Math.max(pasteMin.getX(), pasteMax.getX()), Math.max(pasteMin.getZ(), pasteMax.getZ()));
                     PASTE_Q.offer(new PasteJob(level, fFilt, pasteRp, rot, Mirror.NONE, nbt, tGlobal, pl, pasteMin, pasteMax));
                 }));
-
         });
         return true;
     }
