@@ -4064,6 +4064,12 @@ public class StructureTerrainPrep {
         deepluckyblock.util.DebugLog.setPhase(label);
         if (LAST_STEP_MS != 0L) {
             long delta = nowMs - LAST_STEP_MS;
+            // Campagne /2 : delta REEL de CHAQUE etape, visible dans les
+            // annotations CI (zero comportement -- instrumentation seule).
+            if (delta >= 500L) {
+                deepluckyblock.util.DebugLog.structure(
+                        "[DLB-STEP] {} ms -- {}", delta, label);
+            }
             if (delta >= 3000L) {
                 LOGGER.warn("[DLB-STRUCTURE] l'etape qui vient de finir a pris {} ms de temps REEL ({})"
                                 + " -- voir [DLB-LAGPROBE] pour le detail par tick", delta, label);

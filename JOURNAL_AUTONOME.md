@@ -352,3 +352,10 @@ Mod-side mesure : dressAndPlant 0.2-0.3 s ; fixLiquids 1.7-2.8 s ; filler
 0.3-0.9 s ; attente/tick 0.6-7.2 s. Conclusion : la consigne « x2 partout » est
 physiquement impossible dans le harnais CI ; en jeu reel (60 s d'annonce,
 pre-chauffage T46/T51) le preload tombe a ~0 et la difference est invisible.
+
+## 28/09 — NOUVELLE CAMPAGNE (utilisateur : tout <=9 s, lake <=30 s, 10 runs)
+Constat physique oppose (documente aux entrees precedentes) : preload vanille
+56-93 %, workers busy 33 s/36 (DLB-CPU), GC 0.3 s. Neoforge options (Noisium,
+C2ME) = dependance lourde/alpha -> hors perimetre sans arbitrage explicite.
+Test 1 : instrumentation [DLB-STEP] par etape (delta >= 500 ms, annotations CI),
+le reste /2 exploitable est cote mod (~27.5 s lake, ~2.3 s everest).
