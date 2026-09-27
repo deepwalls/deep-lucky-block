@@ -239,3 +239,18 @@ isSnowy (comp. chaine/colonne) remplace par isSnowyCell (cache/chunk) dans
 verifyGrassColumn et guardWaterEdges. Nuance visible acceptee (guide) :
 biomes enneiges sans "snow/ice/frozen" dans le nom (grove, snowy_slopes)
 recuperent leur couche de neige. Fixtures a relire (smooth/water surtout).
+
+### Test 2/10 (36341708253, d8448a4 T-HABILL.3) — fixtures ALL PASS, timings lus
+- Verifications : securite colonnes, async, loot, water x2, lazy water, smooth,
+  lake, tickets = ALL PASS. commit B (isSnowyCell) n'a rien casse.
+- Latances (fixture 30 s) : everest 34,47 (93 % = preload vanilla 33,3 s,
+  loterie machine, statu quo) ; dragon 31,6 (preload 21,7 = 69 %) ; lake 80,5
+  (preload 48,2 s = 60 %, 756 chunks ~64 ms/chunk ; mieux que 98-114 avant).
+- Postes d'habillage reels mesures (a viser par dressAndPlant) :
+  clearSurfaceDecor 4,7 s | fixLiquids 2,8 s | rebuildTerrain 6,5 s | naturalize
+  0,8 s | verifyGrassSurface hors top postes.
+
+### Test 3/10 — T-HABILL.4 (palette, mesure seule, compile only)
+samplePalette/paletteAt/fillerFor/WITNESS/PALETTE_FALLBACKS + sampleZonePalettes()
+journalise AVANT toute edition en prepZone 1b/11 (invariant I1). Aucun setBlock
+: compile-seule suffit. Repli attendu eleve si zone pas prechargee a ce stade.

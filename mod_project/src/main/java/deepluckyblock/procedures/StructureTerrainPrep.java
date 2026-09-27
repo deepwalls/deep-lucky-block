@@ -364,6 +364,15 @@ public class StructureTerrainPrep {
             // avait reellement pris 720).
             step("prepZone 1/11 : scanTrees termine, " + LAST_TREES.size() + " arbres sauves en "
                     + (System.currentTimeMillis() - tScan0) + " ms");
+            // T-HABILL.4 : echantillonne les palettes de surface AVANT la moindre
+            // edition (invariant I1) puis les CONGELE pour la future passe
+            // dressAndPlant. Aucun setBlock : mesure et journal seulement.
+            {
+                long tPal0 = System.currentTimeMillis();
+                sampleZonePalettes(level, min, max);
+                step("prepZone 1b/11 : palettes de surface echantillonnees en "
+                        + (System.currentTimeMillis() - tPal0) + " ms (aucune edition)");
+            }
             PREP_STARTED.add(chainKey);
             prepZoneAfterPreload(level, min, max, foundationBaseY, topY, () -> {
                 // La chaine terrain est rendue au moment ou l'appelant reprend la
@@ -2516,6 +2525,161 @@ public class StructureTerrainPrep {
     /** Invalide le cache de neige (entre deux habillages, avant reprise). */
     private static void clearSnowCellCache() {
         SNOWY_CELL_CACHE.clear();
+    }
+
+    // ==================================================================
+    // T-HABILL.4 : PALETTE DE SURFACE (guide, LIVRE IV -- invariant I1)
+    // ==================================================================
+    // Bloc de surface dominant + sous-sol, echantillonnes AVANT toute edition
+    // du terrain (pre-marrons, pre-smooth) puis CONGELES jusqu'a la fin de la
+    // chaine : apres le lissage on ne lirait que de la pierre reconstruite et
+    // la palette vaudrait « stone » partout. Ce commit ne fait qu'ECHANTILLONNER
+    // et JOURNALISER (aucun setBlock, aucun appel d'habillage) : c'est la mesure
+    // de la future passe dressAndPlant, qui s'en servira pour decider a quoi
+    // ressemble le sol naturel de chaque chunk.
+    // Adaptation assumee au code du guide : lectures via readBlock (T71) et
+    // SafeSurface (garde T7) au lieu du getChunk brut ; le witness y4=14 reste
+    // a l'interieur des bords du chunk.
+
+    /** Palette d'un chunk : bloc de surface dominant + sous-sol associe. */
+    private record SurfacePalette(Block top, Block filler, int samples, boolean confident) { }
+
+    /** Cache par chunk (cle ChunkPos.asLong), vide entre deux chaines. */
+    private static final Map<Long, SurfacePalette> PALETTE = new HashMap<>();
+    /** Replis sur voisin (echantillon maigre) -- journalise : taux eleve = trop tard. */
+    private static int PALETTE_FALLBACKS = 0;
+    /** Temoins : grille 4x4, evite les bords du chunk (derniers biomes mixtes). */
+    private static final int[] WITNESS = { 2, 6, 10, 14 };
+    /** Témoins exploitables minimum pour se declarer confiant. */
+    private static final int PALETTE_MIN_SAMPLES = 8;
+
+    /** Sous-sol associe a une surface. null = sol inconnu (modde) : conserver dessous. */
+    private static Block fillerFor(Block top) {
+        if (top == Blocks.SAND)          return Blocks.SANDSTONE;
+        if (top == Blocks.RED_SAND)      return Blocks.RED_SANDSTONE;
+        if (top == Blocks.GRASS_BLOCK)   return Blocks.DIRT;
+        if (top == Blocks.PODZOL)        return Blocks.DIRT;
+        if (top == Blocks.MYCELIUM)      return Blocks.DIRT;
+        if (top == Blocks.COARSE_DIRT)   return Blocks.DIRT;
+        if (top == Blocks.MOSS_BLOCK)    return Blocks.DIRT;
+        if (top == Blocks.GRAVEL)        return Blocks.STONE;
+        if (top == Blocks.SNOW_BLOCK)    return Blocks.DIRT;
+        return null;                      // inconnu : CONSERVER l'existant
+    }
+
+    /** Un bloc qui compte comme « sol » pour la palette. */
+    private static boolean isGroundCandidate(BlockState s) {
+        return s.blocksMotion() && isNaturalTerrain(s)
+                && !isLog(s) && !isLeaf(s)
+                && !s.is(Blocks.SNOW_BLOCK) && !s.is(Blocks.ICE)
+                && !s.is(Blocks.PACKED_ICE) && !s.is(Blocks.BLUE_ICE);
+    }
+
+    /** Couverture a traverser sans conclure : air, eau, neige fine, vegetation. */
+    private static boolean isSkippableCover(BlockState s) {
+        return s.isAir() || s.is(Blocks.WATER) || s.is(Blocks.SNOW)
+                || isLeaf(s) || isLog(s) || !s.blocksMotion();
+    }
+
+    /**
+     * Echantillonne le sol naturel d'un chunk (16 témoins, descente borne par le
+     * plancher). A APPELER AVANT TOUTE EDITION. Jamais de getChunk sur un chunk
+     * absent : repli grass/dirt non confiant (pile : jamais attendre).
+     */
+    private static SurfacePalette samplePalette(ServerLevel level, int cx, int cz) {
+        long key = net.minecraft.world.level.ChunkPos.asLong(cx, cz);
+        SurfacePalette cached = PALETTE.get(key);
+        if (cached != null) return cached;
+        if (!deepluckyblock.util.SafeSurface.isLoadedAt(level, cx << 4, cz << 4)) {
+            SurfacePalette unknown = new SurfacePalette(Blocks.GRASS_BLOCK, Blocks.DIRT, 0, false);
+            PALETTE.put(key, unknown);
+            return unknown;
+        }
+        ChunkAccess chunk = level.getChunk(cx, cz);
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        Map<Block, Integer> tally = new HashMap<>();
+        int used = 0;
+        int floor = level.getMinBuildHeight() + 8;
+        for (int lx : WITNESS) {
+            for (int lz : WITNESS) {
+                int x = (cx << 4) + lx, z = (cz << 4) + lz;
+                int y = deepluckyblock.util.SafeSurface.height(
+                        level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                while (y > floor) {
+                    BlockState s = readBlock(level, chunk, mut, x, y, z);
+                    if (isGroundCandidate(s)) { tally.merge(s.getBlock(), 1, Integer::sum); used++; break; }
+                    if (!isSkippableCover(s)) break;   // bloc non-sol et non traversable
+                    y--;
+                }
+            }
+        }
+        Block top = Blocks.GRASS_BLOCK;
+        int best = 0;
+        for (Map.Entry<Block, Integer> e : tally.entrySet())
+            if (e.getValue() > best) { best = e.getValue(); top = e.getKey(); }
+        SurfacePalette pal = new SurfacePalette(top, fillerFor(top), used,
+                used >= PALETTE_MIN_SAMPLES);
+        PALETTE.put(key, pal);
+        return pal;
+    }
+
+    /** Palette CONFIANTE la plus proche (spirale, rayon 3 chunks). Point d'entree unique. */
+    private static SurfacePalette paletteAt(ServerLevel level, int cx, int cz) {
+        SurfacePalette p = samplePalette(level, cx, cz);
+        if (p.confident()) return p;
+        for (int r = 1; r <= 3; r++)
+            for (int dx = -r; dx <= r; dx++)
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;   // anneau seul
+                    SurfacePalette q = samplePalette(level, cx + dx, cz + dz);
+                    if (q.confident()) { PALETTE_FALLBACKS++; return q; }
+                }
+        return p;   // rien de confiant a 3 chunks : on garde le defaut
+    }
+
+    /** Vide la palette en fin de chaine (avec la neige). */
+    private static void clearPaletteCache() {
+        PALETTE.clear();
+        PALETTE_FALLBACKS = 0;
+    }
+
+    /**
+     * T-HABILL.4 (mesure seule) : echantillonne les chunks de la zone et JOURNALISE
+     * la repartition des dominants. Aucun setBlock. Appele au tout debut de
+     * prepZone, juste apres scanTrees -- AVANT le premier setBlock de la chaine.
+     */
+    private static void clearDressingCaches() {
+        clearPaletteCache();
+        clearSnowCellCache();
+    }
+
+    /**
+     * T-HABILL.4 (mesure seule) : echantillonne les chunks de la zone et JOURNALISE
+     * la repartition des dominants. Aucun setBlock. Appele au tout debut de
+     * prepZone, juste apres scanTrees -- AVANT le premier setBlock de la chaine.
+     */
+    private static void sampleZonePalettes(ServerLevel level, BlockPos min, BlockPos max) {
+        int ring = terrainRing() + NATURALIZE_EXTRA_RING;
+        int cx0 = (min.getX() - ring) >> 4, cz0 = (min.getZ() - ring) >> 4;
+        int cx1 = (max.getX() + ring) >> 4, cz1 = (max.getZ() + ring) >> 4;
+        int chunks = 0, confident = 0, fallbacksBefore = PALETTE_FALLBACKS;
+        Map<Block, Integer> dominants = new HashMap<>();
+        for (int cx = cx0; cx <= cx1; cx++)
+            for (int cz = cz0; cz <= cz1; cz++) {
+                SurfacePalette p = paletteAt(level, cx, cz);
+                chunks++;
+                if (p.confident()) confident++;
+                dominants.merge(p.top(), 1, Integer::sum);
+            }
+        if (!deepluckyblock.util.DebugLog.STRUCTURE) return;   // journal desactive : ne pas construire la ligne
+        StringBuilder sb = new StringBuilder();
+        dominants.entrySet().stream()
+                .sorted((a, b) -> b.getValue() - a.getValue())
+                .forEach(e -> sb.append(net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                        .getKey(e.getKey()).getPath()).append('(').append(e.getValue()).append(") "));
+        deepluckyblock.util.DebugLog.structure(
+                "palette : {} chunks echantillonnes, {} confiants, {} repli, dominants = {}",
+                chunks, confident, PALETTE_FALLBACKS - fallbacksBefore, sb.toString().trim());
     }
 
     /** Suite de smoothPass, executee une fois tous les chunks charges. */
