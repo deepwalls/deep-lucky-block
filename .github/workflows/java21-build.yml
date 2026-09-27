@@ -2,7 +2,7 @@ name: Java 21 build
 
 on:
   push:
-    branches: [arena/01a0da6a-deep-lucky-block]
+    branches: [arena/01a0da6a-deep-lucky-block, arena/01a0e366-deep-lucky-block]
     paths:
       - '.github/workflows/java21-build.yml'
       - 'deep_lucky_block_mcreator.zip'
