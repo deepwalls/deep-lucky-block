@@ -405,3 +405,11 @@ Decision documentaire : aucune retouche cachette qualite (interdit), pas de
 report de travail apres le chrono, pas de re-assouplissement des fixtures.
 Journal cloture pour cette campagne ; en attente de l'arbitrage utilisateur
 (Noisium ? C2ME ? tolerance CI 2 CPU ? ou accepter in-game prep as target).
+
+## 28/09 — campagne combos round 3 (+10 runs utilisateur)
+- Run 12 relu : purge + listing OK, 'run/mods EFFECTIF : noisium seul' (le
+  fantome C2ME du run 11 = contamination resolue par la purge). Machine lente
+  (everest 34.8/dragon 30.9 FAIL, lake 75.6 PASS).
+- Technique lumiere (Starlight/ScalableLux) : AUCUN port NeoForge 1.21.1
+  -> cul-de-sac documente, ne pas relancer.
+- Run 13 : A/B Noisiumed 3.0.6 (fork alternatif) vs NoisiumForked 2.7.0.

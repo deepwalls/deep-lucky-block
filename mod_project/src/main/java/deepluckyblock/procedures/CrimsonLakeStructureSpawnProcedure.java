@@ -469,17 +469,8 @@ public class CrimsonLakeStructureSpawnProcedure {
         for (var pl : level.players()) pl.sendSystemMessage(msg2);
 
         final List<StructureTemplate.StructureBlockInfo> fFilt = filt;
-        // T80 : la sonde ne lit QUE groundY(px, pz) (ancrage vertical du lac) --
-        // elle n'a donc besoin que du chunk du CENTRE, charge en FULL avec sa
-        // heightmap primee (regle T7 inchangee : aucune lecture sur chunk non
-        // charge). Avant, TOUTE l'emprise (340 chunks, dont ~23 s de generation
-        // en CI, run 36336086415) etait demandee ici pour cette seule lecture,
-        // puis le prepZone qui suit rechargeait une zone encore plus large
-        // (756 chunks) : deux attentes payees pour le meme terrain. Le
-        // prepZone suivant charge toujours l'emprise entiere de son cote :
-        // aucun changement de geometrie, d'ancrage ni de pipeline.
-        BlockPos probeMin = new BlockPos(px - 8, py, pz - 8);
-        BlockPos probeMax = new BlockPos(px + 8, py, pz + 8);
+        BlockPos probeMin = new BlockPos(px - sx / 2, py, pz - sz / 2);
+        BlockPos probeMax = probeMin.offset(sx - 1, sy - 1, sz - 1);
         StructureTerrainPrep.setTerrainRingScalePercent(100);
         StructureTerrainPrep.setStructureName(NBT_NAME);
         // Read the actual ground only after loading; the player's altitude is not terrain.
@@ -503,14 +494,7 @@ public class CrimsonLakeStructureSpawnProcedure {
             System.out.println("[DLB-LAKE] anchor: ground=" + groundY + ", lowest block="
                     + (origin.getY() + minRelativeY) + ", sink=" + SINK_BLOCKS);
             // All shaping precedes clearing. Nothing may refill the interior before paste.
-            // groundY is the SOLID selected ground: shared clearance only removes what
-            // stands ABOVE it. The lake's own sink and its interior excavation stay
-            // separate and are handled by clearBuildVolume, below the selected ground.
-            System.out.println("[DLB-LAKE] clearance floor: selected groundY=" + groundY
-                    + ", shared clearance starts at Y=" + (groundY + 1)
-                    + ", foundation Y=" + (origin.getY() + minRelativeY)
-                    + " (sink=" + SINK_BLOCKS + " preserved)");
-            StructureTerrainPrep.prepZone(level, min, max, origin.getY() + minRelativeY, groundY, () ->
+            StructureTerrainPrep.prepZone(level, min, max, origin.getY() + minRelativeY, () ->
                     StructureTerrainPrep.decorateTerrainOnly(level, min, max, () ->
                             clearBuildVolume(level, origin.offset(0, minRelativeY, 0), max, () ->
                                     PASTE_Q.offer(new PasteJob(level, fFilt, origin, bfly,

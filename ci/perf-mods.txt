@@ -1,4 +1,4 @@
 # PERF-MODS charges UNIQUEMENT par la session CI serveur (campagne /2).
-# [TEST FINAL] NoisiumForked seul (mesure ok, fixtures vertes, rendu identique).
-# C2ME ecarte : devbuilds Java 25 (major 69), incompatible Temurin 21 imposee.
-noisium-neoforge-2.7.0+mc1.21-1.21.1.jar|https://cdn.modrinth.com/data/hasdd01q/versions/VviuomrA/noisium-neoforge-2.7.0%2Bmc1.21-1.21.1.jar|ed05cdcf19f6fe6849204cddf0009b514b3686a0bac0da1d834e80d106b8e28ee2bf7d1e66a6c140d23b6c4cf5bb06558a795b70e31c179bcd1f74d955bd0068
+# [TEST 13 -- SOLO A/B] Noisiumed 3.0.6 (fork alternatif de Noisium), purge
+# automatique retire NoisiumForked. Mesure vs run 4 (NoisiumForked, m. rapide).
+noisiumed-3.0.6-neoforge-1.21.1.jar|https://cdn.modrinth.com/data/M8MasaZG/versions/U3gpLtpO/noisiumed-3.0.6-neoforge-1.21.1.jar|327f828d09b0a7365b31c9eae253969c2a18c6581fdc0b93032e5ccac813eaf3c09d84cf1cddc6242f5930a508f24b21e355e4998ff57c811586e8f983e66919
