@@ -494,7 +494,14 @@ public class CrimsonLakeStructureSpawnProcedure {
             System.out.println("[DLB-LAKE] anchor: ground=" + groundY + ", lowest block="
                     + (origin.getY() + minRelativeY) + ", sink=" + SINK_BLOCKS);
             // All shaping precedes clearing. Nothing may refill the interior before paste.
-            StructureTerrainPrep.prepZone(level, min, max, origin.getY() + minRelativeY, () ->
+            // groundY is the SOLID selected ground: shared clearance only removes what
+            // stands ABOVE it. The lake's own sink and its interior excavation stay
+            // separate and are handled by clearBuildVolume, below the selected ground.
+            System.out.println("[DLB-LAKE] clearance floor: selected groundY=" + groundY
+                    + ", shared clearance starts at Y=" + (groundY + 1)
+                    + ", foundation Y=" + (origin.getY() + minRelativeY)
+                    + " (sink=" + SINK_BLOCKS + " preserved)");
+            StructureTerrainPrep.prepZone(level, min, max, origin.getY() + minRelativeY, groundY, () ->
                     StructureTerrainPrep.decorateTerrainOnly(level, min, max, () ->
                             clearBuildVolume(level, origin.offset(0, minRelativeY, 0), max, () ->
                                     PASTE_Q.offer(new PasteJob(level, fFilt, origin, bfly,
