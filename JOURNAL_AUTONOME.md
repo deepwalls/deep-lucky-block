@@ -141,3 +141,23 @@ Format : date | hypothèse | mesure | conclusion | décision.
 - Livraison terrain-etape-7 preparee (Structures4 T78 + StructureTerrainPrep
   T79, avants, NOTICE). Arbitrage geometrie/budget Everest remis a
   l'utilisateur (ceinture naturalize differee, statut chunk, ou decision seuil).
+
+## 2026-09-27 — T80 (Crimson Lake) : sonde reduite au chunk central
+
+- Cause mesuree (annotations run 36336086415) : le lac paye DEUX pre-
+  chargements pour le meme terrain : (1) sonde 340 chunks ~23 s pour lire
+  groundY(px,pz) (UNE colonne, garde T7 heightmap primee) ; (2) prepZone
+  coeur 650/zone 756 ~35 s juste apres.
+- Correctif : sonde = px/pz +-8 blocs (chunk central + voisins immediats via
+  la marge propre de preloadBox). Lecture, ancrage (ground=47/sink=10),
+  geometrie et pipeline strictement inchanges ; la fixture lake (sink=10,
+  emprise epargnee) re-verifie tout cela en CI.
+- Gain attendu : ~330 chunks de generation en moins dans la fenetre =
+  ~12 s (machine rapide) a ~23 s (machine lente) ; seuil 120 s conserve.
+- Constat annexes : les budgets T46 (coeur 20 s + anneau 8 s) sont devenus
+  diagnostiques seulement (attente de couverture complete = choix mesure du
+  code actuel : demarrer avec des colonnes absentes coutait plus en lectures
+  serie). Everest est deja a l'optimum geometrique (marge 25% T + 16 < coeur
+  T46 de 48). fillPending trie deja du centre vers l'exterieur (priorite
+  coeur effective). Reste comme leviers post-T80 : regles eau strictes
+  conservees, seuils conserves, harnais conserve.
