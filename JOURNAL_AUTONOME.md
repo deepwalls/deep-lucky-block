@@ -294,3 +294,11 @@ Branchement + sauvetage plantes = etape suivante, avec [server-check].
 ### Test 6/10 — CONFIRMATION (memes seed/coords, aucun changement de code)
 Methode : 2 executions identiques avant de conclure (bruit CI ~30 %).
 (Le push precedent n'a pas declenche de run visible -- relance explicite.)
+
+### Test 6/10 (36344227069, 77b1dd7) — CONFIRMATION : fixtures ALL PASS
+- Meme code, memes seed/coords : dragon 32,2 -> 38,0 ; everest 34,7 -> 36,5 ;
+  lake ~80 -> 118,5 (preload vanille 60-73 %) : bruit machine ±20 %, jamais
+  lie au mod. dressAndPlant 0,3 -> 0,2 s (stable, 3x sous budget guide 1 s).
+- ship/circus PASS; toujours 5 FAIL latence structurels de fixture (30 s CI).
+- Deux points de mesure acquis : la non-regression dressing est CONFIRMEE ;
+  le FAIL latence des grosses structures est un verdict machine, pas qualite.
