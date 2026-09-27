@@ -227,3 +227,9 @@ Format : date | hypothèse | mesure | conclusion | décision.
   sliceBudgetMs adaptatif + anti-doublon — le ChunkPass du guide, avec
   server.execute, violerait I6 et T13). Push groupes, commits 1 tache = 1
   commit dans l'historique, run CI compile seul tant que zero changement visuel.
+
+### Run #0 du programme (36340976542) — compile seule, f582547, SUCCESS
+T-HABILL.1+2 scaffolding (ChunkMajorZone + isSnowyCell + caches) compile.
+Aucun changement de comportement ; aucune session serveur (pas de marqueur).
+Prochaine : T-HABILL.3 (reparation dette T71 dans les boucles grass/neige :
+mutable par colonne + neige issue du cache par chunk), toujours zero visuel.
