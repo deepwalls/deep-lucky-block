@@ -283,3 +283,13 @@ Branchement + sauvetage plantes = etape suivante, avec [server-check].
 - Journal attendu : 'dressAndPlant : A rapides / B melanges, S surfaces,
   F sous-sols, P plantes, K sautees, R replis' + 'palette : N chunks ... dominants'
   + 'repose des plantes sauvees : X replantees'.
+
+### Test 5/10 (36343091899, T-HABILL.6-8) — fixtures ALL PASS, dressAndPlant 0.3 s
+- Verifications ALL PASS (smooth/water x2+lazy/lake/tickets/async/loot).
+- [DLB-PERF] dragon : 'dressAndPlant 0.3 s (1%)' ; verifyGrassSurface et
+  naturalize ABSENTS des postes => bien remplaces. 0.3 s << budget 1 s.
+- Latences : dragon 32,2 (preload 74 %), everest 34,7 (93 %), lake preload 44,35
+  = loterie machine, zero regression liee au dressing.
+
+### Test 6/10 — CONFIRMATION (memes seed/coords, aucun changement de code)
+Methode : 2 executions identiques avant de conclure (bruit CI ~30 %).
