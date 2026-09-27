@@ -309,3 +309,14 @@ circus PASS, ship PASS, everest 29.4 s PASS (limite 30), crimsonlake 66.0 s x2
 PASS (limite 120). Fixtures ALL PASS. everest 29.4 < 30 pour la premiere fois
 (preload 25.6 s, fenetre-sonde de 10.2 s pas reproduite ; loterie machine).
 lake 66.0 = meilleur temps jamais mesure (preload 37.0 = 56 %).
+
+### Test 8/10 (36345649429) — 2e RUN 100 % PASS, chiffres stables
+everest 29.8 s (preload 27.5 = 92 %, mod 2.3 s) ; lake 64.5 s (preload 37.1 =
+58 %, mod 27.5 s : rebuild 6.5, balayage 3.4, decor 3.8, decorate 3.7, fix 2.8,
+attente/tick 5.2, divers ~2) ; une petite structure a 8.1 s (preload 100 %).
+Fixtures ALL PASS, 4e/5e fois. Deux runs identiques -> tableau de reference
+structure-par-structure remis a l'utilisateur ; la marge /2 restante est
+entierement dans le chargement vanille (non rognable sans casser la qualite
+ou les fixtures, interdits).
+
+### Test 9/10 — 3e PASS consecutif vise (stabilite du protocole)

@@ -2887,7 +2887,7 @@ public class StructureTerrainPrep {
     }
 
     // ==================================================================
-    // RUN 7/10 : PREMIER 100 % PASS (everest 29,4 s < 30 ; lake 66,0 s).
+    // RUNS 7-8/10 : 100 % PASS x2 (everest 29,4/29,8 ; lake 66,0/64,5).
     // BILAN 27/09 (tests 5-6/10, CI memes seed/coords) : dressAndPlant 0,2-0,3 s
     // par structure (budget guide 1 s), fixtures ALL PASS x4, latence des
     // structures = bruit machine (+-20 %), preload vanille 60-93 % du chrono.
