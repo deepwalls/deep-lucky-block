@@ -1,4 +1,0 @@
-# PERF-MODS charges UNIQUEMENT par la session CI serveur (campagne /2).
-# [TEST 13 PASS 10/10] Noisiumed 3.0.6 (fork alternatif), everest 28.7s lake 62.6s ; run 14 = confirmation memes conditions, purge
-# automatique retire NoisiumForked. Mesure vs run 4 (NoisiumForked, m. rapide).
-noisiumed-3.0.6-neoforge-1.21.1.jar|https://cdn.modrinth.com/data/M8MasaZG/versions/U3gpLtpO/noisiumed-3.0.6-neoforge-1.21.1.jar|327f828d09b0a7365b31c9eae253969c2a18c6581fdc0b93032e5ccac813eaf3c09d84cf1cddc6242f5930a508f24b21e355e4998ff57c811586e8f983e66919

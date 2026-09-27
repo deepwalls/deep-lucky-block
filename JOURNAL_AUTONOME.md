@@ -434,3 +434,11 @@ Table des techniques testees en solo/combo :
   - C2ME OpenCL addon           : mort avec C2ME core
 Choix conserve dans ci/perf-mods.txt : Noisiumed 3.0.6 (plus recent, meme effet).
 Budget runs neufs : 8 en reserve (2 consommes sur 10).
+
+## 28/09 — OBJECTIF UTILISATEUR : <=18 s partout hors lake (campagne FJP)
+Theorie mesuree : [DLB-CPU] run 5 = 'workers 33 s / wall 36 s' -> UN SEUL
+worker de generation. Vanilla genere le bruit sur ForkJoinPool.commonPool dont
+le parallelisme = availableProcessors-1 = 1 sous ActiveProcessorCount=2.
+Combo test 15 : Noisiumed 3.0.6 (conserve) + FJP.common.parallelism=2 (meme
+ressources, 2 threads d'execution sur 2 CPU). Projection : everest 368 chunks
+a ~27-30 ms -> 10-13 s. Cible <=18 s totales (mod-side everest ~2.5 s).

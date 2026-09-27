@@ -44,7 +44,7 @@ jobs:
       - name: Build mod
         shell: bash
         env:
-          JAVA_TOOL_OPTIONS: '-Xmx2g -XX:ActiveProcessorCount=2'
+          JAVA_TOOL_OPTIONS: '-Xmx2g -XX:ActiveProcessorCount=2 -Djava.util.concurrent.ForkJoinPool.common.parallelism=2'
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/mod-project"
@@ -52,7 +52,7 @@ jobs:
       - name: Verify structures in one dedicated server session
         if: contains(github.event.head_commit.message, '[server-check]')
         env:
-          JAVA_TOOL_OPTIONS: '-Xmx2g -XX:ActiveProcessorCount=2'
+          JAVA_TOOL_OPTIONS: '-Xmx2g -XX:ActiveProcessorCount=2 -Djava.util.concurrent.ForkJoinPool.common.parallelism=2'
         run: python3 ci/server_check.py
       - name: Publish failure excerpt as annotations
         if: failure()
