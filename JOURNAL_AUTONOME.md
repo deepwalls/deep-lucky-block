@@ -108,3 +108,21 @@ Format : date | hypothèse | mesure | conclusion | décision.
   finalTerrainPass, fixLiquids 1,7 s). Attendu ~26,9 s → budget tenu.
 - AST Structures4 : 0 erreur, accolades equilibrees. Run #4 = 1 donnee ;
   il faut 2 mesures meme seed/coords pour conclure un gain (regle).
+
+## 2026-09-27 — Mesure CI #4 (run 36335198901, commit 492bc2e) : T78 ok mod-side, variance machine isolee
+
+- T78 (Everest sans balayage) : l'item « balayage » (8,0 s au run #3) DISPARAIT
+  du decompte [DLB-PERF] Everest — gain mod-side reel de 8,0 s.
+- MAIS run globalement plus lent (~+30 % sur TOUTES les structures, code dragon
+  identique : 27,0 s -> 32,7 s) : pre-chargement Everest 24,5 s -> 33,3 s pour
+  les memes 368 chunks, memes coords/seed. Workers CPU 24,4 s -> 33,0 s : la
+  generation moteur (2 vCPU) varie de ±8 s. ni GC (331 ms) ni heap.
+- Everest run #5 : 35,99 s (pre-chargement 33,3 = 93 %, fixLiquids 1,7, filler
+  0,9, pose 0,0). Sans AUCUN code mod, le meme site couterait 24-33 s : le
+  budget 30 s n'est atteignable de facon deterministe qu'en reduisant la
+  geometrie chargee (marge naturalize ~16 blocs = ~74 chunks ~ 6,4 s) ou le
+  statut de chargement — arbirage geometrie/qualite reserve a l'utilisateur.
+- T79 (local, AST ok) : clearSurfaceDecor saute les sections 16-blocs sans air
+  ni decor (meme discipline que T71) ; equivalence stricte demontree (aucun
+  setBlock ne change). Cible : l'anomalie 0,29 ms/colonne mesuree en jeu
+  (11,8 s / 40 176 colonnes, foret) ; en CI le poste vaut ~1,1 s sur dragon.

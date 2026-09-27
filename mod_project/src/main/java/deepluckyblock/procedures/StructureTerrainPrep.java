@@ -754,6 +754,10 @@ public class StructureTerrainPrep {
     // Avant le smooth : retire TOUS les decors de surface (feuilles, herbe, fleurs,
     // neige, vignes...) sur toute la zone GIGA. Sinon le smooth abaisse le terrain
     // et ces decors se retrouvent a flotter a leur ancienne position. Batche.
+    /** T79 : « cette section contient de l'air OU du decor » -- sinon aucun setBlock. */
+    private static final java.util.function.Predicate<BlockState> DECOR_INTERESTING =
+            s -> s.isAir() || isSurfaceDecor(s);
+
     private static void clearSurfaceDecor(ServerLevel level, BlockPos min, BlockPos max, Runnable onDone) {
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         startColumnPass(level, "clearSurfaceDecor", columnsOf(min, max, terrainRing()), BATCH_COLS, col -> {
@@ -765,10 +769,31 @@ public class StructureTerrainPrep {
             int bottom = surface - 25;
             if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.contains(level, x, z))
                 bottom = Math.max(bottom, CLEARANCE_PLAN.groundY() + 1);
-            for (int y = top; y >= bottom; y--) {
+            ChunkAccess chunk = deepluckyblock.util.SafeSurface.chunkFor(level, x >> 4, z >> 4);
+            // === T79 : LECTURE PAR SECTIONS (meme discipline que T71) ===
+            // L'intervalle balaye fait 43 a 89 blocs par colonne (surface+64
+            // jusqu'a surface-25) et un getBlockState complet chacun : 11,8 s
+            // mesures en jeu sur 40 176 colonnes (0,29 ms/colonne, 14x le
+            // rythme des autres passes). Une section entierement VIDE n'a que
+            // de l'air : la boucle d'origine n'y changeait rien. Une section
+            // SANS air NI decor n'a que des blocs pleins non retirables :
+            // idem. On les saute donc par paquets de 16 -- l'ordre et le
+            // contenu des setBlock restants sont STRICTEMENT identiques a
+            // l'ancienne boucle (scan descendant conserve dans les sections
+            // retenues) : le gain vient uniquement des lectures economisees.
+            int y = top;
+            while (y >= bottom) {
                 if (y < level.getMinBuildHeight()) break;
-                BlockState state = level.getBlockState(mut.set(x, y, z));
+                LevelChunkSection sec = sectionAt(chunk, y);
+                if (sec != null) {
+                    if (sec.hasOnlyAir() || !sec.maybeHas(DECOR_INTERESTING)) {
+                        y = Math.max(bottom, (y & ~15)) - 1;   // section entiere saute
+                        continue;
+                    }
+                }
+                BlockState state = readBlock(level, chunk, mut, x, y, z);
                 if (!state.isAir() && isSurfaceDecor(state)) level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
+                y--;
             }
         }, onDone);
     }
