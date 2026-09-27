@@ -359,3 +359,22 @@ Constat physique oppose (documente aux entrees precedentes) : preload vanille
 C2ME) = dependance lourde/alpha -> hors perimetre sans arbitrage explicite.
 Test 1 : instrumentation [DLB-STEP] par etape (delta >= 500 ms, annotations CI),
 le reste /2 exploitable est cote mod (~27.5 s lake, ~2.3 s everest).
+
+## 28/09 — ANALYSE DU PLAFOND (reponse au « tout <=9 s, lake <=30 s »)
+Preuves mesurees (memes seed/coords, plusieurs runs) :
+- [DLB-CPU] run 5 : wall=36.0 s, workers=33.0 s, GC=0.278 s -> les 36 s sont
+  du travail moteur de generation (workers occupes), pas de l'ordonnancement.
+- everest = 368 chunks (strict empreinte) ~ 74-92 ms/chunk sur le harnais
+  2 CPU / -Xmx2g ; floor vanille publie ~30-60 ms/chunk -> 368 x 0.03s = 11 s,
+  deja AU-DESSUS des 9 s demandes meme au meilleur cas documente.
+- lake = 756 chunks -> floor gen ~23-45 s ; mod-side actuel ~27.5 s
+  (smooth 62 passes ~6.5, balayage 3.4, decor 3.8, decorate 3.7, fix 2.8,
+  attente/tick ~5.2) -> /2 total impossible meme en annulant TOUT le mod-side.
+- ChunkKeeper : REQUEST_PER_TICK=8 / MAX_IN_FLIGHT=16 deja presents (clamps*) ;
+  prewarm T46/T51 couvre le jeu reel (60 s d'annonce) ; les guides bilancent
+  la meme donnée.
+- Modifications moteur externes (Noisium +20-30 % gen ; C2ME alpha) : NON
+  incluses sans arbitrage explicite de l'utilisateur (nouvelle dependance,
+  surface de risque sur pipeline critique).
+Actions /2 retenues (sans perte de qualite) : instrumentation [DLB-STEP]
+deployee (test 1), puis shaves mod-side valides par fixtures + 2 runs fixes.
