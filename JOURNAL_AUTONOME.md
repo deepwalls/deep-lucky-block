@@ -302,3 +302,10 @@ Methode : 2 executions identiques avant de conclure (bruit CI ~30 %).
 - ship/circus PASS; toujours 5 FAIL latence structurels de fixture (30 s CI).
 - Deux points de mesure acquis : la non-regression dressing est CONFIRMEE ;
   le FAIL latence des grosses structures est un verdict machine, pas qualite.
+
+### Test 7/10 (36345131072, bf64e0b) — PREMIER RUN 100 % PASS
+Latences (limites fixture) : citadel PASS, observatory PASS, dragon PASS,
+circus PASS, ship PASS, everest 29.4 s PASS (limite 30), crimsonlake 66.0 s x2
+PASS (limite 120). Fixtures ALL PASS. everest 29.4 < 30 pour la premiere fois
+(preload 25.6 s, fenetre-sonde de 10.2 s pas reproduite ; loterie machine).
+lake 66.0 = meilleur temps jamais mesure (preload 37.0 = 56 %).
