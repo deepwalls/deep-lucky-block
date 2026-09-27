@@ -97,7 +97,7 @@ def wait_for(marker, timeout):
         recent.append(line.strip())
         if '[DLBVERIFY] FAIL' in line:
             raise RuntimeError(line.strip())
-        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair', 'DLB-LAKE', 'STRUCT4', 'Post-process', 'pre-chargement', 'DLB-CHUNKS', 'DLB-CPU']):
+        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair', 'DLB-LAKE', 'STRUCT4', 'Post-process', 'pre-chargement', 'DLB-CHUNKS', 'DLB-CPU', 'DLB-STEP', 'palette :', 'dressAndPlant']):
             phases.append(line.strip())
         pending = {item for item in pending if item not in line}
         if not pending:
