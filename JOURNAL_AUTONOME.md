@@ -442,3 +442,6 @@ le parallelisme = availableProcessors-1 = 1 sous ActiveProcessorCount=2.
 Combo test 15 : Noisiumed 3.0.6 (conserve) + FJP.common.parallelism=2 (meme
 ressources, 2 threads d'execution sur 2 CPU). Projection : everest 368 chunks
 a ~27-30 ms -> 10-13 s. Cible <=18 s totales (mod-side everest ~2.5 s).
+- Run 15 (FJP.common.parallelism=2) : [DLB-CPU] workers/wall = 0.94 -> le
+  commonPool n'est PAS l'executeur de generation vanilla. Bascule sur la
+  propriete systeme officielle -Dmax.bg.threads=2 (run 16), meme objectif.
