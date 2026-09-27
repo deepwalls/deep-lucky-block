@@ -254,3 +254,7 @@ recuperent leur couche de neige. Fixtures a relire (smooth/water surtout).
 samplePalette/paletteAt/fillerFor/WITNESS/PALETTE_FALLBACKS + sampleZonePalettes()
 journalise AVANT toute edition en prepZone 1b/11 (invariant I1). Aucun setBlock
 : compile-seule suffit. Repli attendu eleve si zone pas prechargee a ce stade.
+
+### Test 3/10 (36342357682, T-HABILL.4) — SUCCESS (compile seule)
+Palette + journal prepZone 1b/11 compiles. Prochain : T-HABILL.5 dressAndPlant
+(machinerie complete, flag dressingEnabled()=false : AUCUN appel d'abord).
