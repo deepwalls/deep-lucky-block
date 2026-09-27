@@ -126,3 +126,18 @@ Format : date | hypothèse | mesure | conclusion | décision.
   ni decor (meme discipline que T71) ; equivalence stricte demontree (aucun
   setBlock ne change). Cible : l'anomalie 0,29 ms/colonne mesuree en jeu
   (11,8 s / 40 176 colonnes, foret) ; en CI le poste vaut ~1,1 s sur dragon.
+
+## 2026-09-27 — Mesure CI #5 (run 36336086415, commit f0a6eba) : T79 compile, fixtures vertes ; mur machine confirme
+
+- Machine lente (meme profil que run #5) : Everest 36,15 s (pre-chargement
+  33,5 s = 93 %, workers 33,4 s), dragon 32,50 s, citadel 28,3, circus 8,1.
+- Regressions ciblees : ALL PASS ; fixtures eau (T77), smooth, lake OK malgre
+  T79. clearSurfaceDecor CI inchange (1,1 -> 1,2 s sur dragon, terrain plat) :
+  le gain T79 vise le cas foret en jeu (11,8 s mesures), pas demontrable en CI.
+- Deux points de mesure T78 (runs 36335198901 + 36336086415, meme seed/coords) :
+  balayage disparu du decompte Everest dans les deux — gain mod-side 8,0 s
+  CONFIRME ; le verdict 30 s depend desormais de la machine CI (24,5-33,5 s de
+  generation vanilla pour les 368 chunks, soit ±8 s de bruit).
+- Livraison terrain-etape-7 preparee (Structures4 T78 + StructureTerrainPrep
+  T79, avants, NOTICE). Arbitrage geometrie/budget Everest remis a
+  l'utilisateur (ceinture naturalize differee, statut chunk, ou decision seuil).
