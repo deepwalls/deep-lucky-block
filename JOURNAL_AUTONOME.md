@@ -416,3 +416,21 @@ Journal cloture pour cette campagne ; en attente de l'arbitrage utilisateur
 - ERREUR + REPARATION : snapshot local perime commis dans b9af8e8 (Structure-
   TerrainPrep regressait, 30 symboles T-HABILL perdus). Restauration integrale
   depuis aa4577a. Le commit b9af8e8 est conserve dans l'historique comme preuve.
+
+## 28/09 (fin round 3) — VERDICT COMBOS, campagne cloturee proprement
+Runs consommes ce round : 13 (Noisiumed 3.0.6 = SUCCESS 10/10, everest 28.7 /
+lake 62.6, machine rapide), 14 (meme config = machine lente, everest 37.9 /
+lake 116.6 FAIL-drift, fixtures toujours vertes).
+A/B final : NoisiumForked 2.7.0 (24.0/36.3/37.9/34.8) == Noisiumed 3.0.6
+(28.7/37.9/...) a bruit machine pres. SEUL facteur de PASS/FAIL = la derive
+du runner GH (~x1.6), hors portee de tout reglage code/mod.
+Table des techniques testees en solo/combo :
+  + NoisiumForked 2.7.0 neoforge : FONCTIONNE (rendu bit-identique, fixtures OK)
+  + Noisiumed 3.0.6 neoforge    : FONCTIONNE (equivalent au precedent)
+  - C2ME 0.104-0.122            : IMPOSSIBLE (toutes devbuilds = Java 25 only)
+  - Lumiere (Starlight/ScalableLux) : AUCUN port neoforge 1.21.1 (cul-de-sac)
+  - GC flags                    : REJETE par mesure [DLB-CPU] collectors=278ms/36s
+  - Debit d'emission ChunKeeper : DEJA 8/tick + 16 en vol (relève ancienne IA)
+  - C2ME OpenCL addon           : mort avec C2ME core
+Choix conserve dans ci/perf-mods.txt : Noisiumed 3.0.6 (plus recent, meme effet).
+Budget runs neufs : 8 en reserve (2 consommes sur 10).
