@@ -4864,9 +4864,6 @@ public class StructureTerrainPrep {
      *  verdict (safety: never drown land not proven enclosed). */
     private static final int FIXLIQ_ESCAPE_MAX = 200_000;
 
-    /** T77: max tick pauses a proof tolerates while waiting for a frontier chunk. */
-    private static final int FIXLIQ_ESCAPE_WAIT_MAX = 240;
-
     /** Budget de temps par tick (aucun tick ne doit depasser 40 ms ici). */
     private static final long FIXLIQ_SLICE_MS = 40;
 
@@ -5026,7 +5023,7 @@ public class StructureTerrainPrep {
         final java.util.Set<Long> verifySet = new java.util.HashSet<>();
         final java.util.ArrayDeque<Long> escQueue = new java.util.ArrayDeque<>();
         final java.util.Set<Long> escSeen = new java.util.HashSet<>();
-        long escOrigin; int escLvl; boolean escActive, escLava; int escWait, escExplored;
+        long escOrigin; int escLvl; boolean escActive, escLava; int escExplored;
         int openRejected, proofs;
 
         LiquidJob(ServerLevel l, int cx, int cz, List<int[]> chunks, String label, Runnable onDone,
@@ -5220,7 +5217,10 @@ public class StructureTerrainPrep {
                             // Keep the frontier sparse: no rectangular dry halo expansion.
                             // The next slice waits until these chunks are loaded AND pinned.
                             if (deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, nx >> 4, nz >> 4)) requested++;
-                            retry.add(packed);
+                            // T77: same bounded-round discipline as the request() branch.
+                            // An unbounded onDemand retry could never conclude on a cold
+                            // ring frontier (measured: rounds beyond 40, job never ended).
+                            if (refillRound < FIXLIQ_PENDING_ROUNDS) retry.add(packed); else stalled++;
                         } else {
                             deepluckyblock.util.SafeSurface.request(level, nx >> 4, nz >> 4);
                             if (refillRound < FIXLIQ_PENDING_ROUNDS) retry.add(packed); else stalled++;
@@ -5346,13 +5346,12 @@ public class StructureTerrainPrep {
                     escOrigin = p; escLvl = pl; escLava = LIQ_LAVA.containsKey(p);
                     escSeen.clear(); escQueue.clear();
                     escSeen.add(ck); escQueue.add(ck);
-                    escWait = 0; escExplored = 0; escActive = true; proofs++;
+                    escExplored = 0; escActive = true; proofs++;
                 }
                 while (escActive && !escQueue.isEmpty()) {
                     if (System.currentTimeMillis() - t0 >= FIXLIQ_SLICE_MS) return false;
                     long ck = escQueue.poll();
                     int ex0 = BlockPos.getX(ck), ez0 = BlockPos.getZ(ck);
-                    boolean paused = false;
                     for (int d = 0; d < 4; d++) {
                         int ex = ex0 + (d == 0 ? 1 : d == 1 ? -1 : 0);
                         int ez = ez0 + (d == 2 ? 1 : d == 3 ? -1 : 0);
@@ -5365,16 +5364,11 @@ public class StructureTerrainPrep {
                         if (oa != null && oa == escLvl) { concludeOpen(); break; }   // transitivity
                         if (isProtected(ex, ez)) continue;
                         if (level.getChunkSource().getChunkNow(ex >> 4, ez >> 4) == null) {
-                            // Unknown beyond the near ring: never drown what we cannot see.
-                            if (!inForceRing(ex >> 4, ez >> 4)) { concludeOpen(); break; }
-                            if (onDemand) deepluckyblock.util.ChunkKeeper.trackAdditionalChunk(level, ex >> 4, ez >> 4);
-                            else deepluckyblock.util.SafeSurface.request(level, ex >> 4, ez >> 4);
-                            // Re-judge THIS column once the chunk is here: escSeen only
-                            // ever holds columns that were PROVEN sub-level and eligible.
-                            escQueue.addFirst(ck);
-                            if (++escWait > FIXLIQ_ESCAPE_WAIT_MAX) { concludeOpen(); break; }
-                            paused = true;   // let the chunk arrive; resume next tick
-                            break;
+                            // Unknown land is OPEN land: never drown what we cannot
+                            // see, and never request nor generate a chunk for a
+                            // proof (measured CI storm: 1,360 load requests, retry
+                            // rounds beyond 40, dlbverify timed out at 240 s).
+                            concludeOpen(); break;
                         }
                         // Below the nappe level? (heightmap read only, no block scan)
                         int topY = deepluckyblock.util.SafeSurface.height(level,
@@ -5387,7 +5381,6 @@ public class StructureTerrainPrep {
                         }
                         escSeen.add(ek); escQueue.add(ek);
                     }
-                    if (paused) return false;
                 }
                 if (escActive) concludeBasin();   // frontier exhausted without an exit: sealed
             }
