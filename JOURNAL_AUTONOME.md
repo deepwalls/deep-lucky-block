@@ -180,3 +180,21 @@ Format : date | hypothèse | mesure | conclusion | décision.
   versions) : il supprime une attente redondante de 340 chunks reutilises par
   la suite ; gain reel 0-10 s selon machine, non mesurable au-dessus du bruit.
 - Budget runs du message : 6 consommes (4 sessions + 2 compiles/ce rerun).
+
+## 2026-09-27 — Mesure CI #7 (run 36338736434, commit 8f3febd) : 4e fixture verte ; bruit machine borne
+
+- Fixtures : ALL PASS (4e session consecutive : eau T77 45120 exact, lazy
+  water, smooth, lake sink=10 avec ancrage inchange, tickets, async, loot).
+- Latences : machine LENTE (profil #5/#6) : citadel 28,7 / obs 25,1 / dragon
+  33,0 FAIL / circus 8,0 / ship 10,4 / everest 36,19 FAIL / lake 98,6 PASS.
+- Serie Everest (code T78 identique depuis 492bc2e) : 34,89 (avec balayage,
+  run #4) -> 35,99 -> 36,15 -> 30,19 -> 36,19. Dragon : 27,0 -> 32,7 -> 32,5
+  -> 27,4 -> 33,0. Deux classes de runners : rapide (dragon ~27, everest
+  ~30) / lente (~33/~36). Le mod represente ~2,5 s sur everest et ~9 s sur
+  dragon (balayage 3,6 conserve a dessein) : le reste est la generation
+  vanilla, hors portee du code dans le respect des contraintes (geometrie,
+  seuils, harnais, qualite).
+- Budget du message epuise (8 runs). Prochaine etape proposee : arbitrage
+  utilisateur sur le verdict Everest (decision par decision) OU nouvelles
+  pistes in-game (le pre-chauffage T46/T51 des 60 s d'annonce rend deja le
+  chargement quasi nul en jeu reel ; les gains T79 se mesurent en foret).
