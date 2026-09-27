@@ -88,6 +88,10 @@ if perf_spec.exists():
         got = sha512(target)
         assert got == want, f'PERF-MODS sha512 mismatch sur {fname} (obtenu {got})'
         installed_mods.append(fname)
+    # Purge auto-guerison : aucun jar hors spec ne doit survivre dans run/mods.
+    for stray in list(mods_dir.iterdir()):
+        if stray.suffix == '.jar' and stray.name not in {m for m in installed_mods}:
+            stray.unlink()
 
 lines = queue.Queue()
 log_path = Path(os.environ['RUNNER_TEMP']) / 'server-check.log'
@@ -134,6 +138,9 @@ def wait_for(marker, timeout):
 failed = False
 try:
     wait_for('Done (', 240)
+
+    mods_now = sorted(f.name for f in (run / 'mods').iterdir()) if (run / 'mods').exists() else []
+    annotate('run/mods EFFECTIF au boot : ' + (', '.join(mods_now) if mods_now else '(vide)'))
     annotate('Dedicated server started successfully.')
     if installed_mods:
         annotate('PERF-MODS actifs dans run/mods/ : ' + ', '.join(installed_mods))
