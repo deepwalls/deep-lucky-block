@@ -1737,37 +1737,6 @@ public class Structures5Procedure {
         }
         BlockPos min = new BlockPos(bMinX, bMinY, bMinZ);
         BlockPos max = new BlockPos(bMaxX, bMaxY, bMaxZ);
-        if (followSurf) {
-            // T76: SAFE ANCHOR -- a single center column can lie (09/27 in-game
-            // test: groundY=65 on a bare-fallback candidate while the measured
-            // footprint median was 49, so the model pasted 18 blocks too deep).
-            // Measure the WHOLE footprint now; when the gap exceeds the guard
-            // threshold, fall back to the MEASURED MEDIAN, exactly once, before
-            // any terrain work: the corrected Y feeds clearance, foundation and
-            // paste alike, so the manual model offset (-34/-35/-5) is applied
-            // exactly once and never twice.
-            int[] pre = deepluckyblock.util.SafeSurface.groundStats(level,
-                    min.getX(), min.getZ(), max.getX(), max.getZ(), 4, baseY + 1, baseY);
-            if (pre[3] >= 16 && Math.abs(pre[0] - baseY) > MAX_POST_SMOOTH_DELTA_Y) {
-                int delta = pre[0] - baseY;
-                LOGGER.warn("[STRUCT5] {} : anchor corrected BEFORE terrain (T76) -- measured ground median={} "
-                                + "(min={}, max={}, {} columns) vs center groundY={}; vertical shift of {} block(s), "
-                                + "single offset application preserved",
-                        nbt, pre[0], pre[1], pre[2], pre[3], baseY, delta);
-                baseY = pre[0];
-                fp = fp.above(delta);
-                rp = adjRot(fp, tmpl, rot);
-                min = min.above(delta); max = max.above(delta);
-            } else if (pre[3] > 0) {
-                LOGGER.info("[STRUCT5] {} : center anchor confirmed by footprint (T76) -- median={}, min={}, max={}, "
-                                + "{} columns, delta={} <= {}",
-                        nbt, pre[0], pre[1], pre[2], pre[3], Math.abs(pre[0] - baseY), MAX_POST_SMOOTH_DELTA_Y);
-            } else {
-                LOGGER.warn("[STRUCT5] {} : footprint ground NOT measurable before terrain ({} columns) -- center "
-                                + "anchor {} kept, post-pass diagnostic still applies (T76)",
-                        nbt, pre[3], baseY);
-            }
-        }
         // T14 : groupe par section 16x16x16 + spirale (guide sections 42/43).
         filt = orderBySectionSpiral(filt, bboxRs, rp);
         LOGGER.info("[STRUCT5] {} : {} a poser ({} verre supprime, air exterieur deja ecarte au chargement) -- T73",

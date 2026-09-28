@@ -364,15 +364,6 @@ public class StructureTerrainPrep {
             // avait reellement pris 720).
             step("prepZone 1/11 : scanTrees termine, " + LAST_TREES.size() + " arbres sauves en "
                     + (System.currentTimeMillis() - tScan0) + " ms");
-            // T-HABILL.4 : echantillonne les palettes de surface AVANT la moindre
-            // edition (invariant I1) puis les CONGELE pour la future passe
-            // dressAndPlant. Aucun setBlock : mesure et journal seulement.
-            {
-                long tPal0 = System.currentTimeMillis();
-                sampleZonePalettes(level, min, max);
-                step("prepZone 1b/11 : palettes de surface echantillonnees en "
-                        + (System.currentTimeMillis() - tPal0) + " ms (aucune edition)");
-            }
             PREP_STARTED.add(chainKey);
             prepZoneAfterPreload(level, min, max, foundationBaseY, topY, () -> {
                 // La chaine terrain est rendue au moment ou l'appelant reprend la
@@ -706,7 +697,7 @@ public class StructureTerrainPrep {
                 }
                 targetY = Math.max(minBuild + 1, Math.min(maxBuild - 1, targetY));
 
-                boolean snowy = isSnowyCell(level, mut.set(x, targetY, z));   // T-HABILL.3 : cache par chunk (T71)
+                boolean snowy = isSnowy(level, mut.set(x, targetY, z));
                 BlockState capBlock = Blocks.GRASS_BLOCK.defaultBlockState();
 
                 int curSurfaceY = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
@@ -763,10 +754,6 @@ public class StructureTerrainPrep {
     // Avant le smooth : retire TOUS les decors de surface (feuilles, herbe, fleurs,
     // neige, vignes...) sur toute la zone GIGA. Sinon le smooth abaisse le terrain
     // et ces decors se retrouvent a flotter a leur ancienne position. Batche.
-    /** T79 : « cette section contient de l'air OU du decor » -- sinon aucun setBlock. */
-    private static final java.util.function.Predicate<BlockState> DECOR_INTERESTING =
-            s -> s.isAir() || isSurfaceDecor(s);
-
     private static void clearSurfaceDecor(ServerLevel level, BlockPos min, BlockPos max, Runnable onDone) {
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         startColumnPass(level, "clearSurfaceDecor", columnsOf(min, max, terrainRing()), BATCH_COLS, col -> {
@@ -778,31 +765,10 @@ public class StructureTerrainPrep {
             int bottom = surface - 25;
             if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.contains(level, x, z))
                 bottom = Math.max(bottom, CLEARANCE_PLAN.groundY() + 1);
-            ChunkAccess chunk = deepluckyblock.util.SafeSurface.chunkFor(level, x >> 4, z >> 4);
-            // === T79 : LECTURE PAR SECTIONS (meme discipline que T71) ===
-            // L'intervalle balaye fait 43 a 89 blocs par colonne (surface+64
-            // jusqu'a surface-25) et un getBlockState complet chacun : 11,8 s
-            // mesures en jeu sur 40 176 colonnes (0,29 ms/colonne, 14x le
-            // rythme des autres passes). Une section entierement VIDE n'a que
-            // de l'air : la boucle d'origine n'y changeait rien. Une section
-            // SANS air NI decor n'a que des blocs pleins non retirables :
-            // idem. On les saute donc par paquets de 16 -- l'ordre et le
-            // contenu des setBlock restants sont STRICTEMENT identiques a
-            // l'ancienne boucle (scan descendant conserve dans les sections
-            // retenues) : le gain vient uniquement des lectures economisees.
-            int y = top;
-            while (y >= bottom) {
+            for (int y = top; y >= bottom; y--) {
                 if (y < level.getMinBuildHeight()) break;
-                LevelChunkSection sec = sectionAt(chunk, y);
-                if (sec != null) {
-                    if (sec.hasOnlyAir() || !sec.maybeHas(DECOR_INTERESTING)) {
-                        y = Math.max(bottom, (y & ~15)) - 1;   // section entiere saute
-                        continue;
-                    }
-                }
-                BlockState state = readBlock(level, chunk, mut, x, y, z);
+                BlockState state = level.getBlockState(mut.set(x, y, z));
                 if (!state.isAir() && isSurfaceDecor(state)) level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
-                y--;
             }
         }, onDone);
     }
@@ -851,10 +817,8 @@ public class StructureTerrainPrep {
         StructureScatterDecor.scatter(level, min, max, LAST_STRUCTURE_NAME);              // 16
         deepluckyblock.util.DebugLog.structure("decorate 5/5 : decors (scatter) poses");
         replantTrees(level, LAST_TREES, min, max, () -> {                                  // 17
-            // T-HABILL.8 : dressAndPlant + repose des sauvees REMPLACENT le couple
-            // verifyGrassSurface/naturalize quand le drapeau est leve (chemins
-            // historiques conserves sinon, D9). Cactus poses en tout dernier.
-            dressOrLegacy(level, min, max, () -> {
+            verifyGrassSurface(level, min, max, () -> {                                    // 10
+                naturalize(level, min, max, level.getRandom(), () -> {                     // 18 (T77 : decoupee)
                     cleanupZone(level, min, max, () -> {                                   // 19
                         logTerrainDelta(level, min, max);
                         deepluckyblock.util.DebugLog.setPhase("stabilisation puis relachement des chunks");
@@ -866,6 +830,7 @@ public class StructureTerrainPrep {
                             step("decorate TERMINE (decors, arbres, naturalisation -- structure posee en DERNIER, T39)");
                         });
                     });
+                });
             });
         });
     }
@@ -1043,10 +1008,8 @@ public class StructureTerrainPrep {
                             // avant de semer : la surface redevient herbeuse sur
                             // toute la zone, et la naturalisation peut operer
                             // partout.
-                            // T-HABILL.8 : dressAndPlant + repose des sauvees
-                            // REMPLACENT le couple verifyGrassSurface/naturalize quand le
-                            // drapeau est leve (chemins historiques conserves sinon, D9).
-                            dressOrLegacy(level, min, max, () -> {
+                            verifyGrassSurface(level, min, max, () -> {                      // 10
+                                naturalize(level, min, max, level.getRandom(), () -> {       // 18 (T77)
                                 cleanupZone(level, min, max, () -> {                         // 19
                                     // === T13 : DEGEL DE L'EAU (guide, section 27, etape 11) ===
                                     // Le relief est definitif : l'eau gelee est restituee
@@ -1087,6 +1050,7 @@ public class StructureTerrainPrep {
                                     });
                                     }   // T23 : fin du bloc "eau intacte" (ex-fin du degel)
                                 });
+                                });   // T77 : fin de la naturalisation decoupee
                             });
                         });
                         })));
@@ -1340,12 +1304,6 @@ public class StructureTerrainPrep {
                     if (visited.contains(key)) continue;
 
                     BlockState s = level.getBlockState(mut.set(x, y, z));
-                    // T-HABILL.7 : sauvetage des plantes non couvertes, greffe ICI
-                    // sur un bloc DEJA lu (zero colonne, zero descente en plus,
-                    // guide LIVRE VII). On ne compte que l'ESPECE dans l'inventaire
-                    // du chunk : la position d'origine n'a plus de sens, le terrain
-                    // natif sera retaille entre-temps.
-                    if (isRescuable(s)) noteRescue(x, z, s);
                     // Le tronc est teste AVANT l'arret : cime d'epicea, tronc sous
                     // un couvert vegetal, tronc d'un arbre voisin -- tous sont lus
                     // avant que le sol ne soit atteint.
@@ -2443,730 +2401,6 @@ public class StructureTerrainPrep {
     /** Libelle des passes actuellement en cours (voir startColumnPass). */
     private static final Set<String> RUNNING_PASSES = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
-    // ==================================================================
-    // T-HABILL.1 : ZONE ORDONNEE PAR CHUNK + NEIGE PAR CHUNK (scaffolding)
-    // ==================================================================
-    // Programme d'habillage de surface (docs/GUIDE_COMPLET_TERRAIN_ET_SURFACE.md,
-    // livres IV et VIII, commits 1 et 2 du plan). Ce bloc est du SCAFFOLDING :
-    // rien n'est encore appele, aucun comportement ne change. Deux ecarts
-    // ASSUMES par rapport au texte du guide (consignes dans le journal du
-    // 27/09) : (1) pas de nouvelle classe ChunkPass -- les gardes du mod
-    // (ChunkKeeper.keep, TerrainChain.heartbeat, zoneReady, reprise T70,
-    // budget adaptatif) vivent dans ColumnPass/startColumnPass, qui pilotera
-    // l'habillage avec la liste chunk-major ci-dessous ; (2) pas de
-    // WORLD_SURFACE_WG pour l'habillage post-edition -- c'est un instantane
-    // de worldgen, on garde SafeSurface (garde T7).
-
-    /**
-     * Region d'habillage ordonnee PAR CHUNK : la zone (etendue de outerRing,
-     * centre-inclus) est decoupee en 256-colonnes par chunk, dans l'ordre
-     * x/z croissant. Le guide motive l'ordre chunk-major par (a) la lisibilite
-     * des compteurs au grappe, (b) les caches par chunk (palette D5, neige,
-     * plantes sauvees) -- une action par colonne de startColumnPass y accede
-     * en O(1). Jamais d'attente : un chunk absent est simplement saute (pile).
-     */
-    private static final class ChunkMajorZone {
-        final ServerLevel level;
-        final BlockPos centre;
-        final int outerRing;
-        final int x0, z0, x1, z1;
-        private final List<int[]> chunkMajorCols = new ArrayList<>();
-        private final Map<Long, List<int[]>> byChunk = new LinkedHashMap<>();
-
-        ChunkMajorZone(ServerLevel level, BlockPos centre, BlockPos min, BlockPos max, int outerRing) {
-            this.level = level; this.centre = centre; this.outerRing = outerRing;
-            x0 = Math.min(centre.getX(), min.getX() - outerRing);
-            z0 = Math.min(centre.getZ(), min.getZ() - outerRing);
-            x1 = Math.max(centre.getX(), max.getX() + outerRing);
-            z1 = Math.max(centre.getZ(), max.getZ() + outerRing);
-            int cx0 = x0 >> 4, cz0 = z0 >> 4, cx1 = x1 >> 4, cz1 = z1 >> 4;
-            for (int cx = cx0; cx <= cx1; cx++)
-                for (int cz = cz0; cz <= cz1; cz++) {
-                    if (!level.hasChunk(cx, cz)) continue;   // pile : jamais attendre un chunk
-                    java.util.List<int[]> cols = new ArrayList<>(256);
-                    for (int bx = 0; bx < 16; bx++)
-                        for (int bz = 0; bz < 16; bz++) {
-                            int x = (cx << 4) | bx, z = (cz << 4) | bz;
-                            if (x < x0 || x > x1 || z < z0 || z > z1) continue;
-                            int[] c = {x, z};
-                            cols.add(c);
-                            chunkMajorCols.add(c);
-                        }
-                    if (!cols.isEmpty()) byChunk.put(net.minecraft.world.level.ChunkPos.asLong(cx, cz), cols);
-                }
-        }
-
-        /** Colonnes de la zone, ordre chunk-major (pour startColumnPass). */
-        List<int[]> chunkMajorColumns() { return chunkMajorCols; }
-        /** Découpe par chunk (cle = ChunkPos.asLong), pour les compteurs par chunk. */
-        Map<Long, List<int[]>> byChunk() { return byChunk; }
-        int size() { return chunkMajorCols.size(); }
-        boolean isInside(int x, int z) { return x >= x0 && x <= x1 && z >= z0 && z <= z1; }
-    }
-
-    /**
-     * T-HABILL.2 : neige prise une seule fois par CHUNK puis servie du cache
-     * (le guide chiffre le cout de l'ancienne lecture a ~37 microsecondes par
-     * colonne, soit ~1,05 s sur 28 444 colonnes -- la dette T71). Utilise
-     * coldEnoughToSnow (API 1.21.1 verifiee) ; l'ile aux champignons reste
-     * un cas special (biome froid sans neige). Cache memoire d'une visite :
-     * invalide (clearSnowCellCache) entre deux passes d'habillage.
-     */
-    private static final Map<Long, Boolean> SNOWY_CELL_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
-
-    private static boolean isSnowyCell(ServerLevel level, BlockPos pos) {
-        long key = net.minecraft.world.level.ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
-        Boolean cached = SNOWY_CELL_CACHE.get(key);
-        if (cached != null) return cached;
-        boolean snowy;
-        try {
-            var biome = level.getBiome(pos);
-            snowy = !biome.is(net.minecraft.world.level.biome.Biomes.MUSHROOM_FIELDS)
-                    && biome.value().coldEnoughToSnow(pos);
-        } catch (Throwable t) {
-            snowy = false;   // pile : jamais planter sur un biome illisible
-        }
-        SNOWY_CELL_CACHE.put(key, snowy);
-        return snowy;
-    }
-
-    /** Invalide le cache de neige (entre deux habillages, avant reprise). */
-    private static void clearSnowCellCache() {
-        SNOWY_CELL_CACHE.clear();
-    }
-
-    // ==================================================================
-    // T-HABILL.4 : PALETTE DE SURFACE (guide, LIVRE IV -- invariant I1)
-    // ==================================================================
-    // Bloc de surface dominant + sous-sol, echantillonnes AVANT toute edition
-    // du terrain (pre-marrons, pre-smooth) puis CONGELES jusqu'a la fin de la
-    // chaine : apres le lissage on ne lirait que de la pierre reconstruite et
-    // la palette vaudrait « stone » partout. Ce commit ne fait qu'ECHANTILLONNER
-    // et JOURNALISER (aucun setBlock, aucun appel d'habillage) : c'est la mesure
-    // de la future passe dressAndPlant, qui s'en servira pour decider a quoi
-    // ressemble le sol naturel de chaque chunk.
-    // Adaptation assumee au code du guide : lectures via readBlock (T71) et
-    // SafeSurface (garde T7) au lieu du getChunk brut ; le witness y4=14 reste
-    // a l'interieur des bords du chunk.
-
-    /** Palette d'un chunk : bloc de surface dominant + sous-sol associe. */
-    private record SurfacePalette(Block top, Block filler, int samples, boolean confident) { }
-
-    /** Cache par chunk (cle ChunkPos.asLong), vide entre deux chaines. */
-    private static final Map<Long, SurfacePalette> PALETTE = new HashMap<>();
-    /** Replis sur voisin (echantillon maigre) -- journalise : taux eleve = trop tard. */
-    private static int PALETTE_FALLBACKS = 0;
-    /** Temoins : grille 4x4, evite les bords du chunk (derniers biomes mixtes). */
-    private static final int[] WITNESS = { 2, 6, 10, 14 };
-    /** Témoins exploitables minimum pour se declarer confiant. */
-    private static final int PALETTE_MIN_SAMPLES = 8;
-
-    /** Sous-sol associe a une surface. null = sol inconnu (modde) : conserver dessous. */
-    private static Block fillerFor(Block top) {
-        if (top == Blocks.SAND)          return Blocks.SANDSTONE;
-        if (top == Blocks.RED_SAND)      return Blocks.RED_SANDSTONE;
-        if (top == Blocks.GRASS_BLOCK)   return Blocks.DIRT;
-        if (top == Blocks.PODZOL)        return Blocks.DIRT;
-        if (top == Blocks.MYCELIUM)      return Blocks.DIRT;
-        if (top == Blocks.COARSE_DIRT)   return Blocks.DIRT;
-        if (top == Blocks.MOSS_BLOCK)    return Blocks.DIRT;
-        if (top == Blocks.GRAVEL)        return Blocks.STONE;
-        if (top == Blocks.SNOW_BLOCK)    return Blocks.DIRT;
-        return null;                      // inconnu : CONSERVER l'existant
-    }
-
-    /** Un bloc qui compte comme « sol » pour la palette. */
-    private static boolean isGroundCandidate(BlockState s) {
-        return s.blocksMotion() && isNaturalTerrain(s)
-                && !isLog(s) && !isLeaf(s)
-                && !s.is(Blocks.SNOW_BLOCK) && !s.is(Blocks.ICE)
-                && !s.is(Blocks.PACKED_ICE) && !s.is(Blocks.BLUE_ICE);
-    }
-
-    /** Couverture a traverser sans conclure : air, eau, neige fine, vegetation. */
-    private static boolean isSkippableCover(BlockState s) {
-        return s.isAir() || s.is(Blocks.WATER) || s.is(Blocks.SNOW)
-                || isLeaf(s) || isLog(s) || !s.blocksMotion();
-    }
-
-    /**
-     * Echantillonne le sol naturel d'un chunk (16 témoins, descente borne par le
-     * plancher). A APPELER AVANT TOUTE EDITION. Jamais de getChunk sur un chunk
-     * absent : repli grass/dirt non confiant (pile : jamais attendre).
-     */
-    private static SurfacePalette samplePalette(ServerLevel level, int cx, int cz) {
-        long key = net.minecraft.world.level.ChunkPos.asLong(cx, cz);
-        SurfacePalette cached = PALETTE.get(key);
-        if (cached != null) return cached;
-        if (!deepluckyblock.util.SafeSurface.isLoadedAt(level, cx << 4, cz << 4)) {
-            SurfacePalette unknown = new SurfacePalette(Blocks.GRASS_BLOCK, Blocks.DIRT, 0, false);
-            PALETTE.put(key, unknown);
-            return unknown;
-        }
-        ChunkAccess chunk = level.getChunk(cx, cz);
-        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
-        Map<Block, Integer> tally = new HashMap<>();
-        int used = 0;
-        int floor = level.getMinBuildHeight() + 8;
-        for (int lx : WITNESS) {
-            for (int lz : WITNESS) {
-                int x = (cx << 4) + lx, z = (cz << 4) + lz;
-                int y = deepluckyblock.util.SafeSurface.height(
-                        level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-                while (y > floor) {
-                    BlockState s = readBlock(level, chunk, mut, x, y, z);
-                    if (isGroundCandidate(s)) { tally.merge(s.getBlock(), 1, Integer::sum); used++; break; }
-                    if (!isSkippableCover(s)) break;   // bloc non-sol et non traversable
-                    y--;
-                }
-            }
-        }
-        Block top = Blocks.GRASS_BLOCK;
-        int best = 0;
-        for (Map.Entry<Block, Integer> e : tally.entrySet())
-            if (e.getValue() > best) { best = e.getValue(); top = e.getKey(); }
-        SurfacePalette pal = new SurfacePalette(top, fillerFor(top), used,
-                used >= PALETTE_MIN_SAMPLES);
-        PALETTE.put(key, pal);
-        return pal;
-    }
-
-    /** Palette CONFIANTE la plus proche (spirale, rayon 3 chunks). Point d'entree unique. */
-    private static SurfacePalette paletteAt(ServerLevel level, int cx, int cz) {
-        SurfacePalette p = samplePalette(level, cx, cz);
-        if (p.confident()) return p;
-        for (int r = 1; r <= 3; r++)
-            for (int dx = -r; dx <= r; dx++)
-                for (int dz = -r; dz <= r; dz++) {
-                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;   // anneau seul
-                    SurfacePalette q = samplePalette(level, cx + dx, cz + dz);
-                    if (q.confident()) { PALETTE_FALLBACKS++; return q; }
-                }
-        return p;   // rien de confiant a 3 chunks : on garde le defaut
-    }
-
-    /** Vide la palette en fin de chaine (avec la neige). */
-    private static void clearPaletteCache() {
-        PALETTE.clear();
-        PALETTE_FALLBACKS = 0;
-    }
-
-    /**
-     * T-HABILL.4 (mesure seule) : echantillonne les chunks de la zone et JOURNALISE
-     * la repartition des dominants. Aucun setBlock. Appele au tout debut de
-     * prepZone, juste apres scanTrees -- AVANT le premier setBlock de la chaine.
-     */
-    private static void clearDressingCaches() {
-        clearPaletteCache();
-        clearSnowCellCache();
-        RESCUE.clear();
-        rescueTotal = 0;
-    }
-
-    // ==================================================================
-    // T-HABILL.7 : SAUVETAGE DES PLANTES NON COUVERTES (guide, LIVRE VII)
-    // ==================================================================
-    // naturalize ne refait ni cactus, ni canne a sucre, ni plantes doubles
-    // (tournesols, roses, pivoines), ni lichen, ni plantes moddees : elles
-    // etaient detruites par le remodelage sans remplacement. Le sauvetage
-    // est un INVENTAIRE (Block, quantite) par chunk, rempli au fil de
-    // scanTrees (sur des blocs deja lus) puis repose a la fin de la passe
-    // d'habillage, a des emplacements VALIDES — la seule validite etant
-    // canSurvive, jamais une table sol↔plante ecrite a la main.
-
-    /** Inventaire par chunk (cle ChunkPos.asLong) : espece -> quantite sauvee. */
-    private static final Map<Long, Map<Block, Integer>> RESCUE = new HashMap<>();
-    private static int rescueTotal = 0;
-    private static final int RESCUE_MAX_PER_CHUNK = 64;
-    private static final int RESCUE_MAX_TOTAL = 20_000;
-    private static final int RESCUE_MAX_TRIES = 512;   // par espece et par chunk
-
-    /** Plantes que l'ancien naturalize savait poser — exclues du sauvetage. */
-    private static Set<Block> knownByNaturalize() {
-        Set<Block> s = new HashSet<>();
-        s.add(Blocks.SHORT_GRASS);  s.add(Blocks.TALL_GRASS);
-        s.add(Blocks.FERN);          s.add(Blocks.LARGE_FERN);
-        s.add(Blocks.DANDELION);     s.add(Blocks.POPPY);
-        s.add(Blocks.BROWN_MUSHROOM); s.add(Blocks.RED_MUSHROOM);
-        s.add(Blocks.DEAD_BUSH);
-        return s;
-    }
-
-    /** Plante qui pousse sur le sol (par opposition a mur / plafond / eau). */
-    private static boolean isGroundPlant(BlockState s) {
-        if (!s.getFluidState().isEmpty()) return false;                  // aquatique
-        if (s.is(net.minecraft.tags.BlockTags.CLIMBABLE)) return false;  // lianes, echelles
-        Block b = s.getBlock();
-        if (b == Blocks.SPORE_BLOSSOM || b == Blocks.HANGING_ROOTS) return false;
-        if (b == Blocks.CACTUS || b == Blocks.SUGAR_CANE || b == Blocks.BAMBOO
-                || b == Blocks.DEAD_BUSH || b == Blocks.SWEET_BERRY_BUSH) return true;
-        if (b instanceof net.minecraft.world.level.block.DoublePlantBlock) return true;
-        // Filet general, couvre les mods : une BushBlock se pose sur un sol.
-        return b instanceof net.minecraft.world.level.block.BushBlock;
-    }
-
-    /** Une plante de SOL que naturalize ne sait pas refaire. */
-    private static boolean isRescuable(BlockState s) {
-        Block b = s.getBlock();
-        if (knownByNaturalizeStatic().contains(b)) return false;      // deja couvert
-        if (!isGroundPlant(s)) return false;                          // mur / plafond / eau
-        // Moities HAUTES des plantes doubles : on ne compte que la moitie basse,
-        // sinon chaque tournesol serait compte DEUX fois.
-        if (b instanceof net.minecraft.world.level.block.DoublePlantBlock
-                && s.getValue(net.minecraft.world.level.block.DoublePlantBlock.HALF)
-                   == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER)
-            return false;
-        return true;
-    }
-
-    private static volatile Set<Block> KNOWN_NATURALIZE = null;
-    private static Set<Block> knownByNaturalizeStatic() {
-        Set<Block> s = KNOWN_NATURALIZE;
-        if (s == null) { s = knownByNaturalize(); KNOWN_NATURALIZE = s; }
-        return s;
-    }
-
-    /** Comptabilise, avec les deux plafonds de securite. */
-    private static void noteRescue(int x, int z, BlockState s) {
-        if (rescueTotal >= RESCUE_MAX_TOTAL) return;
-        long key = net.minecraft.world.level.ChunkPos.asLong(x >> 4, z >> 4);
-        Map<Block, Integer> inv = RESCUE.computeIfAbsent(key, k -> new HashMap<>());
-        int already = 0;
-        for (int v : inv.values()) already += v;
-        if (already >= RESCUE_MAX_PER_CHUNK) return;
-        inv.merge(s.getBlock(), 1, Integer::sum);
-        rescueTotal++;
-    }
-
-    /** Ordre de visite deterministe mais disperse (permutation bijective par chunk). */
-    private static int scramble(int n, int cx, int cz) {
-        int k = (int) (posNoise(cx, cz, 0x2C1B) * 251) | 1;   // impair -> bijection
-        return (n * k + (cx * 7 + cz * 13)) & 255;
-    }
-
-    /** Pose une plante sauvee si l'emplacement la supporte (gere piles et doubles). */
-    private static boolean tryPlaceRescued(ServerLevel level, BlockPos.MutableBlockPos mut,
-                                           Block plant, int x, int surfY, int z) {
-        mut.set(x, surfY + 1, z);
-        if (!level.getBlockState(mut).isAir()) return false;
-        BlockState base = plant.defaultBlockState();
-        if (!base.canSurvive(level, mut)) return false;      // LA seule verification
-
-        if (plant instanceof net.minecraft.world.level.block.DoublePlantBlock) {
-            mut.set(x, surfY + 2, z);
-            if (!level.getBlockState(mut).isAir()) return false;
-            // FAST_FLAG (pas de mise a jour de voisinage) : sans lui, poser la
-            // moitie basse declenche une mise a jour qui la casse aussitot.
-            level.setBlock(mut.set(x, surfY + 1, z), base.setValue(
-                    net.minecraft.world.level.block.DoublePlantBlock.HALF,
-                    net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER), FAST_FLAG);
-            level.setBlock(mut.set(x, surfY + 2, z), base.setValue(
-                    net.minecraft.world.level.block.DoublePlantBlock.HALF,
-                    net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER), FAST_FLAG);
-            return true;
-        }
-
-        // Plante en pile : cactus, canne a sucre, bambou. Hauteur deterministe,
-        // jamais au-dela de la hauteur naturelle.
-        int height = 1;
-        if (plant == Blocks.CACTUS || plant == Blocks.SUGAR_CANE)
-            height = 1 + (int) (posNoise(x, z, SALT_STACK) * 3);        // 1..3
-        else if (plant == Blocks.BAMBOO)
-            height = 2 + (int) (posNoise(x, z, SALT_STACK) * 6);        // 2..7
-        for (int h = 0; h < height; h++) {
-            mut.set(x, surfY + 1 + h, z);
-            if (!level.getBlockState(mut).isAir()) break;
-            level.setBlock(mut, base, FAST_FLAG);
-        }
-        return true;
-    }
-
-    /**
-     * Repose les plantes sauvees d'un chunk a des emplacements VALIDES,
-     * jamais a leur position d'origine (le terrain a change).
-     * Le CACTUS passe en DERNIER : il casse si un bloc solide apparait a
-     * cote apres sa pose (guide, section 52.2).
-     */
-    private static int replantRescued(ServerLevel level, int cx, int cz) {
-        long key = net.minecraft.world.level.ChunkPos.asLong(cx, cz);
-        Map<Block, Integer> inv = RESCUE.get(key);
-        if (inv == null || inv.isEmpty()) return 0;
-        List<Map.Entry<Block, Integer>> ordered = new ArrayList<>(inv.entrySet());
-        ordered.sort((a, b) -> Boolean.compare(a.getKey() == Blocks.CACTUS,
-                                               b.getKey() == Blocks.CACTUS));
-        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
-        int placed = 0;
-        for (Map.Entry<Block, Integer> e : ordered) {
-            Block plant = e.getKey();
-            int wanted = e.getValue();
-            int tries = 0;
-            for (int n = 0; n < 256 && wanted > 0 && tries < RESCUE_MAX_TRIES; n++) {
-                int idx = scramble(n, cx, cz);
-                int lx = idx & 15, lz = idx >> 4;
-                int x = (cx << 4) + lx, z = (cz << 4) + lz;
-                int surfY = deepluckyblock.util.SafeSurface.height(
-                        level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-                if (surfY < 1) continue;
-                tries++;
-                if (tryPlaceRescued(level, mut, plant, x, surfY, z)) { wanted--; placed++; }
-            }
-        }
-        RESCUE.remove(key);
-        return placed;
-    }
-
-    /**
-     * Passe de repose globale : un « colonne » synthetique par chunk porteur,
-     * pilotee par startColumnPass (gardes du mod). Appelee APRES dressAndPlant,
-     * donc APRES les decors disperses et les arbres replantes (ordre voulu
-     * par le guide : le cactus est pose en tout dernier).
-     */
-    private static void replantAllRescued(ServerLevel level, Runnable onDone) {
-        List<int[]> carriers = new ArrayList<>();
-        for (long key : RESCUE.keySet()) {
-            int cx = net.minecraft.world.level.ChunkPos.getX(key);
-            int cz = net.minecraft.world.level.ChunkPos.getZ(key);
-            carriers.add(new int[]{cx, cz});
-        }
-        if (carriers.isEmpty()) { if (onDone != null) onDone.run(); return; }
-        final int[] placed = {0};
-        startColumnPass(level, "repose des plantes sauvees", carriers, 8, col -> {
-            placed[0] += replantRescued(level, col[0], col[1]);
-        }, () -> {
-            if (placed[0] > 0) deepluckyblock.util.DebugLog.structure(
-                    "repose des plantes sauvees : {} replantees sur {} chunks porteurs",
-                    placed[0], carriers.size());
-            RESCUE.clear();
-            rescueTotal = 0;
-            if (onDone != null) onDone.run();
-        });
-    }
-
-    /**
-     * Chemin unique du couple habillage + vegetation (LIVRE IX) :
-     * dressAndPlant + repose des sauvees quand le drapeau est leve ;
-     * verifyGrassSurface + naturalize historiques sinon. Meme onDone.
-     */
-    private static void dressOrLegacy(ServerLevel level, BlockPos min, BlockPos max,
-                                      Runnable onDone) {
-        if (dressingEnabled()) {
-            dressAndPlant(level, min, max, () -> replantAllRescued(level, onDone));
-            return;
-        }
-        verifyGrassSurface(level, min, max,
-                () -> naturalize(level, min, max, level.getRandom(), onDone));
-    }
-
-    /**
-     * T-HABILL.4 (mesure seule) : echantillonne les chunks de la zone et JOURNALISE
-     * la repartition des dominants. Aucun setBlock. Appele au tout debut de
-     * prepZone, juste apres scanTrees -- AVANT le premier setBlock de la chaine.
-     */
-    private static void sampleZonePalettes(ServerLevel level, BlockPos min, BlockPos max) {
-        int ring = terrainRing() + NATURALIZE_EXTRA_RING;
-        int cx0 = (min.getX() - ring) >> 4, cz0 = (min.getZ() - ring) >> 4;
-        int cx1 = (max.getX() + ring) >> 4, cz1 = (max.getZ() + ring) >> 4;
-        int chunks = 0, confident = 0, fallbacksBefore = PALETTE_FALLBACKS;
-        Map<Block, Integer> dominants = new HashMap<>();
-        for (int cx = cx0; cx <= cx1; cx++)
-            for (int cz = cz0; cz <= cz1; cz++) {
-                SurfacePalette p = paletteAt(level, cx, cz);
-                chunks++;
-                if (p.confident()) confident++;
-                dominants.merge(p.top(), 1, Integer::sum);
-            }
-        if (!deepluckyblock.util.DebugLog.STRUCTURE) return;   // journal desactive : ne pas construire la ligne
-        StringBuilder sb = new StringBuilder();
-        dominants.entrySet().stream()
-                .sorted((a, b) -> b.getValue() - a.getValue())
-                .forEach(e -> sb.append(net.minecraft.core.registries.BuiltInRegistries.BLOCK
-                        .getKey(e.getKey()).getPath()).append('(').append(e.getValue()).append(") "));
-        deepluckyblock.util.DebugLog.structure(
-                "palette : {} chunks echantillonnes, {} confiants, {} repli, dominants = {}",
-                chunks, confident, PALETTE_FALLBACKS - fallbacksBefore, sb.toString().trim());
-    }
-
-    // ==================================================================
-    // RUNS 7-9/10 : PASS x2 puis FAIL machine-lente (everest 29,4/29,8/36,0).
-    // BILAN 27/09 (tests 5-6/10, CI memes seed/coords) : dressAndPlant 0,2-0,3 s
-    // par structure (budget guide 1 s), fixtures ALL PASS x4, latence des
-    // structures = bruit machine (+-20 %), preload vanille 60-93 % du chrono.
-    // ==================================================================
-    // T-HABILL.5 : dressAndPlant -- HABILLAGE + VEGETATION EN UNE PASSE
-    // ==================================================================
-    // Programme du guide (docs/a-lire-guide-complet.txt, LIVRES IV a VIII).
-    // Remplace verifyGrassSurface + naturalize : la DECISION se fonde sur le
-    // bloc de surface REELLEMENT pose (palette echantillonnee avant edition,
-    // degrade trame probabiliste en bande bordee, warping de la frontiere),
-    // et la vegetation (densites de gout + canSurvive) est posee dans la MEME
-    // descente de colonne.
-    //
-    // Cette etape livre la MACHINERIE COMPLETE, derriere un FASTFLAG
-    // (dressingEnabled()). Avec le drapeau coupe, RIEN ne s'execute —
-    // dressAndPlant ne sera branche en lieu et place de verifyGrassSurface +
-    // naturalize qu'a l'etape suivante, apres mesure de recette (les 20
-    // controles du guide, LIVRE XI).
-    //
-    // Adaptations assumees au texte du guide (journal du 27/09) :
-    //  - pas de nouvelle classe ChunkPass : startColumnPass/ColumnPass pilote
-    //    deja ChunkKeeper.keep, heartbeat, zoneReady, reprise T70, budget
-    //    adaptatif — la liste chunk-major vient de ChunkMajorZone ;
-    //  - pas de WORLD_SURFACE_WG (instantane worldgen) : SafeSurface ;
-    //  - neige via coldEnoughToSnow (T-HABILL.2) au lieu de la chaine ;
-    //  - le cri de posNoise est celui du guide, eprouve par ses mesures
-    //    (moyenne 0,4985, aucun motif en bande, aucune periodicite).
-
-    /** PALETTE_FALLBACKS lit dans le journal dressAndPlant. */
-    private static int paletteFallbacksSoFar() { return PALETTE_FALLBACKS; }
-
-    /** Drapeau de branchement de l'habillage (T-HABILL, programme du guide,
-     *  v1.0 du 27/09/2026 : palette + degrade trame + warping + vegetation
-     *  decidee par le sol final + sauvetage). FALSE = chemin historique intact. */
-    private static boolean dressingEnabled() {
-        return DRESSING_FASTFLAG;
-    }
-    private static final boolean DRESSING_FASTFLAG = true;
-
-    // ---- Tramage : hash de position (guide §39, qualite mesuree) ----
-    private static final int SALT_GROUND = 0x51D0;
-    private static final int SALT_PLANT  = 0x91A7;
-    private static final int SALT_PICK   = 0x3C29;
-    private static final int SALT_STACK  = 0x7B41;
-    private static final int SALT_WARP   = 0x6A19;
-
-    /** Hash de position -> [0,1). Deterministe, sans allocation. */
-    private static float posNoise(int x, int z, int salt) {
-        int h = x * 0x27d4eb2d ^ z * 0x85ebca6b ^ salt * 0x165667b1;
-        h ^= h >>> 15; h *= 0x2545f491; h ^= h >>> 13;
-        return (h & 0x00ffffff) / (float) 0x01000000;
-    }
-
-    // ---- Degrade entre deux sols (guide §35-§36) ----
-    private static final int BLEND_BAND = 5;
-
-    /** Probabilite de prendre le voisin, selon la distance au bord. */
-    private static float edgeP(int distance) {
-        if (distance <= 0 || distance > BLEND_BAND) return 0f;
-        return (BLEND_BAND + 1 - distance) * 0.5f / BLEND_BAND;   // 1 -> 50 %, 5 -> 10 %
-    }
-
-    // ---- Warping de la frontiere (guide §43, contrainte WARP_AMP+BLEND_BAND<=16) ----
-    private static final int   WARP_CELL = 12;
-    private static final float WARP_AMP  = 4.0f;
-
-    private static float dressSmoothstep(float t) { return t * t * (3f - 2f * t); }
-
-    /** Bruit de valeur 2D interpole -- basses frequences, sans allocation. */
-    private static float dressValueNoise(int x, int z, int cell, int salt) {
-        int gx = Math.floorDiv(x, cell), gz = Math.floorDiv(z, cell);
-        float fx = dressSmoothstep(Math.floorMod(x, cell) / (float) cell);
-        float fz = dressSmoothstep(Math.floorMod(z, cell) / (float) cell);
-        float n00 = posNoise(gx,     gz,     salt), n10 = posNoise(gx + 1, gz,     salt);
-        float n01 = posNoise(gx,     gz + 1, salt), n11 = posNoise(gx + 1, gz + 1, salt);
-        return (n00 * (1 - fx) + n10 * fx) * (1 - fz) + (n01 * (1 - fx) + n11 * fx) * fz;
-    }
-
-    /** Distance au bord PERTURBEE : la frontiere serpente au lieu d'etre droite. */
-    private static float effectiveDistance(int d, int x, int z, int salt) {
-        return d - (dressValueNoise(x, z, WARP_CELL, salt) - 0.5f) * 2f * WARP_AMP;
-    }
-
-    /**
-     * UN SEUL tirage sur TOUS les voisins reellement differents (guide §40).
-     * Indices NOMMES dans nb (jamais ecrits a la main).
-     */
-    private static Block pickGround(SurfacePalette local, SurfacePalette[] nb,
-                                    int x, int z, int lx, int lz) {
-        // Ordre de remplissage : dx = -1..1 puis dz = -1..1, centre exclu :
-        //   0 (-1,-1)   1 (-1, 0) OUEST   2 (-1,+1)
-        //   3 ( 0,-1) NORD                4 ( 0,+1) SUD
-        //   5 (+1,-1)   6 (+1, 0) EST     7 (+1,+1)
-        final int W = 1, N = 3, S = 4, E = 6;
-        float dW = effectiveDistance(lx + 1,  x, z, SALT_WARP);
-        float dE = effectiveDistance(16 - lx, x, z, SALT_WARP + 1);
-        float dN = effectiveDistance(lz + 1,  x, z, SALT_WARP + 2);
-        float dS = effectiveDistance(16 - lz, x, z, SALT_WARP + 3);
-        float pWest  = nb[W] != null ? edgeP(Math.round(dW)) : 0f;
-        float pEast  = nb[E] != null ? edgeP(Math.round(dE)) : 0f;
-        float pNorth = nb[N] != null ? edgeP(Math.round(dN)) : 0f;
-        float pSouth = nb[S] != null ? edgeP(Math.round(dS)) : 0f;
-        float total = pWest + pEast + pNorth + pSouth;
-        if (total <= 0f) return local.top();
-        if (total > 1f) {                       // coin : renormalisation
-            pWest /= total; pEast /= total; pNorth /= total; pSouth /= total;
-            total = 1f;
-        }
-        float r = posNoise(x, z, SALT_GROUND);
-        if (r < pWest)                   return nb[W].top();
-        if (r < pWest + pEast)           return nb[E].top();
-        if (r < pWest + pEast + pNorth)  return nb[N].top();
-        if (r < total)                   return nb[S].top();
-        return local.top();
-    }
-
-    // ---- Vegetation ordinaire (guide §45-§47) ----
-
-    /** Table de GOUT : quantite de vegetation par sol final. 0,00 = jamais deviner. */
-    private static float densityFor(Block ground) {
-        if (ground == Blocks.GRASS_BLOCK) return 0.30f;
-        if (ground == Blocks.PODZOL)      return 0.20f;
-        if (ground == Blocks.MYCELIUM)    return 0.15f;
-        if (ground == Blocks.SAND)        return 0.02f;
-        if (ground == Blocks.RED_SAND)    return 0.02f;
-        return 0f;   // gravier, neige, inconnu : rien — ne jamais deviner
-    }
-
-    /** Table de GOUT : lesquelles, par sol final. null = rien ici. */
-    private static BlockState pickPlant(Block ground, float r) {
-        if (ground == Blocks.GRASS_BLOCK) {
-            if (r < 0.55f) return Blocks.SHORT_GRASS.defaultBlockState();
-            if (r < 0.75f) return Blocks.FERN.defaultBlockState();
-            if (r < 0.80f) return Blocks.DANDELION.defaultBlockState();
-            if (r < 0.85f) return Blocks.POPPY.defaultBlockState();
-            return Blocks.SHORT_GRASS.defaultBlockState();
-        }
-        if (ground == Blocks.PODZOL)
-            return r < 0.70f ? Blocks.FERN.defaultBlockState()
-                             : Blocks.BROWN_MUSHROOM.defaultBlockState();
-        if (ground == Blocks.MYCELIUM)
-            return r < 0.50f ? Blocks.BROWN_MUSHROOM.defaultBlockState()
-                             : Blocks.RED_MUSHROOM.defaultBlockState();
-        if (ground == Blocks.SAND || ground == Blocks.RED_SAND)
-            return Blocks.DEAD_BUSH.defaultBlockState();
-        return null;
-    }
-
-    /**
-     * Pose une plante ordinaire si le sol final l'accepte ; la validite est
-     * tranchee par canSurvive (jamais par une table sol↔plante, guide §46).
-     */
-    private static boolean plantOn(ServerLevel level, BlockPos.MutableBlockPos mut,
-                                   int x, int surfY, int z, Block ground, long vegSeed) {
-        float r = posNoise(x, z, SALT_PLANT);
-        if (r > densityFor(ground)) return false;
-        BlockState plant = pickPlant(ground, posNoise(x, z, SALT_PICK));
-        if (plant == null) return false;
-        mut.set(x, surfY + 1, z);
-        if (!level.getBlockState(mut).isAir()) return false;
-        if (!plant.canSurvive(level, mut)) return false;
-        level.setBlock(mut, plant, FAST_FLAG);
-        return true;
-    }
-
-    /** Couche de neige au-dessus de la surface, si le biome est enneige. */
-    private static void applySnowLayer(ServerLevel level, BlockPos.MutableBlockPos mut,
-                                       int x, int surfY, int z) {
-        mut.set(x, surfY + 1, z);
-        if (level.getBlockState(mut).isAir())
-            level.setBlock(mut, Blocks.SNOW.defaultBlockState(), FAST_FLAG);
-    }
-
-    // ---- Passe principale ----
-    private static final int SUBSOIL_DEPTH = 3;
-
-    /**
-     * HABILLAGE + VEGETATION en UNE passe par colonne (guide §61),
-     * pilote par startColumnPass (gardes du mod) sur la liste chunk-major.
-     *
-     * @return la passe ; appelee SEULEMENT si dressingEnabled().
-     */
-    private static void dressAndPlant(ServerLevel level, BlockPos min, BlockPos max,
-                                      Runnable onDone) {
-        if (!dressingEnabled()) { if (onDone != null) onDone.run(); return; }
-        final int innerRing = terrainRing();
-        final int outerRing = terrainRing() + NATURALIZE_EXTRA_RING;
-        final ChunkMajorZone zone = new ChunkMajorZone(level, new BlockPos(
-                (min.getX() + max.getX()) / 2, min.getY(), (min.getZ() + max.getZ()) / 2),
-                min, max, outerRing);
-
-        deepluckyblock.util.ChunkKeeper.keep(level);
-
-        final long vegSeed = level.getSeed()
-                ^ ((long) min.getX() * 912931L) ^ ((long) min.getZ() * 182883L) ^ 0x5EEDL;
-
-        // 0 fastChunks | 1 blendChunks | 2 surfaceSet | 3 fillerSet
-        // 4 plantes    | 5 sautees     | 6 sauvees reposees
-        final int[] stats = new int[7];
-
-        startColumnPass(level, "dressAndPlant", zone.chunkMajorColumns(), BATCH_COLS, col -> {
-            int x = col[0], z = col[1];
-            int cx = x >> 4, cz = z >> 4;
-            int lx = x & 15, lz = z & 15;
-            if (isProtected(x, z) || StructureScatterDecor.isInsideDecor(x, z, 1)) { stats[5]++; return; }
-
-            SurfacePalette pal = paletteAt(level, cx, cz);
-            ChunkAccess chunk = deepluckyblock.util.SafeSurface.chunkFor(level, cx, cz);
-            if (chunk == null) { stats[5]++; return; }
-            BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
-            boolean snowy = isSnowyCell(level, new BlockPos(x, 80, z));
-
-            int surfY = deepluckyblock.util.SafeSurface.height(
-                    level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-            if (surfY < 1) { stats[5]++; return; }
-
-            boolean inner = x >= min.getX() - innerRing && x <= max.getX() + innerRing
-                         && z >= min.getZ() - innerRing && z <= max.getZ() + innerRing;
-            Block chosen = pal.top();
-
-            if (inner) {
-                // Court-circuit niveaux 1 et 2 : quels cotes different ?
-                // Comparaison de BLOCK, jamais de BlockState (invariant I4).
-                boolean anyDifferent = false;
-                SurfacePalette[] nb = null;
-                for (int dx = -1; dx <= 1 && !anyDifferent; dx++)
-                    for (int dz = -1; dz <= 1 && !anyDifferent; dz++) {
-                        if (dx == 0 && dz == 0) continue;
-                        if (paletteAt(level, cx + dx, cz + dz).top() != pal.top()) anyDifferent = true;
-                    }
-                if (anyDifferent) {
-                    stats[1]++;
-                    nb = new SurfacePalette[8];
-                    int k = 0;
-                    for (int dx = -1; dx <= 1; dx++)
-                        for (int dz = -1; dz <= 1; dz++) {
-                            if (dx == 0 && dz == 0) continue;
-                            SurfacePalette q = paletteAt(level, cx + dx, cz + dz);
-                            nb[k] = (q.top() == pal.top()) ? null : q;
-                            k++;
-                        }
-                    chosen = pickGround(pal, nb, x, z, lx, lz);
-                } else {
-                    stats[0]++;
-                }
-
-                BlockState cur = readBlock(level, chunk, mut, x, surfY, z);
-                // Regle 6 : ne rien ecrire si c'est deja correct.
-                if (cur.getBlock() != chosen && isNaturalTerrain(cur) && cur.blocksMotion()) {
-                    level.setBlock(mut.set(x, surfY, z), chosen.defaultBlockState(), FAST_FLAG);
-                    stats[2]++;
-                }
-
-                Block filler = fillerFor(chosen);
-                if (filler != null) {
-                    for (int d = 1; d <= SUBSOIL_DEPTH; d++) {
-                        BlockState s = readBlock(level, chunk, mut, x, surfY - d, z);
-                        if (!isNaturalTerrain(s) || !s.blocksMotion()) break;
-                        if (s.getBlock() == filler) continue;
-                        level.setBlock(mut.set(x, surfY - d, z), filler.defaultBlockState(), FAST_FLAG);
-                        stats[3]++;
-                    }
-                }
-
-                if (snowy) applySnowLayer(level, mut, x, surfY, z);
-            }
-
-            if (plantOn(level, mut, x, surfY, z, chosen, vegSeed)) stats[4]++;
-        }, () -> {
-            deepluckyblock.util.DebugLog.structure(
-                    "dressAndPlant : {} chunks rapides / {} melanges, {} surfaces, "
-                            + "{} sous-sols, {} plantes, {} colonnes sautees, {} replis de palette",
-                    stats[0], stats[1], stats[2], stats[3], stats[4], stats[5],
-                    paletteFallbacksSoFar());
-            clearDressingCaches();
-            if (onDone != null) onDone.run();
-        });
-    }
-
     /** Suite de smoothPass, executee une fois tous les chunks charges. */
     /** Variation maximale autorisee du lissage, en blocs, par colonne (T21). */
     private static final int MAX_SMOOTH_DELTA = 8;
@@ -4064,12 +3298,6 @@ public class StructureTerrainPrep {
         deepluckyblock.util.DebugLog.setPhase(label);
         if (LAST_STEP_MS != 0L) {
             long delta = nowMs - LAST_STEP_MS;
-            // Campagne /2 : delta REEL de CHAQUE etape, visible dans les
-            // annotations CI (zero comportement -- instrumentation seule).
-            if (delta >= 500L) {
-                deepluckyblock.util.DebugLog.structure(
-                        "[DLB-STEP] {} ms -- {}", delta, label);
-            }
             if (delta >= 3000L) {
                 LOGGER.warn("[DLB-STRUCTURE] l'etape qui vient de finir a pris {} ms de temps REEL ({})"
                                 + " -- voir [DLB-LAGPROBE] pour le detail par tick", delta, label);
@@ -4691,11 +3919,7 @@ public class StructureTerrainPrep {
         if (surfY < 1) return;
         BlockState s = level.getBlockState(mut.set(x, surfY, z));
         if (s.isAir() || isLog(s) || isLeaf(s)) return;
-        // T-HABILL.3 : neige une fois par chunk (cache) au lieu d'une comparaison
-        // de chaine par colonne. Nuance assume vs l'ancienne chaine : grove/
-        // snowy_slopes (biomes enneiges sans "snow/ice/frozen" dans le nom)
-        // recoivent desormais la couche de neige -- correction voulue par le guide.
-        boolean snowy = isSnowyCell(level, mut);
+        boolean snowy = isSnowy(level, mut);
         if (s.is(Blocks.SNOW_BLOCK) || s.is(Blocks.PACKED_ICE) || s.is(Blocks.BLUE_ICE)) {
             if (level.getBlockState(mut.set(x, surfY + 1, z)).isAir()) {
                 level.setBlock(mut, Blocks.SNOW.defaultBlockState(), 3); counters[1]++;

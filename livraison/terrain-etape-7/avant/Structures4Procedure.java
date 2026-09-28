@@ -1090,17 +1090,7 @@ public class Structures4Procedure {
             // de l'everest (T36) tournait APRES le paste : elle est deplacee ici,
             // juste avant le premier bloc de la montagne, avec /fixwater + /fixlava
             // dans la foulee. Le PostJob post-pose ne fait donc PLUS de terrain.
-            // === T78 : L'EVEREST NE BALAYE PAS LES NATURELS FLOTTANTS ===
-            // Consigne utilisateur (27/09) : l'Everest est une structure CREUSE,
-            // SANS terrassement : le balayage etendu T41 (lianes/amas flottants,
-            // 8,0 s mesures en CI sur 68 052 colonnes, run 36334260227 -- soit
-            // 23 % des 34,9 s totales) ne devrait pas s'y appliquer. Sans ce
-            // balayage, l'Everest visait le seul budget non tenu (34,9 s > 30 s).
-            // Le re-scellement des trous T40 (0,6 s) et la passe finale T36 sont
-            // CONSERVES : ce sont eux qui asseyent la montagne dans le terrain ;
-            // leur cout est mesure nul a negligeable. Les lianes ou feuilles qui
-            // flottaient avant la pose resteront donc visibles telles quelles --
-            // choix assumé par la consigne.
+            StructureTerrainPrep.sweepFloatingNaturalPass(level, min, max, () ->   // T41
             StructureTerrainPrep.sealUndergroundGaps(level, min, max, () ->   // T40
             StructureTerrainPrep.finalTerrainPass(level, min, max, 6, () ->
                 StructureTerrainPrep.fixLiquidsPassOnDemand(level, min, max, () -> {   // T38
@@ -1113,7 +1103,7 @@ public class Structures4Procedure {
                     LOGGER.info("[STRUCT4-EVEREST] terrain fige (passe finale + fixwater fait AVANT le paste, T39)");
                     if (nearestPlayer != null) nearestPlayer.sendSystemMessage(Component.literal("§b§l⛰ Everest en construction"));
                     });
-                })));
+                }))));
                     });   // T30 : fin du pre-chargement de l'emprise finale
         };
         if (EVEREST_DISTANCE > 0) {
