@@ -452,3 +452,23 @@ a ~27-30 ms -> 10-13 s. Cible <=18 s totales (mod-side everest ~2.5 s).
 - Run 18 : COMBO Noisiumed + ServerCore 1.5.19 neoforge (async chunk/tick,
   MIT, 17M dl). Le flag jvmArgument max.bg.threads=2 reste dans le zip
   (sans effet mesure, conserve par neutralite prouvee).
+
+## 28/09 — CITIBLE <=18 s (everest hors lake) : BILAN PHYSIQUE FINAL
+Leviers JVM/executeur testes et mesures par [DLB-CPU] workers/wall :
+  run 15 FJP.common.parallelism=2 (env) : 0.94x — aucun effet
+  run 16 -Dmax.bg.threads=2 (env)       : 0.94x — aucun effet
+  run 17 max.bg.threads=2 (jvmArgument build.gradle, garanti fork) : 0.93x
+  run 18 COMBO Noisiumed + ServerCore 1.5.19 : 0.93x, everest 35.5 s — aucun effet
+Propriete max.bg.threads verifiee officielle (changelog Mojang 21w38a) et
+patch NeoForge 1.21.1 Util.java lu en ligne (ne touche pas l'executeur).
+Conclusion : pool effectif = 1 worker quels que soient les leviers licites ;
+le mur = CPU du bruit vanilla sur 1 coeur du couple 2 CPU impose.
+Toujours hors portee sans changer la reference : C2ME (Java 25), lumiere
+(inexistant 1.21.1 neoforge), GC (collectors 0.3 s prouve), couper des
+passes/baisser la zone (interdit), differer apres le chrono (gaming interdit),
+rechauffer les fixtures avant la mesure (recuse interdit).
+Mesures finales everest (368 chunks, seed/coords fixes) :
+  noisium best 24.0 s (machine rapide) / bande lente 33.5-37.9 s.
+Etat livre : ci/perf-mods.txt = Noisiumed 3.0.6 ; jvm max.bg.threads=2 conserve
+(neutre, sans risque). ServeurCheck garde tous ses garde-fous.
+Runs neufs consommes sur ce round cible-18 : 6 (13-18). Reste budget : 4.
