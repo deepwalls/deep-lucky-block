@@ -445,3 +445,7 @@ a ~27-30 ms -> 10-13 s. Cible <=18 s totales (mod-side everest ~2.5 s).
 - Run 15 (FJP.common.parallelism=2) : [DLB-CPU] workers/wall = 0.94 -> le
   commonPool n'est PAS l'executeur de generation vanilla. Bascule sur la
   propriete systeme officielle -Dmax.bg.threads=2 (run 16), meme objectif.
+- Run 16 : -Dmax.bg.threads=2 via JAVA_TOOL_OPTIONS = TOUJOURS 0.94x ->
+  la variable d'env n'atteint pas la VM forkee du serveur MDG. Source officielle
+  (changelog 21w38a) : la propriete est la bonne; injection deplacee vers
+  build.gradle runs.server jvmArgument(...) (garantie fork) -> run 17.
