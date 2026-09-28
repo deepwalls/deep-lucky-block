@@ -2,7 +2,7 @@ name: Java 21 build
 
 on:
   push:
-    branches: [arena/01a0da6a-deep-lucky-block]
+    branches: [arena/01a0da6a-deep-lucky-block, arena/01a0e366-deep-lucky-block]
     paths:
       - '.github/workflows/java21-build.yml'
       - 'deep_lucky_block_mcreator.zip'
@@ -63,7 +63,9 @@ jobs:
           from pathlib import Path
           log = Path(os.environ['RUNNER_TEMP']) / 'java21-build.log'
           if log.exists():
-              text = '\n'.join(log.read_text(errors='replace').splitlines()[-100:])
+              lines = log.read_text(errors='replace').splitlines()
+              errs = [l for l in lines if 'error' in l.lower()]
+              text = '\n'.join(errs[:40] + ['---tail---'] + lines[-60:])
               text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
               print('::error title=Build diagnostics::' + text)
           PY
