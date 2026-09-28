@@ -1,4 +1,9 @@
-"""Single headless server session with bounded structure timings and retained logs."""
+"""Single headless server session with bounded structure timings and retained logs.
+
+Session de mesure no 7 (T78+T79+T80) : confirmation sur memes seed/coords et
+tentative de verdict Everest sur machine CI rapide (30,19 s au run precedent,
+budget 30 s -- le reste depend du debit de generation vanilla du runner).
+"""
 import os
 from collections import deque
 from pathlib import Path
@@ -58,6 +63,36 @@ def annotate(text, failure=False):
         print(f'::{"error" if failure else "notice"} title=Server verification::{part}', flush=True)
 
 
+# PERF-MODS (campagne /2, decision utilisateur : tester solo puis combos) --
+# mods d'optimisation de generation charges UNIQUEMENT par la session CI
+# dans run/mods/, jamais embarques dans le jar livre aux joueurs.
+# Spec : ci/perf-mods.txt, lignes "fichier|url|sha512" (lignes '#' ignorees).
+import hashlib
+import urllib.request
+installed_mods = []
+perf_spec = Path('ci/perf-mods.txt')
+if perf_spec.exists():
+    mods_dir = run / 'mods'
+    mods_dir.mkdir(exist_ok=True)
+    def sha512(path):
+        return hashlib.sha512(Path(path).read_bytes()).hexdigest()
+    for raw in perf_spec.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith('#'):
+            continue
+        fname, url, want = (part.strip() for part in line.split('|'))
+        target = mods_dir / fname
+        if not target.exists() or sha512(target) != want:
+            req = urllib.request.Request(url, headers={'User-Agent': 'dlb-ci-check'})
+            target.write_bytes(urllib.request.urlopen(req, timeout=90).read())
+        got = sha512(target)
+        assert got == want, f'PERF-MODS sha512 mismatch sur {fname} (obtenu {got})'
+        installed_mods.append(fname)
+    # Purge auto-guerison : aucun jar hors spec ne doit survivre dans run/mods.
+    for stray in list(mods_dir.iterdir()):
+        if stray.suffix == '.jar' and stray.name not in {m for m in installed_mods}:
+            stray.unlink()
+
 lines = queue.Queue()
 log_path = Path(os.environ['RUNNER_TEMP']) / 'server-check.log'
 proc = subprocess.Popen(['./gradlew', 'runServer', '--console=plain', '--max-workers=2'],
@@ -92,7 +127,7 @@ def wait_for(marker, timeout):
         recent.append(line.strip())
         if '[DLBVERIFY] FAIL' in line:
             raise RuntimeError(line.strip())
-        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair', 'DLB-LAKE', 'STRUCT4', 'Post-process', 'pre-chargement', 'DLB-CHUNKS', 'DLB-CPU']):
+        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair', 'DLB-LAKE', 'STRUCT4', 'Post-process', 'pre-chargement', 'DLB-CHUNKS', 'DLB-CPU', 'DLB-STEP', 'palette :', 'dressAndPlant']):
             phases.append(line.strip())
         pending = {item for item in pending if item not in line}
         if not pending:
@@ -103,7 +138,14 @@ def wait_for(marker, timeout):
 failed = False
 try:
     wait_for('Done (', 240)
+
+    mods_now = sorted(f.name for f in (run / 'mods').iterdir()) if (run / 'mods').exists() else []
+    annotate('run/mods EFFECTIF au boot : ' + (', '.join(mods_now) if mods_now else '(vide)'))
     annotate('Dedicated server started successfully.')
+    if installed_mods:
+        annotate('PERF-MODS actifs dans run/mods/ : ' + ', '.join(installed_mods))
+    else:
+        annotate('PERF-MODS : aucun (baseline)')
     annotate('Running targeted water, loot and terrain fixtures.')
     rcon('dlbverify')
     wait_for('[DLBVERIFY] ALL PASS', 240)
@@ -148,6 +190,14 @@ try:
                 'fixLiquids TERMINE', 'CLEAR COMPLETE', '[DLB-LAKE] anchor', 'EVEREST TERMINÉ', '[DLB-CPU]'))]
             annotate('\n'.join(summary[-2:]) + '\n' + '\n'.join(diagnostics), not within_budget)
 except Exception as exc:
+    # Campagne PERF-MODS : un crash au boot (mod externe) se lit dans le log
+    # serveur, pas dans les phases. On publie les lignes d'erreur filtrees.
+    try:
+        if log_path.exists():
+            tail = log_path.read_text(errors='replace').splitlines()[-120:]
+            annotate('SERVER-LOG TAIL\n' + '\n'.join(tail), True)
+    except Exception:
+        pass
     # Drain actual current logs even when the command's RCON response times out.
     while not lines.empty():
         recent.append(lines.get_nowait().strip())
@@ -172,3 +222,11 @@ raise SystemExit(1 if failed else 0)
 # Full-session rerun authorized after the raw-paste and water fixes.
 
 # Five further optimization cycles authorized; validate true asynchronous chunk requests.
+
+# T77/T76 rerun: strict nappe-membership rule + pre-terrain median anchor; measure fixLiquids and dragon timings.
+
+# T77 follow-up: escape proofs never request chunks (unknown = OPEN); onDemand retry bounded to FIXLIQ_PENDING_ROUNDS.
+
+# T77 third pass: park candidate keys, halo-bounded frontier, pre-expansion force ring.
+
+# T77 final rerun: candidate-key parking fixed, halo-bounded frontier, pre-expansion ring.

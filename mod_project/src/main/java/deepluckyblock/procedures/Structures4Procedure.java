@@ -1090,7 +1090,17 @@ public class Structures4Procedure {
             // de l'everest (T36) tournait APRES le paste : elle est deplacee ici,
             // juste avant le premier bloc de la montagne, avec /fixwater + /fixlava
             // dans la foulee. Le PostJob post-pose ne fait donc PLUS de terrain.
-            StructureTerrainPrep.sweepFloatingNaturalPass(level, min, max, () ->   // T41
+            // === T78 : L'EVEREST NE BALAYE PAS LES NATURELS FLOTTANTS ===
+            // Consigne utilisateur (27/09) : l'Everest est une structure CREUSE,
+            // SANS terrassement : le balayage etendu T41 (lianes/amas flottants,
+            // 8,0 s mesures en CI sur 68 052 colonnes, run 36334260227 -- soit
+            // 23 % des 34,9 s totales) ne devrait pas s'y appliquer. Sans ce
+            // balayage, l'Everest visait le seul budget non tenu (34,9 s > 30 s).
+            // Le re-scellement des trous T40 (0,6 s) et la passe finale T36 sont
+            // CONSERVES : ce sont eux qui asseyent la montagne dans le terrain ;
+            // leur cout est mesure nul a negligeable. Les lianes ou feuilles qui
+            // flottaient avant la pose resteront donc visibles telles quelles --
+            // choix assumé par la consigne.
             StructureTerrainPrep.sealUndergroundGaps(level, min, max, () ->   // T40
             StructureTerrainPrep.finalTerrainPass(level, min, max, 6, () ->
                 StructureTerrainPrep.fixLiquidsPassOnDemand(level, min, max, () -> {   // T38
@@ -1103,7 +1113,7 @@ public class Structures4Procedure {
                     LOGGER.info("[STRUCT4-EVEREST] terrain fige (passe finale + fixwater fait AVANT le paste, T39)");
                     if (nearestPlayer != null) nearestPlayer.sendSystemMessage(Component.literal("§b§l⛰ Everest en construction"));
                     });
-                }))));
+                })));
                     });   // T30 : fin du pre-chargement de l'emprise finale
         };
         if (EVEREST_DISTANCE > 0) {
@@ -1449,9 +1459,17 @@ public class Structures4Procedure {
         // AVANT la lecture de hauteur, pour que baseY corresponde au nouveau site.
         // (L'everest a son propre chemin : voir spawnEverest.)
         if (!isEverest) targetXZ = deepluckyblock.util.StructureSites.freeOffset(level, targetXZ, 8, 32);
+        // Terrain preparation needs a SOLID ground Y, not a tree-top/fluid height.
+        // Keep raw placement unchanged: it re-measures ground after its preload below.
         int baseY = followSurface
-                ? deepluckyblock.util.SafeSurface.surfaceY(level, targetXZ.getX(), targetXZ.getZ(), origin.getY())
+                ? (skipTerrain
+                    ? deepluckyblock.util.SafeSurface.surfaceY(level, targetXZ.getX(), targetXZ.getZ(), origin.getY())
+                    : deepluckyblock.util.SafeSurface.groundY(level, targetXZ.getX(), targetXZ.getZ(), origin.getY()))
                 : origin.getY();
+        if (!skipTerrain && (baseY < level.getMinBuildHeight() || baseY >= level.getMaxBuildHeight())) {
+            LOGGER.error("[STRUCT4] {} : selected groundY={} outside build height; terrain placement refused", nbtName, baseY);
+            return false;
+        }
         // T73 : liste compactee (l'air exterieur n'est plus materialise).
         List<StructureTemplate.StructureBlockInfo> rawBlocks = deepluckyblock.util.StructureTemplateCache.compactBlocks(nbtName);
         if (rawBlocks == null) rawBlocks = extractBlocks(template);
@@ -1515,9 +1533,17 @@ public class Structures4Procedure {
             // Establish and retain the final footprint before any asynchronous placement.
             StructureTerrainPrep.preloadBox(level, min, max, offerPaste);
         } else {
-            // T39 : le paste n'est offert qu'a la fin de la phase TERRAIN.
-            StructureTerrainPrep.prepZone(level, min, max, baseY + offY,
-                    () -> StructureTerrainPrep.decorateTerrainOnly(level, min, max, offerPaste));
+            // Use the same selected plane for clearance and model placement.
+            // offY belongs only to the foundation/model anchor, never to clearance.
+            final int selectedGroundY = baseY;
+            final int foundationBaseY = selectedGroundY + offY;
+            LOGGER.info("[STRUCT4] {} : selected solid groundY={}, clearance starts at Y={}, model offsetY={}, foundationBaseY={}",
+                    nbtName, selectedGroundY, selectedGroundY + 1, offY, foundationBaseY);
+            // No post-smooth re-anchoring on this path (offerPaste uses dy=0).
+            // Wait for ALL terrain work, then verify preload before offering paste.
+            StructureTerrainPrep.prepZone(level, min, max, foundationBaseY, selectedGroundY,
+                    () -> StructureTerrainPrep.decorateTerrainOnly(level, min, max,
+                            () -> StructureTerrainPrep.preloadBox(level, min, max, offerPaste)));
         }
         return true;
     }
