@@ -1,4 +1,0 @@
-# PERF-MODS charges UNIQUEMENT par la session CI serveur (campagne /2, cible <=18 s).
-# [TEST 18 -- COMBO] Noisiumed 3.0.6 (bruit) + ServerCore 1.5.19 (async chunk/tick).
-noisiumed-3.0.6-neoforge-1.21.1.jar|https://cdn.modrinth.com/data/M8MasaZG/versions/U3gpLtpO/noisiumed-3.0.6-neoforge-1.21.1.jar|327f828d09b0a7365b31c9eae253969c2a18c6581fdc0b93032e5ccac813eaf3c09d84cf1cddc6242f5930a508f24b21e355e4998ff57c811586e8f983e66919
-servercore-neoforge-1.5.19+1.21.1.jar|https://cdn.modrinth.com/data/4WWQxlQP/versions/6N9hXiRa/servercore-neoforge-1.5.19%2B1.21.1.jar|55b97df4cc46f52db85b96487188d73c62d511229d98859991c115414c5f1ab37f2f40a0f2edb5692220aa94d6c48b392b0a2d8593b3c3381b1fcbde2a728c8f

@@ -472,3 +472,11 @@ Mesures finales everest (368 chunks, seed/coords fixes) :
 Etat livre : ci/perf-mods.txt = Noisiumed 3.0.6 ; jvm max.bg.threads=2 conserve
 (neutre, sans risque). ServeurCheck garde tous ses garde-fous.
 Runs neufs consommes sur ce round cible-18 : 6 (13-18). Reste budget : 4.
+
+## 28/09 (soir) — PR #2 FUSIONNEE (merge commit 01316052, 64 commits, branche
+conservee). Main contient desormais : campagne T-HABILL complete, combos
+mesures (Noisiumed valide -25 %, C2ME Java25 exclu, ServerCore teste sans
+effet, 3 leviers JVM = 0.93x workers/wall), infra CI (perf-mods, annotations,
+purge run/mods), journal integral. Verdict physique <=18 s : hors portee de
+la reference imposee ; arbitrage Java 25 + C2ME ou assouplissement cap a la
+decision utilisateur. Budget runs restant : 4.
