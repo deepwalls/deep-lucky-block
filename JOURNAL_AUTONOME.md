@@ -449,3 +449,6 @@ a ~27-30 ms -> 10-13 s. Cible <=18 s totales (mod-side everest ~2.5 s).
   la variable d'env n'atteint pas la VM forkee du serveur MDG. Source officielle
   (changelog 21w38a) : la propriete est la bonne; injection deplacee vers
   build.gradle runs.server jvmArgument(...) (garantie fork) -> run 17.
+- Run 18 : COMBO Noisiumed + ServerCore 1.5.19 neoforge (async chunk/tick,
+  MIT, 17M dl). Le flag jvmArgument max.bg.threads=2 reste dans le zip
+  (sans effet mesure, conserve par neutralite prouvee).
