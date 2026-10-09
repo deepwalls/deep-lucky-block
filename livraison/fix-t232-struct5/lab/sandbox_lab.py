@@ -85,16 +85,13 @@ class Server:
         p.write_text(text)
     def start(self, vm_extra=''):
         env = os.environ.copy()
-        jdk = env.get('DLB_JDK', '/home/user/dlb-lab/jdk')
-        env['JAVA_HOME'] = jdk
-        env['PATH'] = f"{jdk}/bin:" + env['PATH']
-        ghome = env.get('DLB_GRADLE_USER_HOME', '/home/user/dlb-lab/.gradle')
-        env['GRADLE_USER_HOME'] = ghome
-        env['GRADLE_OPTS'] = '-Xmx256m -Dorg.gradle.daemon=false'
-        env['JAVA_TOOL_OPTIONS'] = '-Xmx1300m' + ((' ' + vm_extra) if vm_extra else '')
+        # lancement JAVA DIRECT (pas de gradle : l'env. sandbox interdit les
+        # forks de JVM). boot_server.sh est genere par rebuild_lab.sh et porte
+        # -Xmx2200m en ligne de commande ; les props du test (-Ddlb.*) passent
+        # par JAVA_TOOL_OPTIONS (les options de la ligne de commande priment).
+        env['JAVA_TOOL_OPTIONS'] = vm_extra.strip()
         self.proc = subprocess.Popen(
-            [str(self.project / 'gradlew'), 'runServer', '--console=plain', '--max-workers=1',
-             '-x', 'createMinecraftArtifacts', '-x', 'compileJava', '-x', 'classes'],
+            ['bash', str(self.project / 'boot_server.sh')],
             cwd=self.project, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, start_new_session=True)
         self.reader = threading.Thread(target=self._read, daemon=True)
@@ -172,7 +169,7 @@ def run_test(name, sim, view, props, scenario, server, outdir):
                         'max-tick-time': '300000'})  # labo seulement : mesurer long, ne pas crasher
     if FRESH_WORLD:
         import shutil
-        for w in ('lab-world', 'lab-world_nether', 'lab-world_the_end'):
+        for w in ('world', 'world_nether', 'world_the_end'):
             shutil.rmtree(server.run / w, ignore_errors=True)
     server.start(vm_extra=props)
     result = {'name': name, 'sim': sim, 'view': view, 'props': props, 'scenario': scenario,
@@ -256,7 +253,7 @@ def run_test(name, sim, view, props, scenario, server, outdir):
         import glob, subprocess as _sp
         time.sleep(6)
         for _ in range(24):
-            rc2 = _sp.run(['pgrep', '-f', 'devlaun[c]h'], capture_output=True)
+            rc2 = _sp.run(['pgrep', '-f', 'BootstrapLaunche[r]'], capture_output=True)
             if rc2.returncode != 0:
                 break
             time.sleep(5)
@@ -282,6 +279,14 @@ def main():
             break
         r = run_test(name, sim, view, props, scenario, server, outdir)
         results.append(r)
+        # anti-wipe : chaque resultat est persisté immediatement sur disque
+        # (results.jsonl) + log brut par test ; la suite peut etre relancee
+        # avec only=<tests restants> sans rien reperdre.
+        try:
+            with open(outdir / 'results.jsonl', 'a') as fh:
+                fh.write(json.dumps(r, ensure_ascii=False) + '\n')
+        except Exception:
+            pass
     print("== FIN LAB T232 ==", flush=True)
 
 RUN_T0 = time.time()
