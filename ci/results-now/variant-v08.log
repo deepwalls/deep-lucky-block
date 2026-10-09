@@ -1,0 +1,1574 @@
+Picked up JAVA_TOOL_OPTIONS: -Xmx2g -XX:ActiveProcessorCount=2 -Ddlb.search.deferRounds=600 -Ddlb.search.deferCap=192 -Ddlb.search.growth=2
+
+> Configure project :
+Creating Minecraft artifacts without recompilation.
+
+> Task :createMinecraftArtifacts UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :downloadAssets UP-TO-DATE
+> Task :writeServerLegacyClasspath UP-TO-DATE
+> Task :prepareServerRun UP-TO-DATE
+
+> Task :runServer
+Picked up JAVA_TOOL_OPTIONS: -Xmx2g -XX:ActiveProcessorCount=2 -Ddlb.search.deferRounds=600 -Ddlb.search.deferCap=192 -Ddlb.search.growth=2
+WARN StatusConsoleListener Advanced terminal features are not available in this environment
+[02:48:34] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeserverdev, --gameDir, ., --fml.fmlVersion, 4.0.41, --fml.mcVersion, 1.21.1, --fml.neoForgeVersion, 21.1.190, --fml.neoFormVersion, 20240808.144430]
+[02:48:34] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: JVM identified as Eclipse Adoptium OpenJDK 64-Bit Server VM 21.0.12.1+1-LTS
+[02:48:34] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher 11.0.5+main.901c6ea8 starting: java version 21.0.12.1 by Eclipse Adoptium; OS Linux arch amd64 version 6.17.0-1022-azure
+[02:48:34] [main/DEBUG] [cp.mo.mo.LaunchServiceHandler/MODLAUNCHER]: Found launch services [minecraft,forgeclient,forgedatauserdev,testharness,forgeserverdev,forgeserveruserdev,forgejunitdev,forgeclientdev,forgeclientuserdev,forgeserver,forgejunituserdev,forgedatadev]
+[02:48:34] [main/DEBUG] [cp.mo.mo.LaunchPluginHandler/MODLAUNCHER]: Found launch plugins: [mixin,slf4jfixer,runtime_enum_extender,accesstransformer,runtimedistcleaner]
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Discovering transformation services
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path GAMEDIR is /home/runner/work/_temp/mod-project/run
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path MODSDIR is /home/runner/work/_temp/mod-project/run/mods
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path CONFIGDIR is /home/runner/work/_temp/mod-project/run/config
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path FMLCONFIG is /home/runner/work/_temp/mod-project/run/config/fml.toml
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.ta.CommonLaunchHandler/CORE]: Got mod coordinates mcreator%%/home/runner/work/_temp/mod-project/build/classes/java/main:mcreator%%/home/runner/work/_temp/mod-project/build/resources/main from env
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.ta.CommonLaunchHandler/CORE]: Found supplied mod coordinates [{mcreator=[/home/runner/work/_temp/mod-project/build/classes/java/main, /home/runner/work/_temp/mod-project/build/resources/main]}]
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Found additional transformation services from discovery services:
+[02:48:34] [main/INFO] [ne.ne.fm.lo.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgeserverdev
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Found transformer services : [mixin,fml]
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services loading
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loading service mixin
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loaded service mixin
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loading service fml
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: FML 4.0.41 loading
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: FML found ModLauncher version : 11.0.5+main.901c6ea8
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: FML found AccessTransformer version : 10.0.1+139da711
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: FML found EventBus version : null
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: Found Runtime Dist Cleaner
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Loaded service fml
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Configuring option handling for services
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Received command line version data  : VersionInfo[neoForgeVersion=21.1.190, fmlVersion=4.0.41, mcVersion=1.21.1, neoFormVersion=20240808.144430]
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services initializing
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformation service mixin
+[02:48:34] [main/DEBUG] [mixin/]: MixinService [ModLauncher] was successfully booted in cpw.mods.cl.ModuleClassLoader@5a8806ef
+[02:48:34] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=union:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/2af2f021d8e02a0220dc27a7a72b4666d66d44ca/sponge-mixin-0.15.2+mixin.0.8.7.jar%2394!/ Service=ModLauncher Env=SERVER
+[02:48:34] [main/DEBUG] [mixin/]: Initialising Mixin Platform Manager
+[02:48:34] [main/DEBUG] [mixin/]: Adding mixin platform agents for container ModLauncher Root Container(ModLauncher:4f56a0a2)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for ModLauncher Root Container(ModLauncher:4f56a0a2)
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container ModLauncher Root Container(ModLauncher:4f56a0a2)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for ModLauncher Root Container(ModLauncher:4f56a0a2)
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container ModLauncher Root Container(ModLauncher:4f56a0a2)
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformation service mixin
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformation service fml
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Setting up basic FML game directories
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path GAMEDIR is /home/runner/work/_temp/mod-project/run
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path MODSDIR is /home/runner/work/_temp/mod-project/run/mods
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path CONFIGDIR is /home/runner/work/_temp/mod-project/run/config
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLPaths/CORE]: Path FMLCONFIG is /home/runner/work/_temp/mod-project/run/config/fml.toml
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Loading configuration
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Preparing launch handler
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLLoader/CORE]: Using forgeserverdev as launch service
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformation service fml
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services begin scanning
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Beginning scan trigger - transformation service mixin
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: End scan trigger - transformation service mixin
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Beginning scan trigger - transformation service fml
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Initiating mod scan
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.ta.CommonLaunchHandler/CORE]: Got mod coordinates mcreator%%/home/runner/work/_temp/mod-project/build/classes/java/main:mcreator%%/home/runner/work/_temp/mod-project/build/resources/main from env
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.ta.CommonLaunchHandler/CORE]: Found supplied mod coordinates [{mcreator=[/home/runner/work/_temp/mod-project/build/classes/java/main, /home/runner/work/_temp/mod-project/build/resources/main]}]
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.ta.CommonDevLaunchHandler/]: Launching with NeoForge from /home/runner/work/_temp/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: Found 4 implementations of IModFileCandidateLocator:
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: 	       0 - [built-in] net.neoforged.fml.loading.moddiscovery.locators.NeoForgeDevProvider from loader-4.0.41.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: 	       0 - net.neoforged.fml.loading.moddiscovery.locators.ModsFolderLocator from loader-4.0.41.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: 	       0 - net.neoforged.fml.loading.moddiscovery.locators.MavenDirectoryLocator from loader-4.0.41.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: 	   -1000 - [built-in] net.neoforged.fml.loading.moddiscovery.locators.UserdevLocator from loader-4.0.41.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: Found 2 implementations of IModFileReader:
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: 	       0 - net.neoforged.fml.loading.moddiscovery.readers.JarModsDotTomlModFileReader from loader-4.0.41.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: 	   -1000 - net.neoforged.fml.loading.moddiscovery.readers.NestedLibraryModReader from loader-4.0.41.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: Found 1 implementations of IDependencyLocator:
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: 	       0 - net.neoforged.fml.loading.moddiscovery.locators.JarInJarDependencyLocator from loader-4.0.41.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file neoforge-21.1.190.jar with {minecraft} mods - versions {1.21.1}
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate /home/runner/work/_temp/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file neoforge-21.1.190.jar with {neoforge} mods - versions {21.1.190}
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModListHandler/CORE]: Found mod coordinates from lists: []
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate /home/runner/work/_temp/mod-project/build/classes/java/main
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file main with {deep_lucky_block} mods - versions {1.0}
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate /home/runner/work/_temp/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file neoforge-21.1.190.jar with {neoforge} mods - versions {21.1.190}
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.neoforged.fancymodloader/earlydisplay/4.0.41/53dfbd387ed1b88c7d144bdb6551b7f57d5da6d7/earlydisplay-4.0.41.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.neoforged.fancymodloader/loader/4.0.41/3aebc81b9347fa87bb629ffaed20276f2a4c944e/loader-4.0.41.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.neoforged.accesstransformers/at-modlauncher/10.0.1/5aba50202aceead086bc09fbc2751c9f05cb4890/at-modlauncher-10.0.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.neoforged/accesstransformers/10.0.1/fd83b5725f76eae9115e9355fa1c456a6a441400/accesstransformers-10.0.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.neoforged/bus/8.0.5/5b2d33285ab5d1554e9798ad98c40d6ea3868bd5/bus-8.0.5.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.neoforged/coremods/7.0.3/9147e6f638b4272b3bd5fc8f92ad37802512c6c/coremods-7.0.3.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/cpw.mods/modlauncher/11.0.5/b8f0d49294f733fdb6173931b263553e943dc950/modlauncher-11.0.5.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.neoforged/mergetool/2.0.0/52fe1949be64e3303aabaaa21e315f551db9c9f4/mergetool-2.0.0-api.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.electronwill.night-config/toml/3.8.2/c128842f759692f613ea6c3ef0ef052273bbb38c/toml-3.8.2.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.electronwill.night-config/core/3.8.2/94eee571e1524129804d08c75f6416a3be380ad4/core-3.8.2.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.neoforged/JarJarSelector/0.4.1/fb3cc7a58af22ad2880adb98af6d518128c47dae/JarJarSelector-0.4.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.neoforged/JarJarMetadata/0.4.1/f8da03683dc81694556dc3e177c5e3bb77ae6fcb/JarJarMetadata-0.4.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.apache.maven/maven-artifact/3.8.5/4433f50c07debefaed0553bd0068f4f48d449313/maven-artifact-3.8.5.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.jodah/typetools/0.6.3/a01aaa6ddaea9ec07ec4f209487b7a46a526283a/typetools-0.6.3.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.minecrell/terminalconsoleappender/1.3.0/b562e9bb61235c9520e26282cdee71f8f802d1fc/terminalconsoleappender-1.3.0.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/2af2f021d8e02a0220dc27a7a72b4666d66d44ca/sponge-mixin-0.15.2+mixin.0.8.7.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.openjdk.nashorn/nashorn-core/15.4/f67f5ffaa5f5130cf6fb9b133da00c7df3b532a5/nashorn-core-15.4.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-lang3/3.14.0/1ed471194b02f2c6cb734a0cd6f6f107c673afae/commons-lang3-3.14.0.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.sf.jopt-simple/jopt-simple/5.0.4/4fdac2fbe92dfad86aa6e9301736f6b4342a3f5c/jopt-simple-5.0.4.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/commons-io/commons-io/2.15.1/f11560da189ab563a5c8e351941415430e9304ea/commons-io-2.15.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/logging/1.2.7/24cb95ffb0e3433fd6e844c04e68009e504ca1c0/logging-1.2.7.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-slf4j2-impl/2.22.1/d7e6693c2606cb7e7335047d7bb96dec52db5665/log4j-slf4j2-impl-2.22.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-core/2.22.1/7183a25510a02ad00cc6a95d3b3d2a7d3c5a8dc4/log4j-core-2.22.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-api/2.22.1/bea6fede6328fabafd7e68363161a7ea6605abd1/log4j-api-2.22.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/32.1.2-jre/5e64ec7e056456bef3a4bc4c6fdaef71e8ab6318/guava-32.1.2-jre.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.10.1/b3add478d4382b78ea20b1671390a858002feb6c/gson-2.10.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/2.0.9/7cf2726fdcfbc8610f9a71fb3ed639871f315340/slf4j-api-2.0.9.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.antlr/antlr4-runtime/4.13.1/17125bae1d965624e265ef49552f6465a2bfa307/antlr4-runtime-4.13.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.minecraftforge/srgutils/0.4.15/ca408b131759478f164e010fae0d73997e125fb5/srgutils-0.4.15.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.codehaus.plexus/plexus-utils/3.3.0/cf43b5391de623b36fe066a21127baef82c64022/plexus-utils-3.3.0.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.jline/jline-reader/3.20.0/8f15415b022a25b473e8e16c28ae913186ffb9c4/jline-reader-3.20.0.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.machinezoo.noexception/noexception/1.7.1/b65330c98e38a1f915fa54a6e5eca496505e3f0a/noexception-1.7.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.google.guava/failureaccess/1.0.1/1dcf1de382a0bf95a3d8b0849546c88bac1292c9/failureaccess-1.0.1.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.google.guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/b421526c5f297295adef1c886e5246c39d4ac629/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.google.code.findbugs/jsr305/3.0.2/25ea2e8b0c338a877313bd4672d3fe056ea78f0d/jsr305-3.0.2.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.checkerframework/checker-qual/3.33.0/de2b60b62da487644fc11f734e73c8b0b431238f/checker-qual-3.33.0.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.google.errorprone/error_prone_annotations/2.18.0/89b684257096f548fa39a7df9fdaa409d4d4df91/error_prone_annotations-2.18.0.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.google.j2objc/j2objc-annotations/2.8/c85270e307e7b822f1086b93689124b89768e273/j2objc-annotations-2.8.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.jline/jline-terminal/3.20.0/d0ddcc708ddf527a3454c941b7b9225cc83a15ff/jline-terminal-3.20.0.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.github.oshi/oshi-core/6.4.10/b1d8ab82d11d92fd639b56d639f8f46f739dd5fa/oshi-core-6.4.10.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/authlib/6.0.54/de8bc95660e1b2fe8793fd427a7a10dcec5b3ea7/authlib-6.0.54.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/brigadier/1.3.10/d15b53a14cf20fdcaa98f731af5dda654452c010/brigadier-1.3.10.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/datafixerupper/8.0.16/67d4de6d7f95d89bcf5862995fb854ebaec02a34/datafixerupper-8.0.16.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-buffer/4.1.97.Final/f8f3d8644afa5e6e1a40a3a6aeb9d9aa970ecb4f/netty-buffer-4.1.97.Final.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec/4.1.97.Final/384ba4d75670befbedb45c4d3b497a93639c206d/netty-codec-4.1.97.Final.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-common/4.1.97.Final/7cceacaf11df8dc63f23d0fb58e9d4640fc88404/netty-common-4.1.97.Final.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-handler/4.1.97.Final/abb86c6906bf512bf2b797a41cd7d2e8d3cd7c36/netty-handler-4.1.97.Final.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-resolver/4.1.97.Final/cec8348108dc76c47cf87c669d514be52c922144/netty-resolver-4.1.97.Final.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-classes-epoll/4.1.97.Final/795da37ded759e862457a82d9d92c4d39ce8ecee/netty-transport-classes-epoll-4.1.97.Final.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-unix-common/4.1.97.Final/d469d84265ab70095b01b40886cabdd433b6e664/netty-transport-native-unix-common-4.1.97.Final.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport/4.1.97.Final/f37380d23c9bb079bc702910833b2fd532c9abd0/netty-transport-4.1.97.Final.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/it.unimi.dsi/fastutil/8.5.12/c24946d46824bd528054bface3231d2ecb7e95e8/fastutil-8.5.12.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna-platform/5.14.0/28934d48aed814f11e4c584da55c49fa7032b31b/jna-platform-5.14.0.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna/5.14.0/67bf3eaea4f0718cb376a181a629e5f88fa1c9dd/jna-5.14.0.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.joml/joml/1.10.5/22566d58af70ad3d72308bab63b8339906deb649/joml-1.10.5.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/org.lz4/lz4-java/1.8.0/4b986a99445e49ea5fbf5d149c4b63f6ed6c6780/lz4-java-1.8.0.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-epoll/4.1.97.Final/5514744c588190ffda076b35a9b8c9f24946a960/netty-transport-native-epoll-4.1.97.Final-linux-aarch_64.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModDiscoverer/]: Skipping /home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-epoll/4.1.97.Final/54188f271e388e7f313aea995e82f58ce2cdb809/netty-transport-native-epoll-4.1.97.Final-linux-x86_64.jar because it was already located earlier
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.UniqueModListBuilder/]: Found 2 mods for first modid neoforge, selecting most recent based on version data
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.UniqueModListBuilder/]: Selected file neoforge-21.1.190.jar for modid neoforge with version 21.1.190
+[02:48:34] [main/INFO] [ne.ne.fm.lo.mo.lo.JarInJarDependencyLocator/]: Found 2 dependencies adding them to mods collection
+[02:48:34] [main/INFO] [ne.ne.fm.lo.mo.ModDiscoverer/]:
+     Mod List:
+		Name Version (Mod Id)
+
+		Deep Lucky Block 1.0 (deep_lucky_block)
+		Minecraft 1.21.1 (minecraft)
+		NeoForge 21.1.190 (neoforge)
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file neoforge-21.1.190.jar with {minecraft} mods - versions {1.21.1}
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Loading mod file /home/runner/work/_temp/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar with languages [LanguageSpec[languageName=minecraft, acceptedVersions=1]]
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate /home/runner/work/_temp/mod-project/build/classes/java/main
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file main with {deep_lucky_block} mods - versions {1.0}
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Loading mod file /home/runner/work/_temp/mod-project/build/classes/java/main with languages [LanguageSpec[languageName=javafml, acceptedVersions=[4,)]]
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Found mixin config MixinConfig[config=deep_lucky_block.mixins.json, requiredMods=[]]
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileParser/LOADING]: Considering mod file candidate /home/runner/work/_temp/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFileInfo/LOADING]: Found valid mod file neoforge-21.1.190.jar with {neoforge} mods - versions {21.1.190}
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Loading mod file /home/runner/work/_temp/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar with languages [LanguageSpec[languageName=javafml, acceptedVersions=[3,]]]
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Found mixin config MixinConfig[config=neoforge.mixins.json, requiredMods=[]]
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.mo.ModFile/LOADING]: Loading mod file  with languages []
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: End scan trigger - transformation service fml
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: Found 3 implementations of IModLanguageLoader:
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: 	net.neoforged.fml.javafmlmod.FMLJavaModLanguageProvider from loader-4.0.41.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: 	net.neoforged.fml.lowcodemod.LowCodeModLanguageProvider from loader-4.0.41.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: 	net.neoforged.fml.mclanguageprovider.MinecraftModLanguageProvider from loader-4.0.41.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.LanguageProviderLoader/CORE]: Found language provider javafml, version 4.0.41
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.LanguageProviderLoader/CORE]: Found language provider lowcodefml, version 4.0.41
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.LanguageProviderLoader/CORE]: Found language provider minecraft, version 4.0.41
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.ModSorter/]: Configured system mods: [minecraft, neoforge]
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.ModSorter/]: Found system mod: minecraft
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.ModSorter/]: Found system mod: neoforge
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.ModSorter/LOADING]: Found 2 mod requirements (2 mandatory, 0 optional)
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.ModSorter/LOADING]: Found 0 mod requirements missing (0 mandatory, 0 optional)
+[02:48:34] [main/DEBUG] [mixin/]: Adding mixin platform agents for container net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@a7f0ab6
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@a7f0ab6
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@a7f0ab6
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@a7f0ab6
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@a7f0ab6
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new FMLMixinPlatformAgent for net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@a7f0ab6
+[02:48:34] [main/DEBUG] [mixin/]: FMLMixinPlatformAgent accepted container net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@a7f0ab6
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServicesHandler/MODLAUNCHER]: Transformation services loading transformers
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformers for transformation service mixin
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformers for transformation service mixin
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initializing transformers for transformation service fml
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/LOADING]: Loading coremod transformers
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Not loading coremod script-engine since no mod requested it
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: Found 1 implementations of ICoreMod:
+[02:48:34] [main/DEBUG] [ne.ne.fm.ut.ServiceLoaderUtil/CORE]: 	net.neoforged.neoforge.coremods.NeoForgeCoreMod from neoforge-21.1.190.jar > net.neoforged.neoforge-coremods-21.1.190.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Adding [Target[className=net.minecraft.world.level.biome.Biome, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595]] transformer from core-mod net.neoforged.neoforge.coremods.NeoForgeCoreMod@4d8126f in neoforge-21.1.190.jar > net.neoforged.neoforge-coremods-21.1.190.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Adding [Target[className=net.minecraft.world.level.levelgen.structure.Structure, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595]] transformer from core-mod net.neoforged.neoforge.coremods.NeoForgeCoreMod@4d8126f in neoforge-21.1.190.jar > net.neoforged.neoforge-coremods-21.1.190.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Adding [Target[className=net.minecraft.world.level.block.FlowerPotBlock, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595]] transformer from core-mod net.neoforged.neoforge.coremods.NeoForgeCoreMod@4d8126f in neoforge-21.1.190.jar > net.neoforged.neoforge-coremods-21.1.190.jar
+[02:48:34] [main/DEBUG] [ne.ne.fm.lo.FMLServiceProvider/CORE]: Adding [Target[className=net/minecraft/world/level/levelgen/structure/structures/WoodlandMansionPieces$WoodlandMansionPiece, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/npc/CatSpawner, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/level/levelgen/PhantomSpawner, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/server/commands/SummonCommand, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/level/NaturalSpawner, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/monster/Zombie, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/EntityType, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/level/levelgen/structure/structures/OceanRuinPieces$OceanRuinPiece, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/level/levelgen/PatrolSpawner, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/server/commands/RaidCommand, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/ai/village/VillageSiege, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/animal/horse/SkeletonTrapGoal, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/monster/Evoker$EvokerSummonSpellGoal, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/monster/Strider, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/level/levelgen/structure/structures/OceanMonumentPieces$OceanMonumentPiece, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/animal/frog/Tadpole, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/raid/Raid, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/level/levelgen/structure/structures/SwampHutPiece, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/npc/Villager, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/monster/Spider, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595], Target[className=net/minecraft/world/entity/monster/ZombieVillager, elementName=, elementDescriptor=, targetType=cpw.mods.modlauncher.api.TargetType@37c7595]] transformer from core-mod net.neoforged.neoforge.coremods.NeoForgeCoreMod@4d8126f in neoforge-21.1.190.jar > net.neoforged.neoforge-coremods-21.1.190.jar
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.ReplaceFieldWithGetterAccess@963176 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/level/biome/Biome;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.ReplaceFieldWithGetterAccess@31cb96e1 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/level/levelgen/structure/Structure;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.ReplaceFieldWithGetterAccess@3eed0f5 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/level/block/FlowerPotBlock;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/level/levelgen/structure/structures/WoodlandMansionPieces$WoodlandMansionPiece;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/npc/CatSpawner;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/level/levelgen/PhantomSpawner;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/server/commands/SummonCommand;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/level/NaturalSpawner;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/monster/Zombie;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/EntityType;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/level/levelgen/structure/structures/OceanRuinPieces$OceanRuinPiece;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/level/levelgen/PatrolSpawner;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/server/commands/RaidCommand;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/ai/village/VillageSiege;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/animal/horse/SkeletonTrapGoal;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/monster/Evoker$EvokerSummonSpellGoal;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/monster/Strider;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/level/levelgen/structure/structures/OceanMonumentPieces$OceanMonumentPiece;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/animal/frog/Tadpole;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/raid/Raid;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/level/levelgen/structure/structures/SwampHutPiece;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/npc/Villager;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/monster/Spider;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformStore/MODLAUNCHER]: Adding transformer net.neoforged.neoforge.coremods.MethodRedirector@64030b91 to Target : cpw.mods.modlauncher.api.TargetType@37c7595 {Lnet/minecraft/world/entity/monster/ZombieVillager;} {} {V}
+[02:48:34] [main/DEBUG] [cp.mo.mo.TransformationServiceDecorator/MODLAUNCHER]: Initialized transformers for transformation service fml
+[02:48:34] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:ModLauncher Root Container(ModLauncher:4f56a0a2)]
+[02:48:34] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@a7f0ab6]
+[02:48:34] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[FMLMixinPlatformAgent:null]
+[02:48:34] [main/DEBUG] [mixin/]: Compatibility level JAVA_21 specified by deep_lucky_block.mixins.json is higher than the maximum level supported by this version of mixin (JAVA_13).
+[02:48:34] [main/INFO] [mixin/]: Compatibility level set to JAVA_21
+[02:48:34] [main/DEBUG] [mixin/]: Processing launch tasks for PlatformAgent[MixinPlatformAgentDefault:ModLauncher Root Container(ModLauncher:4f56a0a2)]
+[02:48:34] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(mixin_synthetic)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(mixin_synthetic)
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(mixin_synthetic)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(mixin_synthetic)
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(mixin_synthetic)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new FMLMixinPlatformAgent for SecureJarResource(mixin_synthetic)
+[02:48:34] [main/DEBUG] [mixin/]: FMLMixinPlatformAgent rejected container SecureJarResource(mixin_synthetic)
+[02:48:34] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(mixin_synthetic)]
+[02:48:34] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(minecraft)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(minecraft)
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(minecraft)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(minecraft)
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(minecraft)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new FMLMixinPlatformAgent for SecureJarResource(minecraft)
+[02:48:34] [main/DEBUG] [mixin/]: FMLMixinPlatformAgent rejected container SecureJarResource(minecraft)
+[02:48:34] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(minecraft)]
+[02:48:34] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(deep_lucky_block)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(deep_lucky_block)
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(deep_lucky_block)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(deep_lucky_block)
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(deep_lucky_block)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new FMLMixinPlatformAgent for SecureJarResource(deep_lucky_block)
+[02:48:34] [main/DEBUG] [mixin/]: FMLMixinPlatformAgent rejected container SecureJarResource(deep_lucky_block)
+[02:48:34] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(deep_lucky_block)]
+[02:48:34] [main/DEBUG] [mixin/]: Adding mixin platform agents for container SecureJarResource(mixinextras.neoforge)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentMinecraftForge for SecureJarResource(mixinextras.neoforge)
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentMinecraftForge rejected container SecureJarResource(mixinextras.neoforge)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new MixinPlatformAgentDefault for SecureJarResource(mixinextras.neoforge)
+[02:48:34] [main/DEBUG] [mixin/]: MixinPlatformAgentDefault accepted container SecureJarResource(mixinextras.neoforge)
+[02:48:34] [main/DEBUG] [mixin/]: Instancing new FMLMixinPlatformAgent for SecureJarResource(mixinextras.neoforge)
+[02:48:34] [main/DEBUG] [mixin/]: FMLMixinPlatformAgent rejected container SecureJarResource(mixinextras.neoforge)
+[02:48:34] [main/DEBUG] [mixin/]: Processing prepare() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(mixinextras.neoforge)]
+[02:48:34] [main/DEBUG] [mixin/]: Registering mixin config: mixinextras.init.mixins.json source=SecureJarResource(mixinextras.neoforge)
+[02:48:34] [main/DEBUG] [mixin/]: inject() running with 6 agents
+[02:48:34] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:ModLauncher Root Container(ModLauncher:4f56a0a2)]
+[02:48:34] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:net.neoforged.fml.loading.mixin.FMLMixinContainerHandle@a7f0ab6]
+[02:48:34] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[FMLMixinPlatformAgent:null]
+[02:48:34] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(mixin_synthetic)]
+[02:48:34] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(minecraft)]
+[02:48:34] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(deep_lucky_block)]
+[02:48:34] [main/DEBUG] [mixin/]: Processing inject() for PlatformAgent[MixinPlatformAgentDefault:SecureJarResource(mixinextras.neoforge)]
+[02:48:34] [main/INFO] [cp.mo.mo.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeserverdev' with arguments [--gameDir, .]
+[02:48:34] [main/DEBUG] [mixin/]: Preparing mixins for MixinEnvironment[DEFAULT]
+[02:48:34] [main/DEBUG] [mixin/]: Selecting config deep_lucky_block.mixins.json
+[02:48:34] [main/WARN] [mixin/]: Reference map 'deep_lucky_block.refmap.json' for deep_lucky_block.mixins.json could not be read. If this is a development environment you can ignore this message
+[02:48:34] [main/DEBUG] [mixin/]: Selecting config neoforge.mixins.json
+[02:48:34] [main/DEBUG] [mixin/]: Selecting config mixinextras.init.mixins.json
+[02:48:34] [main/DEBUG] [MixinExtras|Service/]: com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.4.1) is taking over from null
+[02:48:34] [main/DEBUG] [mixin/]: Registering new injector for @Inject with org.spongepowered.asm.mixin.injection.struct.CallbackInjectionInfo
+[02:48:34] [main/DEBUG] [mixin/]: Registering new injector for @ModifyArg with org.spongepowered.asm.mixin.injection.struct.ModifyArgInjectionInfo
+[02:48:34] [main/DEBUG] [mixin/]: Registering new injector for @ModifyArgs with org.spongepowered.asm.mixin.injection.struct.ModifyArgsInjectionInfo
+[02:48:34] [main/DEBUG] [mixin/]: Registering new injector for @Redirect with org.spongepowered.asm.mixin.injection.struct.RedirectInjectionInfo
+[02:48:34] [main/DEBUG] [mixin/]: Registering new injector for @ModifyVariable with org.spongepowered.asm.mixin.injection.struct.ModifyVariableInjectionInfo
+[02:48:34] [main/DEBUG] [mixin/]: Registering new injector for @ModifyConstant with org.spongepowered.asm.mixin.injection.struct.ModifyConstantInjectionInfo
+[02:48:34] [main/DEBUG] [mixin/]: Preparing deep_lucky_block.mixins.json (5)
+[02:48:34] [main/DEBUG] [mixin/]: Preparing neoforge.mixins.json (2)
+[02:48:34] [main/DEBUG] [mixin/]: Preparing mixinextras.init.mixins.json (0)
+[02:48:34] [main/DEBUG] [io.ne.ut.in.lo.InternalLoggerFactory/]: Using SLF4J as the default logging framework
+[02:48:34] [main/DEBUG] [io.ne.ut.ResourceLeakDetector/]: -Dio.netty.leakDetection.level: simple
+[02:48:34] [main/DEBUG] [io.ne.ut.ResourceLeakDetector/]: -Dio.netty.leakDetection.targetRecords: 4
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: No oshi.properties file found from ClassLoader cpw.mods.modlauncher.TransformingClassLoader@7aad3f7d
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /proc/self/auxv
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /proc/self/auxv
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /proc/stat
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/topology/core_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/topology/core_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/topology/physical_package_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/topology/physical_package_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cpu_capacity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cpu_capacity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/topology/core_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/topology/core_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/topology/physical_package_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/topology/physical_package_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cpu_capacity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cpu_capacity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/topology/core_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/topology/core_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/topology/physical_package_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/topology/physical_package_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cpu_capacity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cpu_capacity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/topology/core_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/topology/core_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/topology/physical_package_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/topology/physical_package_id
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cpu_capacity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cpu_capacity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/level
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/type
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/ways_of_associativity
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/coherency_line_size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/size
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /proc/cpuinfo
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /proc/self/auxv
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: No oshi.architecture.properties file found from ClassLoader cpw.mods.modlauncher.TransformingClassLoader@7aad3f7d
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /proc/meminfo
+[02:48:35] [main/DEBUG] [os.ut.FileUtil/]: Reading file /proc/meminfo
+[02:48:35] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.4.1).
+[02:48:35] [main/DEBUG] [mixin/]: Registering new injector for @SugarWrapper with com.llamalad7.mixinextras.sugar.impl.SugarWrapperInjectionInfo
+[02:48:35] [main/DEBUG] [mixin/]: Registering new injector for @FactoryRedirectWrapper with com.llamalad7.mixinextras.wrapper.factory.FactoryRedirectWrapperInjectionInfo
+[02:48:35] [main/DEBUG] [mixin/]: Mixing MappedRegistryAccessor from neoforge.mixins.json into net.minecraft.core.MappedRegistry
+[02:48:36] [main/DEBUG] [mixin/]: Mixing BlockEntityTypeAccessor from neoforge.mixins.json into net.minecraft.world.level.block.entity.BlockEntityType
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent0/]: -Dio.netty.noUnsafe: false
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent0/]: Java version: 21
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent0/]: sun.misc.Unsafe.theUnsafe: available
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent0/]: sun.misc.Unsafe.copyMemory: available
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent0/]: sun.misc.Unsafe.storeFence: available
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent0/]: java.nio.Buffer.address: available
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent0/]: direct buffer constructor: unavailable: Reflective setAccessible(true) disabled
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent0/]: java.nio.Bits.unaligned: available, true
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent0/]: jdk.internal.misc.Unsafe.allocateUninitializedArray(int): unavailable: class io.netty.util.internal.PlatformDependent0$7 (in module io.netty.common) cannot access class jdk.internal.misc.Unsafe (in module java.base) because module java.base does not export jdk.internal.misc to module io.netty.common
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent0/]: java.nio.DirectByteBuffer.<init>(long, {int,long}): unavailable
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent/]: sun.misc.Unsafe: available
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent/]: maxDirectMemory: 2147483648 bytes (maybe)
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.tmpdir: /tmp (java.io.tmpdir)
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.bitMode: 64 (sun.arch.data.model)
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.maxDirectMemory: -1 bytes
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.uninitializedArrayAllocationThreshold: -1
+[02:48:37] [main/DEBUG] [io.ne.ut.in.CleanerJava9/]: java.nio.ByteBuffer.cleaner(): available
+[02:48:37] [main/DEBUG] [io.ne.ut.in.PlatformDependent/]: -Dio.netty.noPreferDirect: false
+[02:48:39] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[02:48:39] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[02:48:39] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[02:48:39] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[02:48:39] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[02:48:39] [main/DEBUG] [ne.ne.fm.ModWorkManager/LOADING]: Using 2 threads for parallel mod-loading
+[02:48:40] [main/DEBUG] [ne.ne.fm.ja.FMLModContainer/LOADING]: Creating FMLModContainer instance for [deepluckyblock.DeepLuckyBlockMod]
+[02:48:40] [main/DEBUG] [ne.ne.fm.ja.FMLModContainer/LOADING]: Creating FMLModContainer instance for [net.neoforged.neoforge.common.NeoForgeMod]
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.ne.in.ve.ne.NeoForgeVersion/CORE]: Found NeoForge version 21.1.190
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.ne.in.ve.ne.NeoForgeVersion/CORE]: Found FML version 4.0.41
+[02:48:40] [modloading-worker-0/INFO] [ne.ne.ne.co.NeoForgeMod/NEOFORGE-MOD]: NeoForge mod loading, version 21.1.190, for MC 1.21.1
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file neoforge-client.toml for neoforge tracking
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file neoforge-server.toml for neoforge tracking
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file neoforge-common.toml for neoforge tracking
+[02:48:40] [modloading-worker-0/INFO] [de.co.DeepMixinBootstrap/]: [DeepMixinBootstrap] deep_lucky_block.mixins.json est embarqué (union), non modifiable.
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-tillage_boot.toml for deep_lucky_block tracking
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-core_collection.toml for deep_lucky_block tracking
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-crop_harvest.toml for deep_lucky_block tracking
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-ore_detector.toml for deep_lucky_block tracking
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-range_foot_block.toml for deep_lucky_block tracking
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-transfer.toml for deep_lucky_block tracking
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-weed_removal.toml for deep_lucky_block tracking
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Attempting to inject @EventBusSubscriber classes into the eventbus for neoforge
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-luck_infusion.toml for deep_lucky_block tracking
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-lucky_drop.toml for deep_lucky_block tracking
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Attempting to inject @EventBusSubscriber classes into the eventbus for deep_lucky_block
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.LuckyChestAutofillProcedure for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class net.neoforged.neoforge.network.filters.GenericPacketSplitter for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/LuckyChestAutofillProcedure; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.CrimsonLakeStructureSpawnProcedure for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/CrimsonLakeStructureSpawnProcedure; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.SpawnBobCommand$Registration for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/SpawnBobCommand$Registration; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.FeatherFallingFixProcedure for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/FeatherFallingFixProcedure; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.TestProcedure for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.AbstractByteBuf/]: -Dio.netty.buffer.checkAccessible: true
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.AbstractByteBuf/]: -Dio.netty.buffer.checkBounds: true
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.ut.ResourceLeakDetectorFactory/]: Loaded default ResourceLeakDetector: io.netty.util.ResourceLeakDetector@614d9455
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.ut.in.InternalThreadLocalMap/]: -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.ut.in.InternalThreadLocalMap/]: -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.numHeapArenas: 4
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.numDirectArenas: 4
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.pageSize: 8192
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.maxOrder: 9
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.chunkSize: 4194304
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.smallCacheSize: 256
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.normalCacheSize: 64
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.maxCachedBufferCapacity: 32768
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.cacheTrimInterval: 8192
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.cacheTrimIntervalMillis: 0
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.useCacheForAllThreads: false
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.PooledByteBufAllocator/]: -Dio.netty.allocator.maxCachedByteBuffersPerChunk: 1023
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/TestProcedure; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.Structures4Procedure for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.ByteBufUtil/]: -Dio.netty.allocator.type: pooled
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.ByteBufUtil/]: -Dio.netty.threadLocalDirectBufferSize: 0
+[02:48:40] [modloading-worker-0/DEBUG] [io.ne.bu.ByteBufUtil/]: -Dio.netty.maxThreadLocalCharBufferSize: 16384
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/Structures4Procedure; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.SupremeLuckyBlockDropProcedure for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/SupremeLuckyBlockDropProcedure; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.GenerateLuckyItemProcedure for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Lnet/neoforged/neoforge/network/filters/GenericPacketSplitter; to the mod event bus of mod neoforge
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class net.neoforged.neoforge.network.NetworkInitialization for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Lnet/neoforged/neoforge/network/NetworkInitialization; to the mod event bus of mod neoforge
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class net.neoforged.neoforge.network.ConfigurationInitialization for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Lnet/neoforged/neoforge/network/ConfigurationInitialization; to the mod event bus of mod neoforge
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class net.neoforged.neoforge.common.MonsterRoomHooks for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Lnet/neoforged/neoforge/common/MonsterRoomHooks; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class net.neoforged.neoforge.common.DeferredSpawnEggItem$CommonHandler for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Lnet/neoforged/neoforge/common/DeferredSpawnEggItem$CommonHandler; to the mod event bus of mod neoforge
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class net.neoforged.neoforge.attachment.AttachmentInternals for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/GenerateLuckyItemProcedure; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.HeartTestCommand for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Lnet/neoforged/neoforge/attachment/AttachmentInternals; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/HeartTestCommand; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.GenerateBadProcedure for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/GenerateBadProcedure; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.SanctuarySpawnerEquipProcedure for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/SanctuarySpawnerEquipProcedure; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.GlintCommand for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/GlintCommand; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.Structures5Procedure for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/Structures5Procedure; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.EnchantmentAuditCommand for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/EnchantmentAuditCommand; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.procedures.BobFishingHookProcedure for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/procedures/BobFishingHookProcedure; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.SlbDiagnostics for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/SlbDiagnostics; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.network.DeepLuckyBlockModVariables for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/network/DeepLuckyBlockModVariables; to the mod event bus of mod deep_lucky_block
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.network.DeepPayloads for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/network/DeepPayloads; to the mod event bus of mod deep_lucky_block
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.network.DeepLuckyBlockModVariables$EventBusVariableHandlers for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/network/DeepLuckyBlockModVariables$EventBusVariableHandlers; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.enchantments.FishingTridentElytraHandler for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/enchantments/FishingTridentElytraHandler; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.enchantments.EquipmentExpansionHandler for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/enchantments/EquipmentExpansionHandler; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.enchantments.RealAttributeModifierHandler for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/enchantments/RealAttributeModifierHandler; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.enchantments.UniversalEnchantmentHandler for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/enchantments/UniversalEnchantmentHandler; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.init.DeepLuckyBlockModTabs for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/init/DeepLuckyBlockModTabs; to the mod event bus of mod deep_lucky_block
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.init.SpawnPlacementRegistration for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/init/SpawnPlacementRegistration; to the mod event bus of mod deep_lucky_block
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.init.DeepLuckyBlockModEntities for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/init/DeepLuckyBlockModEntities; to the mod event bus of mod deep_lucky_block
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.commands.SpeedCommand for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/commands/SpeedCommand; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.commands.DlbTestCommands for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/commands/DlbTestCommands; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.compat.LuckyToolsCompatibility for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/compat/LuckyToolsCompatibility; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.advancements.DeepLuckyBlockAdvancementIntegration for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/advancements/DeepLuckyBlockAdvancementIntegration; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.advancements.DeepLuckyBlockAdvancements for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/advancements/DeepLuckyBlockAdvancements; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.util.CrimsonButterflyRetaliation for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/util/CrimsonButterflyRetaliation; to the game event bus
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.util.StructureTemplateStartupPreloader$GameLaunchHook for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/util/StructureTemplateStartupPreloader$GameLaunchHook; to the mod event bus of mod deep_lucky_block
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/LOADING]: Scanning class deepluckyblock.util.StructureTemplateStartupPreloader for @SubscribeEvent-annotated methods
+[02:48:40] [modloading-worker-0/DEBUG] [ne.ne.fm.ja.AutomaticEventSubscriber/]: Subscribing @EventBusSubscriber class Ldeepluckyblock/util/StructureTemplateStartupPreloader; to the game event bus
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loading configs type COMMON
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.ne.co.NeoForgeConfig/FORGEMOD]: Loaded NeoForge config file neoforge-common.toml
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file /home/runner/work/_temp/mod-project/run/config/neoforge-common.toml
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file /home/runner/work/_temp/mod-project/run/config/neoforge-common.toml for changes
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-tillage_boot.toml
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-tillage_boot.toml for changes
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-core_collection.toml
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-core_collection.toml for changes
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-crop_harvest.toml
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-crop_harvest.toml for changes
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-ore_detector.toml
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-ore_detector.toml for changes
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-range_foot_block.toml
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-range_foot_block.toml for changes
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-transfer.toml
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-transfer.toml for changes
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-weed_removal.toml
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-weed_removal.toml for changes
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-luck_infusion.toml
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-luck_infusion.toml for changes
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-lucky_drop.toml
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file /home/runner/work/_temp/mod-project/run/config/deep_lucky_block-lucky_drop.toml for changes
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.DeferredWorkQueue/LOADING]: Dispatching synchronous work for work queue Common setup: 2 jobs
+[02:48:40] [modloading-sync-worker/DEBUG] [ne.ne.fm.DeferredWorkQueue/LOADING]: Synchronous work queue completed in 720.7 μs
+[02:48:40] [main/INFO] [mojang/YggdrasilAuthenticationService]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD]
+[02:48:40] [main/WARN] [minecraft/VanillaPackResourcesBuilder]: Assets URL 'union:/home/runner/work/_temp/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar%23125!/assets/.mcassetsroot' uses unexpected schema
+[02:48:40] [main/WARN] [minecraft/VanillaPackResourcesBuilder]: Assets URL 'union:/home/runner/work/_temp/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar%23125!/data/.mcassetsroot' uses unexpected schema
+[02:48:41] [main/INFO] [minecraft/Main]: No existing world data, creating new world
+[02:48:41] [Worker-Main-1/INFO] [de.DeepLuckyBlockMod/]: [DLBTEST] commande prete : /dlbtest -> citadel, observatory, dragon, circus, ship, everest, crimsonlake | structure <nom|id> | list | water <status|freeze|thaw> | probe <x> <z> | luckybreak [nombre] (permission tout le monde (0))
+[02:48:41] [main/INFO] [minecraft/RecipeManager]: Loaded 1320 recipes
+[02:48:42] [main/INFO] [minecraft/AdvancementTree]: Loaded 1450 advancements
+[02:48:42] [main/DEBUG] [ne.ne.ne.co.CommonHooks/WP]: Gathered mod list to write to world save ci-variants-test
+[02:48:42] [Server thread/INFO] [minecraft/DedicatedServer]: Starting minecraft server version 1.21.1
+[02:48:42] [Server thread/INFO] [minecraft/DedicatedServer]: Loading properties
+[02:48:42] [Server thread/INFO] [minecraft/DedicatedServer]: Default game type: CREATIVE
+[02:48:42] [Server thread/INFO] [minecraft/MinecraftServer]: Generating keypair
+[02:48:42] [Server thread/INFO] [minecraft/DedicatedServer]: Starting Minecraft server on 127.0.0.1:25565
+[02:48:42] [Server thread/DEBUG] [ne.ne.ne.ne.DualStackUtils/]: Detected IPv4 address: "127.0.0.1"
+[02:48:42] [Server thread/DEBUG] [io.ne.ut.in.NativeLibraryLoader/]: -Dio.netty.native.workdir: /tmp (io.netty.tmpdir)
+[02:48:42] [Server thread/DEBUG] [io.ne.ut.in.NativeLibraryLoader/]: -Dio.netty.native.deleteLibAfterLoading: true
+[02:48:42] [Server thread/DEBUG] [io.ne.ut.in.NativeLibraryLoader/]: -Dio.netty.native.tryPatchShadedId: true
+[02:48:42] [Server thread/DEBUG] [io.ne.ut.in.NativeLibraryLoader/]: -Dio.netty.native.detectNativeLibraryDuplicates: true
+[02:48:42] [Server thread/DEBUG] [io.ne.ut.in.NativeLibraryLoader/]: Successfully loaded the library /tmp/libnetty_transport_native_epoll_x86_6411232279701205300054.so
+[02:48:42] [Server thread/DEBUG] [io.ne.ut.NetUtil/]: -Djava.net.preferIPv4Stack: true
+[02:48:42] [Server thread/DEBUG] [io.ne.ut.NetUtil/]: -Djava.net.preferIPv6Addresses: false
+[02:48:42] [Server thread/DEBUG] [io.ne.ut.NetUtilInitializations/]: Loopback interface: lo (lo, 0:0:0:0:0:0:0:1%lo)
+[02:48:42] [Server thread/DEBUG] [io.ne.ut.NetUtil/]: /proc/sys/net/core/somaxconn: 4096
+[02:48:42] [Server thread/DEBUG] [io.ne.ch.MultithreadEventLoopGroup/]: -Dio.netty.eventLoopThreads: 4
+[02:48:42] [Server thread/DEBUG] [io.ne.ut.co.GlobalEventExecutor/]: -Dio.netty.globalEventExecutor.quietPeriodSeconds: 1
+[02:48:42] [Server thread/DEBUG] [io.ne.ut.in.PlatformDependent/]: org.jctools-core.MpscChunkedArrayQueue: available
+[02:48:42] [Server thread/INFO] [minecraft/ServerConnectionListener]: Using epoll channel type
+[02:48:42] [Server thread/DEBUG] [io.ne.ch.DefaultChannelId/]: -Dio.netty.processId: 4973 (auto-detected)
+[02:48:42] [Server thread/DEBUG] [io.ne.ch.DefaultChannelId/]: -Dio.netty.machineId: 70:a8:a5:ff:fe:9a:b6:42 (auto-detected)
+[02:48:42] [Server thread/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loading configs type SERVER
+[02:48:42] [Server thread/DEBUG] [ne.ne.ne.co.NeoForgeConfig/FORGEMOD]: Loaded NeoForge config file neoforge-server.toml
+[02:48:42] [Server thread/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Loaded TOML config file /home/runner/work/_temp/mod-project/run/config/neoforge-server.toml
+[02:48:42] [Server thread/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Watching TOML config file /home/runner/work/_temp/mod-project/run/config/neoforge-server.toml for changes
+[02:48:42] [Server thread/INFO] [minecraft/DedicatedServer]: Preparing level "ci-variants-test"
+[02:48:51] [Server thread/INFO] [minecraft/MinecraftServer]: Preparing start region for dimension minecraft:overworld
+[02:48:51] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2%
+[02:48:51] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2%
+[02:48:52] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2%
+[02:48:52] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2%
+[02:48:53] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2%
+[02:48:53] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2%
+[02:48:54] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2%
+[02:48:54] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2%
+[02:48:55] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2%
+[02:48:55] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2%
+[02:48:56] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 65%
+[02:48:56] [Server thread/INFO] [minecraft/LoggerChunkProgressListener]: Time elapsed: 5230 ms
+[02:48:56] [Server thread/INFO] [minecraft/DedicatedServer]: Done (13.378s)! For help, type "help"
+[02:48:56] [Server thread/INFO] [minecraft/DedicatedServer]: Starting remote control listener
+[02:48:56] [Server thread/INFO] [minecraft/GenericThread]: Thread RCON Listener started
+[02:48:56] [Server thread/INFO] [minecraft/RconThread]: RCON running on 127.0.0.1:25575
+[02:48:56] [Server thread/DEBUG] [ne.ne.ne.ne.DualStackUtils/]: Detected IPv6 address: "0:0:0:0:0:0:0:0"
+[02:48:56] [Server thread/DEBUG] [ne.ne.ne.se.LanguageHook/]: Loaded 4 language files for en_us
+[02:48:56] [Server thread/INFO] [ne.ne.ne.ga.GameTestHooks/]: Enabled Gametest Namespaces: []
+[02:48:56] [Server thread/INFO] [ne.ne.ne.se.pe.PermissionAPI/]: Successfully initialized permission handler neoforge:default_handler
+[02:48:56] [RCON Listener #1/INFO] [minecraft/GenericThread]: Thread RCON Client /127.0.0.1 started
+[02:48:56] [Server thread/INFO] [de.DeepLuckyBlockMod/]: [DLBTEST] dragon demandee a 1200, 68, 0 (id=2, nbt=dragon, joueur factice)
+[02:48:56] [RCON Client /127.0.0.1 #2/INFO] [minecraft/RconClient]: Thread RCON Client /127.0.0.1 shutting down
+[02:48:56] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] zones historiques épuisées jusqu'à 768 blocs : génération ciblée d'une seule emprise à 2117,0
+[02:49:01] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 2266,149
+[02:49:06] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 2415,298
+[02:49:10] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 1589 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 135,2 : 0 chunks epingles, 42 en attente, 4 demandes de chargement ; 1 tick(s) > 1 s au total)
+[02:49:13] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 2698 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 135,2 : 0 chunks epingles, 42 en attente, 4 demandes de chargement ; 2 tick(s) > 1 s au total)
+[02:49:13] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 2650ms or 53 ticks behind
+[02:49:14] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 2564,447
+[02:49:19] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 2713,596
+[02:49:25] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 4531 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 135,2 : 0 chunks epingles, 42 en attente, 6 demandes de chargement ; 3 tick(s) > 1 s au total)
+[02:49:26] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 2862,745
+[02:49:30] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 4400 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 135,2 : 0 chunks epingles, 42 en attente, 8 demandes de chargement ; 4 tick(s) > 1 s au total)
+[02:49:30] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 3011,894
+[02:49:34] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 3160,1043
+[02:49:39] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 3827 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 135,2 : 0 chunks epingles, 42 en attente, 12 demandes de chargement ; 5 tick(s) > 1 s au total)
+[02:49:39] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 3778ms or 75 ticks behind
+[02:49:43] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 3309,1192
+[02:49:46] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 3864 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 135,2 : 0 chunks epingles, 42 en attente, 14 demandes de chargement ; 6 tick(s) > 1 s au total)
+[02:49:48] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] recherche toujours en cours : rayon 619 blocs, 0 candidat(s) differe(s) en chargement de fond, 0 centre(s) ecarte(s), 51 s ecoulees -- T230
+[02:49:48] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] zones historiques épuisées jusqu'à 768 blocs : génération ciblée d'une seule emprise à 2117,0
+[02:49:50] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours cible a 2117,0 : emprise incomplete (1 ticks), re-demande en cours (T229)
+[02:49:54] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours cible a 2713,596 : emprise incomplete (1 ticks), re-demande en cours (T229)
+[02:50:01] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 3607,1490
+[02:50:05] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 3975 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 218,86 : 16 chunks epingles, 8084 en attente, 20 demandes de chargement ; 7 tick(s) > 1 s au total)
+[02:50:05] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 3876ms or 77 ticks behind
+[02:50:07] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours cible a 3607,1490 : emprise incomplete (1 ticks), re-demande en cours (T229)
+[02:50:12] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 4009 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 237,105 : 16 chunks epingles, 11865 en attente, 22 demandes de chargement ; 8 tick(s) > 1 s au total)
+[02:50:13] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 3905,1788
+[02:50:18] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 4054,1937
+[02:50:23] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 4203,2086
+[02:50:29] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 4383 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 237,105 : 20 chunks epingles, 11861 en attente, 28 demandes de chargement ; 9 tick(s) > 1 s au total)
+[02:50:29] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 4335ms or 86 ticks behind
+[02:50:32] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 4352,2235
+[02:50:36] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 3842 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 237,105 : 20 chunks epingles, 11861 en attente, 30 demandes de chargement ; 10 tick(s) > 1 s au total)
+[02:50:37] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 4501,2384
+[02:50:45] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 5623 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 237,105 : 20 chunks epingles, 11861 en attente, 32 demandes de chargement ; 11 tick(s) > 1 s au total)
+[02:50:45] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 4650,2533
+[02:50:49] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 4452 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 237,105 : 20 chunks epingles, 11861 en attente, 34 demandes de chargement ; 12 tick(s) > 1 s au total)
+[02:50:49] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 4410ms or 88 ticks behind
+[02:50:52] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 4799,2682
+[02:50:56] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 3746 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 237,105 : 20 chunks epingles, 11861 en attente, 36 demandes de chargement ; 13 tick(s) > 1 s au total)
+[02:50:57] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] recherche toujours en cours : rayon 619 blocs, 0 candidat(s) differe(s) en chargement de fond, 0 centre(s) ecarte(s), 120 s ecoulees -- T230
+[02:50:57] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] zones historiques épuisées jusqu'à 768 blocs : génération ciblée d'une seule emprise à 2117,0
+[02:51:00] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours cible a 2117,0 : emprise incomplete (1 ticks), re-demande en cours (T229)
+[02:51:02] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours cible a 3011,894 : emprise incomplete (1 ticks), re-demande en cours (T229)
+[02:51:08] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 4352,2235
+[02:51:08] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours cible a 4352,2235 : emprise incomplete (1 ticks), re-demande en cours (T229)
+[02:51:09] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours cible a 4650,2533 : emprise incomplete (1 ticks), re-demande en cours (T229)
+[02:51:15] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 5097,2980
+[02:51:20] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 5246,3129
+[02:51:25] [Server thread/WARN] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] secours ciblé non livré après 5 s; déplacement à 5395,3278
+[02:51:31] [Server thread/WARN] [de.ut.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 4097 ms pendant la phase « aucune (serveur au repos) » -- c'est cette phase qui accapare le thread principal (zone 129,-3 -> 311,179 : 63 chunks epingles, 33426 en attente, 50 demandes de chargement ; 14 tick(s) > 1 s au total)
+[02:51:31] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 4049ms or 80 ticks behind
+[02:54:19] [Server thread/DEBUG] [ne.ne.ne.co.CommonHooks/WP]: Gathered mod list to write to world save ci-variants-test
+[02:58:56] [Server thread/WARN] [de.ut.ChunkKeeper/]: [DLB-CHUNKS] zone tenue en memoire depuis 600 s sans fin de pipeline -- relachee par garde-fou (4096 chunks)
+[02:58:56] [Server thread/WARN] [de.pr.StructureTerrainPrep/]: [DLB-STRUCTURE] l'etape qui vient de finir a pris 439612 ms de temps REEL (prepZone : chunks centraux + clearFootprint termines AVANT preparation) -- voir [DLB-LAGPROBE] pour le detail par tick
+[02:58:56] [Server thread/WARN] [de.ut.SafeSurface/]: [DLB-SURFACE] capture de zone 94x124 : 2339 colonnes sur 11656 restent illisibles apres recalcule (le despeckle de la heightmap les remplace par la mediane des voisins). [#1]
+[02:58:56] [Server thread/WARN] [de.pr.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 4518 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 165 blocs, colonne 5440,3282 de la zone) -- ramenees dans la fenetre
+[02:58:56] [Server thread/WARN] [de.pr.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 7882 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 147 blocs, colonne 5360,3329 de la zone) -- ramenees dans la fenetre
+[02:58:59] [Server thread/WARN] [minecraft/MinecraftServer]: Can't keep up! Is the server overloaded? Running 2011ms or 40 ticks behind
+[630.487s][warning][gc,alloc] light: Retried waiting for GCLocker too often allocating 131075 words
+[02:59:03] [Worker-Main-1/ERROR] [minecraft/Util]: Caught exception in thread Thread[#39,Worker-Main-1,5,main]
+java.lang.OutOfMemoryError: Java heap space
+	at MC-BOOTSTRAP/it.unimi.dsi.fastutil@8.5.12/it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap.clone(Long2ObjectOpenHashMap.java:1336) ~[fastutil-8.5.12.jar%2393!/:?] {}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.lighting.SkyLightSectionStorage$SkyDataLayerStorageMap.copy(SkyLightSectionStorage.java:164) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.lighting.SkyLightSectionStorage$SkyDataLayerStorageMap.copy(SkyLightSectionStorage.java:144) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.lighting.LayerLightSectionStorage.swapSectionMap(LayerLightSectionStorage.java:287) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.lighting.LightEngine.runLightUpdates(LightEngine.java:160) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.lighting.LevelLightEngine.runLightUpdates(LevelLightEngine.java:56) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.level.ThreadedLevelLightEngine.runUpdate(ThreadedLevelLightEngine.java:185) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.level.ThreadedLevelLightEngine.lambda$tryScheduleUpdate$27(ThreadedLevelLightEngine.java:164) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.level.ThreadedLevelLightEngine$$Lambda/0x00007f3cacfd9ec0.run(Unknown Source) ~[?:?] {}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.Util.lambda$wrapThreadWithTaskName$5(Util.java:286) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.Util$$Lambda/0x00007f3cacf7d4f8.run(Unknown Source) ~[?:?] {}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.util.thread.ProcessorMailbox.pollTask(ProcessorMailbox.java:91) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.util.thread.ProcessorMailbox.pollUntil(ProcessorMailbox.java:146) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.util.thread.ProcessorMailbox.run(ProcessorMailbox.java:102) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.exec(ForkJoinTask.java:1423) [?:?] {}
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:387) [?:?] {}
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1312) [?:?] {}
+	at java.base/java.util.concurrent.ForkJoinPool.scan(ForkJoinPool.java:1843) [?:?] {}
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1808) [?:?] {}
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188) [?:?] {}
+[03:00:01] [Server Watchdog/ERROR] [minecraft/ServerWatchdog]: A single server tick took 60.00 seconds (should be max 0.05)
+[03:00:01] [Server Watchdog/ERROR] [minecraft/ServerWatchdog]: Considering it to be crashed, server will forcibly shutdown.
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/topology/core_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/topology/core_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/topology/physical_package_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/topology/physical_package_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cpu_capacity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cpu_capacity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index2/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index0/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index3/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu0/cache/index1/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/topology/core_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/topology/core_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/topology/physical_package_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/topology/physical_package_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cpu_capacity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cpu_capacity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index2/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index0/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index3/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu1/cache/index1/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/topology/core_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/topology/core_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/topology/physical_package_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/topology/physical_package_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cpu_capacity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cpu_capacity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index2/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index0/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index3/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu2/cache/index1/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/topology/core_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/topology/core_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/topology/physical_package_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/topology/physical_package_id
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cpu_capacity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cpu_capacity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index2/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index0/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index3/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/level
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/type
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/ways_of_associativity
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/coherency_line_size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /sys/devices/system/cpu/cpu3/cache/index1/size
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /proc/cpuinfo
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /proc/self/auxv
+[03:00:01] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: No oshi.architecture.properties file found from ClassLoader cpw.mods.modlauncher.TransformingClassLoader@7aad3f7d
+[03:00:02] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /proc/meminfo
+[03:00:02] [Server Watchdog/DEBUG] [os.ut.FileUtil/]: Reading file /proc/meminfo
+[03:00:02] [Server Watchdog/FATAL] [ne.ne.ne.co.NeoForgeMod/]: Preparing crash report with UUID 2065abcf-5239-46c7-a531-9254f2b28b54
+Crash report:
+---- Minecraft Crash Report ----
+// Sorry :(
+
+Time: 2026-10-08 03:00:02
+Description: Watching Server
+
+java.lang.Error: ServerHangWatchdog detected that a single server tick took 60000004.00 seconds (should be max 0.05)
+	at java.base/jdk.internal.misc.Unsafe.park(Native Method) ~[?:?] {}
+	at java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269) ~[?:?] {}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.util.thread.BlockableEventLoop.waitForTasks(BlockableEventLoop.java:143) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:133) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.level.ServerChunkCache$MainThreadExecutor.managedBlock(ServerChunkCache.java:533) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.level.ServerChunkCache.getChunk(ServerChunkCache.java:159) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.getChunk(Level.java:202) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.LevelReader.getChunk(LevelReader.java:130) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.getChunk(Level.java:196) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.getBlockState(Level.java:382) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.updateNeighbourForOutputSignal(Level.java:1065) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.removeBlockEntity(Level.java:786) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.block.state.BlockBehaviour.onRemove(BlockBehaviour.java:174) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.block.SculkSensorBlock.onRemove(SculkSensorBlock.java:128) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase.onRemove(BlockBehaviour.java:722) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.chunk.LevelChunk.setBlockState(LevelChunk.java:274) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.setBlock(Level.java:236) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.setBlock(Level.java:212) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.StructureTerrainPrep.rebuildColumn(StructureTerrainPrep.java:5535) ~[%23127!/:?] {re:classloading}
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.StructureTerrainPrep.lambda$finishRebuildPasses$77(StructureTerrainPrep.java:5084) ~[%23127!/:?] {re:classloading}
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.StructureTerrainPrep$$Lambda/0x00007f3cad11bc28.run(Unknown Source) ~[?:?] {}
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.TestProcedure.onServerTick(TestProcedure.java:1589) ~[%23127!/:?] {re:classloading}
+	at java.base/java.lang.invoke.LambdaForm$DMH/0x00007f3cac003000.invokeStatic(LambdaForm$DMH) ~[?:?] {}
+	at java.base/java.lang.invoke.LambdaForm$MH/0x00007f3cad07a800.invoke(LambdaForm$MH) ~[?:?] {}
+	at java.base/java.lang.invoke.LambdaForm$MH/0x00007f3cac31c400.invokeExact_MT(LambdaForm$MH) ~[?:?] {}
+	at MC-BOOTSTRAP/net.neoforged.bus/net.neoforged.bus.EventListenerFactory$onServerTick/0x00007f3caccac000.invoke(.dynamic) ~[?:?] {}
+	at MC-BOOTSTRAP/net.neoforged.bus/net.neoforged.bus.EventBus.post(EventBus.java:360) ~[bus-8.0.5.jar%23106!/:?] {}
+	at MC-BOOTSTRAP/net.neoforged.bus/net.neoforged.bus.EventBus.post(EventBus.java:328) ~[bus-8.0.5.jar%23106!/:?] {}
+	at TRANSFORMER/neoforge@21.1.190/net.neoforged.neoforge.event.EventHooks.fireServerTickPost(EventHooks.java:1020) ~[neoforge-21.1.190.jar%23126!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:943) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:707) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.lambda$spin$2(MinecraftServer.java:267) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer$$Lambda/0x00007f3cacf08000.run(Unknown Source) ~[?:?] {}
+	at java.base/java.lang.Thread.runWith(Thread.java:1596) [?:?] {}
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?] {}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Server Watchdog
+Stacktrace:
+	at java.base/jdk.internal.misc.Unsafe.park(Native Method) ~[?:?] {}
+	at java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269) ~[?:?] {}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.util.thread.BlockableEventLoop.waitForTasks(BlockableEventLoop.java:143) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:133) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.level.ServerChunkCache$MainThreadExecutor.managedBlock(ServerChunkCache.java:533) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.level.ServerChunkCache.getChunk(ServerChunkCache.java:159) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.getChunk(Level.java:202) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.LevelReader.getChunk(LevelReader.java:130) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.getChunk(Level.java:196) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.getBlockState(Level.java:382) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.updateNeighbourForOutputSignal(Level.java:1065) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.removeBlockEntity(Level.java:786) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.block.state.BlockBehaviour.onRemove(BlockBehaviour.java:174) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.block.SculkSensorBlock.onRemove(SculkSensorBlock.java:128) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase.onRemove(BlockBehaviour.java:722) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.chunk.LevelChunk.setBlockState(LevelChunk.java:274) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.setBlock(Level.java:236) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.setBlock(Level.java:212) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.StructureTerrainPrep.rebuildColumn(StructureTerrainPrep.java:5535) ~[%23127!/:?] {re:classloading}
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.StructureTerrainPrep.lambda$finishRebuildPasses$77(StructureTerrainPrep.java:5084) ~[%23127!/:?] {re:classloading}
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.StructureTerrainPrep$$Lambda/0x00007f3cad11bc28.run(Unknown Source) ~[?:?] {}
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.TestProcedure.onServerTick(TestProcedure.java:1589) ~[%23127!/:?] {re:classloading}
+	at java.base/java.lang.invoke.LambdaForm$DMH/0x00007f3cac003000.invokeStatic(LambdaForm$DMH) ~[?:?] {}
+	at java.base/java.lang.invoke.LambdaForm$MH/0x00007f3cad07a800.invoke(LambdaForm$MH) ~[?:?] {}
+	at java.base/java.lang.invoke.LambdaForm$MH/0x00007f3cac31c400.invokeExact_MT(LambdaForm$MH) ~[?:?] {}
+	at MC-BOOTSTRAP/net.neoforged.bus/net.neoforged.bus.EventListenerFactory$onServerTick/0x00007f3caccac000.invoke(.dynamic) ~[?:?] {}
+	at MC-BOOTSTRAP/net.neoforged.bus/net.neoforged.bus.EventBus.post(EventBus.java:360) ~[bus-8.0.5.jar%23106!/:?] {}
+	at MC-BOOTSTRAP/net.neoforged.bus/net.neoforged.bus.EventBus.post(EventBus.java:328) ~[bus-8.0.5.jar%23106!/:?] {}
+	at TRANSFORMER/neoforge@21.1.190/net.neoforged.neoforge.event.EventHooks.fireServerTickPost(EventHooks.java:1020) ~[neoforge-21.1.190.jar%23126!/:?] {re:classloading}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:943) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:707) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.lambda$spin$2(MinecraftServer.java:267) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading,pl:accesstransformer:B}
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer$$Lambda/0x00007f3cacf08000.run(Unknown Source) ~[?:?] {}
+-- Thread Dump --
+Details:
+	Threads: "Reference Handler" daemon prio=10 Id=9 RUNNABLE
+	at java.base@21.0.12.1/java.lang.ref.Reference.waitForReferencePendingList(Native Method)
+	at java.base@21.0.12.1/java.lang.ref.Reference.processPendingReferences(Reference.java:246)
+	at java.base@21.0.12.1/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:208)
+
+
+"Finalizer" daemon prio=8 Id=10 WAITING on java.lang.ref.NativeReferenceQueue$Lock@5cbe374f
+	at java.base@21.0.12.1/java.lang.Object.wait0(Native Method)
+	-  waiting on java.lang.ref.NativeReferenceQueue$Lock@5cbe374f
+	at java.base@21.0.12.1/java.lang.Object.wait(Object.java:366)
+	at java.base@21.0.12.1/java.lang.Object.wait(Object.java:339)
+	at java.base@21.0.12.1/java.lang.ref.NativeReferenceQueue.await(NativeReferenceQueue.java:48)
+	at java.base@21.0.12.1/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:158)
+	at java.base@21.0.12.1/java.lang.ref.NativeReferenceQueue.remove(NativeReferenceQueue.java:89)
+	at java.base@21.0.12.1/java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:173)
+
+
+"Signal Dispatcher" daemon prio=9 Id=11 RUNNABLE
+
+
+"Common-Cleaner" daemon prio=8 Id=16 TIMED_WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@21db9203
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@21db9203
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1886)
+	at java.base@21.0.12.1/java.lang.ref.ReferenceQueue.await(ReferenceQueue.java:71)
+	at java.base@21.0.12.1/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:143)
+	at java.base@21.0.12.1/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:218)
+	at java.base@21.0.12.1/jdk.internal.ref.CleanerImpl.run(CleanerImpl.java:140)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+	at java.base@21.0.12.1/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:186)
+
+
+"Notification Thread" daemon prio=9 Id=17 RUNNABLE
+
+
+"JNA Cleaner" daemon prio=5 Id=26 TIMED_WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@6ccb53bc
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@6ccb53bc
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1886)
+	at java.base@21.0.12.1/java.lang.ref.ReferenceQueue.await(ReferenceQueue.java:71)
+	at java.base@21.0.12.1/java.lang.ref.ReferenceQueue.remove0(ReferenceQueue.java:143)
+	at java.base@21.0.12.1/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:218)
+	at MC-BOOTSTRAP/com.sun.jna@5.14.0/com.sun.jna.internal.Cleaner$CleanerThread.run(Cleaner.java:154)
+
+
+"Timer hack thread" daemon prio=5 Id=27 TIMED_WAITING
+	at java.base@21.0.12.1/java.lang.Thread.sleep0(Native Method)
+	at java.base@21.0.12.1/java.lang.Thread.sleep(Thread.java:509)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.Util$7.run(Util.java:759)
+
+
+"modloading-sync-worker" daemon prio=5 Id=30 WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@5dda31ae
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@5dda31ae
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(AbstractQueuedSynchronizer.java:519)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.unmanagedBlock(ForkJoinPool.java:3780)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.managedBlock(ForkJoinPool.java:3725)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1746)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:435)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1070)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"FileSystemWatchService" daemon prio=5 Id=31 RUNNABLE (in native)
+	at java.base@21.0.12.1/sun.nio.fs.LinuxWatchService.poll(Native Method)
+	at java.base@21.0.12.1/sun.nio.fs.LinuxWatchService$Poller.run(LinuxWatchService.java:307)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"config-file-watcher-0-0" daemon prio=5 Id=32 TIMED_WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@7725b80e
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@7725b80e
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1797)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedBlockingDeque.pollFirst(LinkedBlockingDeque.java:515)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedBlockingDeque.poll(LinkedBlockingDeque.java:677)
+	at java.base@21.0.12.1/sun.nio.fs.AbstractWatchService.poll(AbstractWatchService.java:108)
+	at MC-BOOTSTRAP/com.electronwill.nightconfig.core@3.8.2/com.electronwill.nightconfig.core.file.FileWatcher$FsWatcher.run(FileWatcher.java:531)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"DLB-StructureLoader" daemon prio=5 Id=34 WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@a137763
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@a137763
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(AbstractQueuedSynchronizer.java:519)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.unmanagedBlock(ForkJoinPool.java:3780)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.managedBlock(ForkJoinPool.java:3725)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1746)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:435)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1070)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"Yggdrasil Key Fetcher" daemon prio=5 Id=35 TIMED_WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@3cf3932e
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@3cf3932e
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1797)
+	at java.base@21.0.12.1/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1182)
+	at java.base@21.0.12.1/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:899)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1070)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"Worker-Main-1" daemon prio=5 Id=39 TIMED_WAITING on java.util.concurrent.ForkJoinPool@30a8925f
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.ForkJoinPool@30a8925f
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkUntil(LockSupport.java:449)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.awaitWork(ForkJoinPool.java:1891)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1809)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188)
+
+
+"Server thread" prio=5 Id=40 TIMED_WAITING on java.lang.String@6a17a98c
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.lang.String@6a17a98c
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.util.thread.BlockableEventLoop.waitForTasks(BlockableEventLoop.java:143)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.util.thread.BlockableEventLoop.managedBlock(BlockableEventLoop.java:133)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.level.ServerChunkCache$MainThreadExecutor.managedBlock(ServerChunkCache.java:533)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.level.ServerChunkCache.getChunk(ServerChunkCache.java:159)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.getChunk(Level.java:202)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.LevelReader.getChunk(LevelReader.java:130)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.getChunk(Level.java:196)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.getBlockState(Level.java:382)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.updateNeighbourForOutputSignal(Level.java:1065)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.removeBlockEntity(Level.java:786)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.block.state.BlockBehaviour.onRemove(BlockBehaviour.java:174)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.block.SculkSensorBlock.onRemove(SculkSensorBlock.java:128)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase.onRemove(BlockBehaviour.java:722)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.chunk.LevelChunk.setBlockState(LevelChunk.java:274)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.setBlock(Level.java:236)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.world.level.Level.setBlock(Level.java:212)
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.StructureTerrainPrep.rebuildColumn(StructureTerrainPrep.java:5535)
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.StructureTerrainPrep.lambda$finishRebuildPasses$77(StructureTerrainPrep.java:5084)
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.StructureTerrainPrep$$Lambda/0x00007f3cad11bc28.run(Unknown Source)
+	at TRANSFORMER/deep_lucky_block@1.0/deepluckyblock.procedures.TestProcedure.onServerTick(TestProcedure.java:1589)
+	at java.base@21.0.12.1/java.lang.invoke.LambdaForm$DMH/0x00007f3cac003000.invokeStatic(LambdaForm$DMH)
+	at java.base@21.0.12.1/java.lang.invoke.LambdaForm$MH/0x00007f3cad07a800.invoke(LambdaForm$MH)
+	at java.base@21.0.12.1/java.lang.invoke.LambdaForm$MH/0x00007f3cac31c400.invokeExact_MT(LambdaForm$MH)
+	at MC-BOOTSTRAP/net.neoforged.bus/net.neoforged.bus.EventListenerFactory$onServerTick/0x00007f3caccac000.invoke(.dynamic)
+	at MC-BOOTSTRAP/net.neoforged.bus/net.neoforged.bus.EventBus.post(EventBus.java:360)
+	at MC-BOOTSTRAP/net.neoforged.bus/net.neoforged.bus.EventBus.post(EventBus.java:328)
+	at TRANSFORMER/neoforge@21.1.190/net.neoforged.neoforge.event.EventHooks.fireServerTickPost(EventHooks.java:1020)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:943)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:707)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer.lambda$spin$2(MinecraftServer.java:267)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.MinecraftServer$$Lambda/0x00007f3cacf08000.run(Unknown Source)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"DestroyJavaVM" prio=5 Id=43 RUNNABLE
+
+
+"Netty Epoll Server IO #0" daemon prio=5 Id=44 RUNNABLE (in native)
+	at MC-BOOTSTRAP/io.netty.transport.classes.epoll@4.1.97.Final/io.netty.channel.epoll.Native.epollWait(Native Method)
+	at MC-BOOTSTRAP/io.netty.transport.classes.epoll@4.1.97.Final/io.netty.channel.epoll.Native.epollWait(Native.java:209)
+	at MC-BOOTSTRAP/io.netty.transport.classes.epoll@4.1.97.Final/io.netty.channel.epoll.Native.epollWait(Native.java:202)
+	at MC-BOOTSTRAP/io.netty.transport.classes.epoll@4.1.97.Final/io.netty.channel.epoll.EpollEventLoop.epollWaitNoTimerChange(EpollEventLoop.java:316)
+	at MC-BOOTSTRAP/io.netty.transport.classes.epoll@4.1.97.Final/io.netty.channel.epoll.EpollEventLoop.run(EpollEventLoop.java:373)
+	at MC-BOOTSTRAP/io.netty.common@4.1.97.Final/io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:997)
+	at MC-BOOTSTRAP/io.netty.common@4.1.97.Final/io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"Worker-Main-2" daemon prio=5 Id=48 WAITING on java.util.concurrent.ForkJoinPool@30a8925f
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.ForkJoinPool@30a8925f
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.awaitWork(ForkJoinPool.java:1893)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1809)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188)
+
+
+"Worker-Main-3" daemon prio=5 Id=49 WAITING on java.util.concurrent.ForkJoinPool@30a8925f
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.ForkJoinPool@30a8925f
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.awaitWork(ForkJoinPool.java:1893)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1809)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188)
+
+
+"IO-Worker-4" prio=5 Id=50 TIMED_WAITING on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1069)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"RCON Listener #1" prio=5 Id=54 RUNNABLE (in native)
+	at java.base@21.0.12.1/sun.nio.ch.Net.poll(Native Method)
+	at java.base@21.0.12.1/sun.nio.ch.NioSocketImpl.park(NioSocketImpl.java:191)
+	at java.base@21.0.12.1/sun.nio.ch.NioSocketImpl.timedAccept(NioSocketImpl.java:703)
+	at java.base@21.0.12.1/sun.nio.ch.NioSocketImpl.accept(NioSocketImpl.java:745)
+	at java.base@21.0.12.1/java.net.ServerSocket.implAccept(ServerSocket.java:698)
+	at java.base@21.0.12.1/java.net.ServerSocket.platformImplAccept(ServerSocket.java:663)
+	at java.base@21.0.12.1/java.net.ServerSocket.implAccept(ServerSocket.java:639)
+	at java.base@21.0.12.1/java.net.ServerSocket.implAccept(ServerSocket.java:585)
+	at java.base@21.0.12.1/java.net.ServerSocket.accept(ServerSocket.java:543)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.rcon.thread.RconThread.run(RconThread.java:42)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+	Number of locked synchronizers = 1
+	- java.util.concurrent.locks.ReentrantLock$NonfairSync@5b64f56a
+
+
+"Server Watchdog" daemon prio=5 Id=55 RUNNABLE
+	at java.management@21.0.12.1/sun.management.ThreadImpl.dumpThreads0(Native Method)
+	at java.management@21.0.12.1/sun.management.ThreadImpl.dumpAllThreads(ThreadImpl.java:518)
+	at java.management@21.0.12.1/sun.management.ThreadImpl.dumpAllThreads(ThreadImpl.java:506)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.dedicated.ServerWatchdog.run(ServerWatchdog.java:50)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"LanServerPinger #1" daemon prio=5 Id=56 TIMED_WAITING
+	at java.base@21.0.12.1/java.lang.Thread.sleep0(Native Method)
+	at java.base@21.0.12.1/java.lang.Thread.sleep(Thread.java:509)
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.client.server.LanServerPinger.run(LanServerPinger.java:52)
+
+
+"DLB-Chunk-Requests" daemon prio=5 Id=58 WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@2faaae33
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@2faaae33
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(AbstractQueuedSynchronizer.java:519)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.unmanagedBlock(ForkJoinPool.java:3780)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.managedBlock(ForkJoinPool.java:3725)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1746)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:435)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1070)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"DLB-Chunk-Requests" daemon prio=5 Id=59 WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@2faaae33
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@2faaae33
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(AbstractQueuedSynchronizer.java:519)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.unmanagedBlock(ForkJoinPool.java:3780)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.managedBlock(ForkJoinPool.java:3725)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1746)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:435)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1070)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"DLB-Chunk-Requests" daemon prio=5 Id=60 WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@2faaae33
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@2faaae33
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(AbstractQueuedSynchronizer.java:519)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.unmanagedBlock(ForkJoinPool.java:3780)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.managedBlock(ForkJoinPool.java:3725)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1746)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:435)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1070)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"DLB-Chunk-Requests" daemon prio=5 Id=61 WAITING on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@2faaae33
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject@2faaae33
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(AbstractQueuedSynchronizer.java:519)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.unmanagedBlock(ForkJoinPool.java:3780)
+	at java.base@21.0.12.1/java.util.concurrent.ForkJoinPool.managedBlock(ForkJoinPool.java:3725)
+	at java.base@21.0.12.1/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(AbstractQueuedSynchronizer.java:1746)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedBlockingQueue.take(LinkedBlockingQueue.java:435)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1070)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"IO-Worker-14" prio=5 Id=68 TIMED_WAITING on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1069)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"IO-Worker-15" prio=5 Id=70 TIMED_WAITING on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1069)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"IO-Worker-16" prio=5 Id=69 TIMED_WAITING on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1069)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"IO-Worker-17" prio=5 Id=71 TIMED_WAITING on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1069)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"IO-Worker-18" prio=5 Id=72 TIMED_WAITING on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1069)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+"IO-Worker-19" prio=5 Id=73 TIMED_WAITING on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/jdk.internal.misc.Unsafe.park(Native Method)
+	-  waiting on java.util.concurrent.SynchronousQueue$Transferer@7b2e73c2
+	at java.base@21.0.12.1/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:410)
+	at java.base@21.0.12.1/java.util.concurrent.LinkedTransferQueue$DualNode.await(LinkedTransferQueue.java:452)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue$Transferer.xferLifo(SynchronousQueue.java:194)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.xfer(SynchronousQueue.java:235)
+	at java.base@21.0.12.1/java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:338)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1069)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)
+	at java.base@21.0.12.1/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base@21.0.12.1/java.lang.Thread.runWith(Thread.java:1596)
+	at java.base@21.0.12.1/java.lang.Thread.run(Thread.java:1583)
+
+
+
+Stacktrace:
+	at TRANSFORMER/minecraft@1.21.1/net.minecraft.server.dedicated.ServerWatchdog.run(ServerWatchdog.java:65) ~[neoforge-21.1.190.jar%23125!/:?] {re:classloading}
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?] {}
+
+
+-- Performance stats --
+Details:
+	Random tick rate: 3
+	Level stats: ResourceKey[minecraft:dimension / minecraft:overworld]: players: 0, entities: 6,6,3,56,56,1,0 [minecraft:turtle:5,minecraft:bee:1], block_entities: 4725 [<null>:4104,minecraft:sculk_sensor:408,minecraft:sculk_catalyst:107,minecraft:sculk_shrieker:46,minecraft:vault:25], block_ticks: 146929, fluid_ticks: 265, chunk_source: Chunks[S] W: 1711 E: 6,6,3,56,56,1,0,
+ResourceKey[minecraft:dimension / minecraft:the_end]: players: 0, entities: 0,0,0,0,0,0,0 [], block_entities: 0 [], block_ticks: 0, fluid_ticks: 0, chunk_source: Chunks[S] W: 0 E: 0,0,0,0,0,0,0,
+ResourceKey[minecraft:dimension / minecraft:the_nether]: players: 0, entities: 0,0,0,0,0,0,0 [], block_entities: 0 [], block_ticks: 0, fluid_ticks: 0, chunk_source: Chunks[S] W: 0 E: 0,0,0,0,0,0,0
+
+-- System Details --
+Details:
+	Minecraft Version: 1.21.1
+	Minecraft Version ID: 1.21.1
+	Operating System: Linux (amd64) version 6.17.0-1022-azure
+	Java Version: 21.0.12.1, Eclipse Adoptium
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode, sharing), Eclipse Adoptium
+	Memory: 1207869248 bytes (1151 MiB) / 1957691392 bytes (1867 MiB) up to 2147483648 bytes (2048 MiB)
+	CPUs: 2
+	Processor Vendor: AuthenticAMD
+	Processor Name: AMD EPYC 9V74 80-Core Processor
+	Identifier: AuthenticAMD Family 25 Model 17 Stepping 1
+	Microarchitecture: Zen 3
+	Frequency (GHz): -0.00
+	Number of physical packages: 1
+	Number of physical CPUs: 2
+	Number of logical CPUs: 4
+	Graphics card #0 name: hyperv_drmdrmfb
+	Graphics card #0 vendor: unknown
+	Graphics card #0 VRAM (MiB): 0.00
+	Graphics card #0 deviceId: unknown
+	Graphics card #0 versionInfo: unknown
+	Virtual memory max (MiB): 11066.84
+	Virtual memory used (MiB): 4386.77
+	Swap memory total (MiB): 3072.00
+	Swap memory used (MiB): 0.00
+	Space in storage for jna.tmpdir (MiB): <path not set>
+	Space in storage for org.lwjgl.system.SharedLibraryExtractPath (MiB): <path not set>
+	Space in storage for io.netty.native.workdir (MiB): <path not set>
+	Space in storage for java.io.tmpdir (MiB): available: 86251.47, total: 147718.61
+	Space in storage for workdir (MiB): available: 86251.47, total: 147718.61
+	JVM Flags: 2 total; -Xmx2g -XX:ActiveProcessorCount=2
+	Server Running: true
+	Player Count: 0 / 20; []
+	Active Data Packs: vanilla, mod_data, mod/deep_lucky_block, mod/neoforge
+	Available Data Packs: bundle, trade_rebalance, vanilla, mod/deep_lucky_block, mod/neoforge, mod_data
+	Enabled Feature Flags: minecraft:vanilla
+	World Generation: Stable
+	World Seed: 123456789
+	Is Modded: Definitely; Server brand changed to 'neoforge'
+	Type: Dedicated Server (map_server.txt)
+	ModLauncher: 11.0.5+main.901c6ea8
+	ModLauncher launch target: forgeserverdev
+	ModLauncher services:
+		sponge-mixin-0.15.2+mixin.0.8.7.jar mixin PLUGINSERVICE
+		loader-4.0.41.jar slf4jfixer PLUGINSERVICE
+		loader-4.0.41.jar runtime_enum_extender PLUGINSERVICE
+		at-modlauncher-10.0.1.jar accesstransformer PLUGINSERVICE
+		loader-4.0.41.jar runtimedistcleaner PLUGINSERVICE
+		modlauncher-11.0.5.jar mixin TRANSFORMATIONSERVICE
+		modlauncher-11.0.5.jar fml TRANSFORMATIONSERVICE
+	FML Language Providers:
+		javafml@4.0
+		lowcodefml@4.0
+		minecraft@4.0
+	Mod List:
+		main                                              |Deep Lucky Block              |deep_lucky_block              |1.0                 |Manifest: NOSIGNATURE
+		neoforge-21.1.190.jar                             |Minecraft                     |minecraft                     |1.21.1              |Manifest: NOSIGNATURE
+		neoforge-21.1.190.jar                             |NeoForge                      |neoforge                      |21.1.190            |Manifest: NOSIGNATURE
+	Crash Report UUID: 2065abcf-5239-46c7-a531-9254f2b28b54
+	FML: 4.0.41
+	NeoForge: 21.1.190
+[03:00:02] [Server Watchdog/FATAL] [ne.ne.ne.co.NeoForgeMod/]: Preparing crash report with UUID ea37c254-e64b-4c9c-b4d8-f65545e9fb1c
+[03:00:02] [Server Watchdog/ERROR] [minecraft/ServerWatchdog]: This crash report has been saved to: /home/runner/work/_temp/mod-project/run/crash-reports/crash-2026-10-08_03.00.02-server.txt
+
+> Task :runServer FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':runServer'.
+> Process 'command '/usr/lib/jvm/temurin-21-jdk-amd64/bin/java'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 11m 39s
+7 actionable tasks: 1 executed, 6 up-to-date

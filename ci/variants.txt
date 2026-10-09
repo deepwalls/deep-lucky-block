@@ -1,0 +1,13 @@
+# campagne T231 (v4 : trace complete, publication incrementale, anneau T231a embarque)
+# Campagne T231 "11 tests opti"
+v01 | 600 | 96  | 2
+v02 | 400 | 96  | 2
+v03 | 200 | 96  | 2
+v04 | 600 | 96  | 1
+v05 | 400 | 96  | 1
+v06 | 200 | 96  | 1
+v07 | 600 | 48  | 2
+v08 | 600 | 192 | 2
+v09 | 400 | 48  | 1
+v10 | 400 | 192 | 1
+v11 | 600 | 48  | 1

@@ -39,6 +39,53 @@ public final class StructureRegressionChecks {
                     } catch (Throwable error) { fail(error); }
                     return 1;
                 }));
+        // T231 : audit de l'anneau exterieur (rapport Dev 07/10 : "ring
+        // exterieur qui n'a pas eu les arbres et la vegetation", "clean mais
+        // pas remis, anneau rectangulaire tout autour de la surface modifiee").
+        // Compte arbres/vegetation par bandes concentriques autour du centre
+        // de structure ; la bande reference (jamais touchee par le pipeline)
+        // sert d'etalon. CI-only : commande /dlbringaudit <cx> <cz>.
+        event.getDispatcher().register(Commands.literal("dlbringaudit")
+                .requires(src -> src.hasPermission(2))
+                .then(Commands.argument("cx", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
+                .then(Commands.argument("cz", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
+                .executes(ctx -> ringAudit(ctx.getSource().getLevel(),
+                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "cx"),
+                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "cz"))))));
+    }
+
+    private static int ringAudit(ServerLevel level, int cx, int cz) {
+        // Bandes : emprise | lissage | anneau naturalize/dress | reference externe
+        final int[] edges = {60, 90, 115, 150};
+        // [bande][0=colonnes, 1=arbres, 2=decor vegetal]
+        final long[][] stat = new long[edges.length][3];
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        for (int x = cx - edges[3]; x <= cx + edges[3]; x += 2) {
+            for (int z = cz - edges[3]; z <= cz + edges[3]; z += 2) {
+                int m = Math.max(Math.abs(x - cx), Math.abs(z - cz));
+                int band = m <= edges[0] ? 0 : m <= edges[1] ? 1 : m <= edges[2] ? 2 : 3;
+                int gy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+                stat[band][0]++;
+                boolean tree = false;
+                for (int dy = -1; dy <= 12 && !tree; dy++) {
+                    var bs = level.getBlockState(mut.set(x, gy + dy, z));
+                    if (bs.is(net.minecraft.tags.BlockTags.LOGS) || bs.is(net.minecraft.tags.BlockTags.LEAVES)) tree = true;
+                }
+                if (tree) stat[band][1]++;
+                var above = level.getBlockState(mut.set(x, gy, z));
+                if (above.is(Blocks.SHORT_GRASS) || above.is(Blocks.TALL_GRASS)
+                        || above.is(Blocks.FERN) || above.is(Blocks.LARGE_FERN)
+                        || above.is(Blocks.SNOW) || above.is(net.minecraft.tags.BlockTags.SMALL_FLOWERS)
+                        || above.is(net.minecraft.tags.BlockTags.TALL_FLOWERS)) stat[band][2]++;
+            }
+        }
+        LOG.info("[DLB-RINGAUDIT] c={},{} emprise(tree={},decor={}) lissage(tree={},decor={}) nat(tree={},decor={}) ref(tree={},decor={},cols={})",
+                cx, cz, stat[0][1], stat[0][2], stat[1][1], stat[1][2], stat[2][1], stat[2][2], stat[3][1], stat[3][2], stat[3][0]);
+        // FAIL : la bande de reference etait boisee (>25 colonnes a arbres)
+        // et l'anneau travaille (lissage + naturalize) n'en montre presque plus.
+        boolean fail = stat[3][1] > 25 && (stat[1][1] + stat[2][1]) < Math.max(3, stat[3][1] * 0.05);
+        LOG.info("[DLB-RINGAUDIT] {}", fail ? "FAIL" : "PASS");
+        return 1;
     }
 
     private static final java.util.Map<Long, Long> CPU_START = new java.util.HashMap<>();
@@ -297,12 +344,15 @@ public final class StructureRegressionChecks {
                     level.setBlock(new BlockPos(x, y, z), (y <= height ? Blocks.DIRT : Blocks.AIR).defaultBlockState(), FLAGS);
             }
         StructureTerrainPrep.resetNaturalReference();
+        // T231 : signature actuelle (13e param int[] kernelSchedule).
         var smooth = StructureTerrainPrep.class.getDeclaredMethod("smoothPassAfterPreload", ServerLevel.class,
                 BlockPos.class, BlockPos.class, int.class, int.class, int.class, int.class,
-                int.class, int.class, int.class, int.class, Runnable.class);
+                int.class, int.class, int.class, int.class, int[].class, Runnable.class);
         smooth.setAccessible(true);
+        int[] kernelSchedule = new int[50];
+        java.util.Arrays.fill(kernelSchedule, 7);
         smooth.invoke(null, level, new BlockPos(-2, 240, -2), new BlockPos(2, 240, 2),
-                7, 50, 3, 12, x0, z0, size, size, (Runnable) () -> {
+                7, 50, 3, 12, x0, z0, size, size, kernelSchedule, (Runnable) () -> {
                     try {
                         for (int x = -8; x <= 8; x++)
                             for (int z = -8; z <= 8; z++)
@@ -322,13 +372,13 @@ public final class StructureRegressionChecks {
     }
     private static void lakeClear(ServerLevel level) {
         BlockPos origin = CrimsonLakeStructureSpawnProcedure.lakeOrigin(0, 0, 251, 7, 5, 5);
-        require(origin.getY() + 7 == 242, "Lake must sink ten blocks below first free ground level");
+        require(origin.getY() + 7 == 252 - 20, "Lake must sink twenty blocks below first free ground level (SINK_BLOCKS=20)");
         BlockPos min = new BlockPos(-2, 242, -2), max = new BlockPos(2, 250, 2);
         for (int x = -3; x <= 3; x++)
             for (int z = -3; z <= 3; z++)
                 for (int y = 241; y <= 270; y++)
                     level.setBlock(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState(), FLAGS);
-        CrimsonLakeStructureSpawnProcedure.clearBuildVolume(level, min, max, () -> {
+        CrimsonLakeStructureSpawnProcedure.clearBuildVolume(level, min, max, min.getY(), () -> {
             try {
                 for (int x = -3; x <= 3; x++)
                     for (int z = -3; z <= 3; z++)

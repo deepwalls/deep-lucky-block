@@ -689,7 +689,7 @@ public class Structures5Procedure {
                 }
                 deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] {} en {}ms ({} blocs, {} a gravite -- ticks de chute neutralises par DLB-CLAMP)", j.name, el, j.blocks.size(), j.grav);
                 if (j.player != null) {
-                    j.player.sendSystemMessage(Component.literal("\u00a7a\u2713 Pose brute \u00a7e" + j.name + "\u00a7a en " + el + "ms (phase paste seule, hors recherche) — finitions en cours"));
+                    j.player.sendSystemMessage(Component.literal("\u00a7a\u2713 Pose brute \u00a7e" + j.name + "\u00a7a en " + el + "ms — finitions en cours"));
                     announceStructureSpawn(j.player, j.name, j.min, j.max);
                 }
                 CarveJob carve = buildCarveJob(j);
@@ -911,13 +911,6 @@ public class Structures5Procedure {
     /** Rayon déjà classé pour la demande active : les reprises ne parcourent que
      * la nouvelle couronne, jamais tout le carré depuis zéro (T180). */
     private static int SEARCH_SCANNED_RADIUS = -1;
-    // T230 : throttles de journalisation. La recherche d'un dragon en monde
-    // neuf prenait 2 min 25 SANS la moindre ligne de log entre la demande et
-    // la zone choisie : le joueur ne savait pas si le jeu etait gele ("toujours
-    // rien ?" tape deux fois). On publie desormais un etat toutes les 10 s.
-    private static long SEARCH_PROGRESS_LAST_MS = 0L;
-    private static long DEFERRED_WAIT_LAST_MS = 0L;
-    private static long DRAIN_WAIT_LAST_MS = 0L;
     /** Ultime candidat généré, une seule emprise à la fois, uniquement après
      * épuisement des zones historiques jusqu'à 4096 blocs. */
     private static BlockPos SEARCH_GENERATED_FALLBACK = null;
@@ -940,21 +933,9 @@ public class Structures5Procedure {
     private static final Set<Long> SEARCH_DEFERRED_KEYS = new HashSet<>();
     private static final Map<Long, Integer> SEARCH_DEFERRED_ROUNDS = new HashMap<>();
     /** Cap anti-inondation (le grief d'origine de T185 reste impossible). */
-    // T231 (campagne CI de calibration, demande dev 07/10 : "fais 11 tests
-    // opti, garde le meilleur") : ces trois reglages deviennent variables par
-    // propriete systeme (-Ddlb.search.*), UNIQUEMENT pour la batterie de runs
-    // serveur. Les valeurs par defaut sont exactement celles du T230 ; la
-    // variante gagnante sera refigee ici en constantes avec le livrable final.
-    private static final int MAX_DEFERRED = propInt("dlb.search.deferCap", 96);
+    private static final int MAX_DEFERRED = 96;
     /** Au-dela, un candidat differe dont la zone n'arrive jamais est consomme. */
-    private static final int MAX_DEFER_ROUNDS = propInt("dlb.search.deferRounds", 600);
-    // 2 = croissance double (T181), 1 = +64 lineaire (pre-T181).
-    private static final int SEARCH_GROWTH_MODE = propInt("dlb.search.growth", 2);
-
-    private static int propInt(String key, int def) {
-        try { return Integer.parseInt(System.getProperty(key, Integer.toString(def))); }
-        catch (NumberFormatException bad) { return def; }
-    }
+    private static final int MAX_DEFER_ROUNDS = 600;
     /** T190 : meilleur terrain sec, réel et intégralement chargé rencontré. Le
      * pipeline clear + deux smooths peut corriger son relief sans générer une
      * emprise distante pendant plusieurs minutes. */
@@ -1188,8 +1169,6 @@ public class Structures5Procedure {
         REJECTED_RUGGED_CENTERS.clear();
         SEARCH_EXTRA_RADIUS = 0;
         SEARCH_SCANNED_RADIUS = -1;
-        SEARCH_PROGRESS_LAST_MS = 0L;
-        DEFERRED_WAIT_LAST_MS = 0L;
         SEARCH_GENERATED_FALLBACK = null;
         SEARCH_FALLBACK_WAIT_TICKS = 0;
         SEARCH_FALLBACK_STALL_TICKS = 0;
@@ -1342,28 +1321,15 @@ public class Structures5Procedure {
                     jumps, MAX_FALLBACK_JUMPS, best.getX(), best.getZ(), by);
             return new BlockPos(best.getX(), by, best.getZ());
         }
-        // T231 (CI session serveur, monde dedie neuf) : "generation annulee" quand
-        // RIEN de sec n'est deja charge cassait la suite des structures (et le
-        // run T229 du dev aurait perdu la structure n'importe ou hors zone
-        // pionniere). Le secours cible tient des requetes en vol dans le fond
-        // executor : au lieu d'abandonner, on REARM le compteur de sauts et on
-        // relance la meme emprise; la borne globale reste GENERATION_TIMEOUT_MS
-        // cote doPaste (un timeout structure y est deja journalise).
-        {
-            BlockPos g2 = SEARCH_GENERATED_FALLBACK;
-            if (g2 != null) {
-                SEARCH_FALLBACK_WAIT_TICKS = 0;
-                SEARCH_FALLBACK_STALL_TICKS = 0;
-                deepluckyblock.util.SafeSurface.requestZone(lvl,
-                        (g2.getX() - 96) >> 4, (g2.getZ() - 96) >> 4,
-                        (g2.getX() + 96) >> 4, (g2.getZ() + 96) >> 4);
-                deepluckyblock.util.ChunkKeeper.track(lvl,
-                        g2.offset(-96, 0, -96), g2.offset(96, 0, 96));
-                LOGGER.warn("[STRUCT5-FLAT] plafond de sauts atteint sans terrain sec charge : rearmement T231 du secours cible a {},{} (T229 annulait la structure)",
-                        g2.getX(), g2.getZ());
-            }
-            return null;
-        }
+        LOGGER.error("[STRUCT5-FLAT] secours abandonne apres {} sauts (plafond {}) et aucun terrain sec deja charge : generation annulee.",
+                jumps, MAX_FALLBACK_JUMPS);
+        // T228 : NE PAS appeler notifyGenerationAborted ici. findFlat renvoie null
+        // et doPaste planifiait quand meme une reprise : la generation abortee
+        // repartait en boucle, puis re-abortait la structure SUIVANTE toutes les
+        // ~40 s (release du mauvais CURRENT_STRUCTURE_ID). On signale l'abandon ;
+        // doPaste renvoie false et l'abort a lieu exactement UNE fois.
+        SEARCH_ABORTED = true;
+        return null;
     }
 
     private static BlockPos findFlat(ServerLevel lvl, BlockPos origin, int structW, int structD, int minEdgeDist) {
@@ -1381,17 +1347,6 @@ public class Structures5Procedure {
         // STRUCT5-GROUND découvrait ensuite 3 à 344 colonnes d'eau sur les bords
         // et relançait tout le scoring.
         int fullCheckR = Math.max(checkR, (int) Math.ceil(Math.max(structW, structD) * 0.50));
-
-        // T230 : re-verifier les candidats differes a CHAQUE reprise, pas
-        // seulement quand une couronne est epuisee. Le blocage T229 gerait une
-        // couronne par ~7,5 s en monde neuf (2 min 25 pour dragon) ; les
-        // couronnes continuent maintenant d'avancer pendant que les zones
-        // demandees se chargent en tache de fond. Seul le secours lointain
-        // (plus bas) attend encore la fin des differes proches.
-        {
-            BlockPos choisi = drainDeferred(lvl, checkR, fullCheckR);
-            if (choisi != null) return choisi;
-        }
 
         // T181 : après épuisement des régions déjà ouvertes, une seule emprise
         // de secours peut être générée. On attend ici sa disponibilité sans
@@ -1502,7 +1457,6 @@ public class Structures5Procedure {
         // T174 : pas de plafond à 512 qui ferait rescanner éternellement le même
         // carré. L'expansion reste bornée à 4096 par SEARCH_EXTRA_RADIUS.
         int searchR = Math.min(Math.max(SEARCH_R, minCenterDist + 16) + SEARCH_EXTRA_RADIUS, 768);
-        reportSearchProgress(searchR);
 
         // On scan TOUTE la zone large (radius SEARCH_R) et on score CHAQUE candidat
         // valide, au lieu de prendre la 1re zone assez plate. Score combine :
@@ -1813,9 +1767,8 @@ public class Structures5Procedure {
                 continue;
             }
             int realY = deepluckyblock.util.SafeSurface.surfaceY(lvl, c.cx(), c.cz(), origin.getY());
-            deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] Zone choisie a {},{} (candidat #{}/{}) : flat={}%, pente={} (score={}, terrain reel exhaustif x0,6, Y reel={}, {} candidat(s) rejetes, {} s de recherche)",
-                    c.cx(), c.cz(), i + 1, maxVerified, (int)(realFq.flatExtent() * 100), realFq.slope(), (int) c.total(), realY, phantomRejected,
-                    GENERATION_START_MS == 0L ? -1L : (System.currentTimeMillis() - GENERATION_START_MS) / 1000);
+            deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] Zone choisie a {},{} (candidat #{}/{}) : flat={}%, pente={} (score={}, terrain reel exhaustif x0,6, Y reel={}, {} candidat(s) rejetes)",
+                    c.cx(), c.cz(), i + 1, maxVerified, (int)(realFq.flatExtent() * 100), realFq.slope(), (int) c.total(), realY, phantomRejected);
             return new BlockPos(c.cx(), candidateGround.maxY(), c.cz());
         }
         // T182 : une tranche courte ne signifie PAS « cercle épuisé ». On
@@ -1843,38 +1796,74 @@ public class Structures5Procedure {
                     c.cx() + fullCheckR, c.cz() + fullCheckR);
             if (candidateFull2 == null || candidateFull2.wet() > 0) continue;
             int realY2 = deepluckyblock.util.SafeSurface.surfaceY(lvl, c.cx(), c.cz(), origin.getY());
-            deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] Zone choisie a {},{} (seconde passe T49, terrain reel verifie, Y reel={}, {} s de recherche)",
-                    c.cx(), c.cz(), realY2,
-                    GENERATION_START_MS == 0L ? -1L : (System.currentTimeMillis() - GENERATION_START_MS) / 1000);
+            deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] Zone choisie a {},{} (seconde passe T49, terrain reel verifie, Y reel={})",
+                    c.cx(), c.cz(), realY2);
             return new BlockPos(c.cx(), candidateGround2.maxY(), c.cz());
         }
-        // T230 : le drain tourne deja en tete de findFlat ; on ne bloque plus
-        // la croissance du rayon sur les differes. Un candidat pret est pris
-        // des qu'il l'est ; sinon la couronne suivante est scannee pendant
-        // que sa zone se charge en tache de fond.
-        {
-            BlockPos choisi = drainDeferred(lvl, checkR, fullCheckR);
-            if (choisi != null) return choisi;
+        // T229 : avant d'elargir, reverifier les candidats differes dont la zone
+        // a ete demandee en tache de fond. Verdicts identiques a la boucle de
+        // verification (eau, relief exhaustif x0.6, emprise entiere seche) ; un
+        // candidat dont la zone n'arrive pas est consomme apres MAX_DEFER_ROUNDS.
+        // Tant qu'un differe reste en attente, on NE passe PAS a la couronne
+        // suivante : c'est ce qui rend a nouveau possible une pose a distance
+        // normale dans un terrain non visite (monde neuf).
+        if (!SEARCH_DEFERRED.isEmpty()) {
+            long drainT0 = System.currentTimeMillis();
+            int drainReady = 0;
+            for (int i = 0; i < SEARCH_DEFERRED.size(); i++) {
+                if (i > 0 && System.currentTimeMillis() - drainT0 > FIND_FLAT_TIME_BUDGET_MS) break;
+                BlockPos c = SEARCH_DEFERRED.get(i);
+                long ck = BlockPos.asLong(c.getX(), 0, c.getZ());
+                FlatQuality q = qualityOnReady(lvl, c.getX(), c.getZ(), checkR);
+                FootprintGround dg = (q == null) ? null : detectExactGround(lvl,
+                        c.getX() - checkR, c.getZ() - checkR, c.getX() + checkR, c.getZ() + checkR);
+                FootprintGround df = (dg == null) ? null : detectExactGround(lvl,
+                        c.getX() - fullCheckR, c.getZ() - fullCheckR,
+                        c.getX() + fullCheckR, c.getZ() + fullCheckR);
+                if (q == null || dg == null || df == null) {
+                    int rounds = SEARCH_DEFERRED_ROUNDS.merge(ck, 1, Integer::sum);
+                    if (rounds >= MAX_DEFER_ROUNDS) {
+                            SEARCH_DEFERRED.remove(i); SEARCH_DEFERRED_KEYS.remove(ck);
+                        SEARCH_DEFERRED_ROUNDS.remove(ck);
+                        REJECTED_RUGGED_CENTERS.add(ck);
+                        i--;
+                    } else if (rounds % 100 == 0) {
+                        deepluckyblock.util.SafeSurface.requestZone(lvl,
+                                (c.getX() - fullCheckR) >> 4, (c.getZ() - fullCheckR) >> 4,
+                                (c.getX() + fullCheckR) >> 4, (c.getZ() + fullCheckR) >> 4);
+                    }
+                    continue;
+                }
+                SEARCH_DEFERRED.remove(i); SEARCH_DEFERRED_KEYS.remove(ck);
+                SEARCH_DEFERRED_ROUNDS.remove(ck); i--;
+                drainReady++;
+                REJECTED_RUGGED_CENTERS.add(ck);
+                if (q.wetRatio() > FLAT_MAX_WET || dg.wet() > 0 || df.wet() > 0) continue;
+                int relief = dg.maxY() - dg.minY();
+                if (relief > MAX_CLIFF_HEIGHT_DIFF) {
+                    if (relief < SEARCH_BEST_LOADED_DRY_RELIEF) {
+                        SEARCH_BEST_LOADED_DRY_RELIEF = relief;
+                        SEARCH_BEST_LOADED_DRY = new BlockPos(c.getX(), dg.maxY(), c.getZ());
+                    }
+                    continue;
+                }
+                LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (candidat differe pret apres chargement fond, relief={}, flat={}%, Y sol={})",
+                        c.getX(), c.getZ(), relief, (int) (q.flatExtent() * 100), dg.maxY());
+                return new BlockPos(c.getX(), dg.maxY(), c.getZ());
+            }
+            if (!SEARCH_DEFERRED.isEmpty()) {
+                if (drainReady == 0 && System.currentTimeMillis() - tMark > 20000) {
+                    tMark = System.currentTimeMillis();
+                    deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] {} candidat(s) differes en attente de leur zone (fond)",
+                            SEARCH_DEFERRED.size());
+                }
+                return null;
+            }
         }
         // T174 : aucun fallback sur une pente "moins mauvaise" ni sur une
         // position hors chunk. Ces replis contournaient les critères finaux et
         // recréaient la même boucle. Agrandir la recherche est la seule issue.
         SEARCH_SCANNED_RADIUS = Math.max(SEARCH_SCANNED_RADIUS, searchR);
-        // T230 : tant qu'un candidat differe (proche du joueur) attend encore
-        // sa zone, on differe le secours lointain/historique. En monde neuf
-        // ces candidats A DISTANCE NORMALE valident leur terrain au bout de
-        // quelques secondes supplementaires ; le secours T190/T174 aurait
-        // sinon envoye la structure hors de vue. L'attente reste bornee :
-        // chaque differe est consomme apres MAX_DEFER_ROUNDS reprises.
-        if (!SEARCH_DEFERRED.isEmpty()) {
-            long nowWait = System.currentTimeMillis();
-            if (nowWait - DEFERRED_WAIT_LAST_MS > 20_000) {
-                DEFERRED_WAIT_LAST_MS = nowWait;
-                deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] secours lointain differe : {} candidat(s) proche(s) encore en chargement (T230)",
-                        SEARCH_DEFERRED.size());
-            }
-            return null;
-        }
         if (SEARCH_EXTRA_RADIUS >= 512 && SEARCH_BEST_LOADED_DRY != null) {
             BlockPos fallback = SEARCH_BEST_LOADED_DRY;
             LOGGER.warn("[STRUCT5-FLAT] secours local chargé choisi à {},{} : relief brut {}, eau=0, génération distante évitée -- T190",
@@ -1906,87 +1895,10 @@ public class Structures5Procedure {
         // le rayon ne répète aucun candidat et rejoint rapidement les anciennes
         // zones ouvertes : 64, 128, 256, 512, 1024, 2048, 4096.
         SEARCH_EXTRA_RADIUS = Math.min(
-                SEARCH_EXTRA_RADIUS == 0 ? 64
-                        : SEARCH_EXTRA_RADIUS + (SEARCH_GROWTH_MODE == 1 ? 64 : SEARCH_EXTRA_RADIUS),
-                512);
+                SEARCH_EXTRA_RADIUS == 0 ? 64 : SEARCH_EXTRA_RADIUS * 2, 512);
         deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] aucun centre x0,6 conforme (relief <= {}, eau=0) -- nouvelle couronne jusqu'a {} blocs; reprise asynchrone",
                 MAX_CLIFF_HEIGHT_DIFF, SEARCH_EXTRA_RADIUS);
         return null;
-    }
-
-    // T230 : drain des candidats differes (extrait du bloc T229). Invoque a
-    // CHAQUE reprise de findFlat au lieu d'attendre l'epuisement d'une
-    // couronne. Verdicts identiques a la boucle de verification (eau, relief
-    // exhaustif x0,6, emprise entiere seche) ; un candidat dont la zone
-    // n'arrive pas est consomme apres MAX_DEFER_ROUNDS reprises.
-    private static BlockPos drainDeferred(ServerLevel lvl, int checkR, int fullCheckR) {
-        if (SEARCH_DEFERRED.isEmpty()) return null;
-        long drainT0 = System.currentTimeMillis();
-        int drainReady = 0;
-        for (int i = 0; i < SEARCH_DEFERRED.size(); i++) {
-            if (i > 0 && System.currentTimeMillis() - drainT0 > FIND_FLAT_TIME_BUDGET_MS) break;
-            BlockPos c = SEARCH_DEFERRED.get(i);
-            long ck = BlockPos.asLong(c.getX(), 0, c.getZ());
-            FlatQuality q = qualityOnReady(lvl, c.getX(), c.getZ(), checkR);
-            FootprintGround dg = (q == null) ? null : detectExactGround(lvl,
-                    c.getX() - checkR, c.getZ() - checkR, c.getX() + checkR, c.getZ() + checkR);
-            FootprintGround df = (dg == null) ? null : detectExactGround(lvl,
-                    c.getX() - fullCheckR, c.getZ() - fullCheckR,
-                    c.getX() + fullCheckR, c.getZ() + fullCheckR);
-            if (q == null || dg == null || df == null) {
-                int rounds = SEARCH_DEFERRED_ROUNDS.merge(ck, 1, Integer::sum);
-                if (rounds >= MAX_DEFER_ROUNDS) {
-                    SEARCH_DEFERRED.remove(i); SEARCH_DEFERRED_KEYS.remove(ck);
-                    SEARCH_DEFERRED_ROUNDS.remove(ck);
-                    REJECTED_RUGGED_CENTERS.add(ck);
-                    i--;
-                } else if (rounds % 100 == 0) {
-                    deepluckyblock.util.SafeSurface.requestZone(lvl,
-                            (c.getX() - fullCheckR) >> 4, (c.getZ() - fullCheckR) >> 4,
-                            (c.getX() + fullCheckR) >> 4, (c.getZ() + fullCheckR) >> 4);
-                }
-                continue;
-            }
-            SEARCH_DEFERRED.remove(i); SEARCH_DEFERRED_KEYS.remove(ck);
-            SEARCH_DEFERRED_ROUNDS.remove(ck); i--;
-            drainReady++;
-            REJECTED_RUGGED_CENTERS.add(ck);
-            if (q.wetRatio() > FLAT_MAX_WET || dg.wet() > 0 || df.wet() > 0) continue;
-            int relief = dg.maxY() - dg.minY();
-            if (relief > MAX_CLIFF_HEIGHT_DIFF) {
-                if (relief < SEARCH_BEST_LOADED_DRY_RELIEF) {
-                    SEARCH_BEST_LOADED_DRY_RELIEF = relief;
-                    SEARCH_BEST_LOADED_DRY = new BlockPos(c.getX(), dg.maxY(), c.getZ());
-                }
-                continue;
-            }
-            LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (candidat differe pret apres chargement fond, relief={}, flat={}%, Y sol={}, {} s de recherche)",
-                    c.getX(), c.getZ(), relief, (int) (q.flatExtent() * 100), dg.maxY(),
-                    GENERATION_START_MS == 0L ? -1L : (System.currentTimeMillis() - GENERATION_START_MS) / 1000);
-            return new BlockPos(c.getX(), dg.maxY(), c.getZ());
-        }
-        if (!SEARCH_DEFERRED.isEmpty() && drainReady == 0) {
-            long now = System.currentTimeMillis();
-            if (now - DRAIN_WAIT_LAST_MS > 20_000) {
-                DRAIN_WAIT_LAST_MS = now;
-                deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] {} candidat(s) differes en attente de leur zone (fond)",
-                        SEARCH_DEFERRED.size());
-            }
-        }
-        return null;
-    }
-
-    // T230 : etat public de la recherche. Sans ca, dragon en monde neuf =
-    // 2 min 25 muettes et le joueur redemandait "toujours rien ?" dans le
-    // vide. Une ligne INFO toutes les 10 s des que la recherche depasse 10 s.
-    private static void reportSearchProgress(int searchR) {
-        if (GENERATION_START_MS == 0L) return;
-        long now = System.currentTimeMillis();
-        long elapsed = now - GENERATION_START_MS;
-        if (elapsed < 10_000 || now - SEARCH_PROGRESS_LAST_MS < 10_000) return;
-        SEARCH_PROGRESS_LAST_MS = now;
-        LOGGER.info("[STRUCT5-FLAT] recherche toujours en cours : rayon {} blocs, {} candidat(s) differe(s) en chargement de fond, {} centre(s) ecarte(s), {} s ecoulees -- T230",
-                searchR, SEARCH_DEFERRED.size(), REJECTED_RUGGED_CENTERS.size(), elapsed / 1000);
     }
 
     // Ecart max (en blocs) pour qu'une colonne compte comme "plate" par rapport au

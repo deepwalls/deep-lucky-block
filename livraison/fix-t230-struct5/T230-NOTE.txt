@@ -1,0 +1,47 @@
+DEEP LUCKY BLOCK – T230-STRUCT5 (07/10/2026)
+==============================================
+
+Livrable : DEEP-LUCKY-BLOCK-T230-STRUCT5-FIX.zip
+Contenu : src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+(remplace le fichier du même chemin dans mod.zip / ton workspace MCreator)
+
+CONTEXTE (log de jeu du 07/10 ~02:20-02:28, monde neuf) :
+- Le T229 fonctionnait : la structure est REELLEMENT posee (achievements OK).
+- Problemes constates :
+  1) La recherche de zone prenait 2 min 25 s en monde neuf, avec pics de lag
+     ("Can't keep up" jusqu'a 16 s de retard).
+  2) Aucune visibilite pendant la recherche : pas une ligne de log entre la
+     demande et la zone trouvee ("toujours rien ?" tape deux fois).
+  3) Message trompeur "Pose brute dragon en 9032ms" = temps de la phase
+     paste seule ; le vrai total etait 2 min 33.
+
+CORRECTIFS T230 (Structures5Procedure.java uniquement) :
+
+1) Drain des candidats differes a CHAQUE reprise de findFlat (au lieu
+   d'attendre l'epuisement d'une couronne entiere). Les couronnes continuent
+   d'avancer pendant que les zones demandees se chargent en tache de fond :
+   le rayon de recherche progresse beaucoup plus vite en monde neuf et la
+   zone valide est choisie des qu'elle est prete, quelle que soit la couronne
+   en cours.
+
+2) Le secours lointain (T190/T174 : terrain historique deja charge ou
+   generation ciblee a 768+ blocs) n'est plus declenche tant qu'un
+   candidat differe A DISTANCE NORMALE est encore en chargement. Bornee
+   (chaque differe expire apres MAX_DEFER_ROUNDS reprises), donc aucun
+   blocage possible : on garde la preference "proche et visible du joueur".
+
+3) VISIBILITE : ligne INFO toutes les 10 s tant que la recherche depasse
+   10 s ("recherche toujours en cours : rayon X blocs, Y candidat(s)
+   differe(s) en chargement de fond, Z centre(s) ecarte(s), N s ecoulees --
+   T230").
+
+4) DUREE DE RECHERCHE : chaque message "Zone choisie a ..." affiche desormais
+   aussi "... s de recherche". Le chat "Pose brute ... en X ms" precise
+   "(phase paste seule, hors recherche)" pour ne plus tromper sur le total.
+
+La distance de pose reste regie par MIN_PLAYER_DISTANCE/TLB etc. (non
+modifies). Aucun autre fichier touche. Valide par javalang-equivalent (bilan
+accolades/parentheses identique a l'original).
+
+Si T230 degraderait en jeu : T229 reste la meilleure option connue validee
+(07/10) ; revenir au zip T229 (meme Drive).

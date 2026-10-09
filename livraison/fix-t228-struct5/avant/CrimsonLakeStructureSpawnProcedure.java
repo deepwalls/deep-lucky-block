@@ -584,10 +584,7 @@ public class CrimsonLakeStructureSpawnProcedure {
                     // queueBuild éternellement sur le même centre.
                     System.err.println("[DLB-LAKE] ABORT: aucune emprise complete libre trouvee; "
                             + "aucun terrain modifie (conflit '" + shiftedConflict + "')");
-                    // T228 : ABORT = notifyGenerationAborted, jamais Finished :
-                    // Finished gravait le lac comme « deja apparu » alors qu'il
-                    // n'avait rien pose -> il devenait intirable pour toujours.
-                    Structures5Procedure.notifyGenerationAborted(level);
+                    Structures5Procedure.notifyGenerationFinished(level);
                     return;
                 }
                 if (deepluckyblock.util.DebugLog.ENABLED) System.out.println("[DLB-LAKE] conflit tardif avec '" + conflict
@@ -605,9 +602,7 @@ public class CrimsonLakeStructureSpawnProcedure {
                     || max.getY() >= level.getMaxBuildHeight()) {
                 System.err.println("[DLB-LAKE] ABORT: template outside build height; no blocks placed");
                 deepluckyblock.util.ChunkKeeper.release(level);
-                // T228 : ABORT = notifyGenerationAborted (voir le correctif
-                // ci-dessus) : la structure doit redevenir tirable.
-                Structures5Procedure.notifyGenerationAborted(level);
+                Structures5Procedure.notifyGenerationFinished(level);
                 return;
             }
             if (deepluckyblock.util.DebugLog.ENABLED) System.out.println("[DLB-LAKE] anchor: ground=" + groundY + ", lowest block="

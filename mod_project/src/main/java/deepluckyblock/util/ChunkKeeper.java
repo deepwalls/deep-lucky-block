@@ -95,8 +95,15 @@ public final class ChunkKeeper {
     // c'est le nombre de chunks APPLIQUES dans un tick qu'il faut ramener a 1
     // pour ne plus jamais depasser la seconde. Le debit n'en souffre pas : la
     // generation est parallele, on ne fait que lisser la LIVRAISON.
-    private static final int REQUEST_PER_TICK = Math.max(1, Math.min(8, Integer.getInteger("dlb.requestPerTick", 8)));
-    private static final int PIN_PER_TICK = 8;
+    // T169 : le commentaire T76b disait bien « 1 demande/tick », mais le défaut
+    // était resté accidentellement à 8. Le log réel confirme la conséquence :
+    // 8 livraisons ont produit un tick de 7821 ms lors de la première structure.
+    // T176 : les chunks déjà FULL ne doivent pas attendre 8 à 14 ticks juste
+    // pour recevoir leur ticket. Cette latence artificielle dominait les runs
+    // (99 chunks annoncés prêts, puis 24/48/72/96). La génération reste limitée
+    // séparément; seuls les tickets bon marché sont posés en une vague.
+    private static final int REQUEST_PER_TICK = Math.max(1, Math.min(8, Integer.getInteger("dlb.requestPerTick", 4)));
+    private static final int PIN_PER_TICK = 128;
     /**
      * Demandes de chargement asynchrones EN VOL, tout au plus.
      *
@@ -110,7 +117,9 @@ public final class ChunkKeeper {
     // 48 datait du diagnostic OOM ; il bornait la MEMOIRE, pas le travail du
     // thread principal -- qui, lui, gelait le jeu. Le debit reste de plusieurs
     // dizaines de chunks par seconde (une generation dure quelques dizaines de ms).
-    private static final int MAX_IN_FLIGHT = Math.max(2, Math.min(32, Integer.getInteger("dlb.maxInFlight", 16)));
+    // Même régression : T76b prescrit 2 chunks en vol, pas 16. Un plafond élevé
+    // laisse les résultats FULL s'accumuler puis s'appliquer ensemble au tick.
+    private static final int MAX_IN_FLIGHT = Math.max(2, Math.min(32, Integer.getInteger("dlb.maxInFlight", 2)));
     /** Le maintien est rafraichi tous les 5 s (le ticket PORTAL dure 15 s). */
     private static final int REFRESH_TICKS = 100;
     /** T66 : intervalle des re-demandes forcees pour les chunks toujours absents (5 s). */
@@ -216,7 +225,7 @@ public final class ChunkKeeper {
             z.cx0 = min.getX() >> 4; z.cx1 = max.getX() >> 4;
             z.cz0 = min.getZ() >> 4; z.cz1 = max.getZ() >> 4;
             fillPending(z);
-            LOGGER.info("[DLB-CHUNKS] zone {} -> {} tenue en memoire pendant le pipeline ({} chunks)",
+            deepluckyblock.util.DebugLog.info(LOGGER, "[DLB-CHUNKS] zone {} -> {} tenue en memoire pendant le pipeline ({} chunks)",
                     min.toShortString(), max.toShortString(), z.pending.size());
             // T10 : ouvre la fenetre d'edition (chute de blocs + fluides
             // neutralises dans la zone) en meme temps que le maintien memoire.
@@ -231,7 +240,7 @@ public final class ChunkKeeper {
                 z.cx0 = Math.min(z.cx0, cx0); z.cx1 = Math.max(z.cx1, cx1);
                 z.cz0 = Math.min(z.cz0, cz0); z.cz1 = Math.max(z.cz1, cz1);
                 fillPending(z);
-                LOGGER.info("[DLB-CHUNKS] zone etendue : {} chunks a maintenir", z.pending.size());
+                deepluckyblock.util.DebugLog.info(LOGGER, "[DLB-CHUNKS] zone etendue : {} chunks a maintenir", z.pending.size());
             }
         }
         // Avancement du depot : un rapport de temps en temps seulement.
@@ -347,7 +356,7 @@ public final class ChunkKeeper {
             }
         }
         if (pinnedNow > 0 && (z.pending.isEmpty() || z.pinned.size() % 24 == 0)) {
-            LOGGER.info("[DLB-CHUNKS] {}/{} chunks epingles (maintien en memoire){}",
+            deepluckyblock.util.DebugLog.info(LOGGER, "[DLB-CHUNKS] {}/{} chunks epingles (maintien en memoire){}",
                     z.pinned.size(), z.pinned.size() + z.pending.size(),
                     z.pending.isEmpty() ? " -- zone complete" : "");
         }
@@ -406,7 +415,7 @@ public final class ChunkKeeper {
         // recalculer tout le scheduling du chunk system d'un coup). Les tickets restants
         // expirent de toute facon seuls au bout de 15 s.
         drainTickets(level, z.pinned);
-        LOGGER.info("[DLB-CHUNKS] zone relachee ({} chunks rendus au chunk system, en tranches)", total);
+        deepluckyblock.util.DebugLog.info(LOGGER, "[DLB-CHUNKS] zone relachee ({} chunks rendus au chunk system, en tranches)", total);
     }
 
     /**

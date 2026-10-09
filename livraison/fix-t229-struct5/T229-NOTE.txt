@@ -1,0 +1,29 @@
+DEEP LUCKY BLOCK - T229 (06/10) - Structures 5 repare
+======================================================
+
+Fichier modifie (a jour, a sa place naturelle dans le projet) :
+  src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+
+3 correctifs cibles, rien d'autre n'a ete touche :
+
+A. Blocage silencieux du secours cible (le dragon n'apparaissait JAMAIS) :
+   la branche "prete" renvoyait null a chaque tick quand l'emprise
+   n'etait pas integralement livree : pas de re-demande, pas de compteur,
+   pas de saut, pas de log. -> re-demande toutes les 20 ticks, WARN
+   visible, saut/abandon honnete apres 100 ticks (meme discipline que la
+   branche d'attente, sortie bornee : 8 sauts -> abandon propre).
+
+B. Fin du teleport ~1 km en terrain non visite :
+   T185 consommait a vue tout candidat non FULL -> dans un monde neuf
+   tout sautait en ~2,5 s et la seule issue etait l'emprise generee loin.
+   -> meilleurs candidats demandes en tache de fond + file differee
+   persistante et bornee (max 96, max 600 reprises), controles finaux
+   identiques (eau / relief x0,6 / emprise seche). La derive T185
+   (97 180 / 294 595 recherches) reste impossible, terminaison garantie.
+
+C. Visibilite : attentes x0,6 / emprise entiere / chargement footprint
+   promues en LOGGER.warn periodique borne (DebugLog etant desactive,
+   tout etait invisible pour toi).
+
+Compilation Java 21 validee en CI (build run 37412249658).
+Le reste de src/ est inchange par rapport a v2.1-COMPLET / mod.zip 06/10.

@@ -320,12 +320,15 @@ public final class StructureScatterDecor {
         // One multiplier per site; placement safety checks still limit the actual count.
         double quantityMultiplier = 1.2 + random.nextDouble() * 1.7;
         int baseTarget = MIN_DECOR + random.nextInt(MAX_DECOR - MIN_DECOR + 1);
-        int target = (int) Math.round(baseTarget * quantityMultiplier);
+        // T177 : densité visuelle demandée divisée par deux. On divise le budget
+        // final, pas seulement le nombre d'essais, afin que le résultat soit
+        // réellement deux fois moins chargé quel que soit le thème.
+        int target = Math.max(1, (int) Math.round(baseTarget * quantityMultiplier * 0.5));
 
-        // Quota de NATURELS tire d'abord (3 a 7). Le reste du budget sera
-        // comble par des elements artificiels, s'il en reste a poser.
-        int naturalTarget = (int) Math.round((MIN_NATURAL
-                + random.nextInt(MAX_NATURAL - MIN_NATURAL + 1)) * quantityMultiplier);
+        // Même réduction pour les éléments naturels du scatter. La végétation
+        // du terrain est restaurée séparément depuis la photographie/fallback.
+        int naturalTarget = Math.max(1, (int) Math.round((MIN_NATURAL
+                + random.nextInt(MAX_NATURAL - MIN_NATURAL + 1)) * quantityMultiplier * 0.5));
         if (naturalTarget > target) naturalTarget = target;
 
         // Tirage SANS REMISE dans le catalogue du thème : les décors d'un même
@@ -477,11 +480,17 @@ public final class StructureScatterDecor {
             // conçues pour le système Jigsaw et contiennent des blocs techniques
             // (vérifié : 51 des 66 fichiers en ont). Sans ce processeur ils
             // resteraient VISIBLES en jeu comme blocs de debug.
+            // T102 (rappel dev 30/09 : « les mini structures etc sont aussi
+            // pastees sans air ») : BlockIgnoreProcessor.AIR est AJOUTE a la
+            // chaine -- aucune entree d'air du template n'est posee (les
+            // deux processeurs sont composes : celui qui renvoie null retire
+            // l'entree de la liste de pose).
             StructurePlaceSettings settings = new StructurePlaceSettings()
                     .setRotation(rot)
                     .setMirror(mir)
                     .setIgnoreEntities(true)
-                    .addProcessor(BlockIgnoreProcessor.STRUCTURE_BLOCK);
+                    .addProcessor(BlockIgnoreProcessor.STRUCTURE_BLOCK)
+                    .addProcessor(BlockIgnoreProcessor.AIR);
 
             try {
                 if (!tmpl.placeInWorld(level, at, at, settings, random, 2 | 16)) {
@@ -608,9 +617,13 @@ public final class StructureScatterDecor {
                 BlockState ground = level.getBlockState(m.set(x, y - 1, z));
                 if (!isNaturalGround(ground)) return null;
                 if (!ground.isSolidRender(level, m)) return null;   // solide sur solide
+                // T151 : le paste arrive bien après l'eau, mais une colonne sèche
+                // appartenant à la nappe T103 peut encore être restaurée lors de la
+                // stabilisation. Rejeter aussi l'eau FUTURE photographiée, sur toute
+                // l'emprise, pas seulement le fluide visible à cet instant.
+                if (StructureTerrainPrep.willBeWaterColumn(x, z)) return null;
                 // T75 : plus general que l'eau -- aucune colonne NOYEE (eau OU lave)
-                // n'accepte de decor : « les plantes doivent etre posees apres tous
-                // les fixwater, sinon elles se retrouvent sous l'eau ».
+                // n'accepte de decor.
                 if (!level.getBlockState(m.set(x, y, z)).getFluidState().isEmpty()) return null;
                 if (y < minY) minY = y;
                 if (y > maxY) maxY = y;

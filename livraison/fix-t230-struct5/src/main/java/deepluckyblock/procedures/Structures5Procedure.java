@@ -940,21 +940,9 @@ public class Structures5Procedure {
     private static final Set<Long> SEARCH_DEFERRED_KEYS = new HashSet<>();
     private static final Map<Long, Integer> SEARCH_DEFERRED_ROUNDS = new HashMap<>();
     /** Cap anti-inondation (le grief d'origine de T185 reste impossible). */
-    // T231 (campagne CI de calibration, demande dev 07/10 : "fais 11 tests
-    // opti, garde le meilleur") : ces trois reglages deviennent variables par
-    // propriete systeme (-Ddlb.search.*), UNIQUEMENT pour la batterie de runs
-    // serveur. Les valeurs par defaut sont exactement celles du T230 ; la
-    // variante gagnante sera refigee ici en constantes avec le livrable final.
-    private static final int MAX_DEFERRED = propInt("dlb.search.deferCap", 96);
+    private static final int MAX_DEFERRED = 96;
     /** Au-dela, un candidat differe dont la zone n'arrive jamais est consomme. */
-    private static final int MAX_DEFER_ROUNDS = propInt("dlb.search.deferRounds", 600);
-    // 2 = croissance double (T181), 1 = +64 lineaire (pre-T181).
-    private static final int SEARCH_GROWTH_MODE = propInt("dlb.search.growth", 2);
-
-    private static int propInt(String key, int def) {
-        try { return Integer.parseInt(System.getProperty(key, Integer.toString(def))); }
-        catch (NumberFormatException bad) { return def; }
-    }
+    private static final int MAX_DEFER_ROUNDS = 600;
     /** T190 : meilleur terrain sec, réel et intégralement chargé rencontré. Le
      * pipeline clear + deux smooths peut corriger son relief sans générer une
      * emprise distante pendant plusieurs minutes. */
@@ -1342,28 +1330,15 @@ public class Structures5Procedure {
                     jumps, MAX_FALLBACK_JUMPS, best.getX(), best.getZ(), by);
             return new BlockPos(best.getX(), by, best.getZ());
         }
-        // T231 (CI session serveur, monde dedie neuf) : "generation annulee" quand
-        // RIEN de sec n'est deja charge cassait la suite des structures (et le
-        // run T229 du dev aurait perdu la structure n'importe ou hors zone
-        // pionniere). Le secours cible tient des requetes en vol dans le fond
-        // executor : au lieu d'abandonner, on REARM le compteur de sauts et on
-        // relance la meme emprise; la borne globale reste GENERATION_TIMEOUT_MS
-        // cote doPaste (un timeout structure y est deja journalise).
-        {
-            BlockPos g2 = SEARCH_GENERATED_FALLBACK;
-            if (g2 != null) {
-                SEARCH_FALLBACK_WAIT_TICKS = 0;
-                SEARCH_FALLBACK_STALL_TICKS = 0;
-                deepluckyblock.util.SafeSurface.requestZone(lvl,
-                        (g2.getX() - 96) >> 4, (g2.getZ() - 96) >> 4,
-                        (g2.getX() + 96) >> 4, (g2.getZ() + 96) >> 4);
-                deepluckyblock.util.ChunkKeeper.track(lvl,
-                        g2.offset(-96, 0, -96), g2.offset(96, 0, 96));
-                LOGGER.warn("[STRUCT5-FLAT] plafond de sauts atteint sans terrain sec charge : rearmement T231 du secours cible a {},{} (T229 annulait la structure)",
-                        g2.getX(), g2.getZ());
-            }
-            return null;
-        }
+        LOGGER.error("[STRUCT5-FLAT] secours abandonne apres {} sauts (plafond {}) et aucun terrain sec deja charge : generation annulee.",
+                jumps, MAX_FALLBACK_JUMPS);
+        // T228 : NE PAS appeler notifyGenerationAborted ici. findFlat renvoie null
+        // et doPaste planifiait quand meme une reprise : la generation abortee
+        // repartait en boucle, puis re-abortait la structure SUIVANTE toutes les
+        // ~40 s (release du mauvais CURRENT_STRUCTURE_ID). On signale l'abandon ;
+        // doPaste renvoie false et l'abort a lieu exactement UNE fois.
+        SEARCH_ABORTED = true;
+        return null;
     }
 
     private static BlockPos findFlat(ServerLevel lvl, BlockPos origin, int structW, int structD, int minEdgeDist) {
@@ -1906,9 +1881,7 @@ public class Structures5Procedure {
         // le rayon ne répète aucun candidat et rejoint rapidement les anciennes
         // zones ouvertes : 64, 128, 256, 512, 1024, 2048, 4096.
         SEARCH_EXTRA_RADIUS = Math.min(
-                SEARCH_EXTRA_RADIUS == 0 ? 64
-                        : SEARCH_EXTRA_RADIUS + (SEARCH_GROWTH_MODE == 1 ? 64 : SEARCH_EXTRA_RADIUS),
-                512);
+                SEARCH_EXTRA_RADIUS == 0 ? 64 : SEARCH_EXTRA_RADIUS * 2, 512);
         deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] aucun centre x0,6 conforme (relief <= {}, eau=0) -- nouvelle couronne jusqu'a {} blocs; reprise asynchrone",
                 MAX_CLIFF_HEIGHT_DIFF, SEARCH_EXTRA_RADIUS);
         return null;

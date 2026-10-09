@@ -472,3 +472,42 @@ Mesures finales everest (368 chunks, seed/coords fixes) :
 Etat livre : ci/perf-mods.txt = Noisiumed 3.0.6 ; jvm max.bg.threads=2 conserve
 (neutre, sans risque). ServeurCheck garde tous ses garde-fous.
 Runs neufs consommes sur ce round cible-18 : 6 (13-18). Reste budget : 4.
+
+## 06/10 — T228 : Structures 5 réparé (compilation CI + 4 bugs de file d'attente)
+
+- Constat utilisateur : « structures 5 il merde quelque part ». Le mod.zip du
+  06/10 00:35 contenait un Structures5Procedure appelant des méthodes
+  SafeSurface absentes de l'overlay CI du 27/09 -> 6 erreurs de compilation
+  (run 37409187037). Overlay resynchronisé sur le zip (7 fichiers) : run
+  37409807032 = build Java 21 OK.
+- Bug critique trouvé par revue : giveUpFallback abortait PUIS doPaste
+  replanifiait -> génération fantôme infinie qui re-abortait la structure
+  suivante ~toutes les 40 s. Correctif : drapeau SEARCH_ABORTED, abort une
+  seule fois par l'appelant (doPaste -> false).
+- Lake : 2 chemins ABORT appelaient notifyGenerationFinished -> lac gravé
+  « déjà apparu » sans bloc posé (intirable). -> notifyGenerationAborted.
+- Achievement/test : contexte écrasé au tirage par la demande suivante ->
+  voyage désormais dans PendingStructure (execute/startNextPending).
+- Everest : 2 abandons async silencieux gelaient GENERATION_BUSY 240 s ;
+  beginGeneration aborte aussi sur false de spawnCircus/Shipdead/Everest.
+- Livraison : livraison/fix-t228-struct5/ (3 fichiers + avant/ + NOTICE.md).
+- Non mesuré : comportement en jeu (pas de session serveur ici ; run/eula.txt
+  absent du zip -> [server-check] non lancé). Validation visuelle attendue.
+
+## 06/10 — T229 : dragon jamais posé en monde neuf (blocage silencieux + téléport ~1 km)
+
+- Reconstitution depuis les logs poussés sur main (21d44b1) : `/dlbtest dragon` à
+  (37,96,128), monde neuf. 2,5 s plus tard : `zones historiques épuisées … emprise
+  à 37,1045` puis SILENCE TOTAL jusqu'à la déconnexion (3 min). Aucune structure posée.
+- Cause A (blocage) : branche « prête » du secours ciblé — `cg/cf == null` renvoyait
+  null sans re-demande, sans compteur, sans saut (les 100 ticks / 8 sauts n'existaient
+  que dans la branche d'attente). Requête perdue ou trou entre mailles = boucle
+  silencieuse infinie. Fix : re-demande 20 ticks, WARN, saut/abandon à 100 ticks.
+- Cause B (téléport) : T185 consommait tout candidat non-FULL à vue ; en terrain non
+  visité RIEN n'est FULL -> tout sautait, seule issue = emprise générée ~1 km (et à
+  chaque structure). Fix : top-candidats demandés en tâche de fond + file différée
+  persistante (max 96, max 600 reprises, verdicts finaux identiques) — distance
+  normale restaurée, dérive T185 toujours impossible, terminaison garantie.
+- Cause C (invisibilité) : attentes x0,6/entière + chargement footprint en DebugLog
+  (désactivé) -> joueur aveugle. Fix : LOGGER.warn périodique borné.
+- mod.zip (deux entrées synchronisées) + overlay CI + livraison mis à jour.

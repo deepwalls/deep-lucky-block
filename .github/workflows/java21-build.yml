@@ -2,16 +2,17 @@ name: Java 21 build
 
 on:
   push:
-    branches: [arena/01a0da6a-deep-lucky-block, arena/01a0e366-deep-lucky-block]
+    branches: [arena/01a0da6a-deep-lucky-block, arena/01a0e366-deep-lucky-block, arena/7cdbe3b3-deep-lucky-block]
     paths:
       - '.github/workflows/java21-build.yml'
       - 'deep_lucky_block_mcreator.zip'
+      - 'mod.zip'
       - 'mod_project/src/**'
       - 'ci/**'
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: java21-build-${{ github.ref }}
@@ -20,7 +21,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - name: Install Java 21
@@ -33,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/mod-project"
-          unzip -q deep_lucky_block_mcreator.zip -d "$RUNNER_TEMP/mod-project"
+          unzip -q mod.zip -d "$RUNNER_TEMP/mod-project"
           cp -a mod_project/src/. "$RUNNER_TEMP/mod-project/src/"
           chmod +x "$RUNNER_TEMP/mod-project/gradlew"
           java -version
@@ -49,6 +50,11 @@ jobs:
           set -euo pipefail
           cd "$RUNNER_TEMP/mod-project"
           ./gradlew build --console=plain --max-workers=2 2>&1 | tee "$RUNNER_TEMP/java21-build.log"
+      - name: Structures5 optimization campaign (variants)
+        if: contains(github.event.head_commit.message, '[variants]')
+        env:
+          JAVA_TOOL_OPTIONS: '-Xmx2g -XX:ActiveProcessorCount=2'
+        run: python3 ci/variants_server.py
       - name: Verify structures in one dedicated server session
         if: contains(github.event.head_commit.message, '[server-check]')
         env:
@@ -69,6 +75,27 @@ jobs:
               text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
               print('::error title=Build diagnostics::' + text)
           PY
+      - name: Publish campaign results back to the repo
+        if: always() && contains(github.event.head_commit.message, '[variants]')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          DIR="ci/results/$(date -u +%Y%m%d-%H%M%S)-${GITHUB_RUN_ID:-local}"
+          mkdir -p "$DIR"
+          cp -f "$RUNNER_TEMP"/variant-*.log "$DIR"/ 2>/dev/null || true
+          cp -f "$RUNNER_TEMP/variants-summary.txt" "$DIR"/ 2>/dev/null || true
+          cp -f "$RUNNER_TEMP/server-summary.txt" "$DIR"/ 2>/dev/null || true
+          cp -f "$RUNNER_TEMP/server-check.log" "$DIR"/ 2>/dev/null || true
+          cp -rf ci/results-now "$DIR"/ 2>/dev/null || true
+          git config user.email "ci-result@deep-lucky-block.ci"
+          git config user.name "DLB CI results"
+          git add "$DIR"
+          git commit -m "CI-RESULTS ($GITHUB_RUN_ID) : campagne variantes + server-check" || exit 0
+          git fetch -q origin
+          git pull --rebase -q origin ${GITHUB_REF#refs/heads/} || true
+          git push -q origin HEAD:${GITHUB_REF#refs/heads/} || true
+          exit 0
       - name: Save build diagnostics
         if: always()
         uses: actions/upload-artifact@v4

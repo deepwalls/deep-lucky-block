@@ -1,4 +1,13 @@
-# Statut actuel — 26 septembre 2026
+# Statut actuel — 6 octobre 2026
+
+**T229 (dernier en date)** : dragon jamais posé en monde neuf — blocage silencieux
+du secours ciblé réparé (re-demande + saut/abandon honnête), candidats proches à
+nouveau éligibles via chargement tâche de fond + file différée bornée (fin du
+téléport ~1 km systématique), diagnostics d'attente rendus visibles. Compilation
+via CI uniquement ; validation en jeu à faire par l'utilisateur.
+Voir `livraison/fix-t228-struct5/NOTICE.md` et `JOURNAL_AUTONOME.md`.
+
+## 26 septembre 2026
 
 Sources **`79d3edd`**, compilation Java 21 et tests fonctionnels PASS.
 Dernière session serveur : **36209068656**, check **108311667567**.

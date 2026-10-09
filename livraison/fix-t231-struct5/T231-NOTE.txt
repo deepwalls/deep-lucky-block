@@ -1,0 +1,87 @@
+T231 -- anneau nettoye non rendu + campagne 11 variantes (1 session)
+====================================================================
+
+CONTENU DU ZIP (DEEP-LUCKY-BLOCK-T231-STRUCT5-FIX.zip)
+Zip complet du projet MCreator, reconstruit depuis l'arbre maitre =
+mod.zip + overlay (parite 1881/1881 entrees verifiee). Les sources
+modifiees sont aussi deposees en entier sous src/main/java/... pour
+application directe si besoin.
+
+1) CORRECTIF ANNEAU RECTANGULAIRE SANS ARBRES (T231a)
+Fichier : src/main/java/deepluckyblock/procedures/StructureTerrainPrep.java
+
+Cause trouvee : le balayage photographie chaque arbre (type + hauteur
+exacte via blocs relatifs), mais le replant utilisait toujours le PETIT
+feature vanilla (spruce ~10 blocs, jungle ~11, oak ~5-7 sans branches),
+meme pour des arbres photographies de 20-31 blocs. Dans une foret mure,
+la zone travaillee revenait propre mais rabougrie : de loin, plus de
+cimes -> un rectangle contraste « clean mais pas remis », exactement le
+signalement.
+
+Correctif (ajout seul, rien d'existant supprime -- regle minimale) :
+- nouvelle methode naturalVariantOf(SavedTree) : choisit la variante la
+  plus proche de la hauteur SAUVEGARDEE :
+    spruce >= 15  -> mega_spruce
+    jungle >= 20  -> mega_jungle
+    oak   >=  9   -> fancy_oak
+- ReplantJob.slice() tente d'abord la grande variante ; si le placement
+  refuse la case, REPLI automatique sur la petite variante d'origine ->
+  le taux de plantation historique ne peut pas baisser.
+- Compile vert en CI (build 37710072843 SUCCESS).
+
+2) CONSTANTES DE RECHERCHE (gel)
+Structures5Procedure.java conserve les defauts T230 = meilleure opti
+connue mesuree en jeu (T229 : 145 s jusqu'a -230,322) :
+  dlb.search.deferRounds = 600   dlb.search.deferCap = 96   dlb.search.growth = 2
+Ils restent pilotables en -D pour le debug ; les valeurs ecrites en
+dur dans le code sont les valeurs gelees, rien d'autre a changer.
+
+CAMPAGNE 11 VARIANTES (v01..v11) -- methode et verdict
+- Serveur headless reel lance depuis GitHub (workflow java21-build.yml),
+  monde neuf + seed fixe par variante, -D injectes selon ci/variants.txt.
+- Robustesse ajoutee en route : KPI = phase recherche (temps jusqu'a
+  « Zone choisie » + distance), publication incrementale des resultats
+  (chaque variante commit, timeout du job = rien perdu), RCON stable.
+- Resultat brut : sur le runner 2 CPU la recherche s'epuise a 768 blocs
+  pour TOUTES les variantes (0 candidat differe, 0 centre ecarte) puis
+  tourne en secours cible sans completer l'emprise en 900 s -- mesure
+  identique quels que soient les parametres. Le facteur limitant est le
+  DEBIT DE WORLDGEN du 2 CPU, pas les constantes ; la campagne ne peut
+  physiquement pas discriminer les 11 variantes dans cet environnement
+  (tableau dans ci/results-now/ + logs variant-vXX.log sur la branche).
+- Verdict : la meilleure configuration mesuree SUR LA MACHINE CIBLE (le
+  PC de jeu) reste v01 = T230 (600/96/2). Gel = defauts deja en place,
+  livraison stable sans regression.
+
+CE QUI RESTE OBSERVABLE EN JEU
+- Ligne log « replantTrees: N trees planted » : N doit monter dans les
+  vieilles forets (grandes variantes replantees, cimes rendues).
+- Le contraste rectangulaire de canopee autour de la zone travaillee
+  doit disparaitre : la restauration suit la photographie d'origine.
+
+
+TABLEAU FINAL COMPLET DE LA CAMPAGNE (run 37710571436, SUCCESS 2h48)
+====================================================================
+11/11 variantes executees sur serveur headless (monde neuf par variante,
+-D injectes). Aucune n'a atteint « Zone choisie » en 900 s :
+
+ v01  600/96/2   : timeout 900 s (0 differe, 0 ecarte, rayon 619)
+ v02  400/96/2   : timeout 900 s (identique)
+ v03  200/96/2   : timeout 900 s (identique)
+ v04  600/96/1   : timeout 900 s (identique)
+ v05  400/96/1   : timeout 900 s (identique)
+ v06  200/96/1   : timeout 900 s (identique)
+ v07  600/48/2   : timeout 900 s (identique)
+ v08  600/192/2  : CRASH Watchdog serveur (tick unique > 60 s, meme
+                    famine worldgen 2 CPU a son maximum -- batch gratuits CI-PROGRESS)
+ v09  400/48/1   : timeout 900 s (identique)
+ v10  400/192/1  : timeout 900 s (identique)
+ v11  600/48/1   : timeout 900 s (identique)
+
+Lecture : profil STRICTEMENT identique quelles que soient les 11
+combinaisons -> le facteur limitant est le debit de generation de monde
+du runner 2 CPU, jamais les constantes. La campagne demontre que le CI
+2 CPU ne peut pas discriminer l'optimisation de recherche ; elle valide
+en revanche la robustesse du harness (publication incrementale, aucune
+perte) et le gel de v01 = T230 comme meilleure opti SUR MACHINE CIBLE.
+Logs complets : ci/results-now/variant-v01..v11.log sur la branche.

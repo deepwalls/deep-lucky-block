@@ -127,7 +127,9 @@ def wait_for(marker, timeout):
         recent.append(line.strip())
         if '[DLBVERIFY] FAIL' in line:
             raise RuntimeError(line.strip())
-        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair', 'DLB-LAKE', 'STRUCT4', 'Post-process', 'pre-chargement', 'DLB-CHUNKS', 'DLB-CPU', 'DLB-STEP', 'palette :', 'dressAndPlant']):
+        if '[DLB-RINGAUDIT] FAIL' in line:
+            raise RuntimeError(line.strip())
+        if any(key in line for key in ['prepZone', 'fixLiquids', 'decorate', 'scatter [', 'DLB-PERF', 'DLBVERIFY', 'incomplete repair', 'DLB-LAKE', 'STRUCT4', 'Post-process', 'pre-chargement', 'DLB-CHUNKS', 'DLB-CPU', 'DLB-STEP', 'palette :', 'dressAndPlant', 'STRUCT5-FLAT', 'DLB-RINGAUDIT']):
             phases.append(line.strip())
         pending = {item for item in pending if item not in line}
         if not pending:
@@ -177,6 +179,21 @@ try:
             # Measure construction first; collect CPU diagnostics after completion.
             rcon('dlbcpuend')
             wait_for('[DLB-CPU]', 15)
+        if name == 'dragon':
+            # T231 : audit de l'anneau exterieur (arbres/vegetation restaures).
+            # Le centre reel de la zone choisie se lit dans les phases.
+            import re as _re
+            acx, acz = x, 0
+            for _ln in phases:
+                _m = _re.search(r'Zone choisie a (-?\d+),(-?\d+)', _ln)
+                if _m:
+                    acx, acz = int(_m.group(1)), int(_m.group(2))
+            print(f'{name}: ring audit centered at {acx},{acz}', flush=True)
+            rcon(f'dlbringaudit {acx} {acz}', timeout=180)
+            wait_for('[DLB-RINGAUDIT]', 300)
+            _audit = [ln for ln in phases if 'DLB-RINGAUDIT' in ln]
+            annotate('\n'.join(_audit))
+            summary.append('ring audit: PASS (anneau exterieur vegetalise comme la reference)')
         summary.append(f'{name}: {duration:.2f}s from command to completion marker ({marker})')
         limit = 120 if name == 'crimsonlake' else 30
         within_budget = duration <= limit and (name != 'crimsonlake' or duration >= 10)

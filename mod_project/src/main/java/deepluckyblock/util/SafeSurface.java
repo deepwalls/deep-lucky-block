@@ -309,11 +309,24 @@ public final class SafeSurface {
     // Only that thread-safe request API runs here; all chunk reads and callbacks return
     // to the server thread. One daemon dispatches requests; no thread per chunk.
     private static final java.util.concurrent.Executor CHUNK_REQUESTS =
-            java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+            java.util.concurrent.Executors.newFixedThreadPool(
+                    Math.max(1, propInt("dlb.chunks.workers", 4)), r -> {
                 Thread thread = new Thread(r, "DLB-Chunk-Requests");
                 thread.setDaemon(true);
                 return thread;
             });
+    // T231 : borne dure sur la file PENDING. En session serveur CI (2 CPU,
+    // monde neuf), les re-demandes periodiques faisaient monter la file a
+    // ~125 000 entrees : aucune zone n'atteignait FULL a temps, les secours
+    // expiraient en chaine. La borne laisse le comportement inchangé tant que
+    // l'ordonnancement tient ; si ELLE est pleine, l'appelant retentera au
+    // prochain tour comme pour tout chunk pas encore pret.
+    private static final int PENDING_CAP = Math.max(256, propInt("dlb.chunks.pendingCap", 2048));
+
+    private static int propInt(String key, int def) {
+        try { return Integer.parseInt(System.getProperty(key, Integer.toString(def))); }
+        catch (NumberFormatException bad) { return def; }
+    }
 
     private static final net.minecraft.server.level.TicketType<Long> ASYNC_TICKET =
             net.minecraft.server.level.TicketType.create("dlb_async_request", Long::compare, 300);
@@ -350,6 +363,8 @@ public final class SafeSurface {
         long k = chunkKey(cx, cz);
         if (READY.contains(k) && level.getChunkSource().getChunkNow(cx, cz) != null) return;
         READY.remove(k);
+        if (PENDING.contains(k)) return;
+        if (PENDING.size() >= PENDING_CAP) return;   // T231 : debit borne du fond
         if (!PENDING.add(k)) return;
         requestAsync(level, cx, cz, k, () -> {});
     }
@@ -472,6 +487,89 @@ public final class SafeSurface {
             }
         } catch (Throwable ignored) { }
         return Integer.MIN_VALUE;
+    }
+
+    /**
+     * T80 : vrai si la colonne x,z a une SURFACE LIQUIDE (eau ou lave en tete de
+     * colonne ; glace, neige et cimes d'arbres traitees comme dans surfaceScanEx).
+     *
+     * <p>POURQUOI : les heightmaps MOTION_BLOCKING_* TRAVERSENT l'eau et designent
+     * le FOND. Mesuree par heightmap, une mer est donc « plate, seche et basse » :
+     * c'est la zone la moins pentue du monde, et les replis de recherche de zone
+     * plate (pente minimale, « moins pentu », hors-chunk, eloinement max) y
+     * ancraient les structures -- la preparation de terrain vidait alors l'eau de
+     * la zone et le fond devenait le sol (structure spawnee au centre d'un ocean).
+     * Ce test lit la REALITE BLOC PAR BLOC via {@link #surfaceScanEx}, jamais la
+     * heightmap. Chunk absent = inconnu : la colonne n'ecarte pas le candidat (les
+     * verifications de zone en amont exigent deja des chunks presents).</p>
+     */
+    public static boolean columnWet(ServerLevel level, int x, int z) {
+        ChunkAccess c = chunkFor(level, x >> 4, z >> 4);
+        if (c == null) return false;
+        boolean[] wetCell = new boolean[1];
+        int y = surfaceScanEx(c, level, x, z, wetCell);
+        return y != Integer.MIN_VALUE && wetCell[0];
+    }
+
+    /** T83 (Y0) : largeur de la bande hors-emprise inspectee autour de la boite. */
+    public static final int Y0_BAND = 16;
+    /** T83 (Y0) : pas d'echantillonnage de la bande (2 = une colonne sur deux). */
+    public static final int Y0_STEP = 2;
+
+    /**
+     * T83 (Y0) : plus haut niveau de LIQUIDE (eau ou lave) vu STRICTEMENT A
+     * L'EXTERIEUR de la boîte [minX..maxX] x [minZ..maxZ], dans une bande de
+     * {@code band} blocs sur les quatre côtes. Sert au critère mission
+     * « plateforme >= eau extérieure + 1 » : si la plateforme choisie n'est
+     * pas strictement au-dessus de ce niveau, un plan d'eau voisin déborde
+     * sur l'emprise (mer, lac, riviere, mare, chute).
+     *
+     * <p>Lecture bloc par bloc via {@link #surfaceScanEx} (la heightmap est
+     * exclue : elle déclare sec le fond des mers). « Liquide » = colonne
+     * dont la SURFACE est un fluide, exactement comme {@link #columnWet}
+     * (T80). Une colonne de chunk absent est IGNOREE (convention T80 :
+     * inconnu != faute ; les appelants ont deja exige la zone en amont).</p>
+     *
+     * @return le plus haut Y de surface liquide trouvé, ou
+     *         {@link Integer#MIN_VALUE} si la bande est sèche partout
+     */
+    public static int maxWaterLevelOutside(ServerLevel level, int minX, int minZ,
+                                           int maxX, int maxZ, int band, int step) {
+        if (band < 1) return Integer.MIN_VALUE;
+        if (step < 1) step = 1;
+        int found = Integer.MIN_VALUE;
+        // Bandes NORD / SUD (coins compris).
+        for (int x = minX - band; x <= maxX + band; x += step) {
+            for (int z = minZ - band; z < minZ; z += step) {
+                int y = waterSurfaceY(level, x, z);
+                if (y > found) found = y;
+            }
+            for (int z = maxZ + 1; z <= maxZ + band; z += step) {
+                int y = waterSurfaceY(level, x, z);
+                if (y > found) found = y;
+            }
+        }
+        // Bandes OUEST / EST (coins deja couverts ci-dessus).
+        for (int z = minZ; z <= maxZ; z += step) {
+            for (int x = minX - band; x < minX; x += step) {
+                int y = waterSurfaceY(level, x, z);
+                if (y > found) found = y;
+            }
+            for (int x = maxX + 1; x <= maxX + band; x += step) {
+                int y = waterSurfaceY(level, x, z);
+                if (y > found) found = y;
+            }
+        }
+        return found;
+    }
+
+    /** T83 : Y de la surface liquide de la colonne, ou {@link Integer#MIN_VALUE}. */
+    private static int waterSurfaceY(ServerLevel level, int x, int z) {
+        ChunkAccess c = chunkFor(level, x >> 4, z >> 4);
+        if (c == null) return Integer.MIN_VALUE;
+        boolean[] wetCell = new boolean[1];
+        int y = surfaceScanEx(c, level, x, z, wetCell);
+        return (y != Integer.MIN_VALUE && wetCell[0]) ? y : Integer.MIN_VALUE;
     }
 
     /** Lecture de hauteur sur un chunk DEJA obtenu (aucune recherche, aucune attente). */
@@ -705,14 +803,35 @@ public final class SafeSurface {
      * l'emprise est insensible a ces accidents isoles.
      */
     public static int[] groundStats(ServerLevel level, int x0, int z0, int x1, int z1, int step, int fromY, int fallbackY) {
+        return groundStats(level, x0, z0, x1, z1, step, fromY, fallbackY, false);
+    }
+
+    /**
+     * Variante T104 de {@link #groundStats} : avec {@code excludeWater=true},
+     * les colonnes dont la surface mesuree est de l'EAU sont exclues de la
+     * mediane. Cas reel (citadel, run 29/09 21:44) : repli pente-minimale sur
+     * une falaise dominant un ocean, 357 colonnes echantillonnees dont une
+     * partie en pleine eau -> mediane=64 alors que la terre culmine a ~110+
+     * ; l'ancre corrigee tombait SOUS le plafond Y0 (eau exterieure 84) et la
+     * garde T83 abandonnait la generation : le joueur attendait sans jamais
+     * rien voir apparaitre. La mediane de TERRE donne une ancre honnete.
+     * Si TOUTES les colonnes sont de l'eau, repli historique (n==0, fallback).
+     */
+    public static int[] groundStats(ServerLevel level, int x0, int z0, int x1, int z1, int step, int fromY,
+                                    int fallbackY, boolean excludeWater) {
         int minX = Math.min(x0, x1), maxX = Math.max(x0, x1), minZ = Math.min(z0, z1), maxZ = Math.max(z0, z1);
         int st = Math.max(1, step);
         int[] tmp = new int[8192];
         int n = 0;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int x = minX; x <= maxX && n < tmp.length; x += st) {
             for (int z = minZ; z <= maxZ && n < tmp.length; z += st) {
                 int y = groundY(level, x, z, fromY);   // T74 : borne de depart = sol attendu
-                if (y != fromY) tmp[n++] = y;
+                if (y == fromY) continue;
+                if (excludeWater && y > level.getMinBuildHeight()
+                        && level.getBlockState(pos.set(x, y, z)).getFluidState()
+                                .is(net.minecraft.tags.FluidTags.WATER)) continue;
+                tmp[n++] = y;
             }
         }
         if (n == 0) return new int[]{fallbackY, fallbackY, fallbackY, 0};

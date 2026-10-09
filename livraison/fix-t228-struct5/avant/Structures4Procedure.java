@@ -1137,14 +1137,7 @@ public class Structures4Procedure {
             BlockPos targetXZ;
             if (EVEREST_DISTANCE > 0) {
                 targetXZ = findFarthestLoadedPos(level, origin, EVEREST_DISTANCE, MIN_CHUNKS_EVEREST);
-                if (targetXZ == null) {
-                    if (nearestPlayer != null) nearestPlayer.sendSystemMessage(Component.literal("§c❌ Everest annulé : pas assez de chunks chargés"));
-                    // T228 : cet abandon ne signalait RIEN -- GENERATION_BUSY restait
-                    // verrouille jusqu'au contournement de 240 s et la reservation
-                    // Everest n'etait jamais liberee. Abandon explicite.
-                    Structures5Procedure.notifyGenerationAborted(level);
-                    return;
-                }
+                if (targetXZ == null) { if (nearestPlayer != null) nearestPlayer.sendSystemMessage(Component.literal("§c❌ Everest annulé : pas assez de chunks chargés")); return; }
             } else targetXZ = origin;
             // T177 : l'Everest fait jusqu'à 278 blocs de côté; protéger seulement
             // son ancre pouvait donc laisser son volume engloutir le joueur. On
@@ -1176,12 +1169,7 @@ public class Structures4Procedure {
             List<StructureTemplate.StructureBlockInfo> rawBlocks =
                     deepluckyblock.util.StructureTemplateCache.compactBlocks(EVEREST_NBT);
             if (rawBlocks == null) rawBlocks = extractBlocks(template);
-            if (rawBlocks.isEmpty()) {
-                LOGGER.error("[STRUCT4-EVEREST] Aucun bloc extrait");
-                // T228 : meme correctif -- abandon silencieux qui gelait la file.
-                Structures5Procedure.notifyGenerationAborted(level);
-                return;
-            }
+            if (rawBlocks.isEmpty()) { LOGGER.error("[STRUCT4-EVEREST] Aucun bloc extrait"); return; }
             // Filtrer d'abord, PUIS minRelY sur la liste filtree (hors verre/air).
             List<StructureTemplate.StructureBlockInfo> filtered = new ArrayList<>(rawBlocks.size());
             int solidCount = 0, airSkipped = 0, laggySkipped = 0, glassSkipped = 0;
