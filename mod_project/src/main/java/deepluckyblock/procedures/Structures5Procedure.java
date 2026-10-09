@@ -1933,9 +1933,21 @@ public class Structures5Procedure {
         }
         if (SEARCH_EXTRA_RADIUS >= 512 && SEARCH_BEST_LOADED_DRY != null) {
             BlockPos fallback = SEARCH_BEST_LOADED_DRY;
-            LOGGER.warn("[STRUCT5-FLAT] secours local chargé choisi à {},{} : relief brut {}, eau=0, génération distante évitée -- T190",
+            // T232-F3 : la porte STRUCT5-GROUND rejette ce candidat (relief x0,6 > max)
+            // puis la recherche le RE-PROPOSE ici a chaque reprise : la boucle
+            // "secours local charge choisi" -> "ecarte avant terrain" tournait
+            // sans fin (obsee en labo t07/t0x). Si la porte l'a deja banni, on ne
+            // le propose plus : on oublie ce "meilleur" terrain pour laisser la
+            // place a un autre, et on continue vers le secours lointain borne.
+            if (!REJECTED_RUGGED_CENTERS.contains(BlockPos.asLong(fallback.getX(), 0, fallback.getZ()))) {
+                LOGGER.warn("[STRUCT5-FLAT] secours local chargé choisi à {},{} : relief brut {}, eau=0, génération distante évitée -- T190",
+                        fallback.getX(), fallback.getZ(), SEARCH_BEST_LOADED_DRY_RELIEF);
+                return fallback;
+            }
+            LOGGER.warn("[STRUCT5-FLAT] secours local {},{} deja banni par la porte relief (relief brut {}) -- on l'oublie et on passe au secours lointain (T232-F3)",
                     fallback.getX(), fallback.getZ(), SEARCH_BEST_LOADED_DRY_RELIEF);
-            return fallback;
+            SEARCH_BEST_LOADED_DRY = null;
+            SEARCH_BEST_LOADED_DRY_RELIEF = Integer.MAX_VALUE;
         }
         if (SEARCH_EXTRA_RADIUS >= 512) {
             double fx = Math.abs(lx) + Math.abs(lz) < 0.01 ? 1.0 : lx;
