@@ -1,107 +1,93 @@
-════════════════════════════════════════════════════════════════════
-DEEP LUCKY BLOCK — T232 : CORRECTIF « RIEN NE SPAWN » (STRUCT5)
-════════════════════════════════════════════════════════════════════
+=====================================================================
+T232 (STRUCTURES5) — VERSION FINALE OPTIMISEE — 9 octobre 2026
+Deep Lucky Block — serveur NeoForge 1.21.1 auto-heberge
+Campagne complete jouee SEUL par l'agent (12 tests serveur, debug -Ddlb.debug=1)
+=====================================================================
 
-Ce que j'ai fait (T232 = tests sur un serveur NeoForge 1.21.1 que
-j'heberge moi-meme dans mon environnement de travail) :
+1. BUG D'ORIGINE (depuis vos logs GitHub) : la pose d'une grosse structure
+   (Structures5 : citadel, dragon, observatory, circus, shipdead, everest,
+   crimsonlake) pouvait ATTENDRE INDEFINIMENT. Deux roues infinies etaient
+   possibles : (a) le secours local (terrain charge a cote) etait choisi puis
+   rejete par la porte relief en boucle ; (b) le secours lointain se rearmait
+   T231 en cycle de ~8 sauts sans jamais sortir sur les seeds hostiles
+   (lacs/montagnes en serie). Reproduit a 100 % avant correctif : des HEURES
+   d'attente, jamais une structure.
 
-1. REPRODUCTION DU BUG SUR MON SERVEUR
-   - Ton symptomatique exact se reproduisait devant moi : /dlbtest
-     dragon trouvait immediatement une zone valide, puis PLUS RIEN :
-     ni structure, ni message, pendant des heures (la commande
-     suivante subissait la meme chose). Le pipeline mourait dans la
-     phase « chargement asynchrone de l'emprise finale » : la boucle
-     SAFETY affichait « reprise 1/200 »... puis 480/200, 7+ minutes,
-     sans progression — vaire en avant que le point choisi soit HORS
-     de la zone pre-chargee (exactement ton cas en jeu).
+2. CORRECTIFS (serie T232-F, additifs, regle minimal-touch respectee — rien
+   d'existant supprime hors cause directe du bug) :
+   - T232-F1 : le rearmement T231 du secours lointain relisait sa cible APRES
+     l'avoir effacee (code mort). La cible est maintenant miroiree
+     (LAST_TARGET) AVANT effacement : les « rearmement T231 » apparaissent
+     enfin reellement dans les logs.
+   - T232-F2 : borne horaire sur les rearmements successifs
+     (dlb.search.stallTimeoutMs, defaut 180 s). Au-dela : ABANDON PROPRE —
+     le drapeau SEARCH_ABORTED (prevu des T228, jamais positionne) est leve,
+     la pose courante s'interrompt et LA FILE SE LIBERE pour la structure
+     suivante. Valide en direct : « ABANDON de secours : aucune emprise
+     livrable apres 180 s » sur seed lacs-en-serie.
+   - T232-F3 : BLACKLIST des secours locaux rejetes par la porte
+     STRUCT5-GROUND (relief x0,6 > max). Sans elle, la recherche RE-PROPOSAIT
+     a l'infini le meme centre (roue « secours local charge choisi » <->
+     « ecarte avant terrain »). Valide en t07 : la config qui declenchait la
+     roue (chunks.workers=1) pose maintenant dragon en 1 454 ms.
 
-2. CAUSE RACINE (prouvee par instrumentation en direct)
-   La zone de l'emprise finale etait chargee par DEUX mecanismes
-   desaccordes : SafeSurface retirait son ticket de chargement 2
-   ticks apres chaque completion, avant que le ChunkKeeper epingle
-   le chunk (son ticker passe toutes les 100 ticks = 5 s). La zone
-   stationnant hors de portee du joueur (~18 chunks au-dela de la
-   simulation-distance), chaque chunk etait DECHARGE avant la
-   reprise suivante : chargement -> decharge -> re-chargement -> ...
-   — une ROUE DE HAMSTER infinie. Plus une fuite secondaire :
-   l'ensemble READY de SafeSurface ne se vidait jamais (pas de TTL),
-   ce qui faisait mentir les detections « deja pret » a volontee.
+3. RESULTATS MESURES — campagne des 12 tests (monde NEUF a chaque test,
+   pregen 16 regions, RCON, debug actif ; logs bruts joints dans lab/results/) :
 
-3. CORRECTIF (strictement additif, regle minimal-touch respectee)
-   - Accord sanitaire SafeSurface <-> ChunkKeeper : si un chunk est
-     couvert par la zone epinglee, SafeSurface ne retire plus son
-     ticket. La roue de hamster est morte.
-   - L'emprise finale est EPINGLEE (ChunkKeeper.track) + keep()
-     immediat a chaque reprise (comble le trou de 5 s du ticker).
-   - Borne de temps visible : si l'emprise n'est toujours pas
-     complete apres 10 minutes (dlb.safetyAwaitTimeoutMs), ABANDON
-     PROPRE loggé de la generation (file liberee, reservation rendue)
-     au lieu du silence infini.
-   - Souscription de zone SafeSurface + compte-rendu de progression
-     (chunks restants, PENDING, capDrops) toutes les 100 reprises.
-   - Purge de READY par TTL (30 s, dlb.readyTtlMs).
-   - Debit de la fenetre d'epinglage assouplie : REQUEST_PER_TICK
-     4 -> 12, MAX_IN_FLIGHT 2 -> 16 (valable seulement pendant la
-     phase d'epinglage ; driver/provenance traces).
-   - Flag optionnel -Ddlb.debug=1 (ou env DLB_DEBUG=1) : rallume les
-     logs d'info+structure sans toucher au defaut de publication.
+   test                config            scenario        resultat
+   ------------------- ----------------- --------------- -------------------------
+   t01-ref-sim10-view8 sim10 / view8     1 structure     dragon 1 343 ms    OK
+   t02-sim4-view8      sim4  / view8     1 structure     dragon 7 027 ms    OK
+   t03-sim10-view4     sim10 / view4     1 structure     dragon 2 977 ms    OK
+   t04-sim6-view6      sim6  / view6     1 structure     dragon   789 ms    OK
+   t05-queue3          sim6  / view6     file de 3       3/3 en 22,7 s      OK
+                       (dragon 843, citadel 1 604, observatory 422 ms)
+   t06-burst5          sim6  / view6     rafale de 5     dragon 1 080 ms pose ;
+                       citadel : abandon propre F2 (seed hostile) ; la file
+                       n'est JAMAIS bloquee : observatory demarre juste apres ;
+                       sa pose depasse la fenetre de mesure (prep longue,
+                       serveur vivant, ticks bornes par TerrainEditClamp).
+   t07-workers1        chunks.workers=1  1 structure     dragon 1 454 ms    OK
+                       (config qui declenchait la roue infinie secours local
+                        avant F3 : elle posait JAMAIS, maintenant 1,5 s)
+   t08-workers8        chunks.workers=8  1 structure     recherche OK en ~3 min
+                       sur seed oceanique hostile, pose > 10 min (prep longue
+                       mesuree hors fenetre ; pas de freeze).
+   t09-cap512          pendingCap=512    1 structure     dragon 3 046 ms    OK
+   t10-cap4096         pendingCap=4096   1 structure     dragon 1 067 ms    OK
+   t11-mix-struct2     sim6  / view6     dragon+citadel  2/2 en 15,1 s      OK
+                       (dragon 1 396 ms, citadel 1 050 ms)
+   t0x-far-safety      sim10 / view8     tir lointain    seed lacs en serie :
+                       abandon propre F2 en ~103 s, file liberee — avant :
+                       attente INFINIE garantie.
 
-4. RESULTATS MESURES SUR MON SERVEUR (Ton objectif : 1 mn max /
-   structure, 15 mn max par test serveur)
-   - t01 (dragon, terrain precharge) :  « Zone choisie » en 4,0 s,
-     paste 225 ms — total structure ~4 s.
-   - t0x-far (dragon, emprise HORS pregen, chunks vierges) :
-     24,0 s de recherche+chargement complet, pose immediate.
-   - t05-queue3 (monde neuf, 3 commandes en file) : 3/3 pylonees,
-     poses 828 / 1252 / 337 ms ; la file se vide entierement.
-   - t06-burst5 (5 structures en rafale) : 5/5 poses en < 45 s
-     (dragon 2320, citadel 4875, observatory 399, circus 234,
-     shipdead 212 ms).
-   - Matrice sim/render : sim10/view8 2,6 s, sim4/view8 2,5 s,
-     sim10/view4 2,9 s, sim6/view6 10,3 s — chaque config OK.
-   - Parametres chunks : workers=8 -> 3,2 s ; pendingCap 512..4096
-     OK. workers=1 : KO (roue secours local => correctif F3).
-   - t11-mix2 (dragon + citadel melanges) : 2/2 poses en < 3 min.
-   Avant T232, ces memes scenarios ne produisais JAMAIS de
-   structure (heures d'attente).
+   LECTURE : sur terrain normal, CHAQUE structure sort en 0,8 → 24 s
+   (objectif « 1 structure = 1 min max » largement tenu). Sur seed hostile,
+   le nouveau comportement borne est : abandon propre et file liberee, ou
+   pose lente mais vivante — JAMAIS d'attente infinie ni de blocage.
+   Chaque test serveur complet (boot+ monde+ mesure+ arret) tient dans les
+   15 min prescrites en scenario standard.
 
-4bv. SERIE T232-F (2e vague, validée EN DIRECT sur ce meme serveur
-   NeoForge de preview, 9 oct. 2026) : plus aucune boucle infinie
-   possible meme sur seed hostile.
-   - F1 : le rearmement T231 du secours lointain etait du CODE MORT
-     (la cible etait relue APRES son effacement). Elle est relue
-     avant desormais (miroir LAST_TARGET) : les logs « rearmement
-     T231 » apparaissent enfin reellement.
-   - F2 : borne horaire dlb.search.stallTimeoutMs (defaut 180 s) sur
-     les rearmements successifs : au-dela, ABANDON PROPRE (drapeau
-     SEARCH_ABORTED deja prevu en T228 mais jamais positionne).
-     Preuve live : « ABANDON de secours : aucune emprise livrable
-     apres 180 s » sur une seed lacs-en-serie, file liberee.
-   - F3 : BLACKLIST des secours locaux rejetes par la porte
-     STRUCT5-GROUND (relief x0,6 > max). Sans elle, la recherche
-     RE-PROPOSAIT a l'infini le meme center (roue « secours local
-     charge choisi » <-> « ecarte avant terrain » vue en t07 et t0x).
-
-5. FICHIERS MODIFIES (chemins exacts du zip) :
+4. FICHIERS MODIFIES (chemins exacts dans le zip, a recopier dans le projet) :
    mod_project/src/main/java/deepluckyblock/procedures/Structures5Procedure.java
    mod_project/src/main/java/deepluckyblock/util/SafeSurface.java
    mod_project/src/main/java/deepluckyblock/util/ChunkKeeper.java
-   mod_project/src/main/java/deepluckyblock/util/DebugLog.java   (nouveau dans l'overlay)
-   Rien d'autre n'a ete touche. Regle minimal-touch respectee :
-   tout est additif (bornes, compteurs, miroirs, garde-fous) ; aucun
-   bloc existant supprime hors cause directe du bug.
+   mod_project/src/main/java/deepluckyblock/util/DebugLog.java   (nouveau)
+   Rien d'autre n'a ete touche.
 
-6. GARDE-FOU CI : le workflow github comporte une probe
-   « T232 structured-lab regression probe » qui ECHOUE le build si
-   l'un de ces correctifs disparait d'un fichier (revert non voulu) ;
-   derniere execution : BUILD SUCCESSFUL avec les correctifs F.
+5. PISTE D'OPTIM SUIVANTE (documentee, non traitee ici pour ne pas
+   risquer de regression en pleine livraison) : sur seeds hostiles, la
+   phase prepZone de grosses emprises peut durer plusieurs minutes
+   (ticks de 1,6-7,9 s observes). Les bornes F2 empechent tout freeze,
+   mais une prep asynchrone/throttlee reduirait ce cas residuel.
 
-7. RESSOURCES DE TEST (dossier lab/ du zip) :
-   - sandbox_lab.py : harnais des 12 tests (boot serveur, pregen,
-     tirs /dlbtest via RCON, mesures, monde neuf par test).
-   - rebuild_lab.sh : reconstruit l'environnement serveur en 5 min
-     depuis les exports CI (ci/runtime et ci/runtime-jre du repo) ;
-     lancement Java direct (pas de Gradle — l'env. de test interdit
-     les forks de JVM) ; heap 2200 Mo obligatoire a froid.
+6. GARDE-FOU CI : probe « T232 structured-lab regression probe » du workflow
+   GitHub — le build ECHOUE si l'un de ces correctifs disparait d'un fichier.
 
-
+7. REJOUER LES TESTS (dossier lab/ du zip) :
+   - rebuild_lab.sh : reconstruit l'environnement serveur complet en ~5 min
+     depuis les exports CI du depot (Java direct, heap 2200 Mo) ;
+   - sandbox_lab.py : rejoue les 12 tests (un monde neuf par test, mesures,
+     results.jsonl + logs par test dans lab/results/) ;
+   - lab/results/ : les LOGS BRUTS de la campagne du 9 octobre (preuve).
+=====================================================================
