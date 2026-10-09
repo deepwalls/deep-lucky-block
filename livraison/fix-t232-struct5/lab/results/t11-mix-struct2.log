@@ -1,0 +1,677 @@
+[09Oct2026 22:15:34.471] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [cpw.mods.bootstraplauncher.BootstrapLauncher, --launchTarget, forgeserverdev, --gameDir, ., --fml.fmlVersion, 4.0.41, --fml.mcVersion, 1.21.1, --fml.neoForgeVersion, 21.1.190, --fml.neoFormVersion, 20240808.144430, nogui]
+[09Oct2026 22:15:34.475] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: JVM identified as Eclipse Adoptium OpenJDK 64-Bit Server VM 21.0.12.1+1-LTS
+[09Oct2026 22:15:34.480] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 11.0.5+main.901c6ea8 starting: java version 21.0.12.1 by Eclipse Adoptium; OS Linux arch amd64 version 6.1.158+
+[09Oct2026 22:15:34.596] [main/INFO] [net.neoforged.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgeserverdev
+[09Oct2026 22:15:34.667] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=union:/home/user/dlb-lab/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/2af2f021d8e02a0220dc27a7a72b4666d66d44ca/sponge-mixin-0.15.2+mixin.0.8.7.jar%2394!/ Service=ModLauncher Env=SERVER
+[09Oct2026 22:15:34.917] [main/INFO] [net.neoforged.fml.loading.moddiscovery.locators.JarInJarDependencyLocator/]: Found 2 dependencies adding them to mods collection
+[09Oct2026 22:15:34.919] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/]: 
+     Mod List:
+		Name Version (Mod Id)
+
+		Deep Lucky Block 1.0 (deep_lucky_block)
+		Minecraft 1.21.1 (minecraft)
+		NeoForge 21.1.190 (neoforge)
+[09Oct2026 22:15:35.566] [main/INFO] [mixin/]: Compatibility level set to JAVA_21
+[09Oct2026 22:15:35.587] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeserverdev' with arguments [--gameDir, ., cpw.mods.bootstraplauncher.BootstrapLauncher, nogui]
+[09Oct2026 22:15:35.662] [main/WARN] [mixin/]: Reference map 'deep_lucky_block.refmap.json' for deep_lucky_block.mixins.json could not be read. If this is a development environment you can ignore this message
+[09Oct2026 22:15:36.435] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.4.1).
+[09Oct2026 22:15:43.412] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[09Oct2026 22:15:43.415] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[09Oct2026 22:15:43.418] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[09Oct2026 22:15:43.419] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[09Oct2026 22:15:43.420] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[09Oct2026 22:15:43.491] [modloading-worker-0/INFO] [net.neoforged.neoforge.common.NeoForgeMod/NEOFORGE-MOD]: NeoForge mod loading, version 21.1.190, for MC 1.21.1
+[09Oct2026 22:15:43.537] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] ═══════════════════════════════════════════════════
+[09Oct2026 22:15:43.538] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] Deep Lucky Block v8 (2026-09-05) charge
+[09Oct2026 22:15:43.538] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] - armures : material avec Layer (rendu custom NeoForge)
+[09Oct2026 22:15:43.538] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] - coffres : NeoForgeData + BLOCK_ENTITY_DATA + transfert a la pose
+[09Oct2026 22:15:43.538] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] - traces : [SLB-V8] POSE / CASSE / COFFRE dans ce log
+[09Oct2026 22:15:43.538] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] ═══════════════════════════════════════════════════
+[09Oct2026 22:15:43.539] [modloading-worker-0/INFO] [deepluckyblock.compat.DeepMixinBootstrap/]: [DeepMixinBootstrap] deep_lucky_block.mixins.json est embarqué (union), non modifiable.
+[09Oct2026 22:15:43.902] [modloading-worker-0/INFO] [deepluckyblock.util.StructureTemplateCache/]: [DLB-T156] lancement du jeu : 8/8 NBT lourds mis en file AVANT toute ouverture de map
+[09Oct2026 22:15:44.070] [main/INFO] [com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService/]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD]
+[09Oct2026 22:15:44.151] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/home/user/dlb-lab/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar%23124!/assets/.mcassetsroot' uses unexpected schema
+[09Oct2026 22:15:44.151] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/home/user/dlb-lab/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar%23124!/data/.mcassetsroot' uses unexpected schema
+[09Oct2026 22:15:44.490] [Yggdrasil Key Fetcher/ERROR] [com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo/]: Failed to request yggdrasil public key
+com.mojang.authlib.exceptions.MinecraftClientException: Failed to read from https://api.minecraftservices.com/publickeys due to Remote host terminated the handshake
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:108) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:57) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo.fetch(YggdrasilServicesKeyInfo.java:114) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo$1.run(YggdrasilServicesKeyInfo.java:89) ~[authlib-6.0.54.jar%2377!/:?]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572) ~[?:?]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317) ~[?:?]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+Caused by: javax.net.ssl.SSLHandshakeException: Remote host terminated the handshake
+	at java.base/sun.security.ssl.SSLSocketImpl.handleEOF(SSLSocketImpl.java:1715) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(SSLSocketImpl.java:1513) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.readHandshakeRecord(SSLSocketImpl.java:1420) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:455) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:426) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsClient.afterConnect(HttpsClient.java:593) ~[?:?]
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:190) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1707) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1632) ~[?:?]
+	at java.base/java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:531) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getResponseCode(HttpsURLConnectionImpl.java:307) ~[?:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:84) ~[authlib-6.0.54.jar%2377!/:?]
+	... 9 more
+Caused by: java.io.EOFException: SSL peer shut down incorrectly
+	at java.base/sun.security.ssl.SSLSocketInputRecord.read(SSLSocketInputRecord.java:494) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketInputRecord.readHeader(SSLSocketInputRecord.java:483) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketInputRecord.decode(SSLSocketInputRecord.java:160) ~[?:?]
+	at java.base/sun.security.ssl.SSLTransport.decode(SSLTransport.java:111) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(SSLSocketImpl.java:1505) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.readHandshakeRecord(SSLSocketImpl.java:1420) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:455) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:426) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsClient.afterConnect(HttpsClient.java:593) ~[?:?]
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:190) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1707) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1632) ~[?:?]
+	at java.base/java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:531) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getResponseCode(HttpsURLConnectionImpl.java:307) ~[?:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:84) ~[authlib-6.0.54.jar%2377!/:?]
+	... 9 more
+[09Oct2026 22:15:45.207] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'circus' : 730800 entree(s) au fichier -> 39084 bloc(s) a poser + 12 air interieur (691704 air exterieur JAMAIS materialise(s) = 94 %, lecture en flux 1198 ms, 80x105x87) -- T73
+[09Oct2026 22:15:45.219] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'circus' : positions lues X 0..79 Y 0..104 Z 0..86 (boite 80x105x87, 0 hors boite) -- T73b
+[09Oct2026 22:15:45.219] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'circus' : ~131 Mo de memoires NBT evitees, et 691704 entree(s) en moins sur le chemin de pose -- T73
+[09Oct2026 22:15:45.219] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'circus' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 1317ms; prêt pour toutes les maps
+[09Oct2026 22:15:45.433] [main/INFO] [net.minecraft.server.Main/]: No existing world data, creating new world
+[09Oct2026 22:15:46.004] [Worker-Main-1/INFO] [deepluckyblock.DeepLuckyBlockMod/]: [DLBTEST] commande prete : /dlbtest -> citadel, observatory, dragon, circus, ship, everest, crimsonlake | structure <nom|id> | list | water <status|freeze|thaw> | probe <x> <z> | luckybreak [nombre] (permission tout le monde (0))
+[09Oct2026 22:15:46.659] [main/INFO] [net.minecraft.world.item.crafting.RecipeManager/]: Loaded 1320 recipes
+[09Oct2026 22:15:47.130] [main/INFO] [net.minecraft.advancements.AdvancementTree/]: Loaded 1450 advancements
+[09Oct2026 22:15:47.132] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'shipdead' : 1700763 entree(s) au fichier -> 71883 bloc(s) a poser + 179 air interieur (1628701 air exterieur JAMAIS materialise(s) = 95 %, lecture en flux 1839 ms, 113x87x173) -- T73
+[09Oct2026 22:15:47.135] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'shipdead' : positions lues X 0..112 Y 0..86 Z 0..172 (boite 113x87x173, 0 hors boite) -- T73b
+[09Oct2026 22:15:47.135] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'shipdead' : ~310 Mo de memoires NBT evitees, et 1628701 entree(s) en moins sur le chemin de pose -- T73
+[09Oct2026 22:15:47.135] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'shipdead' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 1916ms; prêt pour toutes les maps
+[09Oct2026 22:15:47.263] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'everest' : 52980 entree(s) au fichier -> 52980 bloc(s) a poser + 0 air interieur (0 air exterieur JAMAIS materialise(s) = 0 %, lecture en flux 101 ms, 174x123x278) -- T73
+[09Oct2026 22:15:47.263] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'everest' : positions lues X 0..173 Y 0..122 Z 0..277 (boite 174x123x278, 0 hors boite) -- T73b
+[09Oct2026 22:15:47.263] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'everest' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 128ms; prêt pour toutes les maps
+[09Oct2026 22:15:47.856] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Starting minecraft server version 1.21.1
+[09Oct2026 22:15:47.856] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Loading properties
+[09Oct2026 22:15:47.856] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Default game type: SURVIVAL
+[09Oct2026 22:15:47.856] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Generating keypair
+[09Oct2026 22:15:48.046] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Starting Minecraft server on *:25565
+[09Oct2026 22:15:48.133] [Server thread/INFO] [net.minecraft.server.network.ServerConnectionListener/]: Using epoll channel type
+[09Oct2026 22:15:48.215] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[09Oct2026 22:15:48.215] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: The server will make no attempt to authenticate usernames. Beware.
+[09Oct2026 22:15:48.215] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[09Oct2026 22:15:48.215] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: To change this, set "online-mode" to "true" in the server.properties file.
+[09Oct2026 22:15:48.285] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Preparing level "world"
+[09Oct2026 22:15:48.996] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'citadel' : 2114112 entree(s) au fichier -> 105276 bloc(s) a poser + 9329 air interieur (1999507 air exterieur JAMAIS materialise(s) = 94 %, lecture en flux 1697 ms, 104x242x84) -- T73
+[09Oct2026 22:15:48.997] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'citadel' : positions lues X 0..103 Y 0..241 Z 0..83 (boite 104x242x84, 0 hors boite) -- T73b
+[09Oct2026 22:15:48.997] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'citadel' : ~381 Mo de memoires NBT evitees, et 1999507 entree(s) en moins sur le chemin de pose -- T73
+[09Oct2026 22:15:48.997] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'citadel' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 1734ms; prêt pour toutes les maps
+[09Oct2026 22:15:49.201] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'observatory' : 267036 entree(s) au fichier -> 15450 bloc(s) a poser + 75 air interieur (251511 air exterieur JAMAIS materialise(s) = 94 %, lecture en flux 196 ms, 68x77x51) -- T73
+[09Oct2026 22:15:49.202] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'observatory' : positions lues X 0..67 Y 0..76 Z 0..50 (boite 68x77x51, 0 hors boite) -- T73b
+[09Oct2026 22:15:49.202] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'observatory' : ~47 Mo de memoires NBT evitees, et 251511 entree(s) en moins sur le chemin de pose -- T73
+[09Oct2026 22:15:49.202] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'observatory' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 205ms; prêt pour toutes les maps
+[09Oct2026 22:15:49.808] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'dragon' : 803505 entree(s) au fichier -> 75484 bloc(s) a poser + 392 air interieur (727629 air exterieur JAMAIS materialise(s) = 90 %, lecture en flux 574 ms, 69x137x85) -- T73
+[09Oct2026 22:15:49.816] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'dragon' : positions lues X 0..68 Y 0..136 Z 0..84 (boite 69x137x85, 0 hors boite) -- T73b
+[09Oct2026 22:15:49.816] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'dragon' : ~138 Mo de memoires NBT evitees, et 727629 entree(s) en moins sur le chemin de pose -- T73
+[09Oct2026 22:15:49.816] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'dragon' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 614ms; prêt pour toutes les maps
+[09Oct2026 22:15:54.277] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'crimsonlake' : 1366835 entree(s) -> 1359489 VRAI bloc(s) + 5 air interieur (7341 air exterieur ignore(s) = 0 %, ~1 Mo de memoire evites, template vanilla allege) -- T73
+[09Oct2026 22:15:54.285] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'crimsonlake' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 4469ms; prêt pour toutes les maps
+[09Oct2026 22:15:54.296] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'sand_hourglass' : 3825 entree(s) -> 838 VRAI bloc(s) + 123 air interieur (2864 air exterieur ignore(s) = 74 %, ~0 Mo de memoire evites, template vanilla allege) -- T73
+[09Oct2026 22:15:54.304] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'sand_hourglass' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 15ms; prêt pour toutes les maps
+[09Oct2026 22:16:00.104] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Preparing start region for dimension minecraft:overworld
+[09Oct2026 22:16:00.172] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[09Oct2026 22:16:00.801] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[09Oct2026 22:16:01.125] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[09Oct2026 22:16:01.615] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[09Oct2026 22:16:02.202] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[09Oct2026 22:16:02.687] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[09Oct2026 22:16:03.111] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[09Oct2026 22:16:03.629] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 22%
+[09Oct2026 22:16:04.207] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 26%
+[09Oct2026 22:16:04.623] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 26%
+[09Oct2026 22:16:05.109] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 26%
+[09Oct2026 22:16:05.611] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 34%
+[09Oct2026 22:16:06.202] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 34%
+[09Oct2026 22:16:06.768] [Server thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Time elapsed: 6662 ms
+[09Oct2026 22:16:06.769] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (18.532s)! For help, type "help"
+[09Oct2026 22:16:06.769] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Starting remote control listener
+[09Oct2026 22:16:06.774] [Server thread/INFO] [net.minecraft.server.rcon.thread.GenericThread/]: Thread RCON Listener started
+[09Oct2026 22:16:06.774] [Server thread/INFO] [net.minecraft.server.rcon.thread.RconThread/]: RCON running on 0.0.0.0:25575
+[09Oct2026 22:16:06.818] [RCON Listener #1/INFO] [net.minecraft.server.rcon.thread.GenericThread/]: Thread RCON Client /127.0.0.1 started
+[09Oct2026 22:16:06.819] [Server thread/INFO] [net.neoforged.neoforge.gametest.GameTestHooks/]: Enabled Gametest Namespaces: []
+[09Oct2026 22:16:06.824] [Server thread/INFO] [net.neoforged.neoforge.server.permission.PermissionAPI/]: Successfully initialized permission handler neoforge:default_handler
+[09Oct2026 22:16:06.892] [Server thread/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] Préchargement des décors : 153/153 en 63ms. Grosses structures déjà entièrement matérialisées au lancement : 8/8.
+[09Oct2026 22:16:06.893] [Server thread/INFO] [deepluckyblock.util.StructureTemplateStartupPreloader/]: [DLB-T148] préchargement de démarrage : 0/8 template(s) mis en file; lecture unique asynchrone, cache conservé pour toute la session
+[09Oct2026 22:16:21.934] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 81 chunks in Overworld from [59, -16] to [67, -8] to be force loaded]
+[09Oct2026 22:16:21.941] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 14997ms or 299 ticks behind
+[09Oct2026 22:16:31.819] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [67, -16] to [75, -8] to be force loaded]
+[09Oct2026 22:16:41.849] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [75, -16] to [83, -8] to be force loaded]
+[09Oct2026 22:16:42.471] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 5577ms or 111 ticks behind
+[09Oct2026 22:16:50.211] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [83, -16] to [91, -8] to be force loaded]
+[09Oct2026 22:16:59.466] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [59, -8] to [67, 0] to be force loaded]
+[09Oct2026 22:17:00.196] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2752ms or 55 ticks behind
+[09Oct2026 22:17:04.816] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [67, -8] to [75, 0] to be force loaded]
+[09Oct2026 22:17:10.039] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [75, -8] to [83, 0] to be force loaded]
+[09Oct2026 22:17:15.289] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [83, -8] to [91, 0] to be force loaded]
+[09Oct2026 22:17:26.536] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [59, 0] to [67, 8] to be force loaded]
+[09Oct2026 22:17:26.540] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 9246ms or 184 ticks behind
+[09Oct2026 22:17:32.809] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [67, 0] to [75, 8] to be force loaded]
+[09Oct2026 22:17:38.024] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [75, 0] to [83, 8] to be force loaded]
+[09Oct2026 22:17:43.600] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [83, 0] to [91, 8] to be force loaded]
+[09Oct2026 22:17:43.828] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2334ms or 46 ticks behind
+[09Oct2026 22:17:54.008] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [59, 8] to [67, 16] to be force loaded]
+[09Oct2026 22:17:58.914] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [67, 8] to [75, 16] to be force loaded]
+[09Oct2026 22:18:04.207] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [75, 8] to [83, 16] to be force loaded]
+[09Oct2026 22:18:04.210] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 3266ms or 65 ticks behind
+[09Oct2026 22:18:09.409] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [83, 8] to [91, 16] to be force loaded]
+[09Oct2026 22:20:41.513] [Server thread/INFO] [deepluckyblock.DeepLuckyBlockMod/]: [DLBTEST] dragon demandee a 1200, 69, 0 (id=2, nbt=dragon, joueur factice)
+[09Oct2026 22:20:41.515] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] execute() ID=2, origin=1200, 69, 0
+[09Oct2026 22:20:41.515] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE dragon === off=[10,-34,10] dist=0 facing=west
+[09Oct2026 22:20:41.530] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 43x43 cellules (1849 connues) en 14 ms -- T59/T62 (602 recherche(s) de chunk, dont 0 ayant attendu >2 ms, 1 ms au total)
+[09Oct2026 22:20:41.541] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 1271 candidat(s) en 6 ms (joueur 1 ms, emprises 1 ms, mesures terrain 4 ms) -- T57
+[09Oct2026 22:20:41.542] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 569 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:41.572] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1183,-107 (candidat #1/1271) : flat=97%, pente=5 (score=976, terrain reel exhaustif x0,6, Y reel=111, 0 candidat(s) rejetes, 0 s de recherche)
+[09Oct2026 22:20:41.674] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon -> 1193, 76, -29 (baseY=111, minRelY=1, rot=COUNTERCLOCKWISE_90, 159ms)
+[09Oct2026 22:20:41.737] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-GROUND] dragon sol solide validé sous 100% de la zone centrale x0,6 : 1288 colonnes, 0 avec eau autorisée, sol Y=108..114 (relief=6)
+[09Oct2026 22:20:41.738] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon : center anchor confirmed by footprint (T76) -- median=111, min=106, max=115, 212 columns, delta=0 <= 4
+[09Oct2026 22:20:41.781] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon : 75098 a poser (0 verre supprime, air exterieur deja ecarte au chargement) -- T73
+[09Oct2026 22:20:41.792] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon : selected solid groundY=111, clearance starts at Y=112, model offsetY=-34, foundationBaseY=77
+[09Oct2026 22:20:41.796] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] zone 1106, 77, -169 -> 1261, 197, -44 tenue en memoire pendant le pipeline (90 chunks)
+[09Oct2026 22:20:41.797] [Server thread/INFO] [deepluckyblock.util.TerrainEditClamp/]: [DLB-CLAMP] fenetre d'edition ouverte sur 156x249x126 a 1106,-169 -- ticks de chute et de fluide neutralises dans la zone
+[09Oct2026 22:20:41.800] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] 90/90 chunks epingles (maintien en memoire) -- zone complete
+[09Oct2026 22:20:42.363] [Server thread/WARN] [deepluckyblock.procedures.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 1440 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 30 blocs, colonne 1245,-70 de la zone) -- ramenees dans la fenetre
+[09Oct2026 22:20:42.412] [Server thread/WARN] [deepluckyblock.procedures.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 178 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 23 blocs, colonne 1244,-85 de la zone) -- ramenees dans la fenetre
+[09Oct2026 22:20:42.470] [Server thread/INFO] [deepluckyblock.DeepLuckyBlockMod/]: [DLBTEST] citadel demandee a 1200, 69, 0 (id=0, nbt=citadel, joueur factice)
+[09Oct2026 22:20:42.471] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] execute() ID=0, origin=1200, 69, 0
+[09Oct2026 22:20:42.471] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] Une generation est deja en cours : ID=0 mis en file (1 en attente)
+[09Oct2026 22:20:42.656] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon : sol 0 exhaustif fixé avant terrain=111, offsetY=-34, first model blockY=77; diagnostic post-prep median=110, min=106, max=110, samples=79 (aucun second décalage)
+[09Oct2026 22:20:42.656] [Server thread/INFO] [deepluckyblock.util.StructureSites/]: [DLB-SITES] emprise enregistree : dragon (124x94 a 1122,-153), 1 structure(s) suivie(s)
+[09Oct2026 22:20:42.996] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon en 1396ms (75098 blocs, 326 a gravite -- ticks de chute neutralises par DLB-CLAMP)
+[09Oct2026 22:20:43.063] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] carve dragon programmee (1921 colonnes, 75098 blocs occupes, bottomY=77)
+[09Oct2026 22:20:43.224] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon termine : 80 blocs supprimes, 0 blocs de motte (bottomY=77)
+[09Oct2026 22:20:43.292] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] decorate + post de dragon termine
+[09Oct2026 22:20:44.527] [Yggdrasil Key Fetcher/ERROR] [com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo/]: Failed to request yggdrasil public key
+com.mojang.authlib.exceptions.MinecraftClientException: Failed to read from https://api.minecraftservices.com/publickeys due to Remote host terminated the handshake
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:108) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:57) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo.fetch(YggdrasilServicesKeyInfo.java:114) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo$1.run(YggdrasilServicesKeyInfo.java:89) ~[authlib-6.0.54.jar%2377!/:?]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572) ~[?:?]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317) ~[?:?]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+Caused by: javax.net.ssl.SSLHandshakeException: Remote host terminated the handshake
+	at java.base/sun.security.ssl.SSLSocketImpl.handleEOF(SSLSocketImpl.java:1715) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(SSLSocketImpl.java:1513) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.readHandshakeRecord(SSLSocketImpl.java:1420) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:455) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:426) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsClient.afterConnect(HttpsClient.java:593) ~[?:?]
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:190) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1707) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1632) ~[?:?]
+	at java.base/java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:531) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getResponseCode(HttpsURLConnectionImpl.java:307) ~[?:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:84) ~[authlib-6.0.54.jar%2377!/:?]
+	... 9 more
+Caused by: java.io.EOFException: SSL peer shut down incorrectly
+	at java.base/sun.security.ssl.SSLSocketInputRecord.read(SSLSocketInputRecord.java:494) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketInputRecord.readHeader(SSLSocketInputRecord.java:483) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketInputRecord.decode(SSLSocketInputRecord.java:160) ~[?:?]
+	at java.base/sun.security.ssl.SSLTransport.decode(SSLTransport.java:111) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(SSLSocketImpl.java:1505) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.readHandshakeRecord(SSLSocketImpl.java:1420) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:455) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:426) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsClient.afterConnect(HttpsClient.java:593) ~[?:?]
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:190) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1707) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1632) ~[?:?]
+	at java.base/java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:531) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getResponseCode(HttpsURLConnectionImpl.java:307) ~[?:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:84) ~[authlib-6.0.54.jar%2377!/:?]
+	... 9 more
+[09Oct2026 22:20:44.654] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] Post-process de dragon termine
+[09Oct2026 22:20:44.805] [Server thread/INFO] [deepluckyblock.util.TerrainEditClamp/]: [DLB-CLAMP] fenetre fermee (fin de pipeline) : 3 s de travail, 60 ticks ; periode de tick moyenne 51 ms, pire 655 ms (20 TPS = 50 ms) ; 2 tick(s) > 100 ms dont 0 > 1 s ; MSPT lisse 12.0 ms ; chute max 0 entite(s)
+[09Oct2026 22:20:44.807] [Server thread/INFO] [deepluckyblock.util.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 3.0 s -- ou est passe le temps : replantTrees 1.4 s (48%) | pre-chargement des chunks 0.6 s (20%) | rebuildTerrain 0.2 s (6%) | smooth graduel T109 0.1 s (4%) | dressAndPlant 0.1 s (3%) | prepZone 1c/11 0.0 s (1%) | prepZone 0.0 s (1%) | verifyGrassSurface 0.0 s (0%) | attente/tick system 0.5 sacces terrain : 226 requete(s) moteur, 376672 lecture(s) servies par le cache (100%), 0 colonne(s) hors memoire
+[09Oct2026 22:20:44.809] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] zone relachee (90 chunks rendus au chunk system, en tranches)
+[09Oct2026 22:20:44.832] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon entièrement terminé (recherche, pose, terrain, végétation et arbres) en 3317 ms : FIFO libérée
+[09Oct2026 22:20:44.833] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] File d'attente : demarrage de la structure ID=0 (0 encore en attente)
+[09Oct2026 22:20:44.833] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:44.837] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 4 ms -- T59/T62 (23242 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 18 ms au total)
+[09Oct2026 22:20:44.843] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 850 candidat(s) en 3 ms (joueur 0 ms, emprises 1 ms, mesures terrain 2 ms) -- T57
+[09Oct2026 22:20:44.843] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:44.946] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 840 restent dans CE MÊME cercle
+[09Oct2026 22:20:44.958] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:44.961] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (34712 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 20 ms au total)
+[09Oct2026 22:20:44.966] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 840 candidat(s) en 4 ms (joueur 1 ms, emprises 0 ms, mesures terrain 3 ms) -- T57
+[09Oct2026 22:20:44.966] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:45.071] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 829 restent dans CE MÊME cercle
+[09Oct2026 22:20:45.084] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:45.087] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (48022 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 22 ms au total)
+[09Oct2026 22:20:45.090] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 829 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:45.090] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:45.194] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 819 restent dans CE MÊME cercle
+[09Oct2026 22:20:45.205] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:45.207] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (60332 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 24 ms au total)
+[09Oct2026 22:20:45.211] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 819 candidat(s) en 3 ms (joueur 0 ms, emprises 0 ms, mesures terrain 3 ms) -- T57
+[09Oct2026 22:20:45.211] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:45.320] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 807 restent dans CE MÊME cercle
+[09Oct2026 22:20:45.330] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:45.333] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (74222 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 25 ms au total)
+[09Oct2026 22:20:45.336] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 807 candidat(s) en 2 ms (joueur 0 ms, emprises 0 ms, mesures terrain 2 ms) -- T57
+[09Oct2026 22:20:45.336] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:45.448] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 797 restent dans CE MÊME cercle
+[09Oct2026 22:20:45.466] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:45.472] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 6 ms -- T59/T62 (85587 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 27 ms au total)
+[09Oct2026 22:20:45.479] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 797 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:45.479] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:45.590] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 787 restent dans CE MÊME cercle
+[09Oct2026 22:20:45.602] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:45.605] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (97687 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 29 ms au total)
+[09Oct2026 22:20:45.610] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 787 candidat(s) en 2 ms (joueur 0 ms, emprises 0 ms, mesures terrain 2 ms) -- T57
+[09Oct2026 22:20:45.610] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:45.720] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 9 candidat(s); 778 restent dans CE MÊME cercle
+[09Oct2026 22:20:45.731] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:45.733] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (108892 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 31 ms au total)
+[09Oct2026 22:20:45.737] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 778 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:45.738] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:45.840] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 768 restent dans CE MÊME cercle
+[09Oct2026 22:20:45.850] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:45.853] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (121202 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 33 ms au total)
+[09Oct2026 22:20:45.856] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 768 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:45.856] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:45.964] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 758 restent dans CE MÊME cercle
+[09Oct2026 22:20:45.974] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:45.977] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (133407 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 34 ms au total)
+[09Oct2026 22:20:45.979] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 758 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:45.979] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:46.083] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 746 restent dans CE MÊME cercle
+[09Oct2026 22:20:46.092] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:46.095] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (146247 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 36 ms au total)
+[09Oct2026 22:20:46.096] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 746 candidat(s) en 1 ms (joueur 0 ms, emprises 1 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:46.097] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:46.205] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 735 restent dans CE MÊME cercle
+[09Oct2026 22:20:46.214] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:46.217] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (159662 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 37 ms au total)
+[09Oct2026 22:20:46.218] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 735 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:46.219] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:46.323] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 724 restent dans CE MÊME cercle
+[09Oct2026 22:20:46.333] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:46.335] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (172237 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 39 ms au total)
+[09Oct2026 22:20:46.337] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 724 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:46.337] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:46.439] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 713 restent dans CE MÊME cercle
+[09Oct2026 22:20:46.448] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:46.451] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (184917 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 40 ms au total)
+[09Oct2026 22:20:46.452] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 713 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:46.452] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:46.555] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 702 restent dans CE MÊME cercle
+[09Oct2026 22:20:46.565] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:46.567] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (198332 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 42 ms au total)
+[09Oct2026 22:20:46.568] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 702 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:46.569] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:46.673] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 691 restent dans CE MÊME cercle
+[09Oct2026 22:20:46.682] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:46.684] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (212062 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 43 ms au total)
+[09Oct2026 22:20:46.686] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 691 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:46.686] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:46.790] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 9 candidat(s); 682 restent dans CE MÊME cercle
+[09Oct2026 22:20:46.799] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:46.802] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (222952 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 44 ms au total)
+[09Oct2026 22:20:46.803] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 682 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:46.803] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:46.912] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 671 restent dans CE MÊME cercle
+[09Oct2026 22:20:46.921] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:46.923] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (236262 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 46 ms au total)
+[09Oct2026 22:20:46.925] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 671 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:46.925] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:47.030] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 659 restent dans CE MÊME cercle
+[09Oct2026 22:20:47.040] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:47.042] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (250257 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 48 ms au total)
+[09Oct2026 22:20:47.044] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 659 candidat(s) en 2 ms (joueur 1 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:47.044] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:47.153] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 647 restent dans CE MÊME cercle
+[09Oct2026 22:20:47.163] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:47.166] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (264147 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 49 ms au total)
+[09Oct2026 22:20:47.167] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 647 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:47.167] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:47.271] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 635 restent dans CE MÊME cercle
+[09Oct2026 22:20:47.280] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:47.283] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (277302 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 51 ms au total)
+[09Oct2026 22:20:47.284] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 635 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:47.284] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:47.387] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 623 restent dans CE MÊME cercle
+[09Oct2026 22:20:47.397] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:47.399] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (290457 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 52 ms au total)
+[09Oct2026 22:20:47.400] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 623 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:47.400] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:47.501] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 612 restent dans CE MÊME cercle
+[09Oct2026 22:20:47.511] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:47.513] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (303137 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 54 ms au total)
+[09Oct2026 22:20:47.515] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 612 candidat(s) en 2 ms (joueur 0 ms, emprises 0 ms, mesures terrain 2 ms) -- T57
+[09Oct2026 22:20:47.515] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:47.623] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 600 restent dans CE MÊME cercle
+[09Oct2026 22:20:47.624] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2030ms or 40 ticks behind
+[09Oct2026 22:20:47.648] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:47.650] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (316922 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 56 ms au total)
+[09Oct2026 22:20:47.651] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 600 candidat(s) en 1 ms (joueur 1 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:47.652] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:47.761] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 589 restent dans CE MÊME cercle
+[09Oct2026 22:20:47.771] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:47.773] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (330127 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 57 ms au total)
+[09Oct2026 22:20:47.775] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 589 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:47.775] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:47.885] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 577 restent dans CE MÊME cercle
+[09Oct2026 22:20:47.894] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:47.896] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (344227 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 59 ms au total)
+[09Oct2026 22:20:47.898] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 577 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:47.898] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:48.008] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 566 restent dans CE MÊME cercle
+[09Oct2026 22:20:48.017] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:48.019] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (357642 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 61 ms au total)
+[09Oct2026 22:20:48.020] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 566 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:48.020] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:48.130] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 555 restent dans CE MÊME cercle
+[09Oct2026 22:20:48.138] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:48.141] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (370952 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 63 ms au total)
+[09Oct2026 22:20:48.142] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 555 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:48.142] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:48.248] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 544 restent dans CE MÊME cercle
+[09Oct2026 22:20:48.257] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:48.259] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (384157 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 64 ms au total)
+[09Oct2026 22:20:48.261] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 544 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:48.261] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:48.369] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 533 restent dans CE MÊME cercle
+[09Oct2026 22:20:48.378] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:48.380] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (397782 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 66 ms au total)
+[09Oct2026 22:20:48.382] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 533 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:48.382] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:48.490] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 522 restent dans CE MÊME cercle
+[09Oct2026 22:20:48.498] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:48.501] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (410987 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 68 ms au total)
+[09Oct2026 22:20:48.502] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 522 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:48.502] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:48.611] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 511 restent dans CE MÊME cercle
+[09Oct2026 22:20:48.620] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:48.622] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (424402 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 69 ms au total)
+[09Oct2026 22:20:48.624] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 511 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:48.624] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:48.731] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 499 restent dans CE MÊME cercle
+[09Oct2026 22:20:48.739] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:48.742] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (437337 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 71 ms au total)
+[09Oct2026 22:20:48.743] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 499 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:48.743] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:48.845] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 487 restent dans CE MÊME cercle
+[09Oct2026 22:20:48.853] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:48.856] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (449632 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 73 ms au total)
+[09Oct2026 22:20:48.857] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 487 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:48.857] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:48.964] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 476 restent dans CE MÊME cercle
+[09Oct2026 22:20:48.974] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:48.976] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (463257 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 74 ms au total)
+[09Oct2026 22:20:48.977] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 476 candidat(s) en 1 ms (joueur 0 ms, emprises 1 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:48.977] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:49.083] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 465 restent dans CE MÊME cercle
+[09Oct2026 22:20:49.094] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:49.096] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (475832 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 76 ms au total)
+[09Oct2026 22:20:49.097] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 465 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:49.097] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:49.207] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 454 restent dans CE MÊME cercle
+[09Oct2026 22:20:49.215] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:49.217] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (489037 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 78 ms au total)
+[09Oct2026 22:20:49.218] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 454 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:49.219] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:49.328] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 443 restent dans CE MÊME cercle
+[09Oct2026 22:20:49.337] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:49.339] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (502557 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 79 ms au total)
+[09Oct2026 22:20:49.341] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 443 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:49.341] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:49.449] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 432 restent dans CE MÊME cercle
+[09Oct2026 22:20:49.458] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:49.460] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (515972 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 81 ms au total)
+[09Oct2026 22:20:49.461] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 432 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:49.461] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:49.569] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 420 restent dans CE MÊME cercle
+[09Oct2026 22:20:49.578] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:49.580] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (529537 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 83 ms au total)
+[09Oct2026 22:20:49.581] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 420 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:49.582] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:49.687] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 13 candidat(s); 407 restent dans CE MÊME cercle
+[09Oct2026 22:20:49.696] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:49.698] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (542317 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 84 ms au total)
+[09Oct2026 22:20:49.699] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 407 candidat(s) en 1 ms (joueur 1 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:49.699] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:49.810] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 14 candidat(s); 393 restent dans CE MÊME cercle
+[09Oct2026 22:20:49.818] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:49.821] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (555887 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 86 ms au total)
+[09Oct2026 22:20:49.822] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 393 candidat(s) en 1 ms (joueur 0 ms, emprises 1 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:49.822] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:49.928] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 14 candidat(s); 379 restent dans CE MÊME cercle
+[09Oct2026 22:20:49.936] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:49.939] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (568702 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 88 ms au total)
+[09Oct2026 22:20:49.940] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 379 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:49.940] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:50.043] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 367 restent dans CE MÊME cercle
+[09Oct2026 22:20:50.053] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:50.055] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (581112 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 89 ms au total)
+[09Oct2026 22:20:50.056] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 367 candidat(s) en 1 ms (joueur 1 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:50.056] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:50.159] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 356 restent dans CE MÊME cercle
+[09Oct2026 22:20:50.168] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:50.170] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (593362 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 91 ms au total)
+[09Oct2026 22:20:50.171] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 356 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:50.171] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:50.280] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 345 restent dans CE MÊME cercle
+[09Oct2026 22:20:50.288] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:50.291] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (606672 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 92 ms au total)
+[09Oct2026 22:20:50.292] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 345 candidat(s) en 1 ms (joueur 1 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:50.292] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:50.393] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 335 restent dans CE MÊME cercle
+[09Oct2026 22:20:50.402] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:50.404] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (618982 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 94 ms au total)
+[09Oct2026 22:20:50.405] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 335 candidat(s) en 1 ms (joueur 0 ms, emprises 1 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:50.405] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:50.508] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 325 restent dans CE MÊME cercle
+[09Oct2026 22:20:50.516] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:50.519] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (631292 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 95 ms au total)
+[09Oct2026 22:20:50.520] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 325 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:50.520] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:50.622] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 315 restent dans CE MÊME cercle
+[09Oct2026 22:20:50.631] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:50.634] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (643497 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 97 ms au total)
+[09Oct2026 22:20:50.635] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 315 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:50.635] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:50.738] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 305 restent dans CE MÊME cercle
+[09Oct2026 22:20:50.747] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:50.749] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (655807 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 98 ms au total)
+[09Oct2026 22:20:50.750] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 305 candidat(s) en 1 ms (joueur 0 ms, emprises 1 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:50.750] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:50.859] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 294 restent dans CE MÊME cercle
+[09Oct2026 22:20:50.868] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:50.870] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (668592 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 100 ms au total)
+[09Oct2026 22:20:50.871] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 294 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:50.871] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:50.980] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 282 restent dans CE MÊME cercle
+[09Oct2026 22:20:50.990] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:50.992] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (681422 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 101 ms au total)
+[09Oct2026 22:20:50.993] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 282 candidat(s) en 1 ms (joueur 1 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:50.993] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:51.102] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 271 restent dans CE MÊME cercle
+[09Oct2026 22:20:51.111] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:51.113] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (694207 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 103 ms au total)
+[09Oct2026 22:20:51.114] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 271 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:51.114] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:51.220] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 260 restent dans CE MÊME cercle
+[09Oct2026 22:20:51.229] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:51.232] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (706887 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 104 ms au total)
+[09Oct2026 22:20:51.233] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 260 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:51.233] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:51.340] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 249 restent dans CE MÊME cercle
+[09Oct2026 22:20:51.349] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:51.351] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (719567 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 106 ms au total)
+[09Oct2026 22:20:51.352] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 249 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:51.352] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:51.462] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 238 restent dans CE MÊME cercle
+[09Oct2026 22:20:51.471] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:51.473] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (732352 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 107 ms au total)
+[09Oct2026 22:20:51.474] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 238 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:51.474] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:51.583] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 227 restent dans CE MÊME cercle
+[09Oct2026 22:20:51.592] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:51.594] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (745032 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 109 ms au total)
+[09Oct2026 22:20:51.595] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 227 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:51.596] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:51.700] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 217 restent dans CE MÊME cercle
+[09Oct2026 22:20:51.708] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:51.710] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (757237 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 110 ms au total)
+[09Oct2026 22:20:51.712] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 217 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:51.712] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:51.817] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 207 restent dans CE MÊME cercle
+[09Oct2026 22:20:51.827] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:51.829] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (769442 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 112 ms au total)
+[09Oct2026 22:20:51.830] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 207 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:51.830] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:51.935] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 197 restent dans CE MÊME cercle
+[09Oct2026 22:20:51.944] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:51.946] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (781647 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 113 ms au total)
+[09Oct2026 22:20:51.947] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 197 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:51.947] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:52.052] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 14 candidat(s); 183 restent dans CE MÊME cercle
+[09Oct2026 22:20:52.061] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:52.063] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (794032 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 115 ms au total)
+[09Oct2026 22:20:52.064] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 183 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:52.064] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:52.170] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 173 restent dans CE MÊME cercle
+[09Oct2026 22:20:52.178] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:52.181] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (806342 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 117 ms au total)
+[09Oct2026 22:20:52.182] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 173 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:52.182] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:52.287] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 163 restent dans CE MÊME cercle
+[09Oct2026 22:20:52.303] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:52.306] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (818652 recherche(s) de chunk, dont 1 ayant attendu >2 ms, 118 ms au total)
+[09Oct2026 22:20:52.307] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 163 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:52.307] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:52.408] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 6 candidat(s); 157 restent dans CE MÊME cercle
+[09Oct2026 22:20:52.433] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:52.436] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (826122 recherche(s) de chunk, dont 2 ayant attendu >2 ms, 154 ms au total)
+[09Oct2026 22:20:52.437] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 157 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:52.437] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:52.541] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 147 restent dans CE MÊME cercle
+[09Oct2026 22:20:52.551] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:52.553] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (838117 recherche(s) de chunk, dont 2 ayant attendu >2 ms, 155 ms au total)
+[09Oct2026 22:20:52.554] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 147 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:52.554] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:52.661] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 135 restent dans CE MÊME cercle
+[09Oct2026 22:20:52.671] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:52.673] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (851797 recherche(s) de chunk, dont 2 ayant attendu >2 ms, 157 ms au total)
+[09Oct2026 22:20:52.674] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 135 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:52.674] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:52.782] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 123 restent dans CE MÊME cercle
+[09Oct2026 22:20:52.793] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:52.795] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (865152 recherche(s) de chunk, dont 2 ayant attendu >2 ms, 159 ms au total)
+[09Oct2026 22:20:52.796] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 123 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:52.796] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:52.899] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 111 restent dans CE MÊME cercle
+[09Oct2026 22:20:52.909] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:52.911] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (878507 recherche(s) de chunk, dont 2 ayant attendu >2 ms, 161 ms au total)
+[09Oct2026 22:20:52.912] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 111 candidat(s) en 1 ms (joueur 1 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:52.912] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:53.021] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 101 restent dans CE MÊME cercle
+[09Oct2026 22:20:53.047] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:53.049] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (889977 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 179 ms au total)
+[09Oct2026 22:20:53.050] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 101 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:53.050] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:53.158] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 12 candidat(s); 89 restent dans CE MÊME cercle
+[09Oct2026 22:20:53.167] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:53.170] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (903227 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 181 ms au total)
+[09Oct2026 22:20:53.170] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 89 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:53.170] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:53.273] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 78 restent dans CE MÊME cercle
+[09Oct2026 22:20:53.284] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:53.286] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (916537 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 183 ms au total)
+[09Oct2026 22:20:53.287] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 78 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:53.287] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:53.398] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 67 restent dans CE MÊME cercle
+[09Oct2026 22:20:53.420] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:53.425] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 4 ms -- T59/T62 (928787 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 185 ms au total)
+[09Oct2026 22:20:53.427] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 67 candidat(s) en 2 ms (joueur 0 ms, emprises 0 ms, mesures terrain 2 ms) -- T57
+[09Oct2026 22:20:53.427] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:53.533] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 8 candidat(s); 59 restent dans CE MÊME cercle
+[09Oct2026 22:20:53.544] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:53.547] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 3 ms -- T59/T62 (937617 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 187 ms au total)
+[09Oct2026 22:20:53.547] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 59 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:53.547] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:53.649] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 48 restent dans CE MÊME cercle
+[09Oct2026 22:20:53.658] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:53.660] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (950927 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 188 ms au total)
+[09Oct2026 22:20:53.661] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 48 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:53.661] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:53.769] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 38 restent dans CE MÊME cercle
+[09Oct2026 22:20:53.778] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:53.780] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (962072 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 190 ms au total)
+[09Oct2026 22:20:53.781] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 38 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:53.781] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:53.887] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 10 candidat(s); 28 restent dans CE MÊME cercle
+[09Oct2026 22:20:53.900] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:53.902] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (973437 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 192 ms au total)
+[09Oct2026 22:20:53.903] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 28 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:53.903] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:54.008] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 17 restent dans CE MÊME cercle
+[09Oct2026 22:20:54.017] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:54.019] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (986747 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 193 ms au total)
+[09Oct2026 22:20:54.020] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 17 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:54.020] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:54.126] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 11 candidat(s); 6 restent dans CE MÊME cercle
+[09Oct2026 22:20:54.136] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:54.138] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 45x45 cellules (2025 connues) en 2 ms -- T59/T62 (999952 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 195 ms au total)
+[09Oct2026 22:20:54.139] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 6 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:54.139] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 573 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:54.203] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] aucun centre x0,6 conforme (relief <= 10, eau=0) -- nouvelle couronne jusqu'a 64 blocs; reprise asynchrone
+[09Oct2026 22:20:54.213] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:54.218] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 71x71 cellules (5041 connues) en 5 ms -- T59/T62 (1008354 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 196 ms au total)
+[09Oct2026 22:20:54.225] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 1992 candidat(s) en 2 ms (joueur 0 ms, emprises 1 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:54.225] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 452 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:54.328] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 14 candidat(s); 1978 restent dans CE MÊME cercle
+[09Oct2026 22:20:54.337] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:54.343] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 71x71 cellules (5041 connues) en 6 ms -- T59/T62 (1021281 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 198 ms au total)
+[09Oct2026 22:20:54.347] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 1978 candidat(s) en 2 ms (joueur 0 ms, emprises 0 ms, mesures terrain 2 ms) -- T57
+[09Oct2026 22:20:54.347] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 452 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:54.450] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 24 candidat(s); 1954 restent dans CE MÊME cercle
+[09Oct2026 22:20:54.460] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:54.465] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 71x71 cellules (5041 connues) en 5 ms -- T59/T62 (1034113 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 200 ms au total)
+[09Oct2026 22:20:54.469] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 1954 candidat(s) en 0 ms (joueur 0 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:54.469] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 452 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:54.578] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 21 candidat(s); 1933 restent dans CE MÊME cercle
+[09Oct2026 22:20:54.587] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:54.592] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 71x71 cellules (5041 connues) en 5 ms -- T59/T62 (1047955 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 201 ms au total)
+[09Oct2026 22:20:54.596] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 1933 candidat(s) en 1 ms (joueur 1 ms, emprises 0 ms, mesures terrain 0 ms) -- T57
+[09Oct2026 22:20:54.596] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 452 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:54.698] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 31 candidat(s); 1902 restent dans CE MÊME cercle
+[09Oct2026 22:20:54.707] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:54.713] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 71x71 cellules (5041 connues) en 5 ms -- T59/T62 (1061302 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 203 ms au total)
+[09Oct2026 22:20:54.717] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 1902 candidat(s) en 1 ms (joueur 0 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:54.717] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 452 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:54.819] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] tranche 100ms terminée après 17 candidat(s); 1885 restent dans CE MÊME cercle
+[09Oct2026 22:20:54.828] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[09Oct2026 22:20:54.833] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] grille de scoring : 71x71 cellules (5041 connues) en 5 ms -- T59/T62 (1074029 recherche(s) de chunk, dont 3 ayant attendu >2 ms, 205 ms au total)
+[09Oct2026 22:20:54.837] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] scoring termine : 1885 candidat(s) en 3 ms (joueur 2 ms, emprises 0 ms, mesures terrain 1 ms) -- T57
+[09Oct2026 22:20:54.837] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] 452 candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75
+[09Oct2026 22:20:54.906] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1213,173 (candidat #6/1885) : flat=86%, pente=10 (score=907, terrain reel exhaustif x0,6, Y reel=91, 6 candidat(s) rejetes, 10 s de recherche)
+[09Oct2026 22:20:54.943] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel -> 1233, 44, 193 (baseY=91, minRelY=12, rot=NONE, 115ms)
+[09Oct2026 22:20:54.953] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-GROUND] citadel sol solide validé sous 100% de la zone centrale x0,6 : 2184 colonnes, 0 avec eau autorisée, sol Y=88..95 (relief=7)
+[09Oct2026 22:20:54.954] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel : center anchor confirmed by footprint (T76) -- median=93, min=88, max=105, 291 columns, delta=2 <= 4
+[09Oct2026 22:20:54.980] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel : 113930 a poser (1 verre supprime, air exterieur deja ecarte au chargement) -- T73
+[09Oct2026 22:20:54.982] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel : selected solid groundY=91, clearance starts at Y=92, model offsetY=-35, foundationBaseY=56
+[09Oct2026 22:20:54.982] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] zone 1132, 56, 100 -> 1295, 257, 247 tenue en memoire pendant le pipeline (110 chunks)
+[09Oct2026 22:20:54.982] [Server thread/INFO] [deepluckyblock.util.TerrainEditClamp/]: [DLB-CLAMP] fenetre d'edition ouverte sur 164x328x148 a 1132,100 -- ticks de chute et de fluide neutralises dans la zone
+[09Oct2026 22:20:54.983] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] 110/110 chunks epingles (maintien en memoire) -- zone complete
+[09Oct2026 22:20:55.180] [Server thread/WARN] [deepluckyblock.procedures.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 1735 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 45 blocs, colonne 1161,132 de la zone) -- ramenees dans la fenetre
+[09Oct2026 22:20:55.199] [Server thread/WARN] [deepluckyblock.procedures.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 995 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 43 blocs, colonne 1161,132 de la zone) -- ramenees dans la fenetre
+[09Oct2026 22:20:55.436] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel : sol 0 exhaustif fixé avant terrain=91, offsetY=-35, first model blockY=44; diagnostic post-prep median=89, min=88, max=90, samples=68 (aucun second décalage)
+[09Oct2026 22:20:55.436] [Server thread/INFO] [deepluckyblock.util.StructureSites/]: [DLB-SITES] emprise enregistree : citadel (132x116 a 1148,116), 2 structure(s) suivie(s)
+[09Oct2026 22:20:55.989] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] 22 LIGHT/vines techniques souterrains supprimes apres paste
+[09Oct2026 22:20:55.989] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel en 1050ms (113930 blocs, 443 a gravite -- ticks de chute neutralises par DLB-CLAMP)
+[09Oct2026 22:20:56.047] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] carve citadel programmee (4151 colonnes, 113930 blocs occupes, bottomY=56)
+[09Oct2026 22:20:56.464] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel termine : 0 blocs supprimes, 4 blocs de motte (bottomY=56)
