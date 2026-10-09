@@ -52,20 +52,56 @@ j'heberge moi-meme dans mon environnement de travail) :
      paste 225 ms — total structure ~4 s.
    - t0x-far (dragon, emprise HORS pregen, chunks vierges) :
      24,0 s de recherche+chargement complet, pose immediate.
-   - t05-queue3 (3 structures enchainees) : en cours au moment de
-     cette note ; les resultats + matrice completes seront dans les
-     logs ci-joints.
+   - t05-queue3 (monde neuf, 3 commandes en file) : 3/3 pylonees,
+     poses 828 / 1252 / 337 ms ; la file se vide entierement.
+   - t06-burst5 (5 structures en rafale) : 5/5 poses en < 45 s
+     (dragon 2320, citadel 4875, observatory 399, circus 234,
+     shipdead 212 ms).
+   - Matrice sim/render : sim10/view8 2,6 s, sim4/view8 2,5 s,
+     sim10/view4 2,9 s, sim6/view6 10,3 s — chaque config OK.
+   - Parametres chunks : workers=8 -> 3,2 s ; pendingCap 512..4096
+     OK. workers=1 : KO (roue secours local => correctif F3).
+   - t11-mix2 (dragon + citadel melanges) : 2/2 poses en < 3 min.
    Avant T232, ces memes scenarios ne produisais JAMAIS de
    structure (heures d'attente).
+
+4bv. SERIE T232-F (2e vague, validée EN DIRECT sur ce meme serveur
+   NeoForge de preview, 9 oct. 2026) : plus aucune boucle infinie
+   possible meme sur seed hostile.
+   - F1 : le rearmement T231 du secours lointain etait du CODE MORT
+     (la cible etait relue APRES son effacement). Elle est relue
+     avant desormais (miroir LAST_TARGET) : les logs « rearmement
+     T231 » apparaissent enfin reellement.
+   - F2 : borne horaire dlb.search.stallTimeoutMs (defaut 180 s) sur
+     les rearmements successifs : au-dela, ABANDON PROPRE (drapeau
+     SEARCH_ABORTED deja prevu en T228 mais jamais positionne).
+     Preuve live : « ABANDON de secours : aucune emprise livrable
+     apres 180 s » sur une seed lacs-en-serie, file liberee.
+   - F3 : BLACKLIST des secours locaux rejetes par la porte
+     STRUCT5-GROUND (relief x0,6 > max). Sans elle, la recherche
+     RE-PROPOSAIT a l'infini le meme center (roue « secours local
+     charge choisi » <-> « ecarte avant terrain » vue en t07 et t0x).
 
 5. FICHIERS MODIFIES (chemins exacts du zip) :
    mod_project/src/main/java/deepluckyblock/procedures/Structures5Procedure.java
    mod_project/src/main/java/deepluckyblock/util/SafeSurface.java
    mod_project/src/main/java/deepluckyblock/util/ChunkKeeper.java
    mod_project/src/main/java/deepluckyblock/util/DebugLog.java   (nouveau dans l'overlay)
-   Rien d'autre n'a ete touche.
+   Rien d'autre n'a ete touche. Regle minimal-touch respectee :
+   tout est additif (bornes, compteurs, miroirs, garde-fous) ; aucun
+   bloc existant supprime hors cause directe du bug.
 
-6. GARDE-FOU CI : le workflow github comporte desormais une probe
+6. GARDE-FOU CI : le workflow github comporte une probe
    « T232 structured-lab regression probe » qui ECHOUE le build si
-   l'un de ces correctifs disparait d'un fichier (revert non voulu).
+   l'un de ces correctifs disparait d'un fichier (revert non voulu) ;
+   derniere execution : BUILD SUCCESSFUL avec les correctifs F.
+
+7. RESSOURCES DE TEST (dossier lab/ du zip) :
+   - sandbox_lab.py : harnais des 12 tests (boot serveur, pregen,
+     tirs /dlbtest via RCON, mesures, monde neuf par test).
+   - rebuild_lab.sh : reconstruit l'environnement serveur en 5 min
+     depuis les exports CI (ci/runtime et ci/runtime-jre du repo) ;
+     lancement Java direct (pas de Gradle — l'env. de test interdit
+     les forks de JVM) ; heap 2200 Mo obligatoire a froid.
+
 
