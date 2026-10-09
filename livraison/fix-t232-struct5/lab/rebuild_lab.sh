@@ -64,7 +64,8 @@ MODCP="/tmp/modid-t232.jar:$CONF/build/classes/java/main:$CONF/build/resources/m
 DEPCP=$(paste -sd: serverLegacyClasspath.txt)
 cd "$CONF/run"
 exec "$JAVA_BIN" -Xmx2200m \
-  -Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1 \
+  -Ddlb.debug=1 \
+  ${DLB_VM_EXTRA:--Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048} \
   "${VMA[@]}" -cp "$MODCP:$DEPCP" \
   cpw.mods.bootstraplauncher.BootstrapLauncher "${PRA[@]}" nogui
 BEOF

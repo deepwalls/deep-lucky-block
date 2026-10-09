@@ -88,8 +88,9 @@ class Server:
         # lancement JAVA DIRECT (pas de gradle : l'env. sandbox interdit les
         # forks de JVM). boot_server.sh est genere par rebuild_lab.sh et porte
         # -Xmx2200m en ligne de commande ; les props du test (-Ddlb.*) passent
-        # par JAVA_TOOL_OPTIONS (les options de la ligne de commande priment).
-        env['JAVA_TOOL_OPTIONS'] = vm_extra.strip()
+        # par DLB_VM_EXTRA (substituees au bon endroit du script : sinon les
+        # valeurs default du script ecrasent celles du test — t07/t08/t09/t10).
+        env['DLB_VM_EXTRA'] = vm_extra.strip()
         self.proc = subprocess.Popen(
             ['bash', str(self.project / 'boot_server.sh')],
             cwd=self.project, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
