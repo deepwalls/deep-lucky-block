@@ -1,0 +1,71 @@
+════════════════════════════════════════════════════════════════════
+DEEP LUCKY BLOCK — T232 : CORRECTIF « RIEN NE SPAWN » (STRUCT5)
+════════════════════════════════════════════════════════════════════
+
+Ce que j'ai fait (T232 = tests sur un serveur NeoForge 1.21.1 que
+j'heberge moi-meme dans mon environnement de travail) :
+
+1. REPRODUCTION DU BUG SUR MON SERVEUR
+   - Ton symptomatique exact se reproduisait devant moi : /dlbtest
+     dragon trouvait immediatement une zone valide, puis PLUS RIEN :
+     ni structure, ni message, pendant des heures (la commande
+     suivante subissait la meme chose). Le pipeline mourait dans la
+     phase « chargement asynchrone de l'emprise finale » : la boucle
+     SAFETY affichait « reprise 1/200 »... puis 480/200, 7+ minutes,
+     sans progression — vaire en avant que le point choisi soit HORS
+     de la zone pre-chargee (exactement ton cas en jeu).
+
+2. CAUSE RACINE (prouvee par instrumentation en direct)
+   La zone de l'emprise finale etait chargee par DEUX mecanismes
+   desaccordes : SafeSurface retirait son ticket de chargement 2
+   ticks apres chaque completion, avant que le ChunkKeeper epingle
+   le chunk (son ticker passe toutes les 100 ticks = 5 s). La zone
+   stationnant hors de portee du joueur (~18 chunks au-dela de la
+   simulation-distance), chaque chunk etait DECHARGE avant la
+   reprise suivante : chargement -> decharge -> re-chargement -> ...
+   — une ROUE DE HAMSTER infinie. Plus une fuite secondaire :
+   l'ensemble READY de SafeSurface ne se vidait jamais (pas de TTL),
+   ce qui faisait mentir les detections « deja pret » a volontee.
+
+3. CORRECTIF (strictement additif, regle minimal-touch respectee)
+   - Accord sanitaire SafeSurface <-> ChunkKeeper : si un chunk est
+     couvert par la zone epinglee, SafeSurface ne retire plus son
+     ticket. La roue de hamster est morte.
+   - L'emprise finale est EPINGLEE (ChunkKeeper.track) + keep()
+     immediat a chaque reprise (comble le trou de 5 s du ticker).
+   - Borne de temps visible : si l'emprise n'est toujours pas
+     complete apres 10 minutes (dlb.safetyAwaitTimeoutMs), ABANDON
+     PROPRE loggé de la generation (file liberee, reservation rendue)
+     au lieu du silence infini.
+   - Souscription de zone SafeSurface + compte-rendu de progression
+     (chunks restants, PENDING, capDrops) toutes les 100 reprises.
+   - Purge de READY par TTL (30 s, dlb.readyTtlMs).
+   - Debit de la fenetre d'epinglage assouplie : REQUEST_PER_TICK
+     4 -> 12, MAX_IN_FLIGHT 2 -> 16 (valable seulement pendant la
+     phase d'epinglage ; driver/provenance traces).
+   - Flag optionnel -Ddlb.debug=1 (ou env DLB_DEBUG=1) : rallume les
+     logs d'info+structure sans toucher au defaut de publication.
+
+4. RESULTATS MESURES SUR MON SERVEUR (Ton objectif : 1 mn max /
+   structure, 15 mn max par test serveur)
+   - t01 (dragon, terrain precharge) :  « Zone choisie » en 4,0 s,
+     paste 225 ms — total structure ~4 s.
+   - t0x-far (dragon, emprise HORS pregen, chunks vierges) :
+     24,0 s de recherche+chargement complet, pose immediate.
+   - t05-queue3 (3 structures enchainees) : en cours au moment de
+     cette note ; les resultats + matrice completes seront dans les
+     logs ci-joints.
+   Avant T232, ces memes scenarios ne produisais JAMAIS de
+   structure (heures d'attente).
+
+5. FICHIERS MODIFIES (chemins exacts du zip) :
+   mod_project/src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+   mod_project/src/main/java/deepluckyblock/util/SafeSurface.java
+   mod_project/src/main/java/deepluckyblock/util/ChunkKeeper.java
+   mod_project/src/main/java/deepluckyblock/util/DebugLog.java   (nouveau dans l'overlay)
+   Rien d'autre n'a ete touche.
+
+6. GARDE-FOU CI : le workflow github comporte desormais une probe
+   « T232 structured-lab regression probe » qui ECHOUE le build si
+   l'un de ces correctifs disparait d'un fichier (revert non voulu).
+
