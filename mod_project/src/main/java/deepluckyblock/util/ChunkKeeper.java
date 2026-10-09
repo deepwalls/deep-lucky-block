@@ -102,7 +102,7 @@ public final class ChunkKeeper {
     // pour recevoir leur ticket. Cette latence artificielle dominait les runs
     // (99 chunks annoncés prêts, puis 24/48/72/96). La génération reste limitée
     // séparément; seuls les tickets bon marché sont posés en une vague.
-    private static final int REQUEST_PER_TICK = Math.max(1, Math.min(8, Integer.getInteger("dlb.requestPerTick", 4)));
+    private static final int REQUEST_PER_TICK = Math.max(1, Math.min(12, Integer.getInteger("dlb.requestPerTick", 12))); // T232
     private static final int PIN_PER_TICK = 128;
     /**
      * Demandes de chargement asynchrones EN VOL, tout au plus.
@@ -119,7 +119,7 @@ public final class ChunkKeeper {
     // dizaines de chunks par seconde (une generation dure quelques dizaines de ms).
     // Même régression : T76b prescrit 2 chunks en vol, pas 16. Un plafond élevé
     // laisse les résultats FULL s'accumuler puis s'appliquer ensemble au tick.
-    private static final int MAX_IN_FLIGHT = Math.max(2, Math.min(32, Integer.getInteger("dlb.maxInFlight", 2)));
+    private static final int MAX_IN_FLIGHT = Math.max(2, Math.min(32, Integer.getInteger("dlb.maxInFlight", 16))); // T232
     /** Le maintien est rafraichi tous les 5 s (le ticket PORTAL dure 15 s). */
     private static final int REFRESH_TICKS = 100;
     /** T66 : intervalle des re-demandes forcees pour les chunks toujours absents (5 s). */
@@ -258,6 +258,18 @@ public final class ChunkKeeper {
      * quelques chunks pas encore en memoire, epingle ceux qui le sont, et
      * rafraichit les tickets toutes les 5 s.
      */
+    /**
+     * T232 : true si le chunk appartient au rectangle de la zone epinglee du
+     * niveau. Cheville de l'accord sanitaire avec SafeSurface : quand la zone
+     * est epinglee ici, SafeSurface ne retire plus son ticket async sur ces
+     * chunks (fin de la roue de hamster "charge -> decharge -> regenere"
+     * mesuree en lab devant l'emprise finale, cause du « rien ne spawn »).
+     */
+    public static boolean coversChunk(ServerLevel level, int cx, int cz) {
+        Zone z = ZONES.get(level);
+        return z != null && cx >= z.cx0 && cx <= z.cx1 && cz >= z.cz0 && cz <= z.cz1;
+    }
+
     public static void keep(ServerLevel level) {
         Zone z = ZONES.get(level);
         if (z == null) return;

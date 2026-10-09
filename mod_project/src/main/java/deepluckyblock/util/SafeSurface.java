@@ -299,7 +299,14 @@ public final class SafeSurface {
      * cellules). Resultat : le scoring ne peut plus bloquer, quel que soit l'etat du chunk
      * system.
      */
-    private static final java.util.Set<Long> READY = java.util.concurrent.ConcurrentHashMap.newKeySet();
+        private static final java.util.Set<Long> READY = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    // T232 : purge temporelle de READY (TTL) -- avant, READY ne se vidait
+    // JAMAIS : apres une generation de ~64k chunks / ~5 000 demandes, READY
+    // tenait des dizaines de milliers de cles perimees (chunk depuis retourne
+    // au disque) et toutes les detections « deja pret » mentaient pendant des
+    // HEURES (visible en lab : pipeline gelue << rien ne spawn >>).
+    private static final java.util.Map<Long, Long> READY_TIME = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long READY_TTL_MS = Integer.getInteger("dlb.readyTtlMs", 30_000);
     private static final java.util.Set<Long> PENDING = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     private static long chunkKey(int cx, int cz) { return (((long) cx) << 32) ^ (cz & 0xFFFFFFFFL); }
@@ -332,6 +339,59 @@ public final class SafeSurface {
             net.minecraft.server.level.TicketType.create("dlb_async_request", Long::compare, 300);
     private static long nextRequestTicket;
 
+    // ================================================================
+    // T232 : SOUSCRIPTION DE ZONE (emprise finale) + accord ChunkKeeper
+    //
+    // A une seule de ces souscriptions a la fois (la generation est
+    // serialisee par GENERATION_BUSY). La souscription est bornee en
+    // temps : replan() est invoque par Structures5Procedure avec son
+    // propre timeout de 10 minutes ; ici, aucune logique d'abandon --
+    // la souscription rend simplement visible (PlanInfo) ce qui reste
+    // a charger, pour les diagnostics, et signale l'evenement de
+    // completion via whenDone qu'au bon moment.
+    // ================================================================
+    public static final class ZonePlan {
+        public final net.minecraft.server.level.ServerLevel level;
+        public final int cx0, cz0, cx1, cz1;
+        public final Runnable whenDone;
+        public final long startedMs = System.currentTimeMillis();
+        ZonePlan(net.minecraft.server.level.ServerLevel level, int cx0, int cz0, int cx1, int cz1, Runnable whenDone) {
+            this.level = level; this.cx0 = cx0; this.cz0 = cz0; this.cx1 = cx1; this.cz1 = cz1;
+            this.whenDone = whenDone;
+        }
+        boolean covers(int cx, int cz) { return cx >= cx0 && cx <= cx1 && cz >= cz0 && cz <= cz1; }
+    }
+    private static volatile ZonePlan ZONE_PLAN = null;
+
+    public static void replanZone(net.minecraft.server.level.ServerLevel level, int cx0, int cz0, int cx1, int cz1, Runnable whenDone) {
+        ZONE_PLAN = new ZonePlan(level, cx0, cz0, cx1, cz1, whenDone);
+        onChunkReady(-1L);   // premier balayage immediat
+    }
+    public static void dropZonePlan() { ZONE_PLAN = null; }
+    public static int zonePlanMissing() {
+        ZonePlan p = ZONE_PLAN;
+        if (p == null) return 0;
+        int missing = 0;
+        for (int cx = p.cx0; cx <= p.cx1; cx++)
+            for (int cz = p.cz0; cz <= p.cz1; cz++)
+                if (p.level.getChunkSource().getChunkNow(cx, cz) == null) missing++;
+        return missing;
+    }
+    // signale le plan quand TOUTE la zone est en memoire
+    private static void onChunkReady(long key) {
+        ZonePlan p = ZONE_PLAN;
+        if (p == null) return;
+        if (zonePlanMissing() == 0) {
+            ZONE_PLAN = null;
+            p.whenDone.run();
+        }
+    }
+
+    /** T232 : true si le chunk est dans l'emprise actuellement epinglee par le pipeline. */
+    public static boolean hasZoneTicket(net.minecraft.server.level.ServerLevel level, int cx, int cz) {
+        return deepluckyblock.util.ChunkKeeper.coversChunk(level, cx, cz);
+    }
+
     private static void requestAsync(ServerLevel level, int cx, int cz, long key, Runnable whenDone) {
         var chunkPos = new net.minecraft.world.level.ChunkPos(cx, cz);
         long ticket = ++nextRequestTicket;
@@ -345,14 +405,32 @@ public final class SafeSurface {
                         deepluckyblock.procedures.TestProcedure.schedule(level,
                                 deepluckyblock.procedures.TestProcedure.currentTick(level) + 1, () -> {
                     try {
-                        if (error == null && level.getChunkSource().getChunkNow(cx, cz) != null) READY.add(key);
-                        else READY.remove(key);
+                        if (error == null && level.getChunkSource().getChunkNow(cx, cz) != null) {
+                            READY.add(key);
+                            READY_TIME.put(key, System.currentTimeMillis());
+                        } else {
+                            READY.remove(key);
+                            READY_TIME.remove(key);
+                        }
+                        // T232 : plan de zone complet (souscription emprise finale)
+                        onChunkReady(key);
                     } finally {
                         PENDING.remove(key);
                         // Give ChunkKeeper a tick to take over, without sharing its ticket key.
                         deepluckyblock.procedures.TestProcedure.schedule(level,
                                 deepluckyblock.procedures.TestProcedure.currentTick(level) + 2,
-                                () -> level.getChunkSource().removeRegionTicket(ASYNC_TICKET, chunkPos, 0, ticket));
+                                () -> {
+                                    // T232 (accord sanitaire SafeSurface <-> ChunkKeeper) :
+                                    // si le chunk appartient a une emprise epinglee par le
+                                    // pipeline, ce ticket ne se retire PAS. Symptome tue :
+                                    // en sandbox, le retrait +2 ticks dechargeait le chunk
+                                    // (zone hors portee joueur), la reprise suivante le
+                                    // regenereait, le ticket etait a nouveau retire -- roue
+                                    // de hamster infinie, aucune structure ne spawnait
+                                    // jamais. ChunkKeeper garde la zone : un seul tuteur.
+                                    if (!hasZoneTicket(level, cx, cz))
+                                        level.getChunkSource().removeRegionTicket(ASYNC_TICKET, chunkPos, 0, ticket);
+                                });
                         whenDone.run();
                     }
                 })));
@@ -364,7 +442,13 @@ public final class SafeSurface {
         if (READY.contains(k) && level.getChunkSource().getChunkNow(cx, cz) != null) return;
         READY.remove(k);
         if (PENDING.contains(k)) return;
-        if (PENDING.size() >= PENDING_CAP) return;   // T231 : debit borne du fond
+        if (PENDING.size() >= PENDING_CAP) {   // T231 : debit borne du fond
+            if (System.getProperty("dlb.debug") != null || System.getenv("DLB_DEBUG") != null) {
+                if (++CAP_DROP_COUNT % 100 == 1)
+                    LOGGER.warn("[DLB-CHUNKS] T231 pendingCap atteint ({}) : {} nouvelle(s) demande(s) ignorees -- fuite possible de PENDING", PENDING.size(), CAP_DROP_COUNT);
+            }
+            return;
+        }
         if (!PENDING.add(k)) return;
         requestAsync(level, cx, cz, k, () -> {});
     }
@@ -640,6 +724,28 @@ public final class SafeSurface {
      * jamais de generation synchrone).
      */
     public static long softMisses;
+
+    // ============================================================
+    // T232 (diagnostic sandbox/lab) : compteurs temps-reel du fond
+    // de generation. CAP_DROP_COUNT compte les demandes REJETEES par
+    // le plafond T231 ; pendingVolatiles = demandes en cours de
+    // completion. readyCount() = chunks declares prets. Les logs
+    // detailles ne partent que si -Ddlb.debug=1 est actif.
+    // ============================================================
+    public static long CAP_DROP_COUNT = 0;
+    public static int pendingCount() { return PENDING.size(); }
+    public static int readyCount() {
+        long now = System.currentTimeMillis();
+        java.util.Iterator<Long> it = READY.iterator();
+        while (it.hasNext()) {
+            long k = it.next();
+            if (now > READY_TIME.getOrDefault(k, 0L) + READY_TTL_MS) {
+                it.remove();
+                READY_TIME.remove(k);
+            }
+        }
+        return READY.size();
+    }
 
     /**
      * Variante BLOQUANTE (generation synchrone du chunk). T52 : plus aucun appelant

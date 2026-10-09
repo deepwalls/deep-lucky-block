@@ -42,6 +42,30 @@ jobs:
       - name: Install CI-only fixture checks
         if: contains(github.event.head_commit.message, '[server-check]')
         run: cp ci/StructureRegressionChecks.java "$RUNNER_TEMP/mod-project/src/main/java/deepluckyblock/procedures/"
+      - name: T232 structured-lab regression probe
+        run: |
+          P=mod_project/src/main/java/deepluckyblock
+          fail=0
+          need() {
+            f=$1; shift
+            if ! grep -q "$1" "$f"; then
+              echo "::error title=T232-probe::$$f : marqueur absent -> $1"
+              fail=1
+            fi
+          }
+          P=$P
+          need "$P/procedures/Structures5Procedure.java" "dlb.safetyAwaitTimeoutMs"
+          need "$P/procedures/Structures5Procedure.java" "replanZone(level, cx0, cz0, cx1, cz1"
+          need "$P/util/SafeSurface.java" "hasZoneTicket"
+          need "$P/util/SafeSurface.java" "READY_TTL_MS"
+          need "$P/util/ChunkKeeper.java" "coversChunk"
+          need "$P/util/DebugLog.java" "dlb.debug"
+          if [ $$fail -eq 1 ]; then
+            echo "::error title=T232-probe::le correctif lab T232 a disparu d'au moins un fichier -- preventif contre un revert non controle"
+            exit 1
+          fi
+          echo "T232-probe OK : accord sanitaire + borne attente + purge READY presents"
+
       - name: Build mod
         shell: bash
         env:
@@ -96,6 +120,85 @@ jobs:
           git pull --rebase -q origin ${GITHUB_REF#refs/heads/} || true
           git push -q origin HEAD:${GITHUB_REF#refs/heads/} || true
           exit 0
+      - name: Export provisioned server runtime for local sandbox tests [runtime-export]
+        if: contains(github.event.head_commit.message, '[runtime-export]')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          echo "== bootstrap : provisionne completement le runtime serveur =="
+          mkdir -p "$RUNNER_TEMP/mod-project/run"
+          printf 'eula=true\n' > "$RUNNER_TEMP/mod-project/run/eula.txt"
+          (cd "$RUNNER_TEMP/mod-project" && timeout 900 ./gradlew runServer --console=plain --max-workers=2 < /dev/null > "$RUNNER_TEMP/boot.log" 2>&1) &
+          BPID=$!
+          for i in $(seq 1 950); do
+            grep -q "Done (" "$RUNNER_TEMP/boot.log" 2>/dev/null && break
+            sleep 2
+          done
+          kill $BPID 2>/dev/null; sleep 3; kill -9 $BPID 2>/dev/null
+          pkill -f "neoforge" 2>/dev/null; pkill -f "java.*runServer" 2>/dev/null
+          tail -5 "$RUNNER_TEMP/boot.log"
+          echo "== tailles avant tar =="
+          du -sh /home/runner/.gradle/caches /home/runner/.gradle/wrapper "$RUNNER_TEMP/mod-project" 2>/dev/null
+          echo "== tar + split <= 80 Mo =="
+          rm -rf ci/runtime && mkdir -p ci/runtime/parts
+          JAVA_RT=$(ls -d /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.* 2>/dev/null | head -1)
+          echo "java runner: $JAVA_RT"
+          tar -czf /tmp/runtime.tgz \
+              -C "$RUNNER_TEMP" mod-project \
+              -C /home/runner .gradle/caches .gradle/wrapper \
+              -C /opt/hostedtoolcache Java_Temurin-Hotspot_jdk \
+              --exclude='*/outputs/client*' --exclude='*build-cache-1' \
+              --exclude='*.executionHistory' 2>/dev/null || true
+          ls -la /tmp/runtime.tgz
+          split -b 80m -d /tmp/runtime.tgz ci/runtime/parts/part-
+          sha256sum ci/runtime/parts/* > ci/runtime/parts.sha256
+          echo "gradle_boot_log_tail:" > ci/runtime/export-info.txt
+          tail -30 "$RUNNER_TEMP/boot.log" >> ci/runtime/export-info.txt
+          git config user.email "ci-result@deep-lucky-block.ci"
+          git config user.name "DLB CI results"
+          git add ci/runtime
+          git commit -qm "CI-PROGRESS ($GITHUB_RUN_ID) : export runtime serveur pour tests sandbox" || exit 0
+          git fetch -q origin ${GITHUB_REF_NAME}
+          git pull --rebase -q origin ${GITHUB_REF_NAME} || true
+          n=0
+          until git push -q origin HEAD:${GITHUB_REF_NAME}; do
+            n=$((n+1)); [ $n -gt 6 ] && break; sleep 5
+            git pull --rebase -q origin ${GITHUB_REF_NAME} || true
+          done
+          exit 0
+
+      - name: Export runner JDK for sandbox [runtime-jre]
+        if: contains(github.event.head_commit.message, '[runtime-jre]')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          echo "JAVA_HOME=$JAVA_HOME"
+          ls -la /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/ 2>/dev/null | head
+          ls -la ${JAVA_HOME:-/dev/null}/bin/java 2>/dev/null | head -2
+          rm -rf ci/runtime-jre && mkdir -p ci/runtime-jre
+          cp -rL "$JAVA_HOME"/. ci/runtime-jre/jdk/ 2>&1 | head -3 || cp -rL /usr/lib/jvm/temurin-21-jdk-amd64/. ci/runtime-jre/jdk/
+          du -sh ci/runtime-jre/jdk > /tmp/jdk_size.txt
+          NB=$(find ci/runtime-jre -type f | wc -l)
+          echo "::notice title=JDK-EXPORT::JAVA_HOME=$JAVA_HOME taille=$(du -sh ci/runtime-jre/jdk | cut -f1) fichiers=$NB java-version=$(ci/runtime-jre/jdk/bin/java -version 2>&1 | head -1 || echo KO)"
+          rm -rf ci/runtime-jre/jdk/demo ci/runtime-jre/jdk/man 2>/dev/null
+          du -sh ci/runtime-jre
+          tar -czf /tmp/jdk.tgz -C ci/runtime-jre jdk
+          ls -la /tmp/jdk.tgz
+          rm -rf ci/runtime-jre && mkdir -p ci/runtime-jre/parts
+          split -b 80m -d /tmp/jdk.tgz ci/runtime-jre/parts/part-
+          sha256sum ci/runtime-jre/parts/* > ci/runtime-jre/parts.sha256
+          git config user.email "ci-result@deep-lucky-block.ci"
+          git config user.name "DLB CI results"
+          git add -f ci/runtime-jre
+          STOFD=$(git status --short ci/runtime-jre | wc -l)
+          echo "::notice title=JDK-EXPORT-2::fichiers ajoutes=$STOFD"
+          git commit -qm "CI-PROGRESS ($GITHUB_RUN_ID) : export JDK runner" || exit 0
+          git fetch -q origin ${GITHUB_REF_NAME}; git pull --rebase -q origin ${GITHUB_REF_NAME} || true
+          n=0; until git push -q origin HEAD:${GITHUB_REF_NAME}; do n=$((n+1)); [ $n -gt 6 ] && break; sleep 5; git pull --rebase -q origin ${GITHUB_REF_NAME} || true; done
+          exit 0
+
       - name: Save build diagnostics
         if: always()
         uses: actions/upload-artifact@v4

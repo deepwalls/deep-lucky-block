@@ -900,6 +900,17 @@ public class Structures5Procedure {
     /** Une seule génération active : compteur borné du chargement de son emprise choisie. */
     private static int FOOTPRINT_LOAD_RETRIES = 0;
     private static final int MAX_FOOTPRINT_LOAD_RETRIES = 200;
+    // T232 : borne de temps de l'attente de l'emprise finale. Reproduit en lab
+    // sandbox : sans elle, la boucle SAFETY tournait SANS FIN (reprise 480+/200,
+    // 15+ minutes, aucune structure posee) parce que les chunks charges
+    // etaient decharges avant la reprise suivante (ticket async retire trop
+    // tot). L'accord SafeSurface<->ChunkKeeper supprime la cause ; cette borne
+    // supprime le symptome si une variante reapparait : au pire, la generation
+    // echoue PROPREMENT (file liberee, candidate suivante a la prochaine
+    // invocation) au lieu de silencer le serveur.
+    private static long SAFETY_AWAIT_START_MS = 0L;
+    private static final long SAFETY_AWAIT_TIMEOUT_MS =
+            Integer.getInteger("dlb.safetyAwaitTimeoutMs", 600_000); // 10 min par defaut
     /** T229 : reprises consecutives passees a attendre les controles de sol
      * (x0,6 / emprise entiere). Sert uniquement a rendre cette attente visible:
      * sans journal, le joueur ne voyait plus rien passer pendant des minutes. */
@@ -2270,18 +2281,60 @@ public class Structures5Procedure {
             int cx1 = (txz.getX() + safetyRadius) >> 4;
             int cz0 = (txz.getZ() - safetyRadius) >> 4;
             int cz1 = (txz.getZ() + safetyRadius) >> 4;
-            ++FOOTPRINT_LOAD_RETRIES; // diagnostic uniquement : aucun abandon
+            ++FOOTPRINT_LOAD_RETRIES; // diagnostic uniquement : aucun abandon sauf borne T232
             // Le scoring ne charge volontairement rien. Une fois LE candidat
             // final choisi, demander uniquement son emprise puis reprendre sans
             // bloquer le thread serveur. T165 refusait ici et gardait la file
             // verrouillée pendant quatre minutes.
             deepluckyblock.util.SafeSurface.requestZone(level, cx0, cz0, cx1, cz1);
+            // T232 : trois garde-fous additifs dans la phase d'attente :
+            //  (1) PIN de l'emprise finale via ChunkKeeper + keep immediat : le
+            //      ticker autonome de ChunkKeeper ne tournait que toutes les
+            //      100 ticks (5 s) -- assez tard pour qu'un chunk charge
+            //      soit deja decharge quand la zone est hors-portee joueur.
+            //  (2) Souscription de zone SafeSurface (diagnostic + accord avec
+            //      le pin : ses tickets ne sont plus retires sur ces chunks).
+            //  (3) Borne temporelle de 10 min puis abandon PROPRE : la
+            //      generation obtient une sortie visible au lieu d'une
+            //      boucle silencieuse infinie (bug "rien ne spawn").
+            deepluckyblock.util.ChunkKeeper.track(level,
+                    new BlockPos(cx0 << 4, level.getMinBuildHeight(), cz0 << 4),
+                    new BlockPos((cx1 << 4) + 15, level.getMaxBuildHeight() - 1, (cz1 << 4) + 15));
+            deepluckyblock.util.ChunkKeeper.keep(level);
+            if (FOOTPRINT_LOAD_RETRIES == 1) {
+                SAFETY_AWAIT_START_MS = System.currentTimeMillis();
+                final String planNbt = nbt;
+                deepluckyblock.util.SafeSurface.replanZone(level, cx0, cz0, cx1, cz1,
+                        () -> deepluckyblock.util.DebugLog.info(LOGGER,
+                                "[STRUCT5-SAFETY] {} : emprise finale complete (plan zone, {} ms)",
+                                planNbt, System.currentTimeMillis() - SAFETY_AWAIT_START_MS));
+            }
+            long awaitElapsed = SAFETY_AWAIT_START_MS == 0L ? 0L
+                    : System.currentTimeMillis() - SAFETY_AWAIT_START_MS;
+            if (awaitElapsed > SAFETY_AWAIT_TIMEOUT_MS) {
+                int missed = deepluckyblock.util.SafeSurface.zonePlanMissing();
+                LOGGER.warn("[STRUCT5-SAFETY] {} : emprise finale INCOMPLETE apres {} ms ({} chunk(s) manquant(s) "
+                                + "sur {}x{}) -- ABANDON PROPRE de ce candidat : la file est liberee, au prochain "
+                                + "/dlbtest le pipeline refera une nouvelle recherche. (T232 : borne contre la "
+                                + "boucle silencieuse infinie reproduite en lab)",
+                        nbt, awaitElapsed, missed, cx1 - cx0 + 1, cz1 - cz0 + 1);
+                deepluckyblock.util.SafeSurface.dropZonePlan();
+                deepluckyblock.util.ChunkKeeper.release(level);   // le pin ne survit pas a un abandon
+                FOOTPRINT_LOAD_RETRIES = 0;
+                SAFETY_AWAIT_START_MS = 0L;
+                return false;   // l'appelant evalue + notifyGenerationAborted
+            }
             // T229 : attente visible -- DebugLog etant desactive par defaut, le
             // joueur n'avait AUCUNE trace pendant ce chargement (silence total
             // constate en jeu). WARN borne : au debut puis toutes les 100 reprises.
             if (FOOTPRINT_LOAD_RETRIES == 1 || FOOTPRINT_LOAD_RETRIES % 100 == 0)
-                LOGGER.warn("[STRUCT5-SAFETY] {} : chargement asynchrone de l'emprise finale (reprise {}/{})",
-                        nbt, FOOTPRINT_LOAD_RETRIES, MAX_FOOTPRINT_LOAD_RETRIES);
+                LOGGER.warn("[STRUCT5-SAFETY] {} : chargement asynchrone de l'emprise finale (reprise {}/{}, "
+                                + "plan-zone restant={} chunk(s), SafeSurface PENDING={}, capDrops={}, {} ms)",
+                        nbt, FOOTPRINT_LOAD_RETRIES, MAX_FOOTPRINT_LOAD_RETRIES,
+                        deepluckyblock.util.SafeSurface.zonePlanMissing(),
+                        deepluckyblock.util.SafeSurface.pendingCount(),
+                        deepluckyblock.util.SafeSurface.CAP_DROP_COUNT,
+                        awaitElapsed);
             else if (FOOTPRINT_LOAD_RETRIES % 20 == 0)
                 deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-SAFETY] {} : chargement asynchrone de l'emprise finale (reprise {}/{})",
                         nbt, FOOTPRINT_LOAD_RETRIES, MAX_FOOTPRINT_LOAD_RETRIES);
@@ -2294,6 +2347,8 @@ public class Structures5Procedure {
             return true; // accepté et différé : conserver GENERATION_BUSY
         }
         FOOTPRINT_LOAD_RETRIES = 0;
+        SAFETY_AWAIT_START_MS = 0L;   // T232
+        deepluckyblock.util.SafeSurface.dropZonePlan();
         if (finalQuality.wetRatio() > FLAT_MAX_WET) {
             REJECTED_RUGGED_CENTERS.add(BlockPos.asLong(txz.getX(), 0, txz.getZ()));
             PENDING_FLAT_CENTER = null;
