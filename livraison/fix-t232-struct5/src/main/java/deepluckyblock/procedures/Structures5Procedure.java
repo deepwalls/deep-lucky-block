@@ -1037,10 +1037,19 @@ public class Structures5Procedure {
      *  (pour rappel la porte reelle d'acceptation est 10 sur terrain genere). */
     private static final int DRY_PICK_GOOD_SPAN =
             propInt("dlb.search.dryPickGoodSpan", 8);
-    /** Rayon max du choix sec : au-dela, le fil historique re-prendrait trop
-     *  de terrain vierge ; bornage conforme SEARCH_R + EXTRA (768). */
+    /** Rayon max du choix sec PAR BULLE. T233c : 1536 par defaut (bord
+     *  d'ocean reel chez le joueur : 768 etait sature avant la terre) ; le
+     *  plafond qui compte reste le budget temps, jamais le rayon.
+     *  -Ddlb.search.dryPickMaxR=N */
     private static final int DRY_PICK_MAX_R =
-            propInt("dlb.search.dryPickMaxR", 768);
+            propInt("dlb.search.dryPickMaxR", 1536);
+    /** Span sec maximal accepte en mode souple (lacs fins toleres : la
+     *  plateforme remontee T104 les gere cote pose ; le lissage couvre
+     *  jusque ~26 de relief natif). Au-delà : emprise reelle gaspillee et
+     *  vouee au rejet (span 33/53/62 du log joueur ont tous casse).
+     *  -Ddlb.search.dryPickSoftSpan=N */
+    private static final int DRY_PICK_SOFT_SPAN =
+            propInt("dlb.search.dryPickSoftSpan", 32);
     /** Budget temps dur du choix sec (ms). Quel que soit le PC, on rend la
      *  main avec le MEILLEUR candidat deja trouve. -Ddlb.search.dryPickMs=N */
     private static final int DRY_PICK_BUDGET_MS =
@@ -1053,6 +1062,30 @@ public class Structures5Procedure {
      *  meme endroit que REJECTED_RUGGED_CENTERS (nouvelle recherche). */
     private static final java.util.ArrayList<int[]> DRY_PICK_SUGGESTED = new java.util.ArrayList<>();
 
+    /** T233c-2 : cellules DEJA sondées a sec (grille DRY_CELL=96). La bulle
+     *  0 mangeait le budget a CHAQUE reprise (log lab seed 20261011 : 73 x
+     *  ~900 ms puis pose seulement grace au fil historique) ; desormais une
+     *  cellule ecartee est marquee pour TOUTE la recherche : chaque appel
+     *  de ~900 ms fait donc AVANCER la frontiere, au lieu de re-sonder le
+     *  meme ocean. Vide a beginGeneration comme les autres registres. */
+    private static final java.util.Set<Long> DRY_CELLS_DONE = new java.util.HashSet<>();
+    private static long dryCellKey(int cx, int cz) {
+        long gx = Math.floorDiv(cx, 96) + 300000L, gz = Math.floorDiv(cz, 96) + 300000L;
+        return (gx << 32) | (gz & 0xffffffffL);
+    }
+
+    /** T233c : vrai si (cx,cz) est a moins de {@code step} (Manhattan) d'un
+     *  centre DEJA REJETE par les portes reelles. Le log joueur du 10/10 a
+     *  montre le meme ocean re-sonde pendant ~200 s : REJECTED_RUGGED_CENTERS
+     *  n'excluait que le POINT exact. Desormais on apprend le QUARTIER. */
+    private static boolean dryQuarterRejected(int cx, int cz, int step) {
+        for (long key : REJECTED_RUGGED_CENTERS) {
+            int rx = BlockPos.getX(key), rz = BlockPos.getZ(key);
+            if (Math.abs(cx - rx) + Math.abs(cz - rz) < step) return true;
+        }
+        return false;
+    }
+
     /** Choix de centre 100 % bruit (aucun chunk). Balaye les couronnes
      *  96, 144, 192... (pas ~ une emprise) en sondant le relief sec ; un
      *  candidat est retenu si : hors REJECTED_RUGGED_CENTERS, distance min
@@ -1062,84 +1095,127 @@ public class Structures5Procedure {
      *  MEILLEUR trouve avant epuisement du budget. Retourne null si rien de
      *  credible (le balayage historique prend alors le relais) ou si une
      *  erreur quelconque survient (degrade : jamais de choix a l'aveugle). */
+    /** T233b/T233c : choix de centre 100 % bruit (aucun chunk).
+     *  BULLES : balayage autour du joueur, puis centres decales de 1024
+     *  (l'ocean s'arrete quelque part ; a 768 max le log joueur montrait
+     *  "aucun candidat credible" en boucle puis retour au vieux balayage
+     *  worldgen-bound de 280 s). FILTRES SECS par candidat : exclusion
+     *  quartier rejete (T233c), suggestion precedente, distance min joueur
+     *  (bulle 0), hauteur 62-189, fond OCEAN_FLOOR_WG en 9 points (centre
+     *  sec EXIGE ; 8 marges comptees ; avant : 5 sondes, les lacs fins
+     *  passaient et coutaient chacun ~10 s de generation d'emprise),
+     *  conflit StructureSites, span dryRuggedSpan.
+     *  ADMISSION : instantane si 9 fonds secs ET span <= GOOD ; sinon
+     *  meilleur strict (fonds tous secs) a span plus large ; sinon, bulles
+     *  de secours, meilleur souple (fond centre sec, <= 5 marges humides,
+     *  span <= SOFT) -- cas sauve par la plateforme T104 chez le joueur ;
+     *  jamais de span > SOFT (gaspillage d'emprise vouee au rejet).
+     *  Retourne null si tout est epuise sous budget (fil historique relais,
+     *  borne F2 au-dessus) ou en cas d'erreur (jamais de choix aveugle). */
     private static BlockPos dryPickCenter(net.minecraft.server.level.ServerLevel lvl,
             BlockPos origin, int checkR, int fullCheckR, int structMax, Player p, int minEdgeDist) {
         final long t0 = System.currentTimeMillis();
-        int probed = 0, skipped = 0, water = 0;
+        int probed = 0, water = 0, skipped = 0;
         try {
             net.minecraft.world.level.chunk.ChunkGenerator gen = lvl.getChunkSource().getGenerator();
             net.minecraft.world.level.levelgen.RandomState rs = lvl.getChunkSource().randomState();
             final int baseX = p != null ? p.blockPosition().getX() : origin.getX();
             final int baseZ = p != null ? p.blockPosition().getZ() : origin.getZ();
-            final int minCenterDist = minEdgeDist + checkR;      // meme filtre que le scan historique
-            final int step = Math.max(32, structMax);            // un candidat par emprise environ
-            int bestSpan = Integer.MAX_VALUE;
-            BlockPos best = null;
-            for (int r = Math.max(96, minCenterDist + step); r <= DRY_PICK_MAX_R; r += step) {
-                final double angle0 = (r * 0.6180339887) % (2 * Math.PI);  // emaillage tournant
-                final int n = Math.max(8, (int) Math.ceil((2 * Math.PI * r) / step));
-                for (int k = 0; k < n; k++) {
-                    final double a = angle0 + (2 * Math.PI * k) / n;
-                    int cx = baseX + (int) Math.round(Math.cos(a) * r);
-                    int cz = baseZ + (int) Math.round(Math.sin(a) * r);
-                    if (REJECTED_RUGGED_CENTERS.contains(BlockPos.asLong(cx, 0, cz))) { skipped++; continue; }
-                    boolean dejaPropose = false;
-                    for (int[] q : DRY_PICK_SUGGESTED)
-                        if (Math.abs(cx - q[0]) + Math.abs(cz - q[1]) < step) { dejaPropose = true; break; }
-                    if (dejaPropose) { skipped++; continue; }
-                    if (p != null) {
-                        double dpx = cx - p.blockPosition().getX(), dpz = cz - p.blockPosition().getZ();
-                        if ((dpx * dpx + dpz * dpz) < (double) minCenterDist * minCenterDist) { skipped++; continue; }
-                    }
-                    int hy = gen.getBaseHeight(cx, cz,
-                            net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, lvl, rs);
-                    probed++;
-                    if (hy <= 61) { water++; continue; }           // ocean / riviere : rejet sec
-                    if (hy >= 190) { water++; continue; }          // paroi / foret de pics impropre
-                    // T233b-2 : WORLD_SURFACE_WG compte l'EAU dans la
-                    // hauteur (ocean = 62 constant, span 0) : indepistable
-                    // sans sonder le FOND (t04 : 113 choix aquatiques
-                    // d'affilee). OCEAN_FLOOR_WG ignore le fluide.
-                    // Centre + 4 diag a mi-emprise : toute eau <= 61
-                    // eliminate. Sec = zero chunk, cout bruit uniquement.
-                    boolean humide = false;
-                    {
-                        int w = Math.max(12, checkR / 2);
-                        int[][] wpts = {{0, 0}, {-w, -w}, {-w, w}, {w, -w}, {w, w}};
-                        for (int[] wp : wpts) {
-                            int hf = gen.getBaseHeight(cx + wp[0], cz + wp[1],
-                                    net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG, lvl, rs);
-                            if (hf <= 61) { humide = true; break; }
+            final int minCenterDist = minEdgeDist + checkR;
+            final int step = Math.max(32, structMax);
+            final long budget = DRY_PICK_BUDGET_MS;
+            final int[][] bubbles = {{0,0},{1024,0},{-1024,0},{0,1024},{0,-1024},
+                                     {1024,1024},{-1024,-1024},{1024,-1024},{-1024,1024}};
+            BlockPos bestStrict = null; int bestStrictSpan = Integer.MAX_VALUE;
+            BlockPos bestSoft = null;   int bestSoftSpan = Integer.MAX_VALUE;
+            for (int b = 0; b < bubbles.length; b++) {
+                final int cx0 = baseX + bubbles[b][0], cz0 = baseZ + bubbles[b][1];
+                final int r0 = b == 0 ? Math.max(96, minCenterDist + step) : 128;
+                boolean blown = false;
+                for (int r = r0; r <= DRY_PICK_MAX_R; r += step) {
+                    final double angle0 = (r * 0.6180339887) % (2 * Math.PI);
+                    final int n = Math.max(8, (int) Math.ceil((2 * Math.PI * r) / step));
+                    for (int k = 0; k < n; k++) {
+                        final double a = angle0 + (2 * Math.PI * k) / n;
+                        int cx = cx0 + (int) Math.round(Math.cos(a) * r);
+                        int cz = cz0 + (int) Math.round(Math.sin(a) * r);
+                        long ck = dryCellKey(cx, cz);
+                        if (!DRY_CELLS_DONE.add(ck)) { continue; }  // deja sonde a sec
+                        if (dryQuarterRejected(cx, cz, step)) { skipped++; continue; }
+                        boolean dejaPropose = false;
+                        for (int[] q : DRY_PICK_SUGGESTED)
+                            if (Math.abs(cx - q[0]) + Math.abs(cz - q[1]) < step) { dejaPropose = true; break; }
+                        if (dejaPropose) { skipped++; continue; }
+                        if (p != null) {
+                            double dpx = cx - p.blockPosition().getX(), dpz = cz - p.blockPosition().getZ();
+                            if ((dpx * dpx + dpz * dpz) < (double) minCenterDist * minCenterDist) { skipped++; continue; }
                         }
+                        int hy = gen.getBaseHeight(cx, cz,
+                                net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, lvl, rs);
+                        probed++;
+                        if (hy <= 61 || hy >= 190) { water++; continue; }
+                        int wet = 0;
+                        {
+                            int w = Math.max(12, checkR / 2);
+                            int centerFloor = gen.getBaseHeight(cx, cz,
+                                    net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG, lvl, rs);
+                            if (centerFloor <= 61) { water++; continue; }
+                            int[][] wpts = {{-w,0},{w,0},{0,-w},{0,w},{-w,-w},{-w,w},{w,-w},{w,w}};
+                            for (int[] wp : wpts) {
+                                int hf = gen.getBaseHeight(cx + wp[0], cz + wp[1],
+                                        net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG, lvl, rs);
+                                if (hf <= 61) wet++;
+                            }
+                        }
+                        if (deepluckyblock.util.StructureSites.conflict(lvl, cx, cz, checkR) != null) { skipped++; continue; }
+                        int span = dryRuggedSpan(lvl, cx, cz, fullCheckR);
+                        if (wet == 0) {
+                            if (span <= DRY_PICK_GOOD_SPAN) {
+                                DRY_PICK_SUGGESTED.add(new int[]{cx, cz});
+                                LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, bulle {}, {} sondes, {} eau/haut ecartees, span sec={}, 0 chunk genere)",
+                                        cx, cz, System.currentTimeMillis() - t0, b, probed, water, span);
+                                return new BlockPos(cx, Math.max(hy, 63), cz);
+                            }
+                            if (span > 0 && span < bestStrictSpan) {
+                                bestStrictSpan = span; bestStrict = new BlockPos(cx, Math.max(hy, 63), cz);
+                            }
+                        } else if (wet <= 5 && span > 0 && span <= DRY_PICK_SOFT_SPAN && span < bestSoftSpan) {
+                            bestSoftSpan = span; bestSoft = new BlockPos(cx, Math.max(hy, 63), cz);
+                        }
+                        if (System.currentTimeMillis() - t0 > budget) { blown = true; break; }
                     }
-                    if (humide) { water++; continue; }
-                    if (deepluckyblock.util.StructureSites.conflict(lvl, cx, cz, checkR) != null) { skipped++; continue; }
-                    int span = dryRuggedSpan(lvl, cx, cz, fullCheckR);
-                    if (span <= DRY_PICK_GOOD_SPAN) {
-                        DRY_PICK_SUGGESTED.add(new int[]{cx, cz});
-                        BlockPos found = new BlockPos(cx, Math.max(hy, 63), cz);
-                        LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233b : {} ms, {} sondes bruit, {} cartes eau/hauteur ecartees, span sec={}, 0 chunk genere)",
-                                cx, cz, System.currentTimeMillis() - t0, probed, water, span);
-                        return found;
-                    }
-                    if (span > 0 && span < bestSpan) { bestSpan = span; best = new BlockPos(cx, Math.max(hy, 63), cz); }
-                    if (System.currentTimeMillis() - t0 > DRY_PICK_BUDGET_MS) break;
+                    if (blown || (b == 0 && System.currentTimeMillis() - t0 > budget * 3 / 5)) break;
                 }
-                if (System.currentTimeMillis() - t0 > DRY_PICK_BUDGET_MS) break;
+                if (bestStrict != null) {
+                    DRY_PICK_SUGGESTED.add(new int[]{bestStrict.getX(), bestStrict.getZ()});
+                    LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, bulle {}, meilleur strict span sec={}, {} sondes, {} eau/haut, 0 chunk genere)",
+                            bestStrict.getX(), bestStrict.getZ(), System.currentTimeMillis() - t0, b, bestStrictSpan, probed, water);
+                    return bestStrict;
+                }
+                if (bestSoft != null && b > 0) {
+                    DRY_PICK_SUGGESTED.add(new int[]{bestSoft.getX(), bestSoft.getZ()});
+                    LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, bulle {}, admission souple span sec={}, {} sondes, {} eau/haut ecartees, plateforme T104 arbitrera, 0 chunk genere)",
+                            bestSoft.getX(), bestSoft.getZ(), System.currentTimeMillis() - t0, b, bestSoftSpan, probed, water);
+                    return bestSoft;
+                }
+                if (blown) {
+                    // temps partage epuise : rendre le meilleur si possible,
+                    // sinon laisser le prochain appel reprendre la frontiere
+                    // (les cellules deja vues sont sautees gratuitement).
+                    if (bestSoft == null && bestStrict == null) break;
+                }
             }
-            if (best != null) {
-                DRY_PICK_SUGGESTED.add(new int[]{best.getX(), best.getZ()});
-                // rien de parfait dans le rayon couvert : on prend le moins
-                // accidente ; les portes reelles arbitreront sur l'emprise.
-                LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233b : {} ms, budget ecoule, meilleur span sec={}, {} sondes, {} eau/haut ecartees, 0 chunk genere)",
-                        best.getX(), best.getZ(), System.currentTimeMillis() - t0, bestSpan, probed, water);
-                return best;
+            if (bestSoft != null) {
+                DRY_PICK_SUGGESTED.add(new int[]{bestSoft.getX(), bestSoft.getZ()});
+                LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, DERNIER RECOURS souple span sec={}, {} sondes, {} eau/haut, 0 chunk genere)",
+                        bestSoft.getX(), bestSoft.getZ(), System.currentTimeMillis() - t0, bestSoftSpan, probed, water);
+                return bestSoft;
             }
-            LOGGER.info("[STRUCT5-FLAT] selection seche T233b : aucun candidat credible en {} ms ({} sondes, {} eau/haut, {} exclus) -> balayage historique",
+            LOGGER.info("[STRUCT5-FLAT] selection seche T233c : aucun candidat credible en {} ms ({} sondes, {} eau/haut, {} exclus) -> balayage historique",
                     System.currentTimeMillis() - t0, probed, water, skipped);
             return null;
         } catch (Throwable any) {
-            LOGGER.warn("[STRUCT5-FLAT] selection seche T233b en echec ({}), relais par balayage historique", any.toString());
+            LOGGER.warn("[STRUCT5-FLAT] selection seche T233c en echec ({}), relais par balayage historique", any.toString());
             return null;
         }
     }
@@ -1375,6 +1451,7 @@ public class Structures5Procedure {
         FOOTPRINT_LOAD_RETRIES = 0;
         REJECTED_RUGGED_CENTERS.clear();
         DRY_PICK_SUGGESTED.clear();   // T233b : nouvelle recherche, nouvelles propositions
+        DRY_CELLS_DONE.clear();       // T233c-2 : nouvelle frontiere de recherche seche
         SEARCH_EXTRA_RADIUS = 0;
         SEARCH_SCANNED_RADIUS = -1;
         SEARCH_PROGRESS_LAST_MS = 0L;

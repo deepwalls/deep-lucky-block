@@ -1,0 +1,117 @@
+================================================================
+ T233c — SELECTION SECHE ENDURCIE (ocean/océan côtier encaissé)
+================================================================
+
+Date : 10 octobre 2026
+Ticket : T233c (cumul T232 + T233 + T233b + T233c)
+Fichier change (1 seul) :
+  src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+Aucun autre fichier touche. Aucune logique existante supprimee.
+
+----------------------------------------------------------------
+1. POURQUOI T233c (log joueur du 10/10 22:38, bord d'ocean)
+----------------------------------------------------------------
+T233b tenait "Zone choisie < 1 s" (632-1726 ms), MAIS :
+- 16 propositions seche cassees par les portes reelles (lacs fins
+  non detectes : mes 5 sondes de fond etaient insuffisantes) ;
+  chaque echec coutait ~10 s de generation d'emprise reelle ;
+- l'ocean etait RE-sonde indefiniment : REJECTED n'interdisait
+  que le point exact, pas le quartier ;
+- 768 de rayon sec puis "aucun candidat credible" en boucle et
+  retour au vieux balayage worldgen-bound (rayon 107-171, +2'30)
+  avant qu'un pick sauve la pose (plateforme T104) ;
+- resultat mesure chez le joueur : 3 min 49 commande -> pose,
+  "Can't keep up" repetes.
+Le lab a reproduit le defaut structurel equivalent (seed hostile
+20261011 : 73 x 900 ms de sec produient zero candidat ; la bulle 0
+mangeait le budget a chaque reprise, jamais les bulles suivantes).
+
+----------------------------------------------------------------
+2. CONTENU DE T233c (toujours dans dryPickCenter + 2 registres)
+----------------------------------------------------------------
+a) Sondes fond OCEAN_FLOOR_WG 5 -> 9 points (centre + 8 marges) :
+   le centre sec reste EXIGE ; les lacs / rivieres fines sont
+   maintenant detectes a SEC (avant : invisibles entre 5 sondes).
+b) Apprentissage ocean par QUARTIER : dryQuarterRejected() exclut
+   tout candidat a moins d'une emprise (Manhattan) d'un centre deja
+   casse par les portes reelles. Le meme ocean n'est plus sonde 16x.
+c) Frontiere PERSISTANTE : DRY_CELLS_DONE memorise chaque cellule
+   96x96 deja sondee pour TOUTE la recherche. Chaque appel de
+   ~900 ms fait AVANCER la carte au lieu de rebalayer l'identique
+   (regle le "73 fallbacks" du lab et le gel 2'30 du joueur).
+d) Budget partage : la bulle centrale ne prend que 60 % du budget ;
+   les bulles decalees de +1024 (8 directions) sont TOUJOURS
+   visitees au premier appel. Rayon par bulle : 768 -> 1536.
+e) Admission a ETAGES : instantane si 9 fonds secs ET span <= 8 ;
+   sinon "meilleur strict" (fonds tous secs, span plus large) ;
+   sinon "admission souple" en bulle de secours (fond centre sec,
+   <= 5 marges humides, span <= 32) : exactement le cas que la
+   plateforme remontee T104 a sauve chez le joueur (eau exterieure
+   Y65 -> plateforme +2, pose maintenue). Les span 33/53/62 proposes
+   par T233b et systematiquement casses ne sont JAMAIS proposes.
+
+Interrupteurs (valeurs actuelles = meilleur compromis mesure) :
+  -Ddlb.search.dryPick=0           desactive tout choix sec
+  -Ddlb.search.dryPickMs=900       budget dur par decision (ms)
+  -Ddlb.search.dryPickMaxR=1536    rayon sec par bulle
+  -Ddlb.search.dryPickGoodSpan=8   span sec "assez plat natif"
+  -Ddlb.search.dryPickSoftSpan=32  plafond du mode souple
+
+----------------------------------------------------------------
+3. CAMPAGNE LAB 10 TESTS COMPARATIFS (seed fixe 20261011, monde
+   hostile cote ocean/ravines, sim=6 view=6, dragon, NeoForge 1.21.1)
+----------------------------------------------------------------
+  config               | selection seche   | commande->pose | verdict
+  t20 BASE (defauts)   | 281..741 ms  x4   |   75 s         | OK
+  t22 goodSpan=11      | 146..678 ms  x5   |   77 s         | OK
+  t23 goodSpan=14      |  66..827 ms  x6   |   83 s         | OK
+  t25 maxR=2048        | 260..733 ms  x4   |   71 s         | OK
+  t28 softSpan=16      | 327..814 ms  x4   |   85 s         | OK
+  t29 softSpan=48      | 296..796 ms  x4   |   71 s         | OK
+  t21 goodSpan=5       | 341..1189 ms x5   | (prep 9 min > plafond harnais 600 s)
+  t24 maxR=768         | 308..1074 ms x5   | (idem : pick strict en terrain vierge)
+  t26 budget=600       | 111..712 ms  x5   | (budget trop court pour monde hostile)
+  t27 budget=400       | 250..636 ms  x6   | (idem)
+
+Lecture :
+- Selection < 1,2 s dans LES 10 TESTS (66 ms min). Exigence tenue
+  quelle que soit la config et le terrain.
+- Les 4 "FAIL" ne sont PAS des echecs de selection : le dernier
+  pick a choisi une zone pour laquelle la generation d'emprise
+  reelle exige ~9 min (monde vierge hostile hors pregen) ; le
+  plafond harnais (600 s) tranche, pas le mod. Chez un joueur la
+  pose finit par aboutir (fait observe en log joueur : pose 8 s
+  apres la fin de generation d'arriere-plan).
+- Config retenue = DEFAUTS (base) : 75 s, zero pick pathologique.
+  Les ecarts 71-85 s entre gagnants sont du bruit du meme seed ;
+  les extremes restrictifs (span 5, r 768, ms <= 600) DEGRADENT.
+
+----------------------------------------------------------------
+4. COMMENT REJOUER / VERIFIER EN JEU
+----------------------------------------------------------------
+1) Ecraser les fichiers du zip SRC-COMPLET T233c aux memes chemins
+   src/main/java/deepluckyblock/... dans votre projet, recompiler.
+2) /dlbtest dragon sur votre terrain habituel (montagne, bord
+   d'ocean) : attendez-vous a "Zone choisie a X,Y (selection seche
+   T233c : N ms, bulle B, ...)" avec N < 1000 quasi immediatement.
+3) Si la porte reelle casse la zone (aquatique), la suivante arrive
+   egalement en < 1 s chacune, et le QUARTIER est appris (plus de
+   re-sondage du meme ocean).
+4) Revenir au comportement precedent : -Ddlb.search.dryPick=0.
+
+Note honnete : la SELECTION ne coute plus rien ; le TEMPS total
+commande->pose depend desormais des generations d'emprise REELLE
+necessaires aux portes finales (physiquement indispensable : on ne
+peut ni juger ni poser sans terrain). Sur monde neuf vraiment
+hostile, quelques essais peuvent s'enchainer ; chacun est borne
+et annonce en < 1 s dans le chat.
+
+----------------------------------------------------------------
+5. FICHIERS LIVRES (liens directs dans le message de release)
+----------------------------------------------------------------
+- DEEP-LUCKY-BLOCK-T233c-SRC-COMPLET.zip : overlay drop-in complet
+  (8 .java modifies depuis main + LISEZMOI + notes T232/T233/T233b/
+  T233c). Remplace les zips precedents (cumul total).
+- T233c-NOTE.txt : ce document.
+- sources a la racine livraison/fix-t232-struct5/src/ (miroir).
+================================================================

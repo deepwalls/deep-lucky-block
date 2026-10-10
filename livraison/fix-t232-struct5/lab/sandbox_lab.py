@@ -131,19 +131,19 @@ class Server:
             except Exception: pass
 
 TESTS = [
+    # ---- T233c : 10 tests, meme seed/monde -> comparabilite parfaite ----
     # name, sim, view, vm props, scenario
-    # --- T233b : matrice render x simulation demandee par le joueur ---
-    ('t01-ref-sim10-view8',   '10', '8',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
-    ('t02-sim4-view8',        '4',  '8',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
-    ('t03-sim10-view4',       '10', '4',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
-    ('t04-sim6-view6',        '6',  '6',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
-    ('t12-sim12-view10',      '12', '10', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
-    ('t13-sim2-view3',        '2',  '3',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
-    ('t07-workers1-sim6-view6','6', '6',  '-Ddlb.chunks.workers=1 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
-    ('t0x-far-sim10-view8',   '10', '8',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'far'),
-    ('t05-queue3-sim6-view6', '6',  '6',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'queue3'),
+    ('t20-base',       '6', '6', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
+    ('t21-span5',      '6', '6', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1 -Ddlb.search.dryPickGoodSpan=5', 'single'),
+    ('t22-span11',     '6', '6', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1 -Ddlb.search.dryPickGoodSpan=11', 'single'),
+    ('t23-span14',     '6', '6', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1 -Ddlb.search.dryPickGoodSpan=14', 'single'),
+    ('t24-r768',       '6', '6', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1 -Ddlb.search.dryPickMaxR=768', 'single'),
+    ('t25-r2048',      '6', '6', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1 -Ddlb.search.dryPickMaxR=2048', 'single'),
+    ('t26-ms600',      '6', '6', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1 -Ddlb.search.dryPickMs=600', 'single'),
+    ('t27-ms400',      '6', '6', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1 -Ddlb.search.dryPickMs=400', 'single'),
+    ('t28-soft16',     '6', '6', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1 -Ddlb.search.dryPickSoftSpan=16', 'single'),
+    ('t29-soft48',     '6', '6', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1 -Ddlb.search.dryPickSoftSpan=48', 'single'),
 ]
-
 def fire(rcon, structure, x=1200, z=0):
     return rcon.cmd_retry(f'execute positioned {x} 90 {z} run dlbtest {structure}')
 
@@ -161,11 +161,15 @@ def wait_zone(server, markers=('Zone choisie',), timeout=DEFAULT_TIMEOUT_S):
     return None, server.log_since_boot()
 
 FRESH_WORLD = True  # un monde neuf par test (les structures restantes polluent le relief)
+LEVEL_SEED = '20261011'  # T233c : seed fixe = meme monde => configs comparables ('' = aleatoire)
 
 def run_test(name, sim, view, props, scenario, server, outdir):
     print(f"=== {name} (sim={sim} view={view} {props} {scenario}) ===", flush=True)
-    server.set_props(**{'simulation-distance': sim, 'view-distance': view,
-                        'max-tick-time': '300000'})  # labo seulement : mesurer long, ne pas crasher
+    props_srv = {'simulation-distance': sim, 'view-distance': view,
+                 'max-tick-time': '300000'}
+    if LEVEL_SEED:
+        props_srv['level-seed'] = LEVEL_SEED
+    server.set_props(**props_srv)  # labo seulement : mesurer long, ne pas crasher
     if FRESH_WORLD:
         import shutil
         for w in ('world', 'world_nether', 'world_the_end'):
@@ -237,8 +241,16 @@ def run_test(name, sim, view, props, scenario, server, outdir):
         if m: result['site'] = f"{m[-1][0]},{m[-1][1]}"
         # T233b : temps de selection mesure interne au mod (sondes bruit) et
         # nombre de passages (echec eventuel=ZONES rejetees apres generation).
-        md = _re.findall(r'selection seche T233b : (\d+) ms', txt)
+        md = _re.findall(r'lection seche T233[bc]? : (\d+) ms', txt)
         if md: result['select_ms_last'] = int(md[-1]); result['select_ms_all'] = [int(v) for v in md]
+        mx = _re.findall(r"Can't keep up[^0-9]*(\d+)ms", txt)
+        if mx: result['keepup_max_ms'] = max(int(v) for v in mx)
+        tiers = set()
+        if 'meilleur strict' in txt: tiers.add('strict')
+        if 'admission souple' in txt or 'DERNIER RECOURS souple' in txt: tiers.add('souple')
+        result['tiers_vus'] = sorted(tiers)
+        mb = _re.findall(r'lection seche T233[bc]? : \d+ ms, bulle (\d+)', txt)
+        if mb: result['bulle_max'] = max(int(v) for v in mb)
         mf = _re.findall(r'aucun candidat credible en (\d+) ms', txt)
         if mf: result['select_fallbacks'] = [int(v) for v in mf]
         m2 = re.findall(r'en (\d+)ms', txt)
