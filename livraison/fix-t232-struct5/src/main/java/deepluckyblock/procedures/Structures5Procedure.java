@@ -971,10 +971,47 @@ public class Structures5Procedure {
     private static final int MAX_DEFER_ROUNDS = propInt("dlb.search.deferRounds", 600);
     // 2 = croissance double (T181), 1 = +64 lineaire (pre-T181).
     private static final int SEARCH_GROWTH_MODE = propInt("dlb.search.growth", 2);
+    /* T233 : pre-filtre SEC de relief par bruit (sans charger/generer de chunk).
+     * Mesure en partie reelle (log du 10/10, terrain montagneux relief brut 14)
+     * : chaque candidat sans chunks en memoire declenchait en fond la
+     * generation de toute son emprise (requestZone) ; des centaines de zones
+     * vouees au rejet par la porte relief (max 10) inondaient le worldgen et
+     * faisaient ramer le serveur ("Can't keep up" 32-40 s). La sonde seche
+     * (API generateur, aucune lecture de chunk) ecarte d'emblee les candidats
+     * dont l'ecart de hauteur depasse DRY_GATE_SPAN (~26, soit porte 10 x1,75
+     * + marge 8 pour le decalage bruit/reel). Les portes de terrain REEL
+     * (flat, eau, emprise exhaustive) restent le juge final de tous les
+     * candidats restants : aucune tolerance d'acceptation desserree, seulement
+     * moins de generations gaspillees. Desactivable : -Ddlb.search.dryGate=0. */
+    private static final boolean SEARCH_DRY_GATE =
+            !"0".equals(System.getProperty("dlb.search.dryGate", "1"));
+    private static final int SEARCH_DRY_GATE_SPAN =
+            propInt("dlb.search.dryGateSpan", (int) Math.ceil(MAX_CLIFF_HEIGHT_DIFF * 1.75) + 8);
+    private static int SEARCH_DRY_REJECTS = 0;
 
-    private static int propInt(String key, int def) {
-        try { return Integer.parseInt(System.getProperty(key, Integer.toString(def))); }
+    private static int propInt(String key, int def) {        try { return Integer.parseInt(System.getProperty(key, Integer.toString(def))); }
         catch (NumberFormatException bad) { return def; }
+    }
+    /** T233 : ecart de hauteur estime en 9 sondes bruit sur l'emprise, sans
+     * charger ni generer le moindre chunk. Retourne 0 si le generateur ne sait
+     * pas estimer (mode degrade : aucun rejet sec). */
+    private static int dryRuggedSpan(net.minecraft.server.level.ServerLevel lvl, int cx, int cz, int r) {
+        try {
+            net.minecraft.world.level.chunk.ChunkGenerator gen = lvl.getChunkSource().getGenerator();
+            net.minecraft.world.level.levelgen.RandomState rs = lvl.getChunkSource().randomState();
+            int s = Math.max(24, r / 2);
+            int[][] pts = {{0, 0}, {-s, -s}, {-s, s}, {s, -s}, {s, s}, {-s, 0}, {s, 0}, {0, -s}, {0, s}};
+            int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+            for (int[] pt : pts) {
+                int h = gen.getBaseHeight(cx + pt[0], cz + pt[1],
+                        net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, lvl, rs);
+                if (h < min) min = h;
+                if (h > max) max = h;
+            }
+            return min == Integer.MAX_VALUE ? 0 : max - min;
+        } catch (Throwable any) {
+            return 0;   // generateur exotique : ne jamais rejeter a l'aveugle
+        }
     }
     /** T190 : meilleur terrain sec, réel et intégralement chargé rencontré. Le
      * pipeline clear + deux smooths peut corriger son relief sans générer une
@@ -1219,6 +1256,7 @@ public class Structures5Procedure {
         SEARCH_DEFERRED.clear();
         SEARCH_DEFERRED_KEYS.clear();
         SEARCH_DEFERRED_ROUNDS.clear();
+        SEARCH_DRY_REJECTS = 0;   // T233
         SEARCH_BEST_LOADED_DRY = null;
         SEARCH_BEST_LOADED_DRY_RELIEF = Integer.MAX_VALUE;
         PENDING_FLAT_CENTER = null;
@@ -1726,6 +1764,8 @@ public class Structures5Procedure {
                 candidates.size(), tPlayerMs + tSiteMs + tMeasureMs, tPlayerMs, tSiteMs, tMeasureMs);
         if (wetRanked > 0)
             deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] {} candidat(s) ecarte(s) : surface en EAU (un lac est plat mais inconstructible) -- T75", wetRanked);
+        if (SEARCH_DRY_REJECTS > 0)
+            deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] prefiltre relief sec (T233) : {} candidat(s) ecarte(s) SANS generation de chunks (economie worldgen, porte 10x1,75+8)", SEARCH_DRY_REJECTS);
         // T33 : 12 -> 24 candidats verifies. Avec le decalage des emprises
         // chevauchantes (ci-dessus), la liste des candidats n'est plus videe par les
         // collisions et on a le droit d'aller chercher plus loin avant de tomber sur
@@ -1796,6 +1836,13 @@ public class Structures5Procedure {
                 // nouvelle couronne). Reverifie a chaque cercle epuise ; consomme
                 // definitivement seulement apres MAX_DEFER_ROUNDS ou rejet mesure.
                 long ck = BlockPos.asLong(c.cx(), 0, c.cz());
+                // T233 : pre-jet sec AVANT d'enfiler la generation en fond.
+                if (SEARCH_DRY_GATE
+                        && dryRuggedSpan(lvl, c.cx(), c.cz(), fullCheckR) > SEARCH_DRY_GATE_SPAN) {
+                    REJECTED_RUGGED_CENTERS.add(ck);
+                    SEARCH_DRY_REJECTS++;
+                    continue;
+                }
                 if (SEARCH_DEFERRED_KEYS.add(ck) && SEARCH_DEFERRED.size() < MAX_DEFERRED) {
                     SEARCH_DEFERRED.add(new BlockPos(c.cx(), 0, c.cz()));
                     deepluckyblock.util.SafeSurface.requestZone(lvl,

@@ -182,7 +182,10 @@ def run_test(name, sim, view, props, scenario, server, outdir):
             result['note'] = 'boot KO'
             return result
         rc = Rcon('127.0.0.1', 25575, 'lablab')
-        rc.connect(retries=20, delay=2)
+        # le listener RCON se bind quelques secondes APRES "Done (" : lui
+        # laisser le temps (sinon echec "RCON injoignable" = test gache).
+        time.sleep(8)
+        rc.connect(retries=30, delay=2)
         # pregen court : 16 regions 8x8 chunks autour de 1200,0 (amorti : monde conserve)
         # etalee : 1 region (8x8 chunks) / 2 s pour ne pas geler le thread
         # principal (watchdog kill reproduit quand les 16 arrivent d'un coup).

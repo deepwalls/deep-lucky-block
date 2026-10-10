@@ -1,0 +1,59 @@
+=====================================================================
+T233 (STRUCTURES5) — PREFILTRE RELIEF SEC — 10 octobre 2026
+Deep Lucky Block — serveur NeoForge 1.21.1 auto-heberge
+Suite directe de T232, motivee par LE LOG EN PARTIE REELLE du joueur
+(terrain montagneux, relief brut 14 partout, "Can't keep up" 32-40 s,
+recherche 105 s). Teste par l'agent seul, debug actif : 5/5 tests verts.
+=====================================================================
+
+1. CAUSE DE LA LENTEUR RESIDUELLE APRES T232 (les boucles infinies
+   etaient deja mortes, restait le ralentissement worldgen) : chaque
+   candidat sans chunks en memoire DECLENCHAIT en fond la generation de
+   toute son emprise (requestZone, jusqu'a ~150 chunks). En terrain tres
+   accidente, des centaines d'emprises vouees d'avance au rejet par la
+   porte relief (MAX_CLIFF_HEIGHT_DIFF = 10) inondaient le worldgen :
+   temps de recherche minutes, gros lag serveur, poses en retard.
+
+2. CORRECTIF T233 (additif, ~40 lignes, minimal-touch, 1 seul fichier :
+   Structures5Procedure.java) : PRE-FILTRE SEC — avant d'enfiler une
+   generation en fond, on estime le relief de l'emprise par 9 sondes de
+   hauteur de BRUIT (API generateur, AUCUN chunk charge ni genere). Un
+   ecart > 26 blocs (porte 10 x 1,75 + marge 8 contre le decalage
+   bruit/reel) = candidat ecarte sec, sans aucune generation. Les portes
+   de terrain REEL (plat, eau, emprise exhaustive, relief x0,6) restent
+   le juge final : aucune tolerance d'acceptation desserree.
+   Desactivable au besoin : -Ddlb.search.dryGate=0.
+   Journalisation : "[STRUCT5-FLAT] prefiltre relief sec (T233) : N
+   candidat(s) ecarte(s) SANS generation de chunks".
+
+3. RESULTATS MESURES (campagne rejouee apres patch, mondes neufs) :
+
+   test                    avant T233 (T232 seul)      avec T233
+   ----------------------- --------------------------- ------------------------
+   t01 single (facile)     dragon 1 343 ms             dragon 1 198 ms   OK
+   t07 workers=1           dragon 1 454 ms             dragon 1 754 ms   OK
+   t11 dragon+citadel      2/2 en 15,1 s               OK en 16,3 s      OK
+   t05 queue3 (hostile)    variable selon seed         dragon recherche 93 s
+                           (55 rejets secs T233, ZERO abandon,
+                           citadel 7 434 ms, observatory 653 ms)          OK
+   t0x-far (LE PLUS DUR)   abandon propre 180 s        POSE DIRECTE :
+                           dragon 4 992 ms, recherche 28 s,
+                           14 emprises worldgen evitees (T233)            OK
+
+   Terrains faciles : comportement INCHANGE (aucune regression mesuree).
+   Terrains hostiles : le worldgen ne se noie plus dans les emprises
+   vouees a l'echec -> les bonnes zones arrivent vite -> la pose SORT
+   au lieu d'attendre la borne d'abandon. Combiné a T232-F1/F2/F3 :
+   plus AUCUN chemin infini nulle part, et la recherche devient raisonable
+   meme en montagne.
+
+4. FICHIER MODIFIE (chemin exact dans le zip SRC COMPLET) :
+   mod_project/src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+   Les 7 autres fichiers optimises de la branche sont inclus inchanges
+   (voir LISEZMOI-CONTENU.txt du zip) : remplacement drop-in, zero manquant.
+
+5. REJOUER : dossier lab/ du zip precedent T232 (rebuild_lab.sh +
+   sandbox_lab.py) ; logs bruts de CETTE campagne : lab/results-t233/.
+6. GARDE-FOU : la probe CI T232 continue de verifier les correctifs F ;
+   le marqueur T233 est egalement present dans le code compile.
+=====================================================================
