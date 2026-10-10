@@ -1,0 +1,125 @@
+================================================================
+ T233b — SELECTION DE ZONE EN MOINS D'UNE SECONDE (choix sec)
+================================================================
+
+Date : 10 octobre 2026
+Ticket : T233b (suite de T233, livree avec ce correctif)
+Fichier change (1 seul) :
+  src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+Aucun autre fichier touche. Aucune logique existante supprimee.
+
+----------------------------------------------------------------
+1. SYMPTOME (log joueur du 10/10, monde reel, montagne)
+----------------------------------------------------------------
+Run 1 : dragon demandee 19:38:35 a (-102,132,307)
+  -> "Zone choisie a -430,274 ... 279 s de recherche" a 19:43:15
+  -> "Can't keep up" 47 s puis 81 s pendant la selection
+Run 2 : argent demandee 20:12, deja >121 s de selection au coupure
+  -> rayon bloque ~90 s a 107-171, 1012 centres ecartes, defers 7-54
+La POSE elle-meme etait devenue rapide (dragon brute 4 965 ms
+avec T233). Restait le goulot : la SELECTION de zone.
+
+Diagnostic : le tri des candidats par couronnes EXIGEAIT du terrain
+genere ou charge. En terrain montagneux (montagnes du joueur),
+chaque centre evalue declenchait des generations/deferes : en pratique
+~10 centres/s = 279 s. T233 (dry-gate) a supprime les generations
+gaspillees sur les zones vouees au rejet, mais la selection restait
+"worldgen-bound" : impossible a rendre < 1 s par cette voie.
+
+----------------------------------------------------------------
+2. FIX T233b : SELECTION 100 % BRUIT (zero chunk), DECISION < 1 s
+----------------------------------------------------------------
+On inverse la strategie de selection :
+- Le centre est choisi ENTIEREMENT par sondes bruit
+  (ChunkGenerator.getBaseHeight / WORLD_SURFACE_WG = API generateur,
+  AUCUN chunk genere ni charge a cette etape).
+- Les portes de terrain REEL (relief x0.6 max 10, colonnes d'eau,
+  emprise exhaustive, clearance, conflits) restent le JUGE FINAL sur
+  l'emprise generee ensuite. AUCUN critere d'acceptation desserre.
+- Si le choix sec y echoue, il est blackliste (mecanisme F3 existant)
+  et le choix sec suivant est propose instantanement ; l'abandon
+  borne F2 (180 s) reste le garde-fou ultime en dernier recours.
+
+Nouvelle methode : dryPickCenter(lvl, origin, checkR, fullCheckR,
+structMax, p, minEdgeDist) dans Structures5Procedure.java :
+- couronnes de pas ~une emprise, rayon 96 -> 768, emaillage tournant ;
+- filtres secs par candidat : REJECTED_RUGGED_CENTERS, distance min
+  joueur (meme regle que le scan historique), conflit StructureSites,
+  hauteur centre <= 61 (ocean/riviere) ou >= 190 (paroi impropre) ;
+- mesure span sec en 9 sondes (dryRuggedSpan T233 reutilisee) ;
+- stoppe des qu'un candidat <= DRY_PICK_GOOD_SPAN (8 par defaut) ;
+- sinon tant que le budget tient : BEST SO FAR, puis le budget
+  DRY_PICK_BUDGET_MS (900 ms par defaut) EST UN PLAFOND DUR ;
+- en cas d'echec quelconque (generateur exotique), retour null =
+  le balayage historique T233 reprend le relais, rien n'est casse.
+Injection : juste apres drainDeferred dans findFlat, avant le scan
+historique ; bloc ~110 lignes, commente "T233b". Deux "Zone choisie"
+distingues dans les logs par "(selection seche T233b : N ms, ...)".
+
+Interrupteurs (valeurs par defaut = comportement visé, tout OFF = T233 pur) :
+  -Ddlb.search.dryPick=0          desactive T233b completement
+  -Ddlb.search.dryPickMs=900      budget temps decision (ms)
+  -Ddlb.search.dryPickMaxR=768    rayon max du choix sec
+  -Ddlb.search.dryPickGoodSpan=8  span sec juge "assez plat natif"
+
+----------------------------------------------------------------
+3. RESULTATS LAB (matrice sim x view demandee par le joueur)
+----------------------------------------------------------------
+Campagne 9/9 VERTE du 10/10 (NeoForge 1.21.1 auto-heberge, un monde
+neuf par test, dragon sauf mention) :
+  test / (sim, view)      | selection(s) seche(s) | commande->pose | resultat
+  t01 (10, 8)             | 24 x 902..957 ms      | 73 s (monde couvert de zones humides) | OK
+  t02 (4, 8)              | 1 x 99 ms             | 2,7 s           | OK
+  t03 (10, 4)             | 1 x 290 ms            | 2,8 s           | OK
+  t04 (6, 6)              | 1 x 207 ms            | 3,2 s           | OK
+  t12 (12, 10)            | 98/132/235 ms         | 6,2 s           | OK
+  t13 (2, 3)              | 187/255/335 ms        | 2,3 s           | OK
+  t07 (6, 6) worldgen 1w  | 453..937 ms (7)       | 12,7 s          | OK
+  t0x-far 2000 blocs (10,8)| 578..990 ms (18)     | 165 s (pose directe, 0 abandon, portes reelles arbitrage en terrain hostile) | OK
+  t05 queue3 (6, 6)       | 428..974 ms (11)      | 3 poses en 18,8 s (dragon 2,5 s + citadel 4,4 s + observatory 1,4 s) | OK
+Toute selection "Zone choisie" est < 1000 ms, toute config confondue.
+
+Points cles :
+- Selection CONSTANTE sous 1 s, render distance ET simulation
+  distance variant de 2/3 a 12/10 ;
+- Pose inchangee quand le terrain est raisonnable (2-13 s pose
+  complete) ; en terrain tres hostile le pire reste borne par 180 s
+  F2 (t0x 165 s pose directe), et le chat affiche toujours la zone
+  instantanement ;
+- Regressions : aucune. T233b n'affecte QUE le tri initial. Toutes
+  les verifications T232/T233 existantes continuent d'operer ;
+- Le developpement a revele et corrige deux pieges du choix sec :
+  (a) WORLD_SURFACE_WG masque l'eau (ocan = 62 constant), d'ou la
+      sonde OCEAN_FLOOR_WG centre + 4 diagonales ;
+  (b) il faut MEMORISER les centres deja proposes sous peine de
+      ping-pong avec la porte SAFETY (registre DRY_PICK_SUGGESTED).
+  Sans ces correctifs un monde fortement humide bouclait sans pose ;
+  avec : 9/9.
+
+----------------------------------------------------------------
+4. COMMENT REJOUER (serveur NeoForge 1.21.1, Java 21)
+----------------------------------------------------------------
+1) Sauvegarder votre instance actuelle.
+2) Ecraser les fichiers de l'overlay complet (zip SRC-COMPLET T233b)
+   aux memes chemins src/main/java/deepluckyblock/... dans votre
+   projet mod, puis recompiler votre mod.
+3) Tester en jeu : /dlbtest dragon (ou citadel/observatory/circus/ship)
+   sur terrain hostile (montagne, ocean, foret) ; constater dans le
+   chat l'apparition immediate de "Zone choisie a X, Z (selection
+   seche T233b : N ms, ...)" avec N < 1000.
+4) Faire varier simulation-distance / view-distance dans
+   server.properties si serveur (ou options client) : la selection
+   ne doit PAS bouger (independante des chunks charges).
+5) Revenir au comportement T233 sans T233b si besoin :
+   ajouter -Ddlb.search.dryPick=0 aux arguments JVM.
+
+----------------------------------------------------------------
+5. FICHIERS LIVRES (liens directs dans le message de release)
+----------------------------------------------------------------
+- DEEP-LUCKY-BLOCK-T233b-SRC-COMPLET.zip : overlay drop-in complet
+  (les 8 .java modifies depuis main + cette note + notes T232/T233 +
+  LISEZMOI-CONTENU.txt). Remplace le zip T233 : contient T232 + T233
+  + T233b.
+- T233b-NOTE.txt : ce document.
+- sources a la racine livraison/fix-t232-struct5/src/ (miroir).
+================================================================

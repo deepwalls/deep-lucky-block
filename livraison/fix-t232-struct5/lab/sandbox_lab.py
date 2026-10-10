@@ -132,18 +132,16 @@ class Server:
 
 TESTS = [
     # name, sim, view, vm props, scenario
+    # --- T233b : matrice render x simulation demandee par le joueur ---
     ('t01-ref-sim10-view8',   '10', '8',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
-    ('t0x-far-safety',        '10', '8',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'far'),
     ('t02-sim4-view8',        '4',  '8',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
     ('t03-sim10-view4',       '10', '4',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
     ('t04-sim6-view6',        '6',  '6',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
-    ('t05-queue3',            '6',  '6',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'queue3'),
-    ('t06-burst5',            '6',  '6',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'burst5'),
-    ('t07-workers1',          '6',  '6',  '-Ddlb.chunks.workers=1 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
-    ('t08-workers8',          '6',  '6',  '-Ddlb.chunks.workers=8 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
-    ('t09-cap512',            '6',  '6',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=512 -Ddlb.debug=1',  'single'),
-    ('t10-cap4096',           '6',  '6',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=4096 -Ddlb.debug=1', 'single'),
-    ('t11-mix-struct2',       '6',  '6',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'mix2'),
+    ('t12-sim12-view10',      '12', '10', '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
+    ('t13-sim2-view3',        '2',  '3',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
+    ('t07-workers1-sim6-view6','6', '6',  '-Ddlb.chunks.workers=1 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'single'),
+    ('t0x-far-sim10-view8',   '10', '8',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'far'),
+    ('t05-queue3-sim6-view6', '6',  '6',  '-Ddlb.chunks.workers=4 -Ddlb.chunks.pendingCap=2048 -Ddlb.debug=1', 'queue3'),
 ]
 
 def fire(rcon, structure, x=1200, z=0):
@@ -237,6 +235,12 @@ def run_test(name, sim, view, props, scenario, server, outdir):
         result['search_s'] = el
         m = re.findall(r'Zone choisie[^0-9-]*(\d+)[ ,](\d+)', txt)
         if m: result['site'] = f"{m[-1][0]},{m[-1][1]}"
+        # T233b : temps de selection mesure interne au mod (sondes bruit) et
+        # nombre de passages (echec eventuel=ZONES rejetees apres generation).
+        md = _re.findall(r'selection seche T233b : (\d+) ms', txt)
+        if md: result['select_ms_last'] = int(md[-1]); result['select_ms_all'] = [int(v) for v in md]
+        mf = _re.findall(r'aucun candidat credible en (\d+) ms', txt)
+        if mf: result['select_fallbacks'] = [int(v) for v in mf]
         m2 = re.findall(r'en (\d+)ms', txt)
         if m2: result['paste_ms'] = m2[-1]
         if el is None: result['note'] = f"pas de Zone choisie en {DEFAULT_TIMEOUT_S}s"

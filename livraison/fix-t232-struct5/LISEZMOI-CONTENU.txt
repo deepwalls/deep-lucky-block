@@ -1,0 +1,31 @@
+DEEP LUCKY BLOCK — T233b — SRC COMPLET (drop-in)
+=================================================
+Ce zip contient TOUT l'overlay mod_project/src de la derniere version
+optimisee (branche arena, 10 octobre 2026) : les 8 fichiers
+modifies/nouveaux aux chemins exacts, aucun manquant. Remplace le zip
+T233 : il CUMULE T232 + T233 + T233b.
+
+  Par T233b (selection de zone 100 % bruit, "Zone choisie" < 1 s) :
+    - src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+
+  Par T233 (dry-gate relief sec, anti-inondation worldgen) :
+    - .../procedures/Structures5Procedure.java (meme fichier, cumule)
+
+  Par T232 (boucles infinies de pose tuees) :
+    - .../procedures/Structures5Procedure.java (meme fichier, cumule)
+    - src/main/java/deepluckyblock/util/SafeSurface.java
+    - src/main/java/deepluckyblock/util/ChunkKeeper.java
+    - src/main/java/deepluckyblock/util/DebugLog.java   (nouveau)
+
+  Par les livraisons precedentes (meilleure opti connue) :
+    - .../procedures/Structures4Procedure.java
+    - .../procedures/StructureTerrainPrep.java
+    - .../procedures/StructureScatterDecor.java
+    - .../procedures/CrimsonLakeStructureSpawnProcedure.java
+
+Resultats mesures : T232 (12/12) + T233 (5/5) + T233b (matrice
+sim x view : selection ~30-900 ms partout, zéro régression, 9/9) —
+cf T232-NOTE.txt, T233-NOTE.txt et T233b-NOTE.txt jointes ; logs bruts
+dans le repo, lab/results(-t233, -t233b).
+Le reste du projet (autres fichiers src) est identique au main :
+remplacez uniquement ces fichiers.

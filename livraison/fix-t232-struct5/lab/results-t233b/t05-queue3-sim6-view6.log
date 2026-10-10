@@ -1,0 +1,319 @@
+[10Oct2026 20:03:22.442] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [cpw.mods.bootstraplauncher.BootstrapLauncher, --launchTarget, forgeserverdev, --gameDir, ., --fml.fmlVersion, 4.0.41, --fml.mcVersion, 1.21.1, --fml.neoForgeVersion, 21.1.190, --fml.neoFormVersion, 20240808.144430, nogui]
+[10Oct2026 20:03:22.445] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: JVM identified as Eclipse Adoptium OpenJDK 64-Bit Server VM 21.0.12.1+1-LTS
+[10Oct2026 20:03:22.449] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 11.0.5+main.901c6ea8 starting: java version 21.0.12.1 by Eclipse Adoptium; OS Linux arch amd64 version 6.1.158+
+[10Oct2026 20:03:22.577] [main/INFO] [net.neoforged.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgeserverdev
+[10Oct2026 20:03:22.640] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=union:/home/user/dlb-lab/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/2af2f021d8e02a0220dc27a7a72b4666d66d44ca/sponge-mixin-0.15.2+mixin.0.8.7.jar%2394!/ Service=ModLauncher Env=SERVER
+[10Oct2026 20:03:22.946] [main/INFO] [net.neoforged.fml.loading.moddiscovery.locators.JarInJarDependencyLocator/]: Found 2 dependencies adding them to mods collection
+[10Oct2026 20:03:22.948] [main/INFO] [net.neoforged.fml.loading.moddiscovery.ModDiscoverer/]: 
+     Mod List:
+		Name Version (Mod Id)
+
+		Deep Lucky Block 1.0 (deep_lucky_block)
+		Minecraft 1.21.1 (minecraft)
+		NeoForge 21.1.190 (neoforge)
+[10Oct2026 20:03:23.570] [main/INFO] [mixin/]: Compatibility level set to JAVA_21
+[10Oct2026 20:03:23.586] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeserverdev' with arguments [--gameDir, ., cpw.mods.bootstraplauncher.BootstrapLauncher, nogui]
+[10Oct2026 20:03:23.674] [main/WARN] [mixin/]: Reference map 'deep_lucky_block.refmap.json' for deep_lucky_block.mixins.json could not be read. If this is a development environment you can ignore this message
+[10Oct2026 20:03:24.423] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.4.1).
+[10Oct2026 20:03:31.615] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[10Oct2026 20:03:31.619] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[10Oct2026 20:03:31.622] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[10Oct2026 20:03:31.624] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[10Oct2026 20:03:31.625] [main/WARN] [net.minecraft.commands.Commands/]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[10Oct2026 20:03:31.703] [modloading-worker-0/INFO] [net.neoforged.neoforge.common.NeoForgeMod/NEOFORGE-MOD]: NeoForge mod loading, version 21.1.190, for MC 1.21.1
+[10Oct2026 20:03:31.752] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] ═══════════════════════════════════════════════════
+[10Oct2026 20:03:31.753] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] Deep Lucky Block v8 (2026-09-05) charge
+[10Oct2026 20:03:31.754] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] - armures : material avec Layer (rendu custom NeoForge)
+[10Oct2026 20:03:31.754] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] - coffres : NeoForgeData + BLOCK_ENTITY_DATA + transfert a la pose
+[10Oct2026 20:03:31.755] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] - traces : [SLB-V8] POSE / CASSE / COFFRE dans ce log
+[10Oct2026 20:03:31.755] [modloading-worker-0/INFO] [deepluckyblock.SlbDiagnostics/]: [SLB-V8] ═══════════════════════════════════════════════════
+[10Oct2026 20:03:31.757] [modloading-worker-0/INFO] [deepluckyblock.compat.DeepMixinBootstrap/]: [DeepMixinBootstrap] deep_lucky_block.mixins.json est embarqué (union), non modifiable.
+[10Oct2026 20:03:32.139] [modloading-worker-0/INFO] [deepluckyblock.util.StructureTemplateCache/]: [DLB-T156] lancement du jeu : 8/8 NBT lourds mis en file AVANT toute ouverture de map
+[10Oct2026 20:03:32.443] [main/INFO] [com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService/]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD]
+[10Oct2026 20:03:32.591] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/home/user/dlb-lab/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar%23124!/assets/.mcassetsroot' uses unexpected schema
+[10Oct2026 20:03:32.591] [main/WARN] [net.minecraft.server.packs.VanillaPackResourcesBuilder/]: Assets URL 'union:/home/user/dlb-lab/mod-project/build/moddev/artifacts/neoforge-21.1.190.jar%23124!/data/.mcassetsroot' uses unexpected schema
+[10Oct2026 20:03:33.021] [Yggdrasil Key Fetcher/ERROR] [com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo/]: Failed to request yggdrasil public key
+com.mojang.authlib.exceptions.MinecraftClientException: Failed to read from https://api.minecraftservices.com/publickeys due to Remote host terminated the handshake
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:108) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:57) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo.fetch(YggdrasilServicesKeyInfo.java:114) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo$1.run(YggdrasilServicesKeyInfo.java:89) ~[authlib-6.0.54.jar%2377!/:?]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572) ~[?:?]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317) ~[?:?]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+Caused by: javax.net.ssl.SSLHandshakeException: Remote host terminated the handshake
+	at java.base/sun.security.ssl.SSLSocketImpl.handleEOF(SSLSocketImpl.java:1715) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(SSLSocketImpl.java:1513) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.readHandshakeRecord(SSLSocketImpl.java:1420) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:455) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:426) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsClient.afterConnect(HttpsClient.java:593) ~[?:?]
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:190) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1707) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1632) ~[?:?]
+	at java.base/java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:531) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getResponseCode(HttpsURLConnectionImpl.java:307) ~[?:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:84) ~[authlib-6.0.54.jar%2377!/:?]
+	... 9 more
+Caused by: java.io.EOFException: SSL peer shut down incorrectly
+	at java.base/sun.security.ssl.SSLSocketInputRecord.read(SSLSocketInputRecord.java:494) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketInputRecord.readHeader(SSLSocketInputRecord.java:483) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketInputRecord.decode(SSLSocketInputRecord.java:160) ~[?:?]
+	at java.base/sun.security.ssl.SSLTransport.decode(SSLTransport.java:111) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(SSLSocketImpl.java:1505) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.readHandshakeRecord(SSLSocketImpl.java:1420) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:455) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:426) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsClient.afterConnect(HttpsClient.java:593) ~[?:?]
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:190) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1707) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1632) ~[?:?]
+	at java.base/java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:531) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getResponseCode(HttpsURLConnectionImpl.java:307) ~[?:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:84) ~[authlib-6.0.54.jar%2377!/:?]
+	... 9 more
+[10Oct2026 20:03:34.013] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'circus' : 730800 entree(s) au fichier -> 39084 bloc(s) a poser + 12 air interieur (691704 air exterieur JAMAIS materialise(s) = 94 %, lecture en flux 1687 ms, 80x105x87) -- T73
+[10Oct2026 20:03:34.016] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'circus' : positions lues X 0..79 Y 0..104 Z 0..86 (boite 80x105x87, 0 hors boite) -- T73b
+[10Oct2026 20:03:34.016] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'circus' : ~131 Mo de memoires NBT evitees, et 691704 entree(s) en moins sur le chemin de pose -- T73
+[10Oct2026 20:03:34.016] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'circus' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 1875ms; prêt pour toutes les maps
+[10Oct2026 20:03:34.092] [main/INFO] [net.minecraft.server.Main/]: No existing world data, creating new world
+[10Oct2026 20:03:34.679] [Worker-Main-1/INFO] [deepluckyblock.DeepLuckyBlockMod/]: [DLBTEST] commande prete : /dlbtest -> citadel, observatory, dragon, circus, ship, everest, crimsonlake | structure <nom|id> | list | water <status|freeze|thaw> | probe <x> <z> | luckybreak [nombre] (permission tout le monde (0))
+[10Oct2026 20:03:35.402] [main/INFO] [net.minecraft.world.item.crafting.RecipeManager/]: Loaded 1320 recipes
+[10Oct2026 20:03:36.004] [main/INFO] [net.minecraft.advancements.AdvancementTree/]: Loaded 1450 advancements
+[10Oct2026 20:03:36.191] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'shipdead' : 1700763 entree(s) au fichier -> 71883 bloc(s) a poser + 179 air interieur (1628701 air exterieur JAMAIS materialise(s) = 95 %, lecture en flux 2097 ms, 113x87x173) -- T73
+[10Oct2026 20:03:36.191] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'shipdead' : positions lues X 0..112 Y 0..86 Z 0..172 (boite 113x87x173, 0 hors boite) -- T73b
+[10Oct2026 20:03:36.191] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'shipdead' : ~310 Mo de memoires NBT evitees, et 1628701 entree(s) en moins sur le chemin de pose -- T73
+[10Oct2026 20:03:36.191] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'shipdead' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 2175ms; prêt pour toutes les maps
+[10Oct2026 20:03:36.349] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'everest' : 52980 entree(s) au fichier -> 52980 bloc(s) a poser + 0 air interieur (0 air exterieur JAMAIS materialise(s) = 0 %, lecture en flux 133 ms, 174x123x278) -- T73
+[10Oct2026 20:03:36.349] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'everest' : positions lues X 0..173 Y 0..122 Z 0..277 (boite 174x123x278, 0 hors boite) -- T73b
+[10Oct2026 20:03:36.349] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'everest' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 158ms; prêt pour toutes les maps
+[10Oct2026 20:03:36.810] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Starting minecraft server version 1.21.1
+[10Oct2026 20:03:36.810] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Loading properties
+[10Oct2026 20:03:36.810] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Default game type: SURVIVAL
+[10Oct2026 20:03:36.810] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Generating keypair
+[10Oct2026 20:03:36.963] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Starting Minecraft server on *:25565
+[10Oct2026 20:03:37.083] [Server thread/INFO] [net.minecraft.server.network.ServerConnectionListener/]: Using epoll channel type
+[10Oct2026 20:03:37.165] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[10Oct2026 20:03:37.165] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: The server will make no attempt to authenticate usernames. Beware.
+[10Oct2026 20:03:37.165] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[10Oct2026 20:03:37.165] [Server thread/WARN] [net.minecraft.server.dedicated.DedicatedServer/]: To change this, set "online-mode" to "true" in the server.properties file.
+[10Oct2026 20:03:37.308] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Preparing level "world"
+[10Oct2026 20:03:39.015] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'citadel' : 2114112 entree(s) au fichier -> 105276 bloc(s) a poser + 9329 air interieur (1999507 air exterieur JAMAIS materialise(s) = 94 %, lecture en flux 2569 ms, 104x242x84) -- T73
+[10Oct2026 20:03:39.022] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'citadel' : positions lues X 0..103 Y 0..241 Z 0..83 (boite 104x242x84, 0 hors boite) -- T73b
+[10Oct2026 20:03:39.022] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'citadel' : ~381 Mo de memoires NBT evitees, et 1999507 entree(s) en moins sur le chemin de pose -- T73
+[10Oct2026 20:03:39.022] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'citadel' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 2673ms; prêt pour toutes les maps
+[10Oct2026 20:03:39.213] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'observatory' : 267036 entree(s) au fichier -> 15450 bloc(s) a poser + 75 air interieur (251511 air exterieur JAMAIS materialise(s) = 94 %, lecture en flux 165 ms, 68x77x51) -- T73
+[10Oct2026 20:03:39.214] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'observatory' : positions lues X 0..67 Y 0..76 Z 0..50 (boite 68x77x51, 0 hors boite) -- T73b
+[10Oct2026 20:03:39.214] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'observatory' : ~47 Mo de memoires NBT evitees, et 251511 entree(s) en moins sur le chemin de pose -- T73
+[10Oct2026 20:03:39.214] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'observatory' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 192ms; prêt pour toutes les maps
+[10Oct2026 20:03:39.860] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'dragon' : 803505 entree(s) au fichier -> 75484 bloc(s) a poser + 392 air interieur (727629 air exterieur JAMAIS materialise(s) = 90 %, lecture en flux 604 ms, 69x137x85) -- T73
+[10Oct2026 20:03:39.860] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'dragon' : positions lues X 0..68 Y 0..136 Z 0..84 (boite 69x137x85, 0 hors boite) -- T73b
+[10Oct2026 20:03:39.860] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'dragon' : ~138 Mo de memoires NBT evitees, et 727629 entree(s) en moins sur le chemin de pose -- T73
+[10Oct2026 20:03:39.860] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'dragon' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 646ms; prêt pour toutes les maps
+[10Oct2026 20:03:44.870] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'crimsonlake' : 1366835 entree(s) -> 1359489 VRAI bloc(s) + 5 air interieur (7341 air exterieur ignore(s) = 0 %, ~1 Mo de memoire evites, template vanilla allege) -- T73
+[10Oct2026 20:03:44.881] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'crimsonlake' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 5021ms; prêt pour toutes les maps
+[10Oct2026 20:03:44.903] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'sand_hourglass' : 3825 entree(s) -> 838 VRAI bloc(s) + 123 air interieur (2864 air exterieur ignore(s) = 74 %, ~0 Mo de memoire evites, template vanilla allege) -- T73
+[10Oct2026 20:03:44.904] [DLB-StructureLoader/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] 'sand_hourglass' TEMPLATE COMPLET chargé AU LANCEMENT DU JEU en 23ms; prêt pour toutes les maps
+[10Oct2026 20:03:51.009] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Preparing start region for dimension minecraft:overworld
+[10Oct2026 20:03:51.056] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:51.523] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:52.015] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:52.574] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:53.014] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:53.537] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:54.024] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:54.559] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:55.140] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:55.519] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:56.029] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:56.535] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:57.013] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 2%
+[10Oct2026 20:03:57.674] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 20%
+[10Oct2026 20:03:58.045] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 20%
+[10Oct2026 20:03:58.534] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 20%
+[10Oct2026 20:03:59.058] [worldgen/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Preparing spawn area: 20%
+[10Oct2026 20:03:59.292] [Server thread/INFO] [net.minecraft.server.level.progress.LoggerChunkProgressListener/]: Time elapsed: 8282 ms
+[10Oct2026 20:03:59.293] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Done (22.098s)! For help, type "help"
+[10Oct2026 20:03:59.293] [Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer/]: Starting remote control listener
+[10Oct2026 20:03:59.296] [Server thread/INFO] [net.minecraft.server.rcon.thread.GenericThread/]: Thread RCON Listener started
+[10Oct2026 20:03:59.296] [Server thread/INFO] [net.minecraft.server.rcon.thread.RconThread/]: RCON running on 0.0.0.0:25575
+[10Oct2026 20:03:59.336] [Server thread/INFO] [net.neoforged.neoforge.gametest.GameTestHooks/]: Enabled Gametest Namespaces: []
+[10Oct2026 20:03:59.341] [Server thread/INFO] [net.neoforged.neoforge.server.permission.PermissionAPI/]: Successfully initialized permission handler neoforge:default_handler
+[10Oct2026 20:03:59.397] [Server thread/INFO] [deepluckyblock.util.StructureTemplateCache/]: [STRUCT-CACHE] Préchargement des décors : 153/153 en 54ms. Grosses structures déjà entièrement matérialisées au lancement : 8/8.
+[10Oct2026 20:03:59.398] [Server thread/INFO] [deepluckyblock.util.StructureTemplateStartupPreloader/]: [DLB-T148] préchargement de démarrage : 0/8 template(s) mis en file; lecture unique asynchrone, cache conservé pour toute la session
+[10Oct2026 20:04:08.517] [RCON Listener #1/INFO] [net.minecraft.server.rcon.thread.GenericThread/]: Thread RCON Client /127.0.0.1 started
+[10Oct2026 20:04:24.985] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 81 chunks in Overworld from [59, -16] to [67, -8] to be force loaded]
+[10Oct2026 20:04:24.996] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 16448ms or 328 ticks behind
+[10Oct2026 20:04:38.009] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [67, -16] to [75, -8] to be force loaded]
+[10Oct2026 20:04:47.323] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [75, -16] to [83, -8] to be force loaded]
+[10Oct2026 20:04:47.326] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 7278ms or 145 ticks behind
+[10Oct2026 20:04:55.656] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [83, -16] to [91, -8] to be force loaded]
+[10Oct2026 20:05:05.816] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [59, -8] to [67, 0] to be force loaded]
+[10Oct2026 20:05:06.728] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 4428ms or 88 ticks behind
+[10Oct2026 20:05:10.580] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [67, -8] to [75, 0] to be force loaded]
+[10Oct2026 20:05:15.967] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [75, -8] to [83, 0] to be force loaded]
+[10Oct2026 20:05:21.871] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [83, -8] to [91, 0] to be force loaded]
+[10Oct2026 20:05:32.423] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [59, 0] to [67, 8] to be force loaded]
+[10Oct2026 20:05:32.426] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 8527ms or 170 ticks behind
+[10Oct2026 20:05:38.172] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [67, 0] to [75, 8] to be force loaded]
+[10Oct2026 20:05:43.997] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [75, 0] to [83, 8] to be force loaded]
+[10Oct2026 20:05:50.627] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [83, 0] to [91, 8] to be force loaded]
+[10Oct2026 20:05:50.859] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 3460ms or 69 ticks behind
+[10Oct2026 20:06:00.319] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 72 chunks in Overworld from [59, 8] to [67, 16] to be force loaded]
+[10Oct2026 20:06:10.083] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [67, 8] to [75, 16] to be force loaded]
+[10Oct2026 20:06:10.531] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 4682ms or 93 ticks behind
+[10Oct2026 20:06:16.802] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [75, 8] to [83, 16] to be force loaded]
+[10Oct2026 20:06:21.892] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Rcon: Marked 64 chunks in Overworld from [83, 8] to [91, 16] to be force loaded]
+[10Oct2026 20:08:33.065] [Yggdrasil Key Fetcher/ERROR] [com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo/]: Failed to request yggdrasil public key
+com.mojang.authlib.exceptions.MinecraftClientException: Failed to read from https://api.minecraftservices.com/publickeys due to Remote host terminated the handshake
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:108) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:57) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo.fetch(YggdrasilServicesKeyInfo.java:114) ~[authlib-6.0.54.jar%2377!/:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo$1.run(YggdrasilServicesKeyInfo.java:89) ~[authlib-6.0.54.jar%2377!/:?]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572) ~[?:?]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317) ~[?:?]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+Caused by: javax.net.ssl.SSLHandshakeException: Remote host terminated the handshake
+	at java.base/sun.security.ssl.SSLSocketImpl.handleEOF(SSLSocketImpl.java:1715) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(SSLSocketImpl.java:1513) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.readHandshakeRecord(SSLSocketImpl.java:1420) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:455) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:426) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsClient.afterConnect(HttpsClient.java:593) ~[?:?]
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:190) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1707) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1632) ~[?:?]
+	at java.base/java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:531) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getResponseCode(HttpsURLConnectionImpl.java:307) ~[?:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:84) ~[authlib-6.0.54.jar%2377!/:?]
+	... 9 more
+Caused by: java.io.EOFException: SSL peer shut down incorrectly
+	at java.base/sun.security.ssl.SSLSocketInputRecord.read(SSLSocketInputRecord.java:494) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketInputRecord.readHeader(SSLSocketInputRecord.java:483) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketInputRecord.decode(SSLSocketInputRecord.java:160) ~[?:?]
+	at java.base/sun.security.ssl.SSLTransport.decode(SSLTransport.java:111) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(SSLSocketImpl.java:1505) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.readHandshakeRecord(SSLSocketImpl.java:1420) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:455) ~[?:?]
+	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:426) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsClient.afterConnect(HttpsClient.java:593) ~[?:?]
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:190) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1707) ~[?:?]
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1632) ~[?:?]
+	at java.base/java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:531) ~[?:?]
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getResponseCode(HttpsURLConnectionImpl.java:307) ~[?:?]
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:84) ~[authlib-6.0.54.jar%2377!/:?]
+	... 9 more
+[10Oct2026 20:08:54.039] [Server thread/INFO] [deepluckyblock.DeepLuckyBlockMod/]: [DLBTEST] dragon demandee a 1200, 104, 0 (id=2, nbt=dragon, joueur factice)
+[10Oct2026 20:08:54.040] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] execute() ID=2, origin=1200, 104, 0
+[10Oct2026 20:08:54.041] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE dragon === off=[10,-34,10] dist=0 facing=west
+[10Oct2026 20:08:54.469] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1374,29 (selection seche T233b : 428 ms, 11 sondes bruit, 3 cartes eau/hauteur ecartees, span sec=5, 0 chunk genere)
+[10Oct2026 20:08:54.594] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon -> 1452, 31, 123 (baseY=66, minRelY=1, rot=CLOCKWISE_180, 553ms)
+[10Oct2026 20:08:54.657] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-GROUND] dragon candidat 1374,29 écarté avant terrain : relief x0,6=7 (max=10), eau=25/3496; recherche terrestre élargissable
+[10Oct2026 20:08:54.676] [Server thread/INFO] [deepluckyblock.DeepLuckyBlockMod/]: [DLBTEST] citadel demandee a 1200, 104, 0 (id=0, nbt=citadel, joueur factice)
+[10Oct2026 20:08:54.676] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] execute() ID=0, origin=1200, 104, 0
+[10Oct2026 20:08:54.677] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] Une generation est deja en cours : ID=0 mis en file (1 en attente)
+[10Oct2026 20:08:54.679] [Server thread/INFO] [deepluckyblock.DeepLuckyBlockMod/]: [DLBTEST] observatory demandee a 1200, 104, 0 (id=1, nbt=observatory, joueur factice)
+[10Oct2026 20:08:54.679] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] execute() ID=1, origin=1200, 104, 0
+[10Oct2026 20:08:54.679] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] Une generation est deja en cours : ID=1 mis en file (2 en attente)
+[10Oct2026 20:08:54.712] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE dragon === off=[10,-34,10] dist=0 facing=west
+[10Oct2026 20:08:55.484] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1457,-44 (selection seche T233b : 771 ms, 19 sondes bruit, 6 cartes eau/hauteur ecartees, span sec=6, 0 chunk genere)
+[10Oct2026 20:08:55.500] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon -> 1467, 28, -34 (baseY=63, minRelY=1, rot=NONE, 788ms)
+[10Oct2026 20:08:55.517] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-GROUND] dragon candidat 1457,-44 écarté avant terrain : relief x0,6=7 (max=10), eau=14/3496; recherche terrestre élargissable
+[10Oct2026 20:08:55.570] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE dragon === off=[10,-34,10] dist=0 facing=west
+[10Oct2026 20:08:56.293] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1322,231 (selection seche T233b : 722 ms, 21 sondes bruit, 7 cartes eau/hauteur ecartees, span sec=8, 0 chunk genere)
+[10Oct2026 20:08:56.309] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon -> 1332, 30, 241 (baseY=65, minRelY=1, rot=NONE, 738ms)
+[10Oct2026 20:08:56.315] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-GROUND] dragon candidat 1322,231 écarté avant terrain : relief x0,6=8 (max=10), eau=7/3496; recherche terrestre élargissable
+[10Oct2026 20:08:56.399] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE dragon === off=[10,-34,10] dist=0 facing=west
+[10Oct2026 20:08:57.374] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1056,-101 (selection seche T233b : 974 ms, budget ecoule, meilleur span sec=11, 14 sondes, 4 eau/haut ecartees, 0 chunk genere)
+[10Oct2026 20:08:57.402] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon -> 1066, 33, -23 (baseY=68, minRelY=1, rot=COUNTERCLOCKWISE_90, 1003ms)
+[10Oct2026 20:08:57.414] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-GROUND] dragon sol solide validé sous 100% de la zone centrale x0,6 : 1288 colonnes, 0 avec eau autorisée, sol Y=65..74 (relief=9)
+[10Oct2026 20:08:57.420] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon : center anchor confirmed by footprint (T76) -- median=70, min=65, max=81, 202 columns, delta=2 <= 4
+[10Oct2026 20:08:57.516] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon : 75098 a poser (0 verre supprime, air exterieur deja ecarte au chargement) -- T73
+[10Oct2026 20:08:57.538] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon : selected solid groundY=68, clearance starts at Y=69, model offsetY=-34, foundationBaseY=34
+[10Oct2026 20:08:57.546] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] zone 979, 34, -163 -> 1134, 154, -38 tenue en memoire pendant le pipeline (90 chunks)
+[10Oct2026 20:08:57.547] [Server thread/INFO] [deepluckyblock.util.TerrainEditClamp/]: [DLB-CLAMP] fenetre d'edition ouverte sur 156x249x126 a 979,-163 -- ticks de chute et de fluide neutralises dans la zone
+[10Oct2026 20:08:57.551] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] 90/90 chunks epingles (maintien en memoire) -- zone complete
+[10Oct2026 20:08:57.982] [Server thread/WARN] [deepluckyblock.procedures.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 1305 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 17 blocs, colonne 995,-147 de la zone) -- ramenees dans la fenetre
+[10Oct2026 20:08:58.026] [Server thread/WARN] [deepluckyblock.procedures.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 32 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 14 blocs, colonne 996,-147 de la zone) -- ramenees dans la fenetre
+[10Oct2026 20:08:58.029] [Server thread/WARN] [net.minecraft.server.MinecraftServer/]: Can't keep up! Is the server overloaded? Running 2631ms or 52 ticks behind
+[10Oct2026 20:08:58.596] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon : sol 0 exhaustif fixé avant terrain=68, offsetY=-34, first model blockY=34; diagnostic post-prep median=66, min=62, max=67, samples=66 (aucun second décalage)
+[10Oct2026 20:08:58.597] [Server thread/INFO] [deepluckyblock.util.StructureSites/]: [DLB-SITES] emprise enregistree : dragon (124x94 a 995,-147), 1 structure(s) suivie(s)
+[10Oct2026 20:08:58.973] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon en 2480ms (75098 blocs, 326 a gravite -- ticks de chute neutralises par DLB-CLAMP)
+[10Oct2026 20:08:59.126] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] carve dragon programmee (1921 colonnes, 75098 blocs occupes, bottomY=34)
+[10Oct2026 20:08:59.453] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon termine : 61 blocs supprimes, 2 blocs de motte (bottomY=34)
+[10Oct2026 20:08:59.516] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] decorate + post de dragon termine
+[10Oct2026 20:09:00.275] [Server thread/INFO] [deepluckyblock.util.TerrainEditClamp/]: [DLB-CLAMP] fenetre fermee (fin de pipeline) : 2 s de travail, 46 ticks ; periode de tick moyenne 60 ms, pire 512 ms (20 TPS = 50 ms) ; 2 tick(s) > 100 ms dont 0 > 1 s ; MSPT lisse 10.9 ms ; chute max 0 entite(s)
+[10Oct2026 20:09:00.288] [Server thread/INFO] [deepluckyblock.util.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 2.7 s -- ou est passe le temps : pre-chargement des chunks 0.9 s (33%) | replantTrees 0.6 s (22%) | rebuildTerrain 0.3 s (11%) | verifyGrassSurface 0.2 s (8%) | dressAndPlant 0.2 s (7%) | smooth graduel T109 0.1 s (4%) | prepZone 1c/11 0.0 s (1%) | prepZone 0.0 s (1%) | attente/tick system 0.3 sacces terrain : 250 requete(s) moteur, 367339 lecture(s) servies par le cache (100%), 0 colonne(s) hors memoire
+[10Oct2026 20:09:00.296] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] zone relachee (90 chunks rendus au chunk system, en tranches)
+[10Oct2026 20:09:00.954] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] Post-process de dragon termine
+[10Oct2026 20:09:00.954] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] dragon entièrement terminé (recherche, pose, terrain, végétation et arbres) en 6913 ms : FIFO libérée
+[10Oct2026 20:09:00.955] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] File d'attente : demarrage de la structure ID=0 (1 encore en attente)
+[10Oct2026 20:09:00.955] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE citadel === off=[20,-35,20] dist=0 facing=south
+[10Oct2026 20:09:01.567] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 992,223 (selection seche T233b : 611 ms, 21 sondes bruit, 9 cartes eau/hauteur ecartees, span sec=8, 0 chunk genere)
+[10Oct2026 20:09:01.590] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel -> 1012, 44, 346 (baseY=91, minRelY=12, rot=COUNTERCLOCKWISE_90, 635ms)
+[10Oct2026 20:09:01.603] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-GROUND] citadel sol solide validé sous 100% de la zone centrale x0,6 : 2184 colonnes, 0 avec eau autorisée, sol Y=87..94 (relief=7)
+[10Oct2026 20:09:01.604] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel : center anchor confirmed by footprint (T76) -- median=91, min=86, max=100, 320 columns, delta=0 <= 4
+[10Oct2026 20:09:01.635] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel : 113930 a poser (1 verre supprime, air exterieur deja ecarte au chargement) -- T73
+[10Oct2026 20:09:01.637] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel : selected solid groundY=91, clearance starts at Y=92, model offsetY=-35, foundationBaseY=56
+[10Oct2026 20:09:01.638] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] zone 919, 56, 142 -> 1066, 257, 305 tenue en memoire pendant le pipeline (120 chunks)
+[10Oct2026 20:09:01.638] [Server thread/INFO] [deepluckyblock.util.TerrainEditClamp/]: [DLB-CLAMP] fenetre d'edition ouverte sur 148x328x164 a 919,142 -- ticks de chute et de fluide neutralises dans la zone
+[10Oct2026 20:09:04.489] [Server thread/WARN] [deepluckyblock.util.TerrainEditClamp/]: [DLB-LAGPROBE] periode de tick de 2849 ms pendant la phase « prepZone 1c/11 : scanTrees zone FULL, 646 arbres en 1 ms » -- c'est cette phase qui accapare le thread principal (zone 57,8 -> 66,19 : 110 chunks epingles, 10 en attente, 10 demandes de chargement ; 1 tick(s) > 1 s au total)
+[10Oct2026 20:09:04.490] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] 120/120 chunks epingles (maintien en memoire) -- zone complete
+[10Oct2026 20:09:04.563] [Server thread/WARN] [deepluckyblock.procedures.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 1756 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 14 blocs, colonne 940,227 de la zone) -- ramenees dans la fenetre
+[10Oct2026 20:09:04.576] [Server thread/WARN] [deepluckyblock.procedures.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 112 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 8 blocs, colonne 950,284 de la zone) -- ramenees dans la fenetre
+[10Oct2026 20:09:04.802] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel : sol 0 exhaustif fixé avant terrain=91, offsetY=-35, first model blockY=44; diagnostic post-prep median=89, min=86, max=90, samples=159 (aucun second décalage)
+[10Oct2026 20:09:04.803] [Server thread/INFO] [deepluckyblock.util.StructureSites/]: [DLB-SITES] emprise enregistree : citadel (116x132 a 935,158), 2 structure(s) suivie(s)
+[10Oct2026 20:09:05.499] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] 24 LIGHT/vines techniques souterrains supprimes apres paste
+[10Oct2026 20:09:05.502] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel en 4419ms (113930 blocs, 443 a gravite -- ticks de chute neutralises par DLB-CLAMP)
+[10Oct2026 20:09:05.581] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] carve citadel programmee (4151 colonnes, 113930 blocs occupes, bottomY=56)
+[10Oct2026 20:09:05.860] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel termine : 0 blocs supprimes, 9 blocs de motte (bottomY=56)
+[10Oct2026 20:09:05.933] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] decorate + post de citadel termine
+[10Oct2026 20:09:06.660] [Server thread/INFO] [deepluckyblock.util.TerrainEditClamp/]: [DLB-CLAMP] fenetre fermee (fin de pipeline) : 5 s de travail, 77 ticks ; periode de tick moyenne 66 ms, pire 2849 ms (20 TPS = 50 ms) ; 4 tick(s) > 100 ms dont 1 > 1 s ; MSPT lisse 9.7 ms ; chute max 0 entite(s)
+[10Oct2026 20:09:06.663] [Server thread/INFO] [deepluckyblock.util.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 5.0 s -- ou est passe le temps : pre-chargement des chunks 1.1 s (22%) | replantTrees 0.6 s (11%) | dressAndPlant 0.2 s (4%) | rebuildTerrain 0.1 s (3%) | smooth graduel T109 0.1 s (2%) | verifyGrassSurface 0.1 s (1%) | prepZone 1c/11 0.0 s (1%) | prepZone 0.0 s (0%) | attente/tick system 2.8 sacces terrain : 92846 requete(s) moteur, 490701 lecture(s) servies par le cache (84%), 0 colonne(s) hors memoire
+[10Oct2026 20:09:06.665] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] zone relachee (120 chunks rendus au chunk system, en tranches)
+[10Oct2026 20:09:06.797] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] Post-process de citadel termine
+[10Oct2026 20:09:06.797] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] citadel entièrement terminé (recherche, pose, terrain, végétation et arbres) en 5842 ms : FIFO libérée
+[10Oct2026 20:09:06.804] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] File d'attente : demarrage de la structure ID=1 (0 encore en attente)
+[10Oct2026 20:09:06.804] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE observatory === off=[0,-5,0] dist=0 facing=north
+[10Oct2026 20:09:07.419] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1420,-29 (selection seche T233b : 615 ms, 19 sondes bruit, 8 cartes eau/hauteur ecartees, span sec=1, 0 chunk genere)
+[10Oct2026 20:09:07.419] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-SAFETY] observatory candidat aquatique écarté avant terrain; recherche du suivant
+[10Oct2026 20:09:07.452] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE observatory === off=[0,-5,0] dist=0 facing=north
+[10Oct2026 20:09:08.052] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1307,195 (selection seche T233b : 600 ms, 22 sondes bruit, 9 cartes eau/hauteur ecartees, span sec=8, 0 chunk genere)
+[10Oct2026 20:09:08.064] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] observatory -> 1307, 53, 195 (baseY=66, minRelY=8, rot=NONE, 612ms)
+[10Oct2026 20:09:08.069] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-GROUND] observatory candidat 1307,195 écarté avant terrain : relief x0,6=7 (max=10), eau=1/2773; recherche terrestre élargissable
+[10Oct2026 20:09:08.103] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE observatory === off=[0,-5,0] dist=0 facing=north
+[10Oct2026 20:09:09.061] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1398,100 (selection seche T233b : 958 ms, budget ecoule, meilleur span sec=10, 28 sondes, 9 eau/haut ecartees, 0 chunk genere)
+[10Oct2026 20:09:09.061] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-SAFETY] observatory candidat aquatique écarté avant terrain; recherche du suivant
+[10Oct2026 20:09:09.089] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE observatory === off=[0,-5,0] dist=0 facing=north
+[10Oct2026 20:09:10.001] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 978,-5 (selection seche T233b : 912 ms, budget ecoule, meilleur span sec=10, 32 sondes, 11 eau/haut ecartees, 0 chunk genere)
+[10Oct2026 20:09:10.005] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] observatory -> 1028, 65, -5 (baseY=78, minRelY=8, rot=CLOCKWISE_90, 916ms)
+[10Oct2026 20:09:10.008] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-GROUND] observatory candidat 978,-5 écarté avant terrain : relief x0,6=15 (max=10), eau=0/2773; recherche terrestre élargissable
+[10Oct2026 20:09:10.038] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE observatory === off=[0,-5,0] dist=0 facing=north
+[10Oct2026 20:09:11.003] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1170,151 (selection seche T233b : 965 ms, budget ecoule, meilleur span sec=14, 29 sondes, 10 eau/haut ecartees, 0 chunk genere)
+[10Oct2026 20:09:11.024] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] observatory -> 1220, 81, 151 (baseY=94, minRelY=8, rot=CLOCKWISE_90, 986ms)
+[10Oct2026 20:09:11.029] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-GROUND] observatory candidat 1170,151 écarté avant terrain : relief x0,6=13 (max=10), eau=0/2773; recherche terrestre élargissable
+[10Oct2026 20:09:11.087] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] === PASTE observatory === off=[0,-5,0] dist=0 facing=north
+[10Oct2026 20:09:12.019] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1179,221 (selection seche T233b : 931 ms, budget ecoule, meilleur span sec=15, 23 sondes, 9 eau/haut ecartees, 0 chunk genere)
+[10Oct2026 20:09:12.026] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] observatory -> 1179, 88, 221 (baseY=101, minRelY=8, rot=NONE, 939ms)
+[10Oct2026 20:09:12.031] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5-GROUND] observatory sol solide validé sous 100% de la zone centrale x0,6 : 1073 colonnes, 0 avec eau autorisée, sol Y=94..103 (relief=9)
+[10Oct2026 20:09:12.032] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] observatory : center anchor confirmed by footprint (T76) -- median=101, min=90, max=105, 134 columns, delta=0 <= 4
+[10Oct2026 20:09:12.036] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] observatory : 14748 a poser (118 verre supprime, air exterieur deja ecarte au chargement) -- T73
+[10Oct2026 20:09:12.040] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] observatory : selected solid groundY=101, clearance starts at Y=102, model offsetY=-5, foundationBaseY=96
+[10Oct2026 20:09:12.040] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] zone 1110, 96, 158 -> 1248, 157, 284 tenue en memoire pendant le pipeline (90 chunks)
+[10Oct2026 20:09:12.041] [Server thread/INFO] [deepluckyblock.util.TerrainEditClamp/]: [DLB-CLAMP] fenetre d'edition ouverte sur 139x190x127 a 1110,158 -- ticks de chute et de fluide neutralises dans la zone
+[10Oct2026 20:09:12.041] [Server thread/INFO] [deepluckyblock.util.ChunkKeeper/]: [DLB-CHUNKS] 90/90 chunks epingles (maintien en memoire) -- zone complete
+[10Oct2026 20:09:12.254] [Server thread/WARN] [deepluckyblock.procedures.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 1275 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 29 blocs, colonne 1126,260 de la zone) -- ramenees dans la fenetre
+[10Oct2026 20:09:12.260] [Server thread/WARN] [deepluckyblock.procedures.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 53 colonne(s) sortaient de la fenetre autorisee (adaptative T89 : jusqu'a +64/-64 au bord, +10/-2 au loin ; derive maximale mesuree : 9 blocs, colonne 1220,195 de la zone) -- ramenees dans la fenetre
+[10Oct2026 20:09:12.422] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] observatory : sol 0 exhaustif fixé avant terrain=101, offsetY=-5, first model blockY=96; diagnostic post-prep median=98, min=96, max=100, samples=49 (aucun second décalage)
+[10Oct2026 20:09:12.422] [Server thread/INFO] [deepluckyblock.util.StructureSites/]: [DLB-SITES] emprise enregistree : observatory (107x95 a 1126,174), 3 structure(s) suivie(s)
+[10Oct2026 20:09:12.519] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] observatory en 1402ms (14748 blocs, 67 a gravite -- ticks de chute neutralises par DLB-CLAMP)
+[10Oct2026 20:09:12.524] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] carve observatory programmee (1473 colonnes, 14748 blocs occupes, bottomY=96)
+[10Oct2026 20:09:12.565] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] observatory termine : 258 blocs supprimes, 2 blocs de motte (bottomY=96)
+[10Oct2026 20:09:12.638] [Server thread/INFO] [deepluckyblock.procedures.Structures5Procedure/]: [STRUCT5] decorate + post de observatory termine
