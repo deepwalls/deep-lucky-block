@@ -468,6 +468,18 @@ public class Structures5Procedure {
         int redeferred;                // T12 : blocs finalement poses par la passe de rattrapage
         PasteJob(ServerLevel l, List<StructureTemplate.StructureBlockInfo> b, BlockPos o, Rotation r, Mirror m, String n, long t, Player p, BlockPos mn, BlockPos mx) {
             level = l; blocks = b; origin = o; rot = r; mir = m; name = n; t0 = t; player = p; min = mn; max = mx; idx = 0; chests = new ArrayList<>(); grav = 0;
+            // T242 (consigne 12/10 : « retrouver un paste < 5 000 ms juste en
+            // optimisant ») : la pose brute mesuree cote client (dragon : 23,5 s)
+            // n'etait pas CPU-limitee (~2,5 us/bloc mesure en lab, soit ~190 ms
+            // au total pour 75 098 blocs) mais ATTENTE-limitee : les chunks de
+            // l'emprise n'etaient demandes qu'au fil de l'eau, quand placeOne
+            // buttait dessus -> la generation du monde demarrait par a-coups.
+            // On la declenche MAINTENANT en une fois, des le lancement du job :
+            // demande idempotente, non bloquante, meme file de generation maison
+            // (aucun chargement synchrone, aucune politique changee) -- le moteur
+            // tourne a plein regime pendant la suite du pipeline.
+            deepluckyblock.util.SafeSurface.requestZone(level,
+                    mn.getX() >> 4, mn.getZ() >> 4, mx.getX() >> 4, mx.getZ() >> 4);
         }
     }
 
@@ -3115,6 +3127,19 @@ public class Structures5Procedure {
         final int selectedGroundY = baseY;
         final int foundationBaseY = selectedGroundY + oy;
         final BlockPos pasteRp = rp, pasteMin = min, pasteMax = max;
+        // T242 (consigne 12/10 : « retrouver un paste < 5 000 ms juste en
+        // optimisant ») : l'emprise finale du paste est defigure DES ICI, bien
+        // avant preloadBox — prepZone() et decorateTerrainOnly() passent encore
+        // plusieurs secondes entre-temps. On demande alors TOUS les chunks de
+        // l'emprise immediatement, en tache de fond : sur les mondes neufs, les
+        // chunks VIERGES se generent EN PARALLELE des passes de terrain au lieu
+        // d'attendre le lancement du PasteJob (le wall « Pose brute » mesure
+        // cote client — ex. 23 453 ms sur Dragon — etait surtout cette attente
+        // en chaine). Demande idempotente, non bloquante, meme file de fond
+        // maison : aucun comportement change, aucune passe sacrifiee.
+        deepluckyblock.util.SafeSurface.requestZone(level,
+                pasteMin.getX() >> 4, pasteMin.getZ() >> 4,
+                pasteMax.getX() >> 4, pasteMax.getZ() >> 4);
         StructureTerrainPrep.setTerrainRingScalePercent(ringScaleFor(nbt));
         deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] {} : selected solid groundY={}, clearance starts at Y={}, model offsetY={}, foundationBaseY={}",
                 nbt, selectedGroundY, selectedGroundY + 1, oy, foundationBaseY);

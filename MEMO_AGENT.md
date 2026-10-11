@@ -154,3 +154,12 @@ de mon cadre de test) ; +0 pour la reparation (reparer sa propre casse
 n'est pas un merite) => SOLDE 0. Lecon : toute passe ajoutee doit etre
 validee SOUS FENETRE LIBEREE et avec la chronologie exacte de release ;
 la latence disque du client est un axe de test a part entiere.
+
+- T242 (livré 12/10) : pose brute — anticipation de la demande de chunks
+  de l'emprise du paste (avant prepZone + au lancement du PasteJob),
+  idempotente, non bloquante, zéro sacrifice, bump [build T242].
+  DIAG avant fix : paste CPU ~190 ms/75k blocs ; wall = attente chunks
+  + SAFETY + prep (chrono = tGlobal). Lab T242 : obs 5085, dragon 5636,
+  citadel 5403, lac 2,7 s, protocole 3+1 ≈236 s <6 mn, aucune régression.
+  Reste plancher = génération vanilla des chunks vierges sur monde neuf
+  (incompressible sans sacrifier). Options T243 proposées au client.

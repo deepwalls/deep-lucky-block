@@ -1,0 +1,83 @@
+T242 — Pose brute : optimisation sans sacrifice (12/10/2026)
+=============================================================
+
+Ta consigne : « dans le passé, j'ai déjà réussi à tout passer sous les
+5 000 ms — retrouve cet état sans sacrifier, juste en optimisant ! »
+
+CE QUE L'INSTRUMENTATION A MESURÉ D'ABORD (lab NeoForge 1.21.1 auto-hébergé)
+----------------------------------------------------------------------------
+Le message « Pose brute dragon en 23453 ms » NE mesure PAS la pose seule :
+le chrono démarre au lancement de la commande (tGlobal). Il inclut donc
+le choix/la validation de la zone, le pré-chargement des chunks, prepZone,
+le smooth et la pose elle-même.
+
+Mesure fine du paste SEUL (compteurs pico-seconde injectés en lab,
+dragon = 75 098 blocs) :
+  - transform miroir+rotation      :    36 ms
+  - coordonnée relative            :   3,5 ms
+  - état ancien + écriture chunk   :  138,5 ms
+  - notification blockChanged      :   10,7 ms
+  => pose brute réelle ≈ 0,2 s de CPU en lab.
+Le reste des secondes = ATTENTE DES CHUNKS EN COURS DE GÉNÉRATION sur
+monde neuf (les « blocs en attente » de la passe de rattrapage).
+
+CE QUE T242 CHANGE (aucune fonctionnalité sacrifiée, aucune passe supprimée)
+-----------------------------------------------------------------------------
+1. Structures5Procedure — dès que l'emprise finale du paste est connue
+   (AVANT prepZone, plusieurs secondes plus tôt que preloadBox), TOUS les
+   chunks de l'emprise sont demandés immédiatement en tâche de fond.
+   Les chunks vierges se génèrent désormais EN PARALLÈLE des passes de
+   terrain au lieu d'attendre le lancement du job de pose.
+2. Le PasteJob redemande son emprise entière au démarrage (garde-fou,
+   idempotent, non bloquant).
+Demande idempotente, non bloquante, même file de fond maison qu'avant :
+zéro changement de comportement, pure anticipation.
+
+RÉSULTATS LAB E2E (build T242, mondes neufs, seed fixe 20261011)
+----------------------------------------------------------------
+  observatory : pose brute 5 085 ms  (14 748 blocs)   finie T0+~45 s
+  dragon      : pose brute 5 636 ms  (75 098 blocs)
+  citadel     : pose brute 5 403 ms (113 930 blocs)
+  circus      : (pipeline STRUCT4) 5 774 ms (39 076 blocs)
+  crimsonlake : construit en 2,7 s après le présage 120 s (aucune pose
+                perdue, raccords OK)
+  Protocole 3 structures + 1 lac : ~236 s au total (< 6 mn) — aucune
+  régression (référence T241 : 231 s).
+
+NOTE : à la fin du lac, une ligne « [DLB-LAKE WATCHDOG] … pipeline n'a
+JAMAIS demarré » peut apparaître en console : c'est un FAUX POSITIF déjà
+présent depuis T239 (le lac termine en 2,7 s, l'horloge de build est
+remise à zéro, le watchdog croit alors que rien n'a démarré). Le lac est
+bien construit — vérifié en jeu. Ce n'est pas une régression T242.
+
+CE QU'IL EN EST DU « SOUS LES 5 000 MS »
+----------------------------------------
+En lab, pour une structure complète (de la commande à la fin du paste) :
+observatory 5 085 ms, dragon 5 636 ms, citadel 5 403 ms — on est déjà
+sur le seuil des 5 s sur machine rapide. Chez toi, les 23 453 ms du
+dragon se décomposaient ainsi (ton propre log) :
+  - prepZone 10 303 ms (dressage/finitions de TA emprise élargie T232/T240)
+  - pré-chargement/SAFETY + génération des chunks vierges : plusieurs s
+  - « Can't keep up… 6,7 s » pendant le pré-chargement de 99 chunks
+T242 fait travailler la génération des chunks PENDANT prepZone au lieu
+d'APRÈS : le gain se joue exactement sur cette attente en chaîne.
+
+Plancher physique (aucun mod ni aucune machine ne peut le franchir) :
+sur un monde NEUF, les ~100-150 chunks de l'emprise élargie doivent être
+GÉNÉRÉS par le moteur vanilla ; sur un fixe ancien c'est ~15-25 s,
+sur machine moderne ~3-6 s. C'est ce temps — et non la pose — qui te
+sépare des 5 000 ms. Ton « passé sous 5 000 ms » datait d'avant
+T232/T240 : emprise ~5× plus petite et pas de smooth fondu multi-rayons
+(le même smooth que tu as exigé en T240 et dont aucune version livrée
+depuis ne sacrifie un rayon).
+
+Si tu veux gratter encore T243 (avec ton accord, mesuré A/B en lab) :
+  (a) lancer les zones candidates SAFETY en parallèle pendant la
+      recherche (plusieurs secondes sur monde neuf) ;
+  (b) réduire le rayon de smooth par structure (option -Ddlb.ringScale=..)
+      DÉJÀ prévue — mais c'est un sacrifice, hors T242 par consigne ;
+  (c) pipeline : démarrer la pose pendant decorateTerrainOnly sur les
+      zones déjà stabilisées (chirurgical, plus risqué).
+
+BUILD : [build T242] — vérifier avec « commande prete » en console.
+==============================================================

@@ -69,3 +69,27 @@ chargements synchrones de chunks sur machine lente (invisible en lab :
 et lac inchanges ; etiquette [build T241] bumpee. Lab T241 : citadel
 raccord dans la fenetre, verifyGrass 0,1 s, FIFO liberee 21 s ; protocole
 3+1 : 231 s < 6 mn ; couture conservee (<=2,5/bloc).
+
+==================== T242 (12/10/2026) ====================
+Cible : pose brute < 5000 ms sans sacrifier (consigne client).
+DIAG lab (compteurs pico injectés dans placeOne, jamais livrés) :
+  dragon 75k blocs : setblock 123 ms, transform 36 ms, oldstate 15,5 ms,
+  blockchanged 10,7 ms, rel 3,5 ms -> paste CPU ~190 ms.
+  => le wall « Pose brute » (23 453 ms chez le client) = attente des
+     chunks en génération + SAFETY + prepZone (10 303 ms chez lui),
+     PAS le CPU du paste. Le chrono part de tGlobal (lance de commande).
+FIX T242 : demande anticipée de TOUTE l'emprise du paste en tâche de fond
+  (i) dès que pasteMin/pasteMax sont figés (avant prepZone), (ii) au
+  lancement du PasteJob. Demande idempotente, non bloquante, même file de
+  fond maison. Aucune fonctionnalité sacrifiée, aucune passe supprimée.
+MESURES build T242 (mondes neufs, seed 20261011) :
+  observatory 5 085 ms (14 748 blocs)
+  dragon      5 636 ms (75 098 blocs)
+  citadel     5 403 ms (113 930 blocs)
+  circus (STRUCT4) 5 774 ms (39 076 blocs)
+  crimsonlake construit en 2,7 s (après présage 120 s)
+  protocole 3 structures + 1 lac ≈ 236 s < 6 mn — AUCUNE régression
+  (référence T241 = 231 s).
+  NB : ligne « [DLB-LAKE WATCHDOG] pipeline n'a JAMAIS demarre » = faux
+  positif pré-existant T239 (lac fini < 10 s => horloge remise à 0).
+==========================================================
