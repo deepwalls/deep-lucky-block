@@ -87,3 +87,17 @@ ancre sed vide = echec silencieux, 4 boots NoSuchElement ; (2) jamais
 pkill -f <mot de ma propre ligne> : autokill deux fois de suite ;
 (3) `cat >>` sur fichier non committe + clone reset = annexe perdue :
 toujours s'assurer que le fichier source existe AVANT d'ajouter.
+
+## T239 (11/10 soir) — crimsonlake : fin du silence + T239-B rejete
+Ticket : lac demande 18:21:38, 33 min de silence absolu (monde actif).
+Cause non reproductible en lab (8/8 succes) ; diagnostic aveugle car
+TOUTES les etapes clefs du pipeline ecrivaient seulement sous dlb.debug.
+T239-A : logs System.err sur trigger/presage/PENDING/attente NBT/abort
+implicites + watchdog +130 s avec etat complet + etiquette [build T239]
+dans la ligne « commande prete » (plus jamais de diag version aveugle).
+T239-B (pre-chauffage speculatif du candidat suivant) : protocole aggrave
+6 mondes cotes = 327,5 s moy / 368 s max vs 266/314 pour T238 pur ->
+REGRESSION => REVERT avant livraison, Structures5 remis a T238.
+Scoreboard : T239-B -1 (avoir expédie le cycle entier avant le A/B
+protocole) => SOLDE 0. Lecon : toute acceleratrice = A/A sur le protocole
+AGGRAVE avant meme de raconter « ca devrait ».

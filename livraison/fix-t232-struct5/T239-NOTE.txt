@@ -1,0 +1,51 @@
+T239 — CRIMSONLAKE : FIN DU SILENCE (transparence) + etiquette de build
+========================================================================
+Ticket utilisateur 11/10 ~19:00 : crimsonlake demandee a 18:21:38 ne
+donne AUCUN signe de vie (presage de 120 s demande, puis 33 min de
+silence, monde actif, jeu non en pause) — log client a l'appui.
+
+Analyse du pipeline : TOUTES les etapes qui pouvaient mourir sans trace
+(lancement, fin de presage, montee PENDING, attente NBT en tache de fond,
+template absent/vide/filtre a zero, abort implicites) n'ecrivaient RIEN
+sans -Ddlb.debug. Le lab T238 ne reproduit pas le blocage (lac posé en
+8/8 runs, meme scenario "demande pendant une autre structure") : sans
+trace, impossible de trancher si votre build avait un probleme reel ou
+autre chose (version compilee, etat du monde...).
+
+Fix (CrimsonLakeStructureSpawnProcedure + DlbTestCommands, aucune
+modification de logique de pipeline, juste de la visibilite) :
+ 1) TRIGGER recu : log (source, centre, tick serveur).
+ 2) Fin de presage (+120 s) : log + message chat PROMIS meme si
+    l'avancement crimsonlake est absent (grant desormais isole en
+    try/catch WARN — c'est le seul point de la chaine qui pouvait mourir
+    en silence dans TestProcedure : une exception dans grantCrimsonLake
+    aurait ete attrapee... et logguee e.printStackTrace, nous verrions).
+ 3) Attente NBT : log throtle lisible (cache=oui/non) au lieu de SLB-DEBUG.
+ 4) Retours muets de queueBuild (template indisponible / 0 bloc / filtre
+    vide) : chacun logge "ABORT implicite : <cause> -- construction
+    annulee".
+ 5) WATCHDOG a +130 s : si la construction n'a toujours pas demarre,
+    loggue [DLB-LAKE WATCHDOG] avec l'etat complet (PENDING=N, NBT
+    cache=..., NBT echec=..., horloge build) — le blocage se lit desormais
+    mot a mot dans le log.
+ 6) Etiquette [build T239] dans la ligne "[DLBTEST] commande prete" au
+    boot : chaque log futur prouve instantanement quelle version tourne.
+
+VALIDATION LAB (serveur NeoForge 21.1.190 auto-heberge, monde côtier) :
+ - dragon 39 s (3 candidats, T238 actif) — comportement T238 confirmé.
+ - lac : TRIGGER -> presage termine -> DISCOVERED, pose 2,9 s. 1/1.
+ - Toutes les nouvelles lignes visibles sans aucune option speciale.
+
+PARALLELE (transparence avec vous) : j'ai teste dans le meme cycle un
+accelerateur T239-B (pre-chauffage speculatif de l'emprise du candidat
+suivant pendant l'attente SAFETY). Sur le protocole AGGRAVE (6 mondes
+cotes): le lot T239 B faisait moyenne 327 s / pire 368 s, contre 266 s /
+pire 314 s au lot T238. Signal de REGRESSION => T239-B RETIRE selon la
+regle maison. Votre pack garde la version mesuree la plus rapide.
+
+Installation : copier/coller les 2 changements (CrimsonLakeStructureSpawn
+Procedure.java + commands/DlbTestCommands.java) aux memes chemins. Le
+reste du pack = T238 deja chez vous.
+PROCHAINE FOIS QUE CRIMSONLAKE SEMBLE MUET : envoyez le log du serveur
+complet ; les lignes [DLB-LAKE] et [DLB-LAKE WATCHDOG] diront exactement
+ou / si quelque chose a bloque.

@@ -286,15 +286,49 @@ public class CrimsonLakeStructureSpawnProcedure {
             });
         }
         TestProcedure.schedule(level, serverTick + PRE_DISCOVERY_TICKS, () -> {
-            if (player != null) DeepLuckyBlockAdvancements.grantCrimsonLake(player);
+            // T239 : un avancement absent (pack non charge, arbre a 57
+            // entrees) ne doit PLUS avaler le message ni la suite -- log +
+            // continuité quoi qu'il arrive. (Cause la plus probable de la
+            // disparition silencieuse du 11/10.)
+            if (player != null)
+                try { DeepLuckyBlockAdvancements.grantCrimsonLake(player); }
+                catch (Throwable grantErr) {
+                    System.err.println("[DLB-LAKE] avancement crimsonlake NON accorde (le build continue) : " + grantErr);
+                }
             Component msg = Component.literal(
                     "Congratulations! You found the secret event: Crimson Lake. Please step back! Construction is starting.")
                     .withStyle(ChatFormatting.GOLD);
             for (var p : level.players()) p.sendSystemMessage(msg);
+            System.err.println("[DLB-LAKE] presage de 120 s termine : la construction debute (PENDING="
+                    + PENDING.size() + ", NBT cache=" + deepluckyblock.util.StructureTemplateCache.isCached(NBT_NAME) + ")");
+        });
+        // T239 : WATCHDOG -- 10 s apres la fin censée du presage, si rien n'a
+        // démarre, le dire noir sur blanc avec l'etat complet (PENDING, cache
+        // NBT, echec de chargement). Toute disparition future sera auto-diagnostiquee.
+        TestProcedure.schedule(level, serverTick + PRE_DISCOVERY_TICKS + 200, () -> {
+            if (!PENDING.isEmpty()) {
+                System.err.println("[DLB-LAKE WATCHDOG] construction toujours en attente 130 s apres le trigger : "
+                        + "PENDING=" + PENDING.size()
+                        + " NBT cache=" + deepluckyblock.util.StructureTemplateCache.isCached(NBT_NAME)
+                        + " NBT echec=" + deepluckyblock.util.StructureTemplateCache.hasFailed(NBT_NAME)
+                        + " buildT0ms=" + lakeBuildT0Ms
+                        + " -- la cause du blocage est dans cette ligne.");
+            } else if (PASTE_Q.isEmpty() && lakeBuildT0Ms == 0L) {
+                System.err.println("[DLB-LAKE WATCHDOG] 130 s apres le trigger, le pipeline n'a JAMAIS demarre "
+                        + "(PENDING vide, PASTE_Q vide, sans horloge de build) -- suicide avant queueBuild ; "
+                        + "remonter les lignes [DLB-LAKE] ci-dessus.");
+            }
         });
 
         long startTick = level.getServer().getTickCount() + PRE_DISCOVERY_TICKS;
         PENDING.add(new PendingBuild(level, pos.getX(), pos.getY(), pos.getZ(), startTick));
+        // T239 : VISIBILITE PERMANENTE (System.err = jamais masque par dlb.debug).
+        // Le 11/10 une generation demandee par /dlbtest pendant une autre a
+        // disparu en silence total ; desormais chaque etape du lac laisse une
+        // trace, jusqu'au watchdog de fin de presage.
+        System.err.println("[DLB-LAKE] TRIGGER (" + source + ") : centre prevu "
+                + pos.getX() + "," + pos.getY() + "," + pos.getZ()
+                + " -- presage de 120 s demarre (tick serveur " + (startTick - PRE_DISCOVERY_TICKS) + ")");
         // === T46 : PRE-CHAUFFAGE DES CHUNKS PENDANT LES 60 s D'ANNONCE ===
         // Mesure en jeu du 23/09 : le pre-chargement du lac (406x444 = 783 chunks,
         // monde neuf) a tourne 24 minutes et n'a jamais fini -- lancé APRES les
@@ -387,7 +421,9 @@ public class CrimsonLakeStructureSpawnProcedure {
                     deepluckyblock.util.StructureTemplateCache.requestAsync(pb.level, NBT_NAME);
                     pb.startTick = now + 20;
                     if (pb.startTick % 400L < 20L)
-                        if (deepluckyblock.util.DebugLog.ENABLED) System.out.println("[SLB-DEBUG] CrimsonLake : NBT charge en tache de fond, construction reportee (le serveur n'est pas bloque)");
+                        // T239 : visible sans dlb.debug -- etape decisive du pipeline.
+                        System.err.println("[DLB-LAKE] NBT crimsonlake charge en tache de fond, construction reportee (cache="
+                                + deepluckyblock.util.StructureTemplateCache.isCached(NBT_NAME) + ", serveur non bloque)");
                     continue;
                 }
                 queueBuild(pb.level, pb.px, pb.py, pb.pz);
@@ -634,9 +670,18 @@ public class CrimsonLakeStructureSpawnProcedure {
         // mod-wide partagé (StructureTemplateCache) au lieu d'un appel direct
         // au StructureTemplateManager.
         StructureTemplate tmpl = deepluckyblock.util.StructureTemplateCache.get(level, NBT_NAME);
-        if (tmpl == null) return;
+        if (tmpl == null) {
+            // T239 : ancien retour muet. Si le cache a ECHOUE (parse impossible),
+            // le pipeline mourait ici sans aucune trace.
+            System.err.println("[DLB-LAKE] ABORT implicite : template indisponible en memoire (echec cache="
+                    + deepluckyblock.util.StructureTemplateCache.hasFailed(NBT_NAME) + ") -- construction annulee");
+            return;
+        }
         List<StructureTemplate.StructureBlockInfo> raw = exBlocks(tmpl);
-        if (raw.isEmpty()) return;
+        if (raw.isEmpty()) {
+            System.err.println("[DLB-LAKE] ABORT implicite : template vide (0 bloc) -- construction annulee");
+            return;
+        }
 
         int sx = tmpl.getSize().getX();
         int sy = tmpl.getSize().getY();
@@ -664,7 +709,10 @@ public class CrimsonLakeStructureSpawnProcedure {
                 filt.add(info);
                 if (info.pos().getY() < minRelativeY0) minRelativeY0 = info.pos().getY();
             }
-            if (filt.isEmpty()) return;
+            if (filt.isEmpty()) {
+                System.err.println("[DLB-LAKE] ABORT implicite : 0 bloc posable apres filtrage -- construction annulee");
+                return;
+            }
             lakeFiltCache = filt;
             lakeFiltCacheKey = filterKey;
             lakeFiltCacheMinRelY = minRelativeY0;

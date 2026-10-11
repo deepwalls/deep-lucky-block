@@ -40,3 +40,10 @@ run04 238,5 s                                                            OK sous
 run05 229,4 s                                                            OK sous 6 mn
 run06 262,1 s (3 rejets anticipes + 8 complets)                          OK sous 6 mn
 Moyenne 265,8 s ; pire 314,3 s (vs 507 s le cas run09 avant T238, en conditions moins dures)
+
+=== T239 (transparence crimsonlake ; T239-B accel. REJETE par protocole) ===
+Protocole aggrave 6 mondes cotes (same cadre) avec T239-B (pre-chauffage
+speculatif) : 339 / 313 / 356 / 312 / 368 / 277 s = moyenne 327,5 s,
+pire 368 s -> strictement pire que le lot T238 (266 / 314) : RETIRE.
+Validation finale post-retrait (monde cotier, T238 code + visibilite lac) :
+dragon 39 s (3 candidats) ; crimsonlake TRIGGER -> presage -> pose 2,9 s.
