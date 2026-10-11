@@ -765,20 +765,14 @@ public class Structures5Procedure {
                 // doivent pousser AUTOUR des decors, jamais dedans ni dessus).
                 // On lui transmet le nom de la structure pour le choix du theme.
                 StructureTerrainPrep.setStructureName(cj.name);
-                StructureTerrainPrep.decorateFinish(cj.level, cj.min, cj.max);   // T39 : finitions post-pose
+                // T39 : finitions post-pose. T240+T241 : le raccord post-pose
+                // (smoothAround, serie multi-rayons) s'execute A L'INTERIEUR de
+                // cette fenetre, APRES la pose et les decors mais AVANT la
+                // liberation keeper/chaine -- jamais en parallele : la version
+                // T240 parallele relachait la zone sous ses pieds (hang client
+                // 6+ min sur machine lente : chargements synchrones de chunks).
+                StructureTerrainPrep.decorateFinish(cj.level, cj.min, cj.max, true);   // T39 : finitions post-pose
                 POST_Q.offer(new PostJob(cj.level, cj.min, cj.max, cj.name));
-                // T240 : RACCORD POST-POSE. smoothAround() existait mais
-                // n'etait APPELEE NULLE PART : la pose coupait l'emprise a
-                // vif et l'anneau lisse restait decolle des blocs poses --
-                // la “grosse delimitation” signalee par l'utilisateur sur la
-                // dragon du 11/10. La passe travaille l'anneau (emprise
-                // protegee) en serie multi-rayons, sur les memes chunks deja
-                // tenus par le pipeline (aucun chargement supplementaire) ;
-                // elle tourne en parallele des postLayers (colonnes
-                // disjointes : anneau vs emprise).
-                StructureTerrainPrep.smoothAround(cj.level, cj.min, cj.max,
-                        () -> deepluckyblock.util.DebugLog.info(LOGGER,
-                                "[STRUCT5] raccord terrain T240 de {} termine (anneau fondu, serie multi-rayons)", cj.name));
                 deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] decorate + post de {} termine", cj.name);
             }
         }

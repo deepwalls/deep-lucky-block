@@ -128,3 +128,29 @@ interne detectee et corrigee par le protocole AVANT livraison) =>
 SOLDE +1. Lecon : toute passe post-paste qui consomme naturalize()
 hors de la fenetre du pipeline DOIT rendre le keeper — held() est un
 portillon global, pas un refcount.
+
+## T241 (11/10 nuit) — REGRESSION T240 livree au client : hang 6+ min repare
+Log client 23h30 (compilation OK, test sur New World) : dragon+lac ok,
+citadel pedale 6+ min sur "verifyGrassSurface 15312/15312", Can't keep
+up en cascade, total > 6 mn ("trop lent", "chaque structure avant
+mettait moins de 5000ms"). Etiquette restee [build T239] (bump oublie)
+MAIS preuve que le run = T240 : dragon affiche 4 lignes "lissage bride"
+(2 prep + 2 raccord) au lieu de 2.
+Cause racine = MA regression T240 : le raccord cablé en PARALLELE de
+decorateFinish executait verifyGrassSurface/replant/naturalize APRES la
+relache du keeper -> chargements synchrones de chunks par colonne sur
+machine lente (lab : tout en cache, 8 ms -> trou invisible).
+Correctif : surcharge decorateFinish(level,min,max,boolean raccordT240)
+-> le raccord s'execute dans le dernier callback AVANT la liberation
+TerrainChain/ChunkKeeper (fenetre tenue, emprise protegee) ; relache
+dans smoothAround supprimee ; Struct5 l.768 -> decorateFinish(...,true),
+smoothAround parallele supprime ; Structures4/lac inchanges (false) ;
+etiquette [build T241] bumpee (regle desormais : toute livraison bump).
+Lab : citadel = raccord dans la fenetre, verify 0,1 s, fifo liberee 21 s ;
+protocole 3+1 = 231 s < 6 mn ; couture conservee (<=2,5/bloc).
+Scoreboard : -1 (regression livree au client ; le protocole lab ne
+simulait pas la fenêtre relachee + machine lente -- defaut SYSTEMIQUE
+de mon cadre de test) ; +0 pour la reparation (reparer sa propre casse
+n'est pas un merite) => SOLDE 0. Lecon : toute passe ajoutee doit etre
+validee SOUS FENETRE LIBEREE et avec la chronologie exacte de release ;
+la latence disque du client est un axe de test a part entiere.

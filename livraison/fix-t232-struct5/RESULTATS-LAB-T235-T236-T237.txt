@@ -58,3 +58,14 @@ a la ligne de paste ; raccord {11,21,31,43,57} via smoothPassAfterPreload,
 keeper relache en fin de chaine (bug fifo interne corrige avant livraison).
 Protocoles perf (3 structures + 1 crimsonlake, mondes neufs) : 328 s et
 216 s < 6 mn -> aucune regression (ref T238 : 266/314 s).
+
+=== T241 (REGRESSION T240 livree au client : hang 6+ min -> raccord dans la fenetre) ===
+Log client (build T240, etiquette T239 par oubli de bump) : citadel
+pedale 6+ min sur "verifyGrassSurface 15312/15312". Cause : raccord
+T240 en parallele de decorateFinish -> travail post-liberation ->
+chargements synchrones de chunks sur machine lente (invisible en lab :
+8 ms en cache). Correctif : surcharge decorateFinish(..., raccordT240)
+-> le raccord s'execute avant la liberation keeper/chaine ; Structures4
+et lac inchanges ; etiquette [build T241] bumpee. Lab T241 : citadel
+raccord dans la fenetre, verifyGrass 0,1 s, FIFO liberee 21 s ; protocole
+3+1 : 231 s < 6 mn ; couture conservee (<=2,5/bloc).

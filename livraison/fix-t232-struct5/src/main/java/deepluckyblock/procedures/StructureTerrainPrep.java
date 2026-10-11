@@ -220,16 +220,9 @@ public class StructureTerrainPrep {
             verifyGrassSurface(level, min, max);
             replantTrees(level, trees, min, max, () -> {
                 naturalize(level, min, max, random, () -> {
-                    // T240 (correctif perf/fifo) : naturalize() re-epingle la zone
-                    // (ChunkKeeper.track) alors que la fin de pipeline post-pose
-                    // vient de la relacher. Sans cette liberation finale, la zone
-                    // restait tenue a jamais : ChunkKeeper.held(level) == true en
-                    // permanence, finishWhenTerrainReleased() replanifiait sans
-                    // fin et TOUTE structure suivante restait bloquee en file
-                    // ("Une generation est deja en cours"). Mesure lab avant fix :
-                    // zone relachee a la fin du decorate, re-epinglee par le
-                    // raccord, jamais rendue -> observatory ok puis file gelee.
-                    deepluckyblock.util.ChunkKeeper.release(level);
+                    // T241 : la liberation keeper/chaine est portee par l'appelant
+                    // (decorateFinish -> onDone) : le raccord s'execute a
+                    // l'interieur de la fenetre tenue, avant la liberation.
                     if (onDone != null) onDone.run();
                 });
             });
@@ -1186,6 +1179,10 @@ public class StructureTerrainPrep {
      * posee en dernier » verifiable dans les logs.
      */
     public static void decorateFinish(ServerLevel level, BlockPos min, BlockPos max) {
+        decorateFinish(level, min, max, false);
+    }
+
+    public static void decorateFinish(ServerLevel level, BlockPos min, BlockPos max, boolean raccordT240) {
         final String chainKey = chainTag(min, max);
         if (!deepluckyblock.util.TerrainChain.acquire(chainKey)) {
             deepluckyblock.util.DebugLog.structure(
@@ -1224,11 +1221,31 @@ public class StructureTerrainPrep {
             // aucun replant. Repose exacte après habillage, comme dans la chaîne
             // historique; replantTrees respecte l'emprise protégée.
             replantTrees(level, LAST_TREES, min, max, () -> {
-                deepluckyblock.util.TerrainChain.release(chainKey);
-                deepluckyblock.util.ChunkKeeper.release(level);
-                clearFootprintProtection();
-                CLEARANCE_PLAN = null;
-                step("decorate TERMINE T180 (végétation + arbres restaurés)");
+                // T241 (hang client 11/10 23h30 : « verifyGrassSurface 15312/15312 »
+                // pedalant 6+ minutes apres la citadel en build T240) : la passe de
+                // raccord T240 s'executait en PARALLELE de decorateFinish. Arrivee
+                // a son verifyGrassSurface/replant/naturalize, la fenetre keepere
+                // venait d'etre relachee ici : sur machine lente chaque colonne
+                // declenchait alors du chargement SYNCHRONE de chunks -- en lab
+                // (chunks chauds, 8 ms) le trou etait invisible. Le raccord se
+                // deroule desormais ICI, a l'interieur de la fenetre tenue
+                // (keeper actif, emprise protegee, chunks chauds), AVANT la
+                // liberation : +0 chargement supplementaire, et la FIFO ne se
+                // libere qu'apres la fin reelle du raccord.
+                Runnable release = () -> {
+                    deepluckyblock.util.TerrainChain.release(chainKey);
+                    deepluckyblock.util.ChunkKeeper.release(level);
+                    clearFootprintProtection();
+                    CLEARANCE_PLAN = null;
+                    step("decorate TERMINE T180 (végétation + arbres restaurés)");
+                };
+                if (raccordT240) smoothAround(level, min, max, () -> {
+                    LOGGER.info("[DLB-STRUCTURE] raccord terrain T240 de {} termine "
+                            + "(anneau fondu, serie multi-rayons, dans la fenetre tenue -- T241)",
+                            LAST_STRUCTURE_NAME);
+                    release.run();
+                });
+                else release.run();
             });
         });
     }

@@ -1,0 +1,54 @@
+================================================================
+ T241 — CORRECTIF URGENT de la livraison T240 (hang client 6+ min)
+================================================================
+SYMPTOME (log client 11/10 23h30, MCreator 2026.1.14619) :
+ - dragon OK, lac OK, citadel : apres ses finitions, le serveur
+   pedale 6+ minutes sur "verifyGrassSurface 15312/15312" (ticks de
+   1,5-2,3 s espaces de 90-100 s), plusieurs autres "Can't keep up"
+   et un total dragon+lac+citadel > 6 minutes ("trop lent",
+   "chaque structure avant mettait moins de 5000ms").
+ - PREUVE que ce run est en build T240 bien qu'il affiche
+   "[build T239]" (etiquette non bumpee dans T240, mon oubli) :
+   la dragon affiche 4 lignes "lissage bride" (2 du prep + 2 du
+   raccord T240 a 23:26:15) au lieu des 2 historiques.
+
+CAUSE RACINE (la mienne, regression de T240) :
+ Le raccord T240 que j'avais cable tournait EN PARALLELE de
+ decorateFinish. Quand il atteignait son verifyGrassSurface /
+ replantTrees / naturalize, la fenetre ChunkKeeper venait d'etre
+ relachee par decoratedFinish : sur machine rapide (mon lab) tout
+ etait encore en cache (8 ms, invisible) ; sur ta machine chaque
+ colonne declenchait du chargement SYNCHRONE de chunks -> ~6 min
+ de gel, puis "Can't keep up" en cascade.
+
+CORRECTIF (minimal-touch, 3 fichiers) :
+ 1) StructureTerrainPrep : surcharge decorateFinish(level, min,
+    max, boolean raccordT240). Dans le dernier callback, AVANT la
+    liberation TerrainChain/ChunkKeeper, le raccord s'execute
+    A L'INTERIEUR de la fenetre tenue (keeper actif, emprise
+    protegee, chunks chauds). La liberation (et donc la FIFO)
+    n'arrive qu'APRES la fin reelle du raccord. Chemin historique
+    (Structures4 circus/everest, lac crimson) INCHANGE (false).
+ 2) Structures5Procedure : decordeFinish(..., true) au lieu du
+    smoothAround parallele T240 (supprime).
+ 3) DlbTestCommands : etiquette [build T241] -- desormais TOUTE
+    livraison bump l'etiquette, fini les doutes de version.
+
+VALIDATION LAB (NeoForge 1.21.1, E2E avant annonce) :
+ - citadel : raccord dans la fenetre, verifyGrassSurface 0,1 s
+   (vs 6+ min), "entièrement terminé ... en 21102 ms : FIFO
+   liberee" ✓ ;
+ - protocole regression (3 structures basiques + 1 crimsonlake,
+   monde neuf) : TOTAL 231 s < 6 mn (25 + 15 + 56 + 135) ✓ ;
+ - couture re-mesuree apres T241 : rampes <= 2,5 blocs/bloc est et
+   ouest, paliers doux nord/sud, zero lame de paste ✓ (benefice
+   T240 conserve).
+
+FICHIERS LIVRES (chemins src/...) :
+ - mod_project/.../procedures/StructureTerrainPrep.java
+ - mod_project/.../procedures/Structures5Procedure.java
+ - mod_project/.../commands/DlbTestCommands.java
+ + ce zip complet : src/ a ecraser tel quel.
+
+APRES COMPIL : verifie la ligne "commande prete ... [build T241]"
+avant tout test. Si elle dit encore T239, le zip n'est pas applique.

@@ -294,7 +294,7 @@ public final class DlbTestCommands {
         // (trop de diagnostics ont buté sur « quelle version tournait ? »).
         DeepLuckyBlockMod.LOGGER.info("[DLBTEST] commande prete : /dlbtest -> {} | structure <nom|id> | list | "
                         + "water <status|freeze|thaw> | probe <x> <z> | luckybreak [nombre] "
-                        + "(permission {}) [build T239]",
+                        + "(permission {}) [build T241]",
                 String.join(", ", names), opOnly() ? "operateur (niveau 2)" : "tout le monde (0)");
     }
 
