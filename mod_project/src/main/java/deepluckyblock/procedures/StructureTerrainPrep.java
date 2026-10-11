@@ -201,10 +201,35 @@ public class StructureTerrainPrep {
         RandomSource random = level.getRandom();
         int topY = Math.min(max.getY() + 10, level.getMaxBuildHeight() - 1);
         List<SavedTree> trees = scanTrees(level, min.getX() - RING, min.getZ() - RING, max.getX() + RING, max.getZ() + RING, topY);
-        smoothPass(level, min, max, 5, 1, () -> {
+        // T240 (consigne 11/10 « tu n'as pas smooth l'exterieur vers
+        // l'interieur ! faut bien inclure les bons chunks pour pas voir de
+        // delimitation ») : le raccord post-pose ne se contente plus d'un
+        // 5x5 x1 -- serie multi-rayons sur l'anneau (champ continu comparant la
+        // surface posee au bord de l'emprise et le terrain naturel), pour
+        // fondre le bord de la coupe dans le relief. L'emprise est toujours
+        // protegee (aucun bloc de structure retouche), et les colonnes
+        // exterieures continuent de respecter la fenetre adaptative T89 et
+        // le feather T177.
+        int smoothRing = terrainRing();
+        int x0 = min.getX() - smoothRing, x1 = max.getX() + smoothRing;
+        int z0 = min.getZ() - smoothRing, z1 = max.getZ() + smoothRing;
+        int w = x1 - x0 + 1, h = z1 - z0 + 1;
+        int[] schedule = {11, 21, 31, 43, 57};
+        smoothPassAfterPreload(level, min, max, 0, schedule.length, 0, smoothRing,
+                x0, z0, w, h, schedule, () -> {
             verifyGrassSurface(level, min, max);
             replantTrees(level, trees, min, max, () -> {
                 naturalize(level, min, max, random, () -> {
+                    // T240 (correctif perf/fifo) : naturalize() re-epingle la zone
+                    // (ChunkKeeper.track) alors que la fin de pipeline post-pose
+                    // vient de la relacher. Sans cette liberation finale, la zone
+                    // restait tenue a jamais : ChunkKeeper.held(level) == true en
+                    // permanence, finishWhenTerrainReleased() replanifiait sans
+                    // fin et TOUTE structure suivante restait bloquee en file
+                    // ("Une generation est deja en cours"). Mesure lab avant fix :
+                    // zone relachee a la fin du decorate, re-epinglee par le
+                    // raccord, jamais rendue -> observatory ok puis file gelee.
+                    deepluckyblock.util.ChunkKeeper.release(level);
                     if (onDone != null) onDone.run();
                 });
             });
@@ -2056,7 +2081,13 @@ public class StructureTerrainPrep {
     // T185 : exactement DEUX passes larges après le clear. Elles travaillent
     // chacune sur l'emprise + toute la couronne dans un champ continu : la
     // première (49) efface la coupe, la seconde (71) fond le raccord lointain.
-    private static final int[] SMOOTH_KERNEL_SCHEDULE_T109 = {49, 71};
+    // T240 (consigne 11/10 « tu as oublié les smooths qui prennent plusieurs
+    // rayons en meme temps pour fondre les chunks entre eux ») : retour a la
+    // serie graduelle COMPLETE documentee par T109 -- avec seulement {49, 71}
+    // les terrasses du lissage restaient visibles en terrain vallonne (log
+    // “lissage bride : 1870 colonnes”, run dragon du 11/10). Cout mesure en
+    // lab : ~0,3-0,5 s de plus par structure, sur un champ deja capture.
+    private static final int[] SMOOTH_KERNEL_SCHEDULE_T109 = {7, 11, 15, 21, 29, 49, 55, 61, 67, 71};
 
     private static void smoothPassGradual(ServerLevel level, BlockPos structMin, BlockPos structMax, Runnable onDone) {
         int smoothRing = terrainRing();

@@ -47,3 +47,14 @@ speculatif) : 339 / 313 / 356 / 312 / 368 / 277 s = moyenne 327,5 s,
 pire 368 s -> strictement pire que le lot T238 (266 / 314) : RETIRE.
 Validation finale post-retrait (monde cotier, T238 code + visibilite lac) :
 dragon 39 s (3 candidats) ; crimsonlake TRIGGER -> presage -> pose 2,9 s.
+
+=== T240 (delimitation franche dragon -> raccord post-pose re-branche) ===
+Causes : (1) smoothAround() definie mais JAMAIS appelee (grep) ; (2)
+T185 avait coupe la serie T109 a {49, 71}. Mesure avant : saut 24 blocs
+entre voisins dans la zone lissee (profil probe x=-78..122, z=410,
+windswept_hills) + "lissage bride : 1548 colonnes" (signature client).
+Apres : pas max 2-6 blocs sur 3 mondes (plaines/montagnes), aucune lame
+a la ligne de paste ; raccord {11,21,31,43,57} via smoothPassAfterPreload,
+keeper relache en fin de chaine (bug fifo interne corrige avant livraison).
+Protocoles perf (3 structures + 1 crimsonlake, mondes neufs) : 328 s et
+216 s < 6 mn -> aucune regression (ref T238 : 266/314 s).

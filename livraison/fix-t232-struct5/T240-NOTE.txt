@@ -1,0 +1,66 @@
+================================================================
+ T240 — delimitation franche au bord de la dragon (11/10/2026)
+================================================================
+SYMPTOME (client) : rectangle net visible a la limite de la zone
+paste : terrain naturel d'un cote, terrain modifie/structure de
+l'autre, couture nette, aucun fondu de l'exterieur vers
+l'interieur. Consignes : retour des smooths multi-rayons qui
+"font fondre les chunks entre eux" + lissage exterieur ->
+interieur sur les bons chunks, zero delimitation visible.
+
+DIAGNOSTIC (repro lab : dragon sur windswept_hills) :
+ 1) LE RACCORD POST-POSE N'ETAIT JAMAIS EXECUTE.
+    smoothAround(level, min, max, onDone) — la passe prevue pour
+    fondre l'anneau avec l'emprise APRES la pose — n'avait AUCUN
+    appelant dans tout le code (grep exhaustif). La pose coupait
+    donc l'emprise a vif et personne ne raccommodait l'anneau.
+ 2) T185 AVAIT REDUIT LA SERIE DE LISSAGE a seulement 2 passes
+    ({49, 71}) au lieu de la serie graduelle documentee T109
+    (7>11>15>21>29>49>55>61>67>71). Mesure avant fix : profil
+    probe x=-78..122 a z=410 -> saut de 24 blocs entre voisins
+    DANS la zone lisse + log "lissage bride : 1548 colonnes"
+    (signature identique a celle du client).
+
+CORRECTIFS (minimal-touch, 2 fichiers) :
+ a) StructureTerrainPrep : SMOOTH_KERNEL_SCHEDULE_T109 restaure
+    = {7, 11, 15, 21, 29, 49, 55, 61, 67, 71} (note T185
+    conservee, commentaire T240 ajoute).
+ b) StructureTerrainPrep : smoothAround() reecrite = serie de
+    raccord {11, 21, 31, 43, 57} via le moteur existant
+    smoothPassAfterPreload (fenetre adaptative T89 + feather
+    T177 + limitSlope inchanges, emprise protegee, chaine
+    verifyGrassSurface -> replantTrees -> naturalize conservee).
+ c) Structures5Procedure : smoothAround() ENFIN cablee dans les
+    finitions post-paste (fin de CarveJob, apres POST_Q.offer,
+    en parallele des postLayers — colonnes disjointes anneau vs
+    emprise, chunks deja tenus par le pipeline -> 0 chargement
+    supplementaire). Log dedie :
+    "[STRUCT5] raccord terrain T240 de <nom> termine".
+ d) BUG PRIS EN LAB (regression interne, corrigee avant
+    livraison) : naturalize() re-epingle la zone
+    (ChunkKeeper.track) alors que decorateFinish venait de la
+    relacher -> held() restait vrai a jamais -> la FIFO de
+    generation ne se liberait plus ("Une generation est deja en
+    cours" pour toute structure suivante). Correctif : le
+    raccord relache le keeper en fin de chaine (1 ligne).
+
+MESURES LAB (avant -> apres) :
+ - Profil de sol par probes (meme protocole) : pas max entre
+   voisins 24 blocs -> 2 a 6 blocs sur tous les bords testes
+   (3 mondes, plaines ET montagnes) ; aucun mur a la ligne de
+   paste ; bord est/ouest/nord/sud continus au pas de 1.
+ - Cout : raccord multi-rayons ~0,3-0,5 s par structure (logo
+   perf de la tache), lisse sur champ deja capture.
+ - REGRESSION PERF (regle maison : protocole < 6 mn verifie
+   apres tout changement de smooth) : 2 mondes neufs, 3
+   structures basiques + 1 crimsonlake = 328 s puis 216 s
+   (reference T238 : 266/314 s ; T239-B rejetee : 277-368 s)
+   -> PAS DE REGRESSION.
+ - Structures4 (circus/everest) et evenement crimsonlake
+   inactifs/inchanges ; la signature lac reste "pose 2,9 s apres
+   presage 120 s".
+
+FICHIERS LIVRES (chemins src/...) :
+ - mod_project/.../procedures/StructureTerrainPrep.java
+ - mod_project/.../procedures/Structures5Procedure.java
+ + ce zip complet : src/ a ecraser tel quel.
