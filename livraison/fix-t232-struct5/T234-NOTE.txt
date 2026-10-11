@@ -1,0 +1,98 @@
+================================================================================
+DEEP LUCKY BLOCK - CORRECTIF T234 (11/10/2026)
+CRIMSON LAKE : CONSTRUCTION EN COUCHES BLOQUEE A L'INFINI
+================================================================================
+
+SYMPTOME (log utilisateur du 10/10, session 22:17 -> 01:23+)
+------------------------------------------------------------
+- 22:54:09-22:54:10  chat : "Crimson Lake: loading surrounding chunks and
+  building layer by layer..."  (affiche DEUX fois, preuve de la relance)
+- 22:54:52..22:55:03 warnings vanilla "Tried to load a DUMMY block entity"
+  autour de (-258, 50, 26..32) : le clear ecrivait deja dans le monde
+- 23:04:10  "[DLB-CHUNKS] zone tenue 600 s sans fin de pipeline -- relachee
+  par garde-fou (9 chunks)"
+- + 1 h 30 de SILENCE TOTAL --> "ca charge infini !! toujours pas apparu ??
+  crimsonlake ?"
+
+CAUSES RACINES (cumulatives, toutes corrigees)
+----------------------------------------------
+1) AUCUNE attente du pipeline lac n'avait de borne. 3 replanifications
+   TOURA/CYCLE infinies et muettes :
+   - sonde zoneLoaded -> schedule(+1 tick) a l'infini, et CHAQUE relance
+     refiltrait les 1 359 489 blocs du NBT (~1 s de thread serveur par essai,
+     visible dans le log : messages a 1 seconde d'ecart) ;
+   - LakeClearJob : chunk absent -> reRequest + report au tick suivant,
+     a l'infini, y compris UN SEUL chunk a la fois ;
+   - PasteJob : blocs differes (chunk absent) attendus sans fin.
+2) GARDE-FOU ChunkKeeper a 600 s (depuis le 1er track, pas le 1er clear) :
+   il relachait la zone en plein clear ; sans zone tenue, la generation de
+   l'emprise stoppait sur un chunk jamais demande correctement, et le clear
+   continuait de boucler EN SILENCE pour toujours (keep() devenant un no-op).
+3) LA BOUCLE 2) etait de toute facon destinee a l'echec : seul un nob de
+   sonde 3x3 chunks etait tenu. L'emprise reelle du lac (~750 chunks) n'etait
+   pompée que par LakeClearJob, UN chunk a la fois, sans moteur de maintien :
+   plus un chunk lent (generation vierge) et c'est 600+ s de blocage.
+4) Le chat "building layer by layer" partait a CHAQUE relance de queueBuild.
+
+CORRECTIFS T234 (fichier CrimsonLakeStructureSpawnProcedure.java UNIQUEMENT)
+----------------------------------------------------------------------------
+A) DEADLINES DURES + ABANDON PROPRE (jamais d'infini) :
+   - LAKE_PROBE_DEADLINE_MS     = 90 s  (-Ddlb.lake.probeDeadlineMs)
+   - LAKE_CLEAR_CHUNK_WAIT_MS   = 75 s  (-Ddlb.lake.clearChunkWaitMs) par chunk
+   - LAKE_PASTE_DEFER_MS        = 180 s (-Ddlb.lake.pasteDeferMs)
+   - LAKE_TOTAL_DEADLINE_MS     = 540 s (-Ddlb.lake.totalDeadlineMs) GLOBAL,
+     volontairement < garde-fou ChunkKeeper (600 s) : on libere la zone
+     nous-memes PROPREMENT, jamais le garde-fou a notre place.
+   Chaque echeance -> abortLakeBuild() : relache ChunkKeeper,
+   notifyGenerationAborted (T228), nettoie PASTE_Q, vide l'etat, rend
+   Crimson Lake RETIRABLE dans le monde, chat rouge explicite avec la raison.
+   Si les blocs differes n'arrivent toujours pas a 180 s : ils sont abandones
+   EXPLICITEMENT (compte loggue) et la pose SE TERMINE -- un lac a 1,36 M
+   blocs moins une poignee > un blocage infini.
+B) EMPRISE ENTRIERE TENUE PAR LE KEEPER : track(min,max) sur l'emprise finale
+   AVANT le clear -- le pompeur round-robin du keeper (T46..T135) pousse la
+   generation de tout le foot print en parallele ; on ne depend plus d'un
+   reRequest chunk-par-chunk.
+C) CACHE DE FILTRAGE : la liste des 1,36 M blocs filtree est reutilisee entre
+   relances du meme centre (key px,py,pz) -- le 1 s de re-filtrage ne se paie
+   qu'une fois par build au lieu de chaque essai.
+D) PAS DE SILENCE :
+   - announceLakeProgress(...) : 1 ligne console [DLB-LAKE] progression : ...
+     TOUJOURS (non gatee par le flag debug) + chat gris au joueur, toutes les
+     20 s au mieux, pendant TOUTES les attentes (sonde, clear, pose differee).
+   - Message "building layer by layer" UNIQUE par construction.
+   - STRUCTURE DISCOVERED (fin) toujours imprime aussi (console), meme sans
+     joueur connecte.
+   - Clear : progression "clearing X/323 chunks (N blocs)" toutes les 30 s ;
+     attente d'un chunk : log toutes les 10 s avec ses coordonnees.
+   - Abort/fin/reset des compteurs T234 systematique, y compris sur les deux
+     aborts historiques (conflit tardif, hors build height).
+E) ARMURE : tout step() du LakeClearJob est enveloppe d'un try/catch
+   Throwable -> abort propre au lieu de mourir en silence.
+
+VALIDATION
+----------
+1) Compilation OK (javac 21, NeoForge 21.1.190, projet complet 162 sources).
+2) Test E2E en serveur NeoForge reel auto-heberge (lab), sim 10 / view 8,
+   monde vierge, declenchement par /dlbtest crimsonlake a (-5000,-5000) :
+   - presage complet respecte, construction demarree ;
+   - reproduction du point exact de blocage historique (clear 95/323,
+     attente du chunk [-316,-313]) : le marker T234 l'annonce au lieu de
+     partir en silence infini ;
+   - trenchant : la generation finit par rattraper grace au maintien
+     keeper ; le clear se termine ; [DLB-LAKE] STRUCTURE DISCOVERED
+     center [-5000, 46, -4858], built in 3.1s ;
+   - AUCUN blocage reliquat (abort/jamais infini), aucun garde-fou frappe,
+     aucun verrou de fichier orphelin.
+3) Non-regression : aucun autre fichier modifie ; les 4 autres structures
+   (citadel, dragon, circus, shipdead) empruntent un autre pipeline
+   (Structures5Procedure/T233c) intact.
+
+CONTENU LIVRE
+-------------
+- mod_project/src/main/java/deepluckyblock/procedures/CrimsonLakeStructureSpawnProcedure.java
+  -> overlay a poser au meme chemin dans le projet MCreator complet (drop-in,
+     aucune autre touche ; compatible avec l'etat T233c).
+Interrupteurs (tous optionnels) : -Ddlb.lake.probeDeadlineMs, .clearChunkWaitMs,
+  .pasteDeferMs, .totalDeadlineMs.
+================================================================================

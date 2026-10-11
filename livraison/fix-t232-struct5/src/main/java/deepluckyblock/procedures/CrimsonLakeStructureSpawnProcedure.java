@@ -72,6 +72,91 @@ public class CrimsonLakeStructureSpawnProcedure {
     private static final int INITIAL_BUTTERFLIES_MAX = 77;
     private static final int PRE_DISCOVERY_TICKS = 120 * 20;
 
+    // === T234 : JAMAIS DE BLOCAGE INFINI (ticket utilisateur 11/10 : « ca charge
+    //    infini !! toujours pas apparu ?? crimsonlake ? ») ======================
+    //    Reconstitution du freeze d'1 h 30 en log : « loading surrounding chunks
+    //    and building layer by layer... » a 22:54:09/22:54:10 (2 relances de
+    //    queueBuild), quelques chunks effaces (warnings DUMMY a 22:54:52), puis
+    //    SILENCE TOTAL : le clear pas-a-pas attendait un chunk qui ne venait
+    //    jamais ; le seul garde-fou existant (ChunkKeeper, 600 s depuis le
+    //    PREMIER track) a relache la zone a 23:04:10, apres quoi TOUTES les
+    //    attentes internes continuaient de se replanifier chaque tick pour
+    //    toujours, sans plus aucun message.
+    //    Cause racine : AUCUNE attente du pipeline lac n'avait de borne dure
+    //    (sonde zoneLoaded replanifiee a l'infini ; chunk absent du clear
+    //    replanifie a l'infini ; blocs differes de la pose attendus a l'infini).
+    //    Correctif : chaque attente a une DEADLINE dure + progression annoncee
+    //    (chat + console) ; depassee, la construction est ABANDONNEE PROPREMENT
+    //    (zone relachee, etat nettoye, lac RETIRABLE a nouveau) -- jamais de
+    //    silence infini, jamais de pose a l'aveugle sur chunks manquants.
+    private static final long LAKE_PROBE_DEADLINE_MS =
+            Long.getLong("dlb.lake.probeDeadlineMs", 90_000L);
+    private static final long LAKE_CLEAR_CHUNK_WAIT_MS =
+            Long.getLong("dlb.lake.clearChunkWaitMs", 75_000L);
+    private static final long LAKE_PASTE_DEFER_MS =
+            Long.getLong("dlb.lake.pasteDeferMs", 180_000L);
+    // Borne globale de la construction : volontairement INFERIEURE au garde-fou
+    // ChunkKeeper (600 s depuis le 1er track) pour liberer la zone soi-meme
+    // proprement AVANT que le garde-fou ne le fasse a sa place.
+    private static final long LAKE_TOTAL_DEADLINE_MS =
+            Long.getLong("dlb.lake.totalDeadlineMs", 540_000L);
+    /** Debut de la construction courante (0 = aucune). Pose au 1er queueBuild. */
+    private static long lakeBuildT0Ms = 0L;
+    /** Derniere annonce de progression (anti-spam chat/console). */
+    private static long lakeLastAnnounceMs = 0L;
+    /** T234 : le chat « building layer by layer » ne part qu'une fois par build. */
+    private static boolean lakeProbeAnnounced = false;
+    // T234 : la liste filtree (1 359 489 blocs, ~1 s de re-filtrage mesure en jeu
+    // sur le PC de l'utilisateur entre deux relances de queueBuild : messages a
+    // 22:54:09 puis 22:54:10) est REUTILISEE entre les tentatives tant que le
+    // centre ne bouge pas -- sans quoi chaque relance de borne+delai coutait
+    // 1 s de thread serveur a pleine frequence.
+    private static java.util.List<StructureTemplate.StructureBlockInfo> lakeFiltCache = null;
+    private static long lakeFiltCacheKey = Long.MIN_VALUE;
+    private static int lakeFiltCacheMinRelY = 0;
+
+    /**
+     * T234 : abandon PROPRE et annonce d'une construction de lac. Idempotent.
+     * Ne pose RIEN de plus, relache la zone tenue, nettoie les files, rend le
+     * lac de nouveau tirable (comme T228 pour Structures5) et le dit au joueur.
+     */
+    private static void abortLakeBuild(ServerLevel level, String reason) {
+        long waited = lakeBuildT0Ms > 0 ? (System.currentTimeMillis() - lakeBuildT0Ms) : -1;
+        System.err.println("[DLB-LAKE] ABORT T234 : " + reason
+                + (waited >= 0 ? " (construction abandonnee apres " + waited / 1000 + " s)" : "")
+                + " -- aucun blocage infini, terrain/clear non termine laisse en l'etat, le lac redevient tirable");
+        lakeBuildT0Ms = 0L;
+        lakeFiltCache = null;
+        lakeProbeAnnounced = false;
+        // Une pose en file pour le meme niveau ne doit pas demarrer apres abandon.
+        PASTE_Q.removeIf(j -> j.level == level);
+        deepluckyblock.util.ChunkKeeper.release(level);
+        Structures5Procedure.notifyGenerationAborted(level);
+        // Retirable a nouveau dans ce monde (le drapeau « deja apparu » etait
+        // pose au DECLENCHEMENT, ligne markWorldTriggered) -- parite T228.
+        try {
+            ServerLevel ow = level.getServer().overworld();
+            if (!ow.isDebug()) stateOf(ow).clear();
+        } catch (Throwable ignored) { }
+        Component msg = Component.literal(
+                "Crimson Lake: construction ABORTED (" + reason + "). "
+                        + "The world is intact and the lake can be discovered again.")
+                .withStyle(ChatFormatting.RED);
+        for (var pl : level.players()) pl.sendSystemMessage(msg);
+    }
+
+    /** T234 : annonce de progression bornee (max 1 message toutes les 20 s).
+     *  Console TOUJOURS (c'est le ticket : l'utilisateur passait 1 h 30 sans
+     *  aucun signe de vie) ; chat joueur borne au meme rythme. */
+    private static void announceLakeProgress(ServerLevel level, String text) {
+        long now = System.currentTimeMillis();
+        if (now - lakeLastAnnounceMs < 20_000L) return;
+        lakeLastAnnounceMs = now;
+        System.out.println("[DLB-LAKE] progression : " + text);
+        Component msg = Component.literal("Crimson Lake: " + text).withStyle(ChatFormatting.GRAY);
+        for (var pl : level.players()) pl.sendSystemMessage(msg);
+    }
+
     @SuppressWarnings("removal")
     private static final ResourceLocation TEMPLATE_ID  = ResourceLocation.fromNamespaceAndPath("deep_lucky_block", "crimsonlake");
 
@@ -337,15 +422,44 @@ public class CrimsonLakeStructureSpawnProcedure {
             }
             if (j.idx >= j.blocks.size() && !j.defer.isEmpty()) {
                 j.waitTicks++;
-                if (j.waitTicks % 100 == 0) {
-                    if (deepluckyblock.util.DebugLog.ENABLED) System.out.println("[SLB-DEBUG] CrimsonLake PASTE : " + j.defer.size()
-                            + " bloc(s) en attente de chunk (tache de fond, aucun blocage)");
+                // T234 : attente BORNEE des chunks qui ne viennent jamais. Avant :
+                // retour silencieux a l'infini (meme constat que le clear). A
+                // l'echeance, les quelques blocs restants sont abandonnes
+                // explicitement (comptes et annonces) et la pose SE TERMINE :
+                // un lac a 1 359 489 blocs moins une poignee >> un blocage infini.
+                if (j.deferSinceMs == 0L) j.deferSinceMs = System.currentTimeMillis();
+                long waiting = System.currentTimeMillis() - j.deferSinceMs;
+                if (waiting > LAKE_PASTE_DEFER_MS) {
+                    System.err.println("[DLB-LAKE] T234 : " + j.defer.size() + " bloc(s) differes abandonnes apres "
+                            + waiting / 1000 + " s (chunk definitidement indisponible) -- la pose se termine quand meme");
+                    announceLakeProgress(j.level, j.defer.size() + " blocks at unloaded terrain edges were skipped; finishing.");
+                    j.defer.clear();
+                } else {
+                    if (j.waitTicks % 400 == 0) {
+                        announceLakeProgress(j.level, "finishing " + j.defer.size()
+                                + " blocks on loading chunks (" + waiting / 1000 + "s / "
+                                + LAKE_PASTE_DEFER_MS / 1000 + "s)...");
+                    }
+                    return;
                 }
+            } else if (j.defer.isEmpty()) {
+                j.deferSinceMs = 0L;
+            }
+            // T234 : borne globale de construction, meme pendant la pose. Couper
+            // AVANT le garde-fou ChunkKeeper (600 s), jamais apres.
+            if (lakeBuildT0Ms > 0 && System.currentTimeMillis() - lakeBuildT0Ms > LAKE_TOTAL_DEADLINE_MS
+                    && !(j.idx >= j.blocks.size() && j.defer.isEmpty())) {
+                abortLakeBuild(j.level, "pose toujours en cours a la deadline globale ("
+                        + (System.currentTimeMillis() - lakeBuildT0Ms) / 1000 + " s)");
                 return;
             }
             if (j.idx >= j.blocks.size()) {
                 PASTE_Q.poll();
                 if (DEBUG_LOGS) System.out.println("[SLB-DEBUG] CrimsonLake PASTE COMPLETE");
+                // T234 : construction reussie -> reset des bornes/caches de build.
+                lakeBuildT0Ms = 0L;
+                lakeFiltCache = null;
+                lakeProbeAnnounced = false;
 
                 // Passe de finition APRES le paste, comme les autres structures :
                 // naturalize (vegetation contre les murs), cleanup de la
@@ -383,7 +497,10 @@ public class CrimsonLakeStructureSpawnProcedure {
                                     + " §7(built in " + dur + "s)"
                                     + " §6✦");
                     for (var pl : j.level.players()) pl.sendSystemMessage(discovered);
-                    if (deepluckyblock.util.DebugLog.ENABLED) System.out.println("[DLB-LAKE] STRUCTURE DISCOVERED (T111): center [" + cx + ", " + cy
+                    // T234 : la fin de construction est toujours visible en
+                    // console (tant pis pour le serveur headless/test) --
+                    // c'est le seul marqueur certain que le pipeline est FINIT.
+                    System.out.println("[DLB-LAKE] STRUCTURE DISCOVERED (T111): center [" + cx + ", " + cy
                             + ", " + cz + "], built in " + dur + "s");
                 }
 
@@ -497,6 +614,22 @@ public class CrimsonLakeStructureSpawnProcedure {
 
     private static void queueBuild(ServerLevel level, int px, int py, int pz) {
         if (DEBUG_LOGS) System.out.println("[SLB-DEBUG] CrimsonLake QUEUE BUILD at " + px + "," + py + "," + pz);
+        // T234 : horloge de construction. Premiere entree = debut du build ;
+        // toutes les deadlines T234 (global + par phase) s'y referent.
+        if (lakeBuildT0Ms == 0L) {
+            lakeBuildT0Ms = System.currentTimeMillis();
+            lakeLastAnnounceMs = lakeBuildT0Ms;
+            lakeProbeAnnounced = false;
+        } else {
+            // Borne globale : au-dela, meme une simple relance n'a plus lieu
+            // d'etre (la zone tenue serait de toute facon coupee par le
+            // garde-fou ChunkKeeper a 600 s) : abandon propre, jamais infini.
+            long lived = System.currentTimeMillis() - lakeBuildT0Ms;
+            if (lived > LAKE_TOTAL_DEADLINE_MS) {
+                abortLakeBuild(level, "deadline globale depassee (" + lived / 1000 + " s)");
+                return;
+            }
+        }
         // FIX (freeze serveur au chargement à froid d'un gros NBT) : cache
         // mod-wide partagé (StructureTemplateCache) au lieu d'un appel direct
         // au StructureTemplateManager.
@@ -511,29 +644,51 @@ public class CrimsonLakeStructureSpawnProcedure {
 
         BlockPos bfly = new BlockPos(px, py + 10, pz);
 
-        long filterT0 = System.currentTimeMillis();
-        List<StructureTemplate.StructureBlockInfo> filt = new ArrayList<>(raw.size());
-        int minRelativeY0 = Integer.MAX_VALUE;
-        for (var info : raw) {
-            if (info.state().isAir() || isLaggy(info.state())) continue;
-            filt.add(info);
-            if (info.pos().getY() < minRelativeY0) minRelativeY0 = info.pos().getY();
+        // T234 : filtrage mis en cache entre relances sur le MEME centre (le
+        // re-filtrage coute ~1 s de thread serveur). Invalide a l'abandon, au
+        // deplacement du centre (conflit tardif) et en fin de pose.
+        List<StructureTemplate.StructureBlockInfo> filt;
+        final int minRelativeY;
+        long filterKey = (((long) px) << 32) ^ (pz & 0xffffffffL) ^ (((long) py) << 24);
+        if (lakeFiltCache != null && lakeFiltCacheKey == filterKey) {
+            filt = lakeFiltCache;
+            minRelativeY = lakeFiltCacheMinRelY;
+            if (deepluckyblock.util.DebugLog.ENABLED) System.out.println("[DLB-LAKE] T234 : liste de pose REUTILISEE ("
+                    + filt.size() + " blocs) -- aucun re-filtrage pour cette relance");
+        } else {
+            long filterT0 = System.currentTimeMillis();
+            filt = new ArrayList<>(raw.size());
+            int minRelativeY0 = Integer.MAX_VALUE;
+            for (var info : raw) {
+                if (info.state().isAir() || isLaggy(info.state())) continue;
+                filt.add(info);
+                if (info.pos().getY() < minRelativeY0) minRelativeY0 = info.pos().getY();
+            }
+            if (filt.isEmpty()) return;
+            lakeFiltCache = filt;
+            lakeFiltCacheKey = filterKey;
+            lakeFiltCacheMinRelY = minRelativeY0;
+            minRelativeY = minRelativeY0;
+            if (deepluckyblock.util.DebugLog.ENABLED) System.out.println("[DLB-LAKE] liste de pose prête sans tri : " + filt.size()
+                    + " blocs filtrés en " + (System.currentTimeMillis() - filterT0) + "ms");
         }
-        if (filt.isEmpty()) return;
         // T175 : NE PLUS TRIER 1 359 489 blocs sur le thread serveur.
         // orderByY créait plusieurs millions de comparaisons et une énorme
         // pression GC juste après l'annonce : le log restait muet pendant plus
         // de cinq minutes avec des retards de 16–18 s. Le clear est terminé
         // avant le paste et la physique est neutralisée; l'ordre Y n'est donc
         // pas une condition de correction. Conserver l'ordre préchargé du NBT.
-        final int minRelativeY = minRelativeY0;
-        if (deepluckyblock.util.DebugLog.ENABLED) System.out.println("[DLB-LAKE] liste de pose prête sans tri : " + filt.size()
-                + " blocs filtrés en " + (System.currentTimeMillis() - filterT0) + "ms");
 
-        Component msg2 = Component.literal(
-                "Crimson Lake: loading surrounding chunks and building layer by layer...")
-                .withStyle(ChatFormatting.AQUA);
-        for (var pl : level.players()) pl.sendSystemMessage(msg2);
+        // T234 : le message « building layer by layer » n'est annonce qu'UNE
+        // FOIS par construction (avant, chaque relance de queueBuild le
+        // renvoyait au chat -- d'ou le double message 22:54:09/22:54:10).
+        if (!lakeProbeAnnounced) {
+            lakeProbeAnnounced = true;
+            Component msg2 = Component.literal(
+                    "Crimson Lake: loading surrounding chunks and building layer by layer...")
+                    .withStyle(ChatFormatting.AQUA);
+            for (var pl : level.players()) pl.sendSystemMessage(msg2);
+        }
 
         final List<StructureTemplate.StructureBlockInfo> fFilt = filt;
         // T80 : la sonde ne lit QUE groundY(px, pz) (ancrage vertical du lac) --
@@ -552,7 +707,20 @@ public class CrimsonLakeStructureSpawnProcedure {
         // Read the actual ground only after loading; the player's altitude is not terrain.
         StructureTerrainPrep.preloadBox(level, probeMin, probeMax, () -> {
             if (!deepluckyblock.util.ChunkKeeper.zoneLoaded(level, probeMin, probeMax)) {
-                TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1,
+                // T234 : relance BORNEE. Avant : +1 tick a l'infini, avec un
+                // re-filtrage de 1,36 M de blocs a CHAQUE essai (~1 s de thread
+                // serveur par tentative, observe en jeu a 22:54:09/22:54:10).
+                // Desormais : cadence 2 s, filtrage reutilise, deadline dure,
+                // progression annoncee, abandon propre au-dela.
+                long waiting = lakeBuildT0Ms > 0 ? System.currentTimeMillis() - lakeBuildT0Ms : 0L;
+                if (waiting > LAKE_PROBE_DEADLINE_MS) {
+                    abortLakeBuild(level, "sonde terrain non chargee apres " + waiting / 1000
+                            + " s (deadline " + LAKE_PROBE_DEADLINE_MS / 1000 + " s)");
+                    return;
+                }
+                announceLakeProgress(level, "still preparing terrain (" + waiting / 1000
+                        + "s / " + LAKE_PROBE_DEADLINE_MS / 1000 + "s)...");
+                TestProcedure.schedule(level, TestProcedure.currentTick(level) + 40,
                         () -> queueBuild(level, px, py, pz));
                 return;
             }
@@ -588,6 +756,10 @@ public class CrimsonLakeStructureSpawnProcedure {
                     // Finished gravait le lac comme « deja apparu » alors qu'il
                     // n'avait rien pose -> il devenait intirable pour toujours.
                     Structures5Procedure.notifyGenerationAborted(level);
+                    // T234 : reset des bornes/caches de build pour toute abort.
+                    lakeBuildT0Ms = 0L;
+                    lakeFiltCache = null;
+                    lakeProbeAnnounced = false;
                     return;
                 }
                 if (deepluckyblock.util.DebugLog.ENABLED) System.out.println("[DLB-LAKE] conflit tardif avec '" + conflict
@@ -608,6 +780,10 @@ public class CrimsonLakeStructureSpawnProcedure {
                 // T228 : ABORT = notifyGenerationAborted (voir le correctif
                 // ci-dessus) : la structure doit redevenir tirable.
                 Structures5Procedure.notifyGenerationAborted(level);
+                // T234 : reset des bornes/caches de build pour toute abort.
+                lakeBuildT0Ms = 0L;
+                lakeFiltCache = null;
+                lakeProbeAnnounced = false;
                 return;
             }
             if (deepluckyblock.util.DebugLog.ENABLED) System.out.println("[DLB-LAKE] anchor: ground=" + groundY + ", lowest block="
@@ -627,6 +803,16 @@ public class CrimsonLakeStructureSpawnProcedure {
             // encore après. Une seule opération est nécessaire : clear réel à
             // partir de groundY+1, puis paste -air. Sink/fond, ancrage, présage,
             // contrôle d'emprise et règles propres au lac restent inchangés.
+            // T234 : TOUTE l'emprise est desormais TENUE par le ChunkKeeper
+            // pendant le clear+paste (avant : seul le nob de sonde 3x3 chunks
+            // l'etait ; le reste n'etait demande qu'un chunk a la fois par le
+            // clear, sans le moteur de maintien construit pour ca en T46-T135).
+            // Le keeper pompe alors toute l'emprise en parallele pendant le
+            // clear -- plus de blocage a la chaine sur un chunk manquant ; et
+            // la deadline globale T234 (540 s) abandonne proprement AVANT le
+            // garde-fou du keeper (600 s), jamais apres.
+            deepluckyblock.util.ChunkKeeper.track(level, finalOrigin.offset(0, minRelativeY, 0), max);
+            announceLakeProgress(level, "terrain locked, clearing starts (" + sx + "x" + sz + " blocks)...");
             clearBuildVolume(level, finalOrigin.offset(0, minRelativeY, 0), max,
                     groundY + 1, () -> PASTE_Q.offer(new PasteJob(level, fFilt,
                             finalOrigin, bfly, System.currentTimeMillis(), sx, sz)));
@@ -665,6 +851,12 @@ public class CrimsonLakeStructureSpawnProcedure {
         int cx, cz;
         long cleared;
         int chunksDone;
+        // T234 : bornes anti-blocage (jamais d'attente infinie d'un chunk).
+        final int totalChunks;
+        final long t0;
+        long blockedSinceMs;
+        int blockedCx = Integer.MIN_VALUE, blockedCz = Integer.MIN_VALUE;
+        long lastProgressLogMs;
 
         LakeClearJob(ServerLevel level, BlockPos min, BlockPos max, int clearFloorY, Runnable onReady) {
             this.level = level; this.min = min; this.max = max;
@@ -672,6 +864,9 @@ public class CrimsonLakeStructureSpawnProcedure {
             cx0 = min.getX() >> 4; cz0 = min.getZ() >> 4;
             cx1 = max.getX() >> 4; cz1 = max.getZ() >> 4;
             cx = cx0; cz = cz0;
+            totalChunks = (cx1 - cx0 + 1) * (cz1 - cz0 + 1);
+            t0 = System.currentTimeMillis();
+            lastProgressLogMs = t0;
         }
 
         /**
@@ -706,14 +901,58 @@ public class CrimsonLakeStructureSpawnProcedure {
          * ce chunk-la seulement : securite d'abord, vitesse ensuite.
          */
         void step() {
+            // T234 : un clear de casse NE DOIT JAMAIS mourir en silence ni
+            // tourner a l'infini. Toute exception devient un abandon propre.
+            try {
+                stepGuarded();
+            } catch (Throwable t) {
+                System.err.println("[DLB-LAKE] CLEAR a plante en mais ne bouclera plus (cause ci-dessous) :");
+                t.printStackTrace();
+                abortLakeBuild(level, "exception pendant le clear : " + t);
+            }
+        }
+
+        private void stepGuarded() {
+            long nowMs = System.currentTimeMillis();
+            // T234 — borne globale de construction : couper AVANT le garde-fou
+            // ChunkKeeper (600 s) eut ete ; le garde-fou relachait la zone puis
+            // le clear attendait ses chunks A JAMAIS (log du 11/10, 1 h 30).
+            if (lakeBuildT0Ms > 0 && nowMs - lakeBuildT0Ms > LAKE_TOTAL_DEADLINE_MS) {
+                abortLakeBuild(level, "clear toujours en cours a la deadline globale ("
+                        + (nowMs - lakeBuildT0Ms) / 1000 + " s)");
+                return;
+            }
             deepluckyblock.util.ChunkKeeper.keep(level);
             long deadline = System.nanoTime() + 40_000_000L;   // 40 ms : un chunk ~1-3 ms
             while (cx <= cx1 && System.nanoTime() < deadline) {
                 var chunk = level.getChunkSource().getChunkNow(cx, cz);
                 if (chunk == null) {
+                    // T234 : attente trackee et BORNEE du chunk manquant. Avant,
+                    // cette boucle replanifiait ce chunk a l'infini, en silence,
+                    // meme apres le relache par garde-fou du ChunkKeeper.
+                    if (blockedCx != cx || blockedCz != cz) {
+                        blockedCx = cx; blockedCz = cz;
+                        blockedSinceMs = System.currentTimeMillis();
+                    } else {
+                        long waiting = System.currentTimeMillis() - blockedSinceMs;
+                        if (waiting > LAKE_CLEAR_CHUNK_WAIT_MS) {
+                            abortLakeBuild(level, "chunk [" + cx + "," + cz + "] toujours absence apres "
+                                    + waiting / 1000 + " s d'attente (clear " + chunksDone + "/" + totalChunks + ")");
+                            return;
+                        }
+                        if (System.currentTimeMillis() - lastProgressLogMs >= 10_000L) {
+                            lastProgressLogMs = System.currentTimeMillis();
+                            announceLakeProgress(level, "waiting for terrain chunk [" + cx + "," + cz + "] ("
+                                    + waiting / 1000 + "s, clear " + chunksDone + "/" + totalChunks + ")...");
+                            // Relance complete : le maintien keeper pompe deja
+                            // l'emprise ; on re-emet explicitement cette tete.
+                            deepluckyblock.util.ChunkKeeper.keep(level);
+                        }
+                    }
                     deepluckyblock.util.SafeSurface.reRequest(level, cx, cz);
                     break;
                 }
+                blockedCx = Integer.MIN_VALUE; blockedCz = Integer.MIN_VALUE; blockedSinceMs = 0L;
                 if (chunk instanceof net.minecraft.world.level.chunk.LevelChunk lc) {
                     cleared += clearChunkDirect(lc);
                 } else {
@@ -721,6 +960,13 @@ public class CrimsonLakeStructureSpawnProcedure {
                 }
                 chunksDone++;
                 if (++cz > cz1) { cz = cz0; cx++; }
+            }
+            // T234 : compte-rendu de progression borne (chat + console),
+            // ~1 toutes les 20-30 s, jamais de silence.
+            if (cx <= cx1 && System.currentTimeMillis() - lastProgressLogMs >= 30_000L) {
+                lastProgressLogMs = System.currentTimeMillis();
+                announceLakeProgress(level, "clearing " + chunksDone + "/" + totalChunks + " chunks ("
+                        + cleared + " blocks removed)...");
             }
             if (cx <= cx1) {
                 TestProcedure.schedule(level, TestProcedure.currentTick(level) + 1, this::step);
@@ -958,6 +1204,8 @@ public class CrimsonLakeStructureSpawnProcedure {
         /** T53 : memo de chunk pour la pose (une recherche par chunk au lieu d'une par bloc). */
         final deepluckyblock.util.SafeSurface.ChunkMemo memo = new deepluckyblock.util.SafeSurface.ChunkMemo();
         int waitTicks;
+        /** T234 : debut de l'attente des blocs differes (0 = aucune attente). */
+        long deferSinceMs;
         PasteJob(ServerLevel l, List<StructureTemplate.StructureBlockInfo> b, BlockPos o, BlockPos bf, long t, int sx, int sz) {
             level = l; blocks = b; origin = o; bfly = bf; t0 = t; total = b.size(); this.sx = sx; this.sz = sz; idx = 0;
         }

@@ -1,38 +1,34 @@
-DEEP LUCKY BLOCK — T233c — SRC COMPLET (drop-in)
-=================================================
-Ce zip contient TOUT l'overlay mod_project/src de la derniere version
-optimisee (branche arena, 10 octobre 2026) : les 8 fichiers
-modifies/nouveaux aux chemins exacts, aucun manquant. Remplace tous
-les zips precedents : il CUMULE T232 + T233 + T233b + T233c.
+CONTENU DE LA LIVRAISON T234 (11/10/2026)
+-----------------------------------------
 
-  Par T233c (selection seche endurcie : ocean/lacs fins, bulles ±1024,
-           frontiere persistante, admission strict/souple) :
-    - src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+Cette livraison contient :
 
-  Par T233b (selection de zone 100 % bruit, "Zone choisie" < 1 s) :
-    - .../procedures/Structures5Procedure.java (meme fichier, cumule)
+  T234-NOTE.txt  ..............  diagnostic complet du freeze infini de
+                                  Crimson Lake + correctifs + validation.
 
-  Par T233 (dry-gate relief sec, anti-inondation worldgen) :
-    - .../procedures/Structures5Procedure.java (meme fichier, cumule)
+  src/  .......................  overlay source Windows (copier/coller TOUT
+                                  dans le projet MCreator, aux memes chemins) :
 
-  Par T232 (boucles infinies de pose tuees) :
-    - .../procedures/Structures5Procedure.java (meme fichier, cumule)
-    - src/main/java/deepluckyblock/util/SafeSurface.java
-    - src/main/java/deepluckyblock/util/ChunkKeeper.java
-    - src/main/java/deepluckyblock/util/DebugLog.java   (nouveau)
+    src/main/java/deepluckyblock/procedures/CrimsonLakeStructureSpawnProcedure.java
+    src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+    src/main/java/deepluckyblock/procedures/Structures4Procedure.java
+    src/main/java/deepluckyblock/procedures/StructureScatterDecor.java
+    src/main/java/deepluckyblock/procedures/StructureTerrainPrep.java
+    src/main/java/deepluckyblock/util/SafeSurface.java
+    src/main/java/deepluckyblock/util/ChunkKeeper.java
+    src/main/java/deepluckyblock/util/DebugLog.java
 
-  Par les livraisons precedentes (meilleure opti connue) :
-    - .../procedures/Structures4Procedure.java
-    - .../procedures/StructureTerrainPrep.java
-    - .../procedures/StructureScatterDecor.java
-    - .../procedures/CrimsonLakeStructureSpawnProcedure.java
+  lab/  .......................  maquette de test (rebuild_lab.sh, sandbox_lab.py)
+                                  et CI de reference (serveur NeoForge reel).
 
-Resultats mesures : T232 (12/12) + T233 (5/5) + T233b (9/9 matrice
-sim x view) + T233c (10 tests comparatifs seed hostile fixe : toute
-selection 66..1189 ms, 6/10 poses 71-85 s, les 4 autres plafonnees
-par la generation d'emprise reelle hors pregen, jamais par la
-selection) — cf T232-NOTE.txt, T233-NOTE.txt, T233b-NOTE.txt et
-T233c-NOTE.txt jointes ; logs bruts dans le repo,
-lab/results(-t233, -t233b, -t233c).
-Le reste du projet (autres fichiers src) est identique au main :
-remplacez uniquement ces fichiers.
+Le correctif T234 = 1 seul fichier au-dessus
+(CrimsonLakeStructureSpawnProcedure.java). Tous les autres fichiers sont la
+derniere etat unifiee T232/T233/T233b/T233c deja validee en jeu -- pour que tu
+enregistres tout l'etat d'un coup si le tien a diverge.
+
+T234 corrige : le gel 1 h 30 a vie de « Crimson Lake: loading surrounding chunks
+and building layer by layer... » (clear d'un chunk absent replanifie a l'infini,
+garde-fou ChunkKeeper 600 s puis silence).
+
+Tout ce qui est en dehors de ces correctifs reste INCHANGE.
+Attention a NE PAS ecraser : debug.txt, config/*, logs/, saves/, mods/.
