@@ -848,7 +848,9 @@ public class StructureTerrainPrep {
     // avec du grass block, du niveau de base de la structure jusqu'au premier bloc
     // solide. Garantit qu'il n'y a aucun vide sous la structure (pas de flottaison).
     // Batche via schedule.
-    private static void prefillFoundation(ServerLevel level, BlockPos min, BlockPos max, int foundationBaseY, Runnable onDone) {
+    /** T236 : rendu visible au paquet pour le re-ancrage post-terrain de
+     * Structures5Procedure (remplissage du manque sous la structure decalee). */
+    static void prefillFoundation(ServerLevel level, BlockPos min, BlockPos max, int foundationBaseY, Runnable onDone) {
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         int minBuild = level.getMinBuildHeight();
         int[] filled = {0};
@@ -1703,9 +1705,21 @@ public class StructureTerrainPrep {
             for (int y = top - 1; y > level.getMinBuildHeight(); y--) {
                 BlockState state = level.getBlockState(m.set(x, y, z));
                 if (state.is(Blocks.WATER) || state.is(Blocks.LAVA)) { floor = y; break; }
+                // T237 (run 11/10 : foret de bambou jamais nettoyee, plaines
+                // couvertes de citrouilles conservees) : TOUT obstacle collidable
+                // non repertorie (bambou, cactus, citrouille, pasteque, tige de
+                // champignon geant, decor modde...) etait pris pour du
+                // « terrain modde » -> floor pose SUR la plante elle-meme -> la
+                // boucle de nettoyage (y > floor) ne s'executait jamais sur ces
+                // colonnes. Une plante/un decor de surface ne doit JAMAIS
+                // arreter la recherche du vrai sol.
                 boolean moddedGround = state.blocksMotion() && !state.is(net.minecraft.tags.BlockTags.LOGS)
                         && !state.is(net.minecraft.tags.BlockTags.LEAVES)
-                        && !(state.getBlock() instanceof net.minecraft.world.level.block.BushBlock);
+                        && !(state.getBlock() instanceof net.minecraft.world.level.block.BushBlock)
+                        && !isGroundPlant(state)
+                        && !state.is(Blocks.PUMPKIN) && !state.is(Blocks.MELON)
+                        && !state.is(Blocks.JACK_O_LANTERN)
+                        && !(state.getBlock() instanceof net.minecraft.world.level.block.HugeMushroomBlock);
                 if (isGroundStop(state) || moddedGround) { floor = y; break; }
             }
             for (int y = top - 1; y > floor; y--) {
@@ -1769,7 +1783,13 @@ public class StructureTerrainPrep {
                     // guide LIVRE VII). On ne compte que l'ESPECE dans l'inventaire
                     // du chunk : la position d'origine n'a plus de sens, le terrain
                     // natif sera retaille entre-temps.
-                    if (isRescuable(s)) noteRescue(x, z, s);
+                    // T237 : une colonne de bambou haute 12 valait 12 sauvetages et
+                    // saturait le plafond RESCUE_MAX_PER_CHUNK au detriment des
+                    // fleurs. On ne compte que le SOMMET d'une pile continue (le
+                    // bloc du dessous est d'une autre espece/inexistant).
+                    if (isRescuable(s) && (y <= colBottom
+                            || level.getBlockState(mut.set(x, y - 1, z)).getBlock() != s.getBlock()))
+                        noteRescue(x, z, s);
                     // Le tronc est teste AVANT l'arret : cime d'epicea, tronc sous
                     // un couvert vegetal, tronc d'un arbre voisin -- tous sont lus
                     // avant que le sol ne soit atteint.

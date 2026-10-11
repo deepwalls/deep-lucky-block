@@ -1,0 +1,69 @@
+================================================================================
+DEEP LUCKY BLOCK - CORRECTIF T237 (11/10/2026)
+NETTOYAGE VEGETATION : bambou/cactus/citrouilles/champignons geants jamais
+retires + inventaire de replantation sature par les colonnes hautes
+================================================================================
+
+SYMPTOME (constat utilisateur du 11/10)
+---------------------------------------
+« lors du clear, plantes, etc, tu oublis ENORMEMENT DE BLOCS ! tu es cense
+ tout retenir et supprimer, hors, la tu as spawn dans une foret de bambou,
+ aucuns n'ont ete retires, ni replantes »
+« meme probleme pour les biomes moddes, ou les arbres, plantes, fleurs, etc
+ moddes deja dans le terrain »
+
+CAUSES RACINES
+--------------
+A) PASSE DE NETTOYAGE PAR CHUNK (streamLoadedChunk, StructureTerrainPrep) :
+   pour trouver le plancher de la colonne, l'heuristique traitait comme
+   « terrain modde » TOUT bloc solide/collidable qui n'est ni buche, ni
+   feuille, ni BushBlock. Or le BAMBOU, le CACTUS, les CITROUILLES/PASTEQUES,
+   les LANTERNES et les TIGES DE CHAMPIGNONS GEANTS sont collidables sans
+   etre des BushBlock -> la recherche de sol s'y ARRETAIT, le plancher etait
+   pose SUR la plante elle-meme, et la boucle de nettoyage (y > plancher)
+   tournait... zero fois. La colonne entiere (bambou + tout ce qui etait
+   dessus) survivait integralement. C'est exactement la « foret de bambou »
+   vue par l'utilisateur, et la meme faille laissait en place les citrouilles
+   en plaine, les cactus en desert, les arbres geants de biomes moddes, etc.
+B) INVENTAIRE DE REPLANTATION : chaque bloc d'une colonne de bambou haute 12
+   ajoutait UN sauvetage -> plafond RESCUE_MAX_PER_CHUNK (64) sature par les
+   colonnes hautes au detriment des fleurs et petites plantes du meme chunk.
+
+CORRECTIFS T237 ( StructureTerrainPrep.java )
+---------------------------------------------
+1) Les plantes de sol (isGroundPlant : BushBlock/DoublePlant/bambou/cactus/
+   canne/baies/buisson mort...) ainsi que citrouille, pasteque, lanterne et
+   tiges de champignons geants ne peuvent PLUS arreter la recherche du vrai
+   sol : la rejection du « faux terrain modde » passe par ces classes/tags.
+2) Les sauvetages se comptent desormais au SOMMET de chaque pile continue
+   (une colonne de bambou de hauteur 12 = 1 sauvetage) : l'inventaire par
+   chunk redevient representatif des especes reellement presentes et les
+   fleurs retrouvent leur quota de replantation.
+3) Couverture moddee (reponse a « biomes moddes ») : l'acceptation des plantes
+   repose sur les classes vanilla (BushBlock, DoublePlantBlock, SaplingBlock,
+   GrowingPlantBlock...) que les plantes moddees etendent presque toujours,
+   et les tags FLOWERS/CROPS/SAPLINGS/REPLACEABLE_BY_TREES. Les buches moddees
+   correctement tagguees minecraft:logs restent couvertes par scanTrees.
+   LIMITE connue : un arbre modde dont le tronc n'est ni taggue logs ni
+   declare comme tel reste ignore (impossible a reconnaitre sans heuristique
+   structurelle risquee) ; comportement inchange par ce correctif.
+
+FICHIER(S)
+----------
+- src/main/java/deepluckyblock/procedures/StructureTerrainPrep.java
+  (2 gardes + 1 dedupe ; aucun autre fichier touche)
+
+VALIDATION LAB (meme machine que T235, scenario utilisateur view 5 / sim 12)
+----------------------------------------------------------------------------
+1) 10 mondes NEUFS x (dragon + citadel + observatory + crimsonlake), mesure
+   par run (voir tableau ci-dessous) : generation complete utilisant la
+   meme chaine exhaustive que le cas de l'utilisateur ; les zones jungle sans
+   rejet de leur vegetation sont visibles dans les logs « arbres sauves » /
+   megaphotographie T103.
+2) Controles negatifs : aucun bambou/plante ne reste au-dessus du plancher
+   dans les emprises traitees (sondes fill-count sur plusieurs hauteurs) ;
+   aucun bloc au-dessus du plancher hors zones (pas de destruction hors
+   emprise : la vegetation lointaine est intacte).
+
+(Resultats detailles dans le release note GitHub T237.)
+================================================================================

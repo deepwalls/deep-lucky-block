@@ -1,0 +1,66 @@
+================================================================================
+DEEP LUCKY BLOCK - CORRECTIF T236 (11/10/2026)
+ANCRE Y : le sol est remesure APRES les modifs terrain (cas « structure relevee »)
+================================================================================
+
+SYMPTOME (constat utilisateur du 11/10, retour en jeu)
+------------------------------------------------------
+« les structures genre dragon etc, spawnent au mauvais y, il semblerait que le
+ y sol soit modifie par les modifs terrain, et est generalement releve ; il
+ faut recalculer le y sol apres modif terrains »
+Log associe : « [STRUCT5] dragon : uneven ground remains (selected=71,
+ median=70, min=61, max=70); model anchor and manual offset preserved » puis
+ la structure apparait decalee en hauteur par rapport au terrain remodule.
+
+CAUSE RACINE
+------------
+L'ancre Y (baseY) etait figee UNE SEULE FOIS, AVANT le pipeline terrain, sur
+la colonne centrale + garde T76. Or les passes prepZone/lissage adaptatif T89
+(fenetre jusqu'a +64/-64 en bord d'emprise) REMODENT le sol APRES la mesure,
+et la mesure de fin de pipeline servait uniquement de diagnostic : aucun
+re-ancrage (peur historique T178 : mesurer a l'interieur de l'emprise = lire
+le plancher de fondation et appliquer l'offset du modele une seconde fois).
+Le modele restait donc cale sur le sol D'AVANT les modifs.
+
+CORRECTIF T236 ( Structures5Procedure.java )
+--------------------------------------------
+1) Une fois TOUTES les passes terrain terminees (prepZone + decorate), le sol
+   REEL est remesure sur la COURONNE 2..6 blocs juste HORS de l'emprise
+   (4 bandes, pas 2, eau exclue, meme ordre de retour que groundStats).
+   L'interieur n'est jamais mesure -> le piege T178 est evite par
+   construction.
+2) Si la mediane de la couronne depasse l'ancre de 2 a MAX_POST_SMOOTH_DELTA_Y
+   (4) blocs, ET que le bas de la couronne n'est pas croule
+   (min >= ancre - 2, garde-fou anti-frange), le paste ENTIER est remonte
+   (rp + bbox + box StructureSites) sans toucher l'offset du modele.
+3) Le manque sous la structure decalee est rempli AVANT le paste avec la
+   primitive historique prefillFoundation (rendue visible au paquet), en
+   tache de fond par colonnes (aucun gel).
+4) Cas inverse (couronne PLUS BASSE) : comportement inchange. La couronne de
+   lissage T89 gere la pente, la fondation porte la base ; aucune nouvelle
+   regle ne risque d'enfoncer le modele dans le plateau erige.
+
+FICHIER(S)
+----------
+- src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+  (+ helper ringGroundStats, + bloc de re-ancrage borne, + offre de paste
+   apres remplissage de soutien)
+- src/main/java/deepluckyblock/procedures/StructureTerrainPrep.java
+  (prefillFoundation : private -> package, javadoc ajoutee)
+
+PROTOCOLE DE VALIDATION (serveur NeoForge 1.21.1 auto-heberge, run avec
+-Ddlb.debug=1 sur la ligne de commande)
+---------------------------------------
+Voir T237-NOTE pour la matrice complete 10 mondes neufs. Points T236 :
+- Aucune ancre ne devenait plus fausse : 0 regression constatee (les zones
+  replates restent sur ancre initiale, le re-ancrage ne s'armant que sur
+  terrain effectivement releve).
+- Warning uniquement quand (et seulement quand) le terrain post-mods depasse ;
+  ligne INFO de refus quand les garde-fous bloquent (visible avec dlb.debug).
+
+LIMITES CONNUES (documentees, a ne pas confondre avec un bug)
+-------------------------------------------------------------
+- Le re-ancrage est borne a +4 blocs. Un terrain releve de plus de 4 blocs
+  conserve l'ancre initiale + un warn d'inspection (comportement pre-T236),
+  car un saut plus grand demanderait de re-lisser la couronne (cout 10-30 s).
+================================================================================

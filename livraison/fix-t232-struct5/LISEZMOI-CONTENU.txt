@@ -1,14 +1,24 @@
-CONTENU DE LA LIVRAISON T235 (11/10/2026)
------------------------------------------
+CONTENU DE LA LIVRAISON T236-T237 (11/10/2026)
+----------------------------------------------
 
 Cette livraison contient :
 
-  T235-NOTE.txt  ..............  diagnostic de la regression vitesse (giga
-                                  pause, pins 818, 216 s) + correctifs +
-                                  mesures avant/apres validees en lab.
+  T236-NOTE.txt  ..............  ancre Y remesuree APRES les modifs terrain
+                                  (structures spawnant au mauvais y, cas
+                                  « sol releve par le lissage »).
 
-  T234-NOTE.txt  ..............  la veille : fix du blocage infini de
-                                  Crimson Lake (toujours d'actualite).
+  T237-NOTE.txt  ..............  nettoyage vegetation : foret de bambou /
+                                  cactus / citrouilles / champignons geants
+                                  jamais retires + quota de replantation
+                                  sature par les colonnes hautes.
+
+  RESULTATS-LAB-T235-T236-T237.txt
+                     ..............  protocole demande : 10 mondes neufs x
+                                  (dragon + citadel + observatory +
+                                  crimsonlake), tableau complet, 9/10 sous
+                                  le seuil de 6 mn, moyenne 328 s.
+
+  T235-NOTE.txt / T234-NOTE.txt .  livraisons precedentes (deja appliquees).
 
   src/  .......................  overlay source (copier/coller TOUT aux memes
                                   chemins dans le projet MCreator) :
@@ -22,11 +32,10 @@ Cette livraison contient :
     src/main/java/deepluckyblock/util/ChunkKeeper.java
     src/main/java/deepluckyblock/util/DebugLog.java
 
-Le correctif T235 = 2 fichiers seulement (ChunkKeeper + Structures5).
-Tout le reste = l'etat unifie deja valide (T232/T233/T233b/T233c/T234).
+T236 = 2 fichiers (Structures5Procedure + StructureTerrainPrep).
+T237 = 1 fichier (StructureTerrainPrep).
+Les deux se cumulent au-dessus de T235 : appliquer l'overlay ENTIER d'un coup
+compatible avec l'etat deja pose par T234/T235 ; aucun autre fichier touche,
+aucun critere de selection desserre (0 % d'eau / relief restent les juges).
 
-T235 corrige : la « giga pause » avant apparition en monde neuf (pins
-accumules, 2500 demandes en file, ~216 s). Mesure lab : 32 s / 24 s au 2e jet.
-
-Tout ce qui n'est pas ces correctifs reste INCHANGE.
 Attention a NE PAS ecraser : debug.txt, config/*, logs/, saves/, mods/.

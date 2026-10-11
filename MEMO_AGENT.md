@@ -47,3 +47,22 @@
 - T230 (3bb42e2) : drain des candidats differes a chaque reprise de findFlat (contrainte T229 levee), secours lointain T174/T190 bloque tant qu'un differe proche est encore en chargement, ligne INFO de progression toutes les 10 s pendant la recherche, durees de recherche affichees dans "Zone choisie", chat "Pose brute" precise "(phase paste seule, hors recherche)".
 - Livraison T230 : zip 55 832 B sur Drive (id 1nnsCuh809xc5p3eVZ5IbVWq-SXekOzuC) + note (id 1W_ss1KgRWrObFKe480H4FHZPnAzFdcCQ), dossier 0AMOST-WPxU3uUk9PVA.
 - Piege sandbox rencontre : rollback local de mod.zip entre appels bash → reconstruire mod.zip depuis /home/user/work/mod et commiter+pusher DANS LE MEME appel ; push hors detached HEAD (git checkout -B <branche>).
+
+## Deep-learning (instruction utilisateur 11/10 04:14 : « learn and retry », punition/récompense)
+
+| Date | Evenement | Score |
+|---|---|---|
+| 11/10 | T234 a introduit la « giga pause » (216 s en jeu, revert partiel impossible → T235) | **Punition -1** |
+| 11/10 | T235 : giga pause eliminee (32 s lab, valide par protocole, en attente user) | **Récompense +1** |
+| 11/10 | Protocole 10 mondes : 9/10 sous 6 mn, 10/10 completes | **Récompense +1** |
+| 11/10 | Run09 507 s hors seuil (monde cotier 63 rejets aquatiques) | **Punition -1** |
+| | **Solde cumulé** | **0** (la faute T234 est compensee, la dette run09 = travail T235b optionnel) |
+
+## Historique T (suite)
+
+| T | Date | Objet | État |
+|---|---|---|---|
+| T230-T234 | 09-10/10 | SeaLanternGate, dry pick T233b/T233c, crimsonlake blocage infini (deadlines dures) | livrés GitHub |
+| T235 | 11/10 | Giga pause : pin keeper remplace au lieu d'union + release sur rejet/abandon/fin (216 s -> 32 s lab) | livré GitHub, validé 10-run |
+| T236 | 11/10 | Ancre Y replaiste sur sol REEL post-mods (couronne 2..6 blocs hors emprise, borne +4, soutien rempli) | livré GitHub, tirée 2× en vrai run lab |
+| T237 | 11/10 | Bambou/cactus/citrouille/champignon géant ne bloquent plus la recherche de sol (clear jamais sauté) ; quota replantation au sommet des piles | livré GitHub |
