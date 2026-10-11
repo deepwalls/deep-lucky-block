@@ -101,3 +101,30 @@ REGRESSION => REVERT avant livraison, Structures5 remis a T238.
 Scoreboard : T239-B -1 (avoir expédie le cycle entier avant le A/B
 protocole) => SOLDE 0. Lecon : toute acceleratrice = A/A sur le protocole
 AGGRAVE avant meme de raconter « ca devrait ».
+
+## T240 (11/10 nuit) — couture franche au bord de la dragon : raccord rebranche
+Ticket : delimitation nette zone coupee vs terrain modifie (screenshot
+client dragon). Repro lab obtenue sur windswept_hills : profil probe,
+saut de 24 blocs entre voisins DANS la zone lissee + "lissage bride :
+1548 colonnes" = meme signature que le log client.
+DEUX causes racines : (1) smoothAround() — la passe de raccord post-paste
+— definie l.200 mais AUCUN appelant dans tout le repo (grep exhaustif) :
+la pose coupait l'emprise a vif ; (2) T185 avait reduit la serie T109 a
+{49, 71} alors que T109 documentait 7>11>15>21>29>49>55>61>67>71.
+Fix (2 fichiers, minimal-touch) : serie T109 complete restauree ;
+smoothAround = serie raccord {11,21,31,43,57} via smoothPassAfterPreload
+(T89/T177/limitSlope intacts, emprise protegee) ; smoothAround ENFIN
+cablee dans les finitions post-paste de Structures5 (apres POST_Q).
+REGRESSION INTERNE attrapee en lab avant livraison : naturalize()
+re-epingle la zone apres sa liberation par decorateFinish -> held() vrai
+a jamais -> FIFO gelee, toute structure suivante "mis en file" sans fin.
+Correctif : ChunkKeeper.release() a la fin de la chaine du raccord.
+Mesures : couture 24 -> <=6 blocs (3 mondes, plaines/montagnes, pas 1) ;
+cout raccord ~0,3-0,5 s ; protocoles perf (3 structures + 1 crimsonlake,
+mondes neufs) : 328 s puis 216 s < 6 mn (ref T238 266/314) => OK.
+Livre 33e0d1b + zip DEEP-LUCKY-BLOCK-T240-SRC-COMPLET.zip.
+Scoreboard : T240 +1 (diagnostic par mesure avant/apres + regression
+interne detectee et corrigee par le protocole AVANT livraison) =>
+SOLDE +1. Lecon : toute passe post-paste qui consomme naturalize()
+hors de la fenetre du pipeline DOIT rendre le keeper — held() est un
+portillon global, pas un refcount.
