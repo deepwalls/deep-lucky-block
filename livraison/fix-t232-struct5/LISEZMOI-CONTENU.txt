@@ -1,13 +1,17 @@
-CONTENU DE LA LIVRAISON T234 (11/10/2026)
+CONTENU DE LA LIVRAISON T235 (11/10/2026)
 -----------------------------------------
 
 Cette livraison contient :
 
-  T234-NOTE.txt  ..............  diagnostic complet du freeze infini de
-                                  Crimson Lake + correctifs + validation.
+  T235-NOTE.txt  ..............  diagnostic de la regression vitesse (giga
+                                  pause, pins 818, 216 s) + correctifs +
+                                  mesures avant/apres validees en lab.
 
-  src/  .......................  overlay source Windows (copier/coller TOUT
-                                  dans le projet MCreator, aux memes chemins) :
+  T234-NOTE.txt  ..............  la veille : fix du blocage infini de
+                                  Crimson Lake (toujours d'actualite).
+
+  src/  .......................  overlay source (copier/coller TOUT aux memes
+                                  chemins dans le projet MCreator) :
 
     src/main/java/deepluckyblock/procedures/CrimsonLakeStructureSpawnProcedure.java
     src/main/java/deepluckyblock/procedures/Structures5Procedure.java
@@ -18,17 +22,11 @@ Cette livraison contient :
     src/main/java/deepluckyblock/util/ChunkKeeper.java
     src/main/java/deepluckyblock/util/DebugLog.java
 
-  lab/  .......................  maquette de test (rebuild_lab.sh, sandbox_lab.py)
-                                  et CI de reference (serveur NeoForge reel).
+Le correctif T235 = 2 fichiers seulement (ChunkKeeper + Structures5).
+Tout le reste = l'etat unifie deja valide (T232/T233/T233b/T233c/T234).
 
-Le correctif T234 = 1 seul fichier au-dessus
-(CrimsonLakeStructureSpawnProcedure.java). Tous les autres fichiers sont la
-derniere etat unifiee T232/T233/T233b/T233c deja validee en jeu -- pour que tu
-enregistres tout l'etat d'un coup si le tien a diverge.
+T235 corrige : la « giga pause » avant apparition en monde neuf (pins
+accumules, 2500 demandes en file, ~216 s). Mesure lab : 32 s / 24 s au 2e jet.
 
-T234 corrige : le gel 1 h 30 a vie de « Crimson Lake: loading surrounding chunks
-and building layer by layer... » (clear d'un chunk absent replanifie a l'infini,
-garde-fou ChunkKeeper 600 s puis silence).
-
-Tout ce qui est en dehors de ces correctifs reste INCHANGE.
+Tout ce qui n'est pas ces correctifs reste INCHANGE.
 Attention a NE PAS ecraser : debug.txt, config/*, logs/, saves/, mods/.

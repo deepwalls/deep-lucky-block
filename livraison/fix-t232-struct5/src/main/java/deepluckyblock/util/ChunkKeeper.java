@@ -205,6 +205,27 @@ public final class ChunkKeeper {
     }
 
     /**
+     * T235 : REMPlace la zone tenue au lieu de l'etendre. track() ETENDAIT a chaque
+     * candidat retenu par la recherche (union de tous les candidats d'une meme
+     * generation) : mesure en jeu (log du 11/10, dragon, monde neuf) : les echecs
+     * successifs de verification (zones aquatiques / fantomes) laissaient leurs
+     * chunks epingles et leurs demandes de generation -- 383 puis 818 chunks
+     * epingles, 1842 puis 2510 demandes en file, et le dernier candidat valide
+     * attendait mines dans la tempete de generation d'elles-memes (prepZone =
+     * 147 s, paste affame = 156 s, total commande -> fin = 216 s au lieu de
+     * < 60 s). Desormais chaque NOUVEAU candidat remplace le precedent : seule
+     * l'emprise utile reste tenue, et le monde genere 20 chunks par candidat au
+     * lieu de l'union de tous les candidats jamais essaies. Voir aussi :
+     * notifyGenerationAborted qui relache TOUJOURS la zone et le plan de zone
+     * SafeSurface, quel que soit le point de sortie du pipeline.
+     */
+    public static void trackReplacing(ServerLevel level, BlockPos min, BlockPos max) {
+        Zone z = ZONES.get(level);
+        if (z != null) release(level);
+        track(level, min, max);
+    }
+
+    /**
      * T46 : PRE-CHAUFFAGE -- demande la generation d'une zone SANS la garder en
      * memoire. Utilise pendant les 60 s d'annonce de l'evenement : la generation
      * (le vrai cout) se fait pendant que le joueur attend, mais on n'epingle pas

@@ -1291,6 +1291,13 @@ public class Structures5Procedure {
         GenerateLuckyItemProcedure.releaseStructureReservation(CURRENT_STRUCTURE_ID);
         CURRENT_STRUCTURE_ID = -1;
         GENERATION_BUSY = false;
+        // T235 : quelle que soit la raison de l'abandon (timeout emprise,
+        // conflit tardif, verif reelle refusee, hors build height...), le pin
+        // ChunkKeeper et le plan de zone SafeSurface ne survivent PAS a la fin
+        // de la generation. Log joueur 11/10 : 818 chunks epingles et 2510
+        // demandes en file apres 10 candidats generes pour rien.
+        deepluckyblock.util.ChunkKeeper.release(level);
+        deepluckyblock.util.SafeSurface.dropZonePlan();
         startNextPending(level);
     }
 
@@ -1320,6 +1327,11 @@ public class Structures5Procedure {
         }
         CURRENT_STRUCTURE_ID = -1;
         GENERATION_BUSY = false;
+        // T235 : filet identique au chemin abandon -- si une branche a termine
+        // sans passer par la release finale du prep (echafaudage alterne),
+        // la zone n'est jamais laissee epinglee.
+        deepluckyblock.util.ChunkKeeper.release(level);
+        deepluckyblock.util.SafeSurface.dropZonePlan();
         startNextPending(level);
     }
 
@@ -1653,7 +1665,7 @@ public class Structures5Procedure {
                 deepluckyblock.util.SafeSurface.requestZone(lvl,
                         (g2.getX() - 96) >> 4, (g2.getZ() - 96) >> 4,
                         (g2.getX() + 96) >> 4, (g2.getZ() + 96) >> 4);
-                deepluckyblock.util.ChunkKeeper.track(lvl,
+                deepluckyblock.util.ChunkKeeper.trackReplacing(lvl,
                         g2.offset(-96, 0, -96), g2.offset(96, 0, 96));
                 LOGGER.warn("[STRUCT5-FLAT] plafond de sauts atteint sans terrain sec charge : rearmement T231 du secours cible a {},{} (T229 annulait la structure) -- reste {} s avant abandon",
                         g2.getX(), g2.getZ(),
@@ -1795,7 +1807,7 @@ public class Structures5Procedure {
             SEARCH_GENERATED_FALLBACK = g.offset(jump, 0, jump);
                 SEARCH_FALLBACK_LAST_TARGET = SEARCH_GENERATED_FALLBACK; // T232-F
             int r = fullCheckR;
-            deepluckyblock.util.ChunkKeeper.track(lvl,
+            deepluckyblock.util.ChunkKeeper.trackReplacing(lvl,
                     SEARCH_GENERATED_FALLBACK.offset(-r, 0, -r),
                     SEARCH_GENERATED_FALLBACK.offset(r, 0, r));
             deepluckyblock.util.SafeSurface.requestZone(lvl,
@@ -2229,7 +2241,7 @@ public class Structures5Procedure {
                     searchOrigin.getX() + (int) Math.round(fx * far), searchOrigin.getY(),
                     searchOrigin.getZ() + (int) Math.round(fz * far));
             SEARCH_FALLBACK_LAST_TARGET = SEARCH_GENERATED_FALLBACK;   // T232-F
-            deepluckyblock.util.ChunkKeeper.track(lvl,
+            deepluckyblock.util.ChunkKeeper.trackReplacing(lvl,
                     SEARCH_GENERATED_FALLBACK.offset(-fullCheckR, 0, -fullCheckR),
                     SEARCH_GENERATED_FALLBACK.offset(fullCheckR, 0, fullCheckR));
             deepluckyblock.util.SafeSurface.requestZone(lvl,
@@ -2627,7 +2639,7 @@ public class Structures5Procedure {
             //  (3) Borne temporelle de 10 min puis abandon PROPRE : la
             //      generation obtient une sortie visible au lieu d'une
             //      boucle silencieuse infinie (bug "rien ne spawn").
-            deepluckyblock.util.ChunkKeeper.track(level,
+            deepluckyblock.util.ChunkKeeper.trackReplacing(level,
                     new BlockPos(cx0 << 4, level.getMinBuildHeight(), cz0 << 4),
                     new BlockPos((cx1 << 4) + 15, level.getMaxBuildHeight() - 1, (cz1 << 4) + 15));
             deepluckyblock.util.ChunkKeeper.keep(level);
@@ -2682,6 +2694,13 @@ public class Structures5Procedure {
         if (finalQuality.wetRatio() > FLAT_MAX_WET) {
             REJECTED_RUGGED_CENTERS.add(BlockPos.asLong(txz.getX(), 0, txz.getZ()));
             PENDING_FLAT_CENTER = null;
+            // T235 : relcher immediat le pin de l'emprise finale du candidat
+            // aquatique. Avant : la zone restait tenue jusqu'au garde-fou
+            // ChunkKeeper (600 s) ou la fin d'une structure future -- le log
+            // joueur du 11/10 montrait 383 -> 818 chunks epingles sur 10
+            // candidats successifs, et le monde genait pour des candidates
+            // morts.
+            deepluckyblock.util.ChunkKeeper.release(level);
             deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-SAFETY] {} candidat aquatique écarté avant terrain; recherche du suivant", nbt);
             final BlockPos retryOrigin = origin;
             deepluckyblock.procedures.TestProcedure.schedule(level,
@@ -2829,7 +2848,7 @@ public class Structures5Procedure {
             // T232 : meme accord sanitaire que la SAFETY -- pin + keep immediat +
             // borne temporelle. Mesure en lab (queue) : citadel enchainerait
             // 470 reprises de 20 ticks silencieusement (roue de hamster).
-            deepluckyblock.util.ChunkKeeper.track(level,
+            deepluckyblock.util.ChunkKeeper.trackReplacing(level,
                     new BlockPos((gx0 >> 4) << 4, level.getMinBuildHeight(), (gz0 >> 4) << 4),
                     new BlockPos(((gx1 >> 4) << 4) + 15, level.getMaxBuildHeight() - 1, ((gz1 >> 4) << 4) + 15));
             deepluckyblock.util.ChunkKeeper.keep(level);
@@ -2871,7 +2890,7 @@ public class Structures5Procedure {
             // T232 : idem branche exactGround -- pin + keep + borne (la boucle
             // « emprise entiere en chargement » n'avait AUCUNE garde : c'est la
             // qu'une file de plusieurs structures restait perdue pour toujours).
-            deepluckyblock.util.ChunkKeeper.track(level,
+            deepluckyblock.util.ChunkKeeper.trackReplacing(level,
                     new BlockPos((min.getX() >> 4) << 4, level.getMinBuildHeight(), (min.getZ() >> 4) << 4),
                     new BlockPos(((max.getX() >> 4) << 4) + 15, level.getMaxBuildHeight() - 1, ((max.getZ() >> 4) << 4) + 15));
             deepluckyblock.util.ChunkKeeper.keep(level);

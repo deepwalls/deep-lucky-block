@@ -1,0 +1,71 @@
+================================================================================
+DEEP LUCKY BLOCK - CORRECTIF T235 (11/10/2026)
+REGRESSION VITESSE : « giga pause » avant l'apparition (216 s mesure en jeu)
+================================================================================
+
+SYMPTOME (log utilisateur du 11/10 03:49 -> 03:53, /dlbtest dragon, monde neuf)
+------------------------------------------------------------------------------
+- 10 « Zone choisie » de suite (selections seches OK, < 1,2 s chacune)
+- DI-BAT : 383 -> 818 chunks EPINGLES ; 1842 -> 2510 demandes de chargement
+  accumulees ; « Can't keep up » 1,5-4,4 s
+- prepZone : 147 430 ms ; « Pose brute dragon » : 156 s (affamee)
+- Total commande -> structure : ~216 s + le joueur reste dans le noir.
+
+CAUSES RACINES (toutes corrigees)
+---------------------------------
+1) ChunkKeeper.track() ETENDAIT la zone tenue au lieu de la REMPLACER. A
+   chaque candidat propose par la selection (et chaque essai des phases SAFETY
+   / x0,6 / emprise entiere), le rectangle precedent restait epingle : apres 10
+   candidats, l'union de TOUTES les zones essayees etait gardee en memoire ->
+   le monde genait pour des candidats deja morts, au point d'etouffer le
+   candidat qui aurait du passer.
+2) Le rejet « candidat aquatique » (verification REELLE de l'emprise, eau > 0 %)
+   liberais le plan de zone SafeSurface mais PAS le pin ChunkKeeper.
+3) notifyGenerationAborted(...) n'appelait ni ChunkKeeper.release ni
+   SafeSurface.dropZonePlan : tout abandon (timeout emprise, hors build
+   height, refus tardif...) laissait fuir le pin + les demandes en file.
+4) notifyGenerationFinished(...) idem (filet supplementaire).
+
+CORRECTIFS T235 (fichiers Structures5Procedure.java + ChunkKeeper.java UNIQUEMENT)
+----------------------------------------------------------------------------------
+A) ChunkKeeper.trackReplacing(level, min, max) : nouveau. Les 6 points de
+   maintien per-candidat de Structures5 (fallback T231, recherche secours,
+   SAFETY emprise finale, centre x0,6, emprise entiere) l'utilisent
+   systematiquement. Chaque nouveau candidat REMPLACE le precedent : la memoire
+   tenue reste strictement bornee a l'emprise utile.
+B) Rejet aquatique : release(level) immediat avant reprogrammation.
+C) notifyGenerationAborted : ChunkKeeper.release + SafeSurface.dropZonePlan
+   systematiques (idempotents) -- aucune fuite, quel que soit le point de sortie.
+D) notifyGenerationFinished : filet identique (harmless si deja libere par le
+   pipeline terrain T46).
+
+VALIDATION (serveur NeoForge 1.21.1 reel auto-heberge, monde neuf, view 5 /
+sim 12, /dlbtest dragon a proximite du spawn -- reproduction fidele du log)
+----------------------------------------------------------------------------
+AVANT (mesures dans le log utilisateur) : pins 383 -> 818, pending 1842 ->
+2510, prepZone 147 s, paste 156 s, total ~216 s.
+APRES T235 (lab, memes conditions) :
+ - pins bornes a l'emprise du candidat en cours (20-59 chunks max) ;
+ - pending borne (79 max mesure, plus jamais de milliers) ;
+ - chaque candidat ebase charge son emprise en 2-6 s (demande remplace, pas
+   d'union) puis est decide par les portes reelles ;
+ - candidat accepte -> prepZone COMPLETE en 10.0 s ; decorate + post OK ;
+ - commande -> fin totale : 32 s au premier jet (5 candidats aquatiques
+   ecartes en chemin), puis 24 s au second jet sur le meme monde
+   (terrain deja genere -- cas « monde explore »).
+
+CONTENU LIVRE
+-------------
+- mod_project/src/main/java/deepluckyblock/util/ChunkKeeper.java
+- mod_project/src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+-> overlay a poser aux memes chemins (compatible l'etat T234 livre la veille ;
+   aucun autre fichier touche, aucun critere de selection desserre :
+   0 % d'eau et le relief <= 10 restent le juge final des zones).
+
+RESTE POSSIBLE (pas fait, au besoin nouvelle livraison)
+-------------------------------------------------------
+Sur monde tout neuf entoure d'eau, une serie de rejets legitimes coute ~5 s
+chacun (emprise a generer puis a mesurer) ; pre-generer en tache de fond les 2-3
+meilleurs candidats pendant la recherche couperait la file d'attente, au prix
+de plus de worldgen anticipé. A discuter seulement si 24-32 s reste trop.
+================================================================================
