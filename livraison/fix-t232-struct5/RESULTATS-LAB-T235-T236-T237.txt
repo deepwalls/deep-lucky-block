@@ -32,3 +32,11 @@ RUN   dragon   citadel  observ.  crimsonlake*  TOTAL    verdict
  (runs 06 et 10, warn « re-ancrage post-terrain »), refuse proprement 6 fois
  (couronne relevee au-dela du cap ou bord bas : ancre initiale conservee,
  ligne INFO visible avec dlb.debug).
+=== POST-SCRIPTUM T238 (rejet anticipe aquatique, protocole aggrave 6 mondes cotes) ===
+run01 314,3 s (citadel 89 s : 6 rejets + 1 anticipe)                     OK sous 6 mn
+run02 245,0 s (3 rejets aquatiques complets)                             OK sous 6 mn
+run03 305,6 s (citadel 111 s : 20 pics, 10 rejets + 1 anticipe)          OK sous 6 mn
+run04 238,5 s                                                            OK sous 6 mn
+run05 229,4 s                                                            OK sous 6 mn
+run06 262,1 s (3 rejets anticipes + 8 complets)                          OK sous 6 mn
+Moyenne 265,8 s ; pire 314,3 s (vs 507 s le cas run09 avant T238, en conditions moins dures)

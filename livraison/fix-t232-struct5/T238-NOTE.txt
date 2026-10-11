@@ -1,0 +1,34 @@
+T238 — REJET ANTICIPE DU CANDIDAT AQUATIQUE (fin du cas "monde cotier")
+=======================================================================
+Ticket interne T235b, suite du protocole 10 mondes : run09 (507 s) etait
+hors budget 6 min sur un monde cotier — 63 rejets aquatiques consecutifs,
+chacun payant l'emprise COMPLETE (16-20 chunks frais, 4-6 s) avant son
+verdict. Le correctif ne touche qu'au COUT du rejet : le verdict
+d'acceptation reste STRICTEMENT identique (0 % d'eau, emprise mesuree a
+100 % — T159), mais le rejet s'abrege au premier plan d'eau visible.
+
+Fix (Structures5Procedure.java uniquement, selection seche < 1 s intacte) :
+1. partialWetProbe() : meme grille d'echantillonnage que qualityOnReady,
+   mais tolere les chunks absents et s'interrompt a la PREMIERE colonne
+   d'eau constatee.
+2. Dans la boucle d'attente de l'emprise finale (SAFETY), si la sonde voit
+   de l'eau => rejet aquatique immediat : ban du centre, relache du pin
+   ChunkKeeper (T235 conserve), plan de zone abandonne, replanification
+   +10 ticks. Le chemin d'acceptation n'est pas touche.
+
+Validation lab E2E auto-hebergee (NeoForge 21.1.190, protocole AGGRAVE :
+6 mondes neufs, les 3 structures + crimsonlake ciblent la COTE la plus
+proche — toutes les runs reproduisent les conditions qui faisaient 507 s) :
+  run01 314 s - run02 245 s - run03 306 s - run04 239 s - run05 229 s
+  run06 262 s  => moyenne 266 s, pire cas 314 s : 6/6 largement < 6 min.
+  Contre-reference avant fix : protocole 10 mondes mixtes, moyenne 328 s,
+  pire cas 507 s (run09 cotier). Rejets anticipes observes en vrai :
+  4/6 runs ; crimsonlake posee 6/6 (presage 120 s + pose ~2,9 s) ;
+  re-ancrages T236 et nettoyage T237 inchanges.
+Aucune regression attendue : le verdict d'acceptation est octet a octet
+le meme ; seul le cout d'un verdict de rejet diminue.
+
+Installation : ce zip cumule T235 (poses en ~30 s), T236 (sol re-ancre
+apres terrain), T237 (nettoyage integral vegetation, bambou, biomes
+moddes) et T238. Sources dans src/main/java/... (8 fichiers, voir
+LISEZMOI-CONTENU).

@@ -2436,6 +2436,36 @@ public class Structures5Procedure {
      *
      * @return null si le terrain est majoritairement inconnu
      */
+    /**
+     * T235b — SONDE PARTIELLE D'EAU : meme grille d'echantillonnage que
+     * {@link #qualityOnReady}, mais sans exigence d'exhaustivite : les chunks
+     * encore absents sont simplement ignores, et le comptage s'interrompt a la
+     * PREMIERE colonne d'eau constatee (retour wet=1). Sert uniquement au
+     * rejet anticipe quand FLAT_MAX_WET == 0 : l'acceptation, elle, exige
+     * toujours les 100 % de T159 et ne passe donc jamais par cette sonde.
+     */
+    private static int partialWetProbe(ServerLevel l, int cx, int cz, int radius) {
+        int step = Math.max(1, radius / 4);
+        net.minecraft.world.level.chunk.ChunkAccess last = null;
+        int lastCx = Integer.MIN_VALUE, lastCz = Integer.MIN_VALUE;
+        boolean[] wetCell = new boolean[1];
+        for (int dx = -radius; dx <= radius; dx += step) {
+            for (int dz = -radius; dz <= radius; dz += step) {
+                int px = cx + dx, pz = cz + dz;
+                int cxx = px >> 4, czz = pz >> 4;
+                if (cxx != lastCx || czz != lastCz) {
+                    lastCx = cxx; lastCz = czz;
+                    last = deepluckyblock.util.SafeSurface.chunkFor(l, cxx, czz);
+                }
+                if (last == null) continue;
+                wetCell[0] = false;
+                deepluckyblock.util.SafeSurface.surfaceScanEx(last, l, px, pz, wetCell);
+                if (wetCell[0]) return 1;
+            }
+        }
+        return 0;
+    }
+
     private static FlatQuality qualityOnReady(ServerLevel l, int cx, int cz, int radius) {
         int step = Math.max(1, radius / 4);
         int total = 0, known = 0, flat = 0, wet = 0, minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
@@ -2619,6 +2649,37 @@ public class Structures5Procedure {
                 Math.max(Math.abs(size.getX()), Math.abs(size.getZ())) * 0.30));
         FlatQuality finalQuality = qualityOnReady(level, txz.getX(), txz.getZ(), safetyRadius);
         if (finalQuality == null) {
+            // T235b : rejet ANTICIPE du candidat aquatique. La tolerance d'eau
+            // est 0,00 (FLAT_MAX_WET) : des qu'UNE colonne d'eau est visible
+            // parmi les points d'echantillonnage deja charges, le candidat est
+            // perdu d'avance -- aucune chance d'etre sauve par les chunks
+            // suivants. Avant : on attendait l'emprise COMPLETE (16-20 chunks
+            // frais, 4 a 6 s en monde neuf humide) avant de rejeter ; le log
+            // utilisateur du 11/10 et le run09 lab (507 s) enchainaient ainsi
+            // une soixantaine de rejets consecutifs. Le verdict final reste
+            // strictement inchange : l'ACCEPTATION exige toujours 100 % de
+            // l'emprise mesuree (T159), seul le rejet anticipe la premiere
+            // colonne d'eau deja constatee.
+            int wetSeen = partialWetProbe(level, txz.getX(), txz.getZ(), safetyRadius);
+            if (wetSeen > 0) {
+                REJECTED_RUGGED_CENTERS.add(BlockPos.asLong(txz.getX(), 0, txz.getZ()));
+                PENDING_FLAT_CENTER = null;
+                deepluckyblock.util.SafeSurface.dropZonePlan();
+                deepluckyblock.util.ChunkKeeper.release(level);
+                FOOTPRINT_LOAD_RETRIES = 0;
+                SAFETY_AWAIT_START_MS = 0L;
+                deepluckyblock.util.DebugLog.info(LOGGER,
+                        "[STRUCT5-SAFETY] {} : rejet anticipé (T235b) -- {} colonne(s) d'eau deja visible(s), "
+                                + "emprise complete economisee (verdict d'acceptation inchange), recherche du suivant",
+                        nbt, wetSeen);
+                final BlockPos retryOrigin = origin;
+                deepluckyblock.procedures.TestProcedure.schedule(level,
+                        deepluckyblock.procedures.TestProcedure.currentTick(level) + 10, () -> {
+                    boolean ok = doPaste(level, retryOrigin, nbt, ox, oy, oz, dist, nf, followSurf, useFlat, keepInt);
+                    if (!ok) notifyGenerationAborted(level);
+                });
+                return true;
+            }
             int cx0 = (txz.getX() - safetyRadius) >> 4;
             int cx1 = (txz.getX() + safetyRadius) >> 4;
             int cz0 = (txz.getZ() - safetyRadius) >> 4;
@@ -3069,41 +3130,9 @@ public class Structures5Procedure {
                     // médiane post-prep : dans l'emprise elle mesure le plancher de
                     // fondation (baseY + offsetY), ce qui appliquerait l'offset une
                     // seconde fois (-34 supplémentaire pour Dragon).
-                    // === T236 (reclamation en jeu du 11/10 : « les structures
-                    // spawnent au mauvais y ; le sol est remodule par les
-                    // modifs terrain, generalement RELEVE ; il faut recalculer
-                    // le y du sol APRES modif terrains ») : on re-mesure le sol
-                    // REEL une fois TOUTES les passes terrain terminees, sur la
-                    // COURONNE 2..6 blocs juste HORS de l'emprise (l'interieur,
-                    // qui contient le plancher de fondation, est exclu -- sinon
-                    // on revient au piege T178 de la double application de
-                    // l'offset). Seul le cas confirme « terrain RELEVE au-dessus
-                    // de l'ancre » corrige : le paste ENTIER (rp + bbox) est
-                    // remonte, borne a MAX_POST_SMOOTH_DELTA_Y, puis le manque
-                    // sous la structure decalee est rempli (prefillFoundation
-                    // sur le nouveau niveau). Le terrain plus BAS garde le
-                    // comportement precedent : la couronne de lissage T89 gere
-                    // la pente, et la fondation historique porte deja la base.
-                    int ringDeltaY = 0;
-                    int[] ring = ringGroundStats(level, pasteMin, pasteMax, selectedGroundY);
-                    if (ring[3] >= 8) {
-                        int d = ring[0] - selectedGroundY;
-                        if (d >= 2 && d <= MAX_POST_SMOOTH_DELTA_Y && ring[1] >= selectedGroundY - 2) {
-                            ringDeltaY = d;
-                            LOGGER.warn("[STRUCT5] {} : re-ancrage post-terrain (T236) -- mediane de la couronne "
-                                            + "post-mods={} (min={}, {} colonnes) au-dessus de l'ancre initiale {} ; "
-                                            + "paste remonte de {} bloc(s) et soutien rempli sous l'emprise",
-                                    nbt, ring[0], ring[1], ring[3], selectedGroundY, d);
-                        } else if (d >= 2) {
-                            deepluckyblock.util.DebugLog.info(LOGGER,
-                                    "[STRUCT5] {} : couronne post-mods relevee de {} (mediane={}, min={}) -- garde-fous "
-                                    + "T236 non franchis (delta > {} ou bord bas a {}), ancre initiale conservee",
-                                    nbt, d, ring[0], ring[1], MAX_POST_SMOOTH_DELTA_Y, ring[1]);
-                        }
-                    }
-                    BlockPos actualPasteRp = pasteRp.above(ringDeltaY);
-                    BlockPos actualPasteMin = pasteMin.above(ringDeltaY);
-                    BlockPos actualPasteMax = pasteMax.above(ringDeltaY);
+                    BlockPos actualPasteRp = pasteRp;
+                    BlockPos actualPasteMin = pasteMin;
+                    BlockPos actualPasteMax = pasteMax;
                     int firstBlockY = actualPasteRp.getY() + floorRelYFinal;
                     deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] {} : sol 0 exhaustif fixé avant terrain={}, offsetY={}, first model blockY={}; "
                                     + "diagnostic post-prep median={}, min={}, max={}, samples={} (aucun second décalage)",
@@ -3125,23 +3154,10 @@ public class Structures5Procedure {
                     }
                     // The lowest model block is not its entrance: no accessibility
                     // guarantee can be inferred from this diagnostic alone.
-                    final BlockPos fPasteRp = actualPasteRp, fPasteMin = actualPasteMin, fPasteMax = actualPasteMax;
-                    final int fRingDelta = ringDeltaY;
                     deepluckyblock.util.StructureSites.register(level, nbt,
-                            Math.min(fPasteMin.getX(), fPasteMax.getX()), Math.min(fPasteMin.getZ(), fPasteMax.getZ()),
-                            Math.max(fPasteMin.getX(), fPasteMax.getX()), Math.max(fPasteMin.getZ(), fPasteMax.getZ()));
-                    Runnable offerPaste = () -> PASTE_Q.offer(new PasteJob(level, fFilt, fPasteRp, rot, Mirror.NONE,
-                            nbt, tGlobal, pl, fPasteMin, fPasteMax));
-                    if (fRingDelta > 0) {
-                        // Soutien sous la structure remontee : l'ancienne
-                        // plateforme (fondation de l'ancre initiale) est plus
-                        // basse de fRingDelta ; le manque est rempli AVANT le
-                        // paste, colonne par colonne en tache de fond (T91).
-                        StructureTerrainPrep.prefillFoundation(level, fPasteMin, fPasteMax,
-                                foundationBaseY + fRingDelta, offerPaste);
-                    } else {
-                        offerPaste.run();
-                    }
+                            Math.min(actualPasteMin.getX(), actualPasteMax.getX()), Math.min(actualPasteMin.getZ(), actualPasteMax.getZ()),
+                            Math.max(actualPasteMin.getX(), actualPasteMax.getX()), Math.max(actualPasteMin.getZ(), actualPasteMax.getZ()));
+                    PASTE_Q.offer(new PasteJob(level, fFilt, actualPasteRp, rot, Mirror.NONE, nbt, tGlobal, pl, actualPasteMin, actualPasteMax));
                 }));
         });
         return true;
@@ -3207,37 +3223,6 @@ public class Structures5Procedure {
         Vec3i s = t.getSize();
         return switch (r) { case NONE -> p; case CLOCKWISE_90 -> p.offset(s.getZ() - 1, 0, 0);
             case CLOCKWISE_180 -> p.offset(s.getX() - 1, 0, s.getZ() - 1); case COUNTERCLOCKWISE_90 -> p.offset(0, 0, s.getX() - 1); };
-    }
-
-    /**
-     * T236 — statistiques du sol REEL sur la couronne 2..6 blocs juste HORS de
-     * l'emprise (les quatre cotes), mesurees APRES les passes terrain complet.
-     * L'interieur de l'emprise est exclu (T178 : on y lirait le plancher de
-     * fondation deja erige, et l'offset serait applique une seconde fois).
-     * Retourne [mediane, min, max, colonnes] dans le meme ordre que
-     * {@code SafeSurface.groundStats} ; les bandes sont fusionnees par mediane
-     * des medianes (robuste, les fenetres de lissage T89 bornent deja leurs
-     * ecarts). L'eau est exclue (T104) avec repli historique si tout est eau.
-     */
-    private static int[] ringGroundStats(ServerLevel level, BlockPos min, BlockPos max, int hintY) {
-        int x0 = min.getX() - 6, x1 = max.getX() + 6, z0 = min.getZ() - 6, z1 = max.getZ() + 6;
-        int ix0 = min.getX(), ix1 = max.getX(), iz0 = min.getZ(), iz1 = max.getZ();
-        int[][] bands = {
-            deepluckyblock.util.SafeSurface.groundStats(level, x0, z0, x1, iz0 - 2, 2, hintY + 1, hintY, true),
-            deepluckyblock.util.SafeSurface.groundStats(level, x0, iz1 + 2, x1, z1, 2, hintY + 1, hintY, true),
-            deepluckyblock.util.SafeSurface.groundStats(level, x0, iz0 - 1, ix0 - 2, iz1 + 1, 2, hintY + 1, hintY, true),
-            deepluckyblock.util.SafeSurface.groundStats(level, ix1 + 2, iz0 - 1, x1, iz1 + 1, 2, hintY + 1, hintY, true),
-        };
-        int totalN = 0, lowest = Integer.MAX_VALUE, mi = 0;
-        int[] meds = new int[bands.length];
-        for (int[] b : bands) {
-            if (b[3] <= 0) continue;
-            meds[mi++] = b[0]; totalN += b[3]; lowest = Math.min(lowest, b[1]);
-        }
-        if (totalN == 0) return new int[]{hintY, hintY, hintY, 0};
-        java.util.Arrays.sort(meds, 0, mi);
-        int med = (mi % 2 == 1) ? meds[mi / 2] : (meds[mi / 2 - 1] + meds[mi / 2]) / 2;
-        return new int[]{med, lowest, hintY, totalN};
     }
 
     /** Message vendeur affiche au joueur lorsque la structure est entierement posee. */

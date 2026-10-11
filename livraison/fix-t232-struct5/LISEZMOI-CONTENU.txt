@@ -1,41 +1,55 @@
-CONTENU DE LA LIVRAISON T236-T237 (11/10/2026)
-----------------------------------------------
+CONTENU DE LA LIVRAISON T238 (11/10/2026) — ETAT CUMULE
+=======================================================
 
-Cette livraison contient :
+Ce zip cumule tous les correctifs valides en lab E2E :
+T235 (vitesse monde neuf) + T236 (Y du sol re-ancre apres terrain) +
+T237 (nettoyage integral de la vegetation : bambou, arbres/plantes/fleurs
+moddes, champignons geants, citrouilles...) + T238 (rejet anticipe du
+candidat aquatique — fin du cas « monde cotier » a 507 s).
 
-  T236-NOTE.txt  ..............  ancre Y remesuree APRES les modifs terrain
-                                  (structures spawnant au mauvais y, cas
-                                  « sol releve par le lissage »).
+  T238-NOTE.txt .............. dernier correctif : le candidat tombe dans
+                               l'eau ? le verdict tombe au 1er plan d'eau vu
+                               au lieu d'attendre l'emprise complete.
+                               Protocole AGGRAVE (6 mondes NEUFS visant la
+                               cote, soit les pires conditions du run09 qui
+                               prenait 507 s) : moyenne 266 s, pire 314 s,
+                               6/6 sous les 6 minutes.
 
-  T237-NOTE.txt  ..............  nettoyage vegetation : foret de bambou /
-                                  cactus / citrouilles / champignons geants
-                                  jamais retires + quota de replantation
-                                  sature par les colonnes hautes.
+  T236-NOTE.txt .............. correction du Y : structures posees au
+                               mauvais niveau / sol « releve » par le lissage
+                               — l'ancre est recalculee apres les passes
+                               terrain (couronne exterieure, cap +4, garde
+                               de couronne basse).
 
-  RESULTATS-LAB-T235-T236-T237.txt
-                     ..............  protocole demande : 10 mondes neufs x
-                                  (dragon + citadel + observatory +
-                                  crimsonlake), tableau complet, 9/10 sous
-                                  le seuil de 6 mn, moyenne 328 s.
+  T237-NOTE.txt .............. nettoyage : la heuristique prenait bambou,
+                               cactus, citrouilles, champignons geants et
+                               plantes moddees pour du « terrain » et
+                               n'executait jamais le nettoyage ; inventaire
+                               de sauvetage dedouble par pile. Zones de
+                               test restituees propres en lab.
 
-  T235-NOTE.txt / T234-NOTE.txt .  livraisons precedentes (deja appliquees).
+  T235-NOTE.txt .............. la « giga pause » avant apparition (216 s ->
+                               ~30 s) : pins de chunks morts relaches a
+                               chaque rejet/abandon/fin.
 
-  src/  .......................  overlay source (copier/coller TOUT aux memes
-                                  chemins dans le projet MCreator) :
+  RESULTATS-LAB-T235-T236-T237.txt . les tableaux des 2 protocoles (10 mondes
+                               mixtes + 6 mondes cotes) — lisez-en les totaux.
+
+  T234-NOTE.txt .............. veille : fix du blocage infini Crimson Lake
+                               (toujours d'actualite, inclus ici).
+
+  src/  ...................... overlay source : copier/coller TOUT aux memes
+                               chemins dans le projet MCreator :
 
     src/main/java/deepluckyblock/procedures/CrimsonLakeStructureSpawnProcedure.java
-    src/main/java/deepluckyblock/procedures/Structures5Procedure.java
+    src/main/java/deepluckyblock/procedures/Structures5Procedure.java       (T235+T236+T238)
     src/main/java/deepluckyblock/procedures/Structures4Procedure.java
     src/main/java/deepluckyblock/procedures/StructureScatterDecor.java
-    src/main/java/deepluckyblock/procedures/StructureTerrainPrep.java
+    src/main/java/deepluckyblock/procedures/StructureTerrainPrep.java       (T237)
     src/main/java/deepluckyblock/util/SafeSurface.java
-    src/main/java/deepluckyblock/util/ChunkKeeper.java
+    src/main/java/deepluckyblock/util/ChunkKeeper.java                      (T235)
     src/main/java/deepluckyblock/util/DebugLog.java
 
-T236 = 2 fichiers (Structures5Procedure + StructureTerrainPrep).
-T237 = 1 fichier (StructureTerrainPrep).
-Les deux se cumulent au-dessus de T235 : appliquer l'overlay ENTIER d'un coup
-compatible avec l'etat deja pose par T234/T235 ; aucun autre fichier touche,
-aucun critere de selection desserre (0 % d'eau / relief restent les juges).
-
-Attention a NE PAS ecraser : debug.txt, config/*, logs/, saves/, mods/.
+Le monde de test n'a pas besoin d'etre recree ; les fix agissent sur les
+prochaines generations. Etiquette dans le log au boot : cherchez [STRUCT5]
+au premier /dlbtest — le dump DLB-STRUCT prouve la version installee.

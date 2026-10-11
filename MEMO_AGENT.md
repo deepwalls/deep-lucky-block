@@ -66,3 +66,24 @@
 | T235 | 11/10 | Giga pause : pin keeper remplace au lieu d'union + release sur rejet/abandon/fin (216 s -> 32 s lab) | livré GitHub, validé 10-run |
 | T236 | 11/10 | Ancre Y replaiste sur sol REEL post-mods (couronne 2..6 blocs hors emprise, borne +4, soutien rempli) | livré GitHub, tirée 2× en vrai run lab |
 | T237 | 11/10 | Bambou/cactus/citrouille/champignon géant ne bloquent plus la recherche de sol (clear jamais sauté) ; quota replantation au sommet des piles | livré GitHub |
+
+## T238 (interne T235b) — rejet anticipe du candidat aquatique (11/10 fin)
+Suite protocole 10 mondes : run09 = 507 s (cotier, 63 rejets x emprise
+complete 4-6 s). Piste « pre-charge speculatif du candidat suivant » :
+ecartee (plomberie lourde du picker, regression risk, gain partiel).
+Piste retenue : **avortement precoce du rejet** — FLAT_MAX_WET == 0,00,
+donc une seule colonne d'eau deja visible condamne le candidat sans
+recours possible ; partialWetProbe() (meme grille que qualityOnReady,
+chunks absents toleres, arret au 1er plan d'eau) declenche le rejet
+aquatique sans attendre les 100 % d'emprise. Acceptation inchangee (T159).
+Lab AGGRAVE (6 mondes NEUFS, structures visees a la cote la plus proche) :
+314 / 245 / 306 / 239 / 229 / 262 s => moyenne 266 s, pire 314 s ; 6/6
+< 6 mn ; crimsonlake 6/6 posee (presage 120 s + pose ~2,9 s).
+Contre-reference : run09 507 s sous conditions moins dures. Livre 500f183.
+Scoreboard deep-learning : T234 -1, T235 +1, protocole +1, recap run09 -1,
+T238 6/6 sous budget +1 => SOLDE +1.
+Lecons lab (cout reel paye) : (1) verifier les argfiles apres regen —
+ancre sed vide = echec silencieux, 4 boots NoSuchElement ; (2) jamais
+pkill -f <mot de ma propre ligne> : autokill deux fois de suite ;
+(3) `cat >>` sur fichier non committe + clone reset = annexe perdue :
+toujours s'assurer que le fichier source existe AVANT d'ajouter.
