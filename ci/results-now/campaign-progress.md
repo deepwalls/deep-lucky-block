@@ -1,1 +1,1 @@
-PROGRESS: r06-goodspan-9 -> OK
+PROGRESS: r07-dryms-700 -> OK
