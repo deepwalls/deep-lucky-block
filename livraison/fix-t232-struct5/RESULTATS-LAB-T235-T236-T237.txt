@@ -115,3 +115,20 @@ LAB E2E build T243 (seed fixe 20261011) : protocole 3+1 ≈260 s < 6 mn
   non tranche sans capture coords (garde T26 anti-enfouissement
   emprise = hauteur d'origine sur 1 bloc ; pas d'inversion aveugle).
 ==========================================================
+
+==================== APPEND T244 (12/10/2026 ~02:45 UTC) ====================
+Protocole 3 structures + 1 lac, seed 20261011, monde frais, NeoForge 1.21.1 :
+ - observatory : 20 769 ms   (recherche+pose+terrain+vegetation)
+ - dragon      : 15 074 ms
+ - circus      : 10 210 ms (STRUCT4 paste) + post-process ~2 s
+ - crimsonlake : presage 120 s + construction 2,8 s
+ TOTAL ~169 s << 6 mn. ZERO exception/regression.
+Diag T244 symetrie lissage (dragon, 2e passe) : N 1.7/8 +1.7 p2 | S 1.5/6 +1.5 p2
+ | E 2.9/9 +2.9 p2 | O 3.6/14 +3.6 p2  -- remblai 4 cotes, marche max 2 blocs.
+Avant correctifs (meme version sans limitOuterEdgeSlope/limitContactSlope) :
+ E p11 @(1112,1054) d23 | O p14 @(1045,1083) d23 (falaise bord de zone).
+A/B perf : plan-zone candidat retenu 7667 ms (reprise 20t) -> 2084 ms (2t) = -73%.
+Bug rencontre en cours de dev : AIOOBE dans limitOuterEdgeSlope (typo j+1 au
+ lieu de j-1 dans la branche j>0) — corrige, re-test OK, aucune livraison
+ intermediaire defectueuse (la livraison est la version corrigee).
+=============================================================================

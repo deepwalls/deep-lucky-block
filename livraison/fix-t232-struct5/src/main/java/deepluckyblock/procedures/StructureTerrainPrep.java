@@ -4262,6 +4262,77 @@ public class StructureTerrainPrep {
         return worst;
     }
 
+    /**
+     * T244 : relaxation de pente bornee a la couronne EXTERNE de la zone de
+     * smooth (20 colonnes depuis le bord). Ne s'appelle qu'apres le clamp
+     * adaptatif + anti-tranchee, dont les fenetres heterogenes au bord
+     * creaient des marches de 4 a 14 blocs a quelques colonnes du perimetre.
+     * Meme regle que {@link #limitSlope} (ecart max MAX_SLOPE_STEP entre
+     * voisins, convergence) mais confinee au ruban de raccord, pour ne jamais
+     * retoucher le plateau interieur deja converge. Cout : quelques
+     * iterations sur ~1600 colonnes, aucun acces monde.
+     */
+    private static int[][] limitOuterEdgeSlope(int[][] hm, boolean[][] waterMask, int w, int h) {
+        for (int iter = 0; iter < 64; iter++) {
+            boolean any = false;
+            for (int i = 0; i < w; i++) {
+                for (int j = 0; j < h; j++) {
+                    int edge = Math.min(Math.min(i, w - 1 - i), Math.min(j, h - 1 - j));
+                    if (edge > 20) continue;                       // ruban externe uniquement
+                    if (waterMask != null && waterMask[i][j]) continue;
+                    int v = hm[i][j];
+                    int lo = v, hi = v;
+                    if (i > 0)     { lo = Math.min(lo, hm[i - 1][j]); hi = Math.max(hi, hm[i - 1][j]); }
+                    if (i < w - 1) { lo = Math.min(lo, hm[i + 1][j]); hi = Math.max(hi, hm[i + 1][j]); }
+                    if (j > 0)     { lo = Math.min(lo, hm[i][j - 1]); hi = Math.max(hi, hm[i][j - 1]); }
+                    if (j < h - 1) { lo = Math.min(lo, hm[i][j + 1]); hi = Math.max(hi, hm[i][j + 1]); }
+                    if (v - lo > MAX_SLOPE_STEP) { hm[i][j] = lo + MAX_SLOPE_STEP; any = true; }
+                    else if (hi - v > MAX_SLOPE_STEP) { hm[i][j] = hi - MAX_SLOPE_STEP; any = true; }
+                }
+            }
+            if (!any) break;
+        }
+        return hm;
+    }
+
+    /**
+     * T244 : relaxation de pente au CONTACT de l'emprise. Meme regle que
+     * {@link #limitSlope} (ecart voisin <= MAX_SLOPE_STEP, convergence) mais
+     * confinee aux 10 premieres colonnes de la couronne. Les colonnes de
+     * l'emprise sont un pivot : lues jamais ecrites — la restauration finale
+     * a y0 garde toute sa valeur. But : tuer la marche residuelle au pied du
+     * mur (jusqu'a 5 blocs mesures in vivo) en la transformant en pente
+     * douce de raccord sur les premiers blocs autour du batiment.
+     */
+    private static int[][] limitContactSlope(int[][] hm, boolean[][] waterMask, int w, int h,
+                                             int sMinI, int sMaxI, int sMinJ, int sMaxJ) {
+        for (int iter = 0; iter < 24; iter++) {
+            boolean any = false;
+            for (int i = 0; i < w; i++) {
+                for (int j = 0; j < h; j++) {
+                    if (waterMask != null && waterMask[i][j]) continue;
+                    boolean inX = i >= sMinI && i <= sMaxI;
+                    boolean inZ = j >= sMinJ && j <= sMaxJ;
+                    if (inX && inZ) continue;                    // emprise : pivot fige
+                    int ddI = i < sMinI ? sMinI - i : (i > sMaxI ? i - sMaxI : 0);
+                    int ddJ = j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0);
+                    int dd = Math.max(ddI, ddJ);
+                    if (dd < 1 || dd > 10) continue;             // ruban de contact 1..10
+                    int v = hm[i][j];
+                    int lo = v, hi = v;
+                    if (i > 0)     { lo = Math.min(lo, hm[i - 1][j]); hi = Math.max(hi, hm[i - 1][j]); }
+                    if (i < w - 1) { lo = Math.min(lo, hm[i + 1][j]); hi = Math.max(hi, hm[i + 1][j]); }
+                    if (j > 0)     { lo = Math.min(lo, hm[i][j - 1]); hi = Math.max(hi, hm[i][j - 1]); }
+                    if (j < h - 1) { lo = Math.min(lo, hm[i][j + 1]); hi = Math.max(hi, hm[i][j + 1]); }
+                    if (v - lo > MAX_SLOPE_STEP) { hm[i][j] = lo + MAX_SLOPE_STEP; any = true; }
+                    else if (hi - v > MAX_SLOPE_STEP) { hm[i][j] = hi - MAX_SLOPE_STEP; any = true; }
+                }
+            }
+            if (!any) break;
+        }
+        return hm;
+    }
+
     /** T23 : remblai maximal autorise du lissage (vers le haut), en blocs,
      *  LOIN de l'emprise (fenetre de fond T89). */
     private static final int MAX_SMOOTH_RISE = 10;
@@ -4319,7 +4390,19 @@ public class StructureTerrainPrep {
                 int dx = i < sMinI ? sMinI - i : (i > sMaxI ? i - sMaxI : 0);
                 int dz = j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0);
                 int reach = ADAPTIVE_SMOOTH_MAX - 2 * Math.max(dx, dz);
-                int allowRise = Math.max(MAX_SMOOTH_RISE, reach);
+                // T244 : la fenetre de REMBLAI se referme 2x moins vite
+                // (1 bloc par bloc d'eloignement). Un creux de berge cote aval
+                // d'une pente reclame souvent 20-40 blocs de remblai jusque
+                // pres du bord du ring ; la decroissance a 2/bloc l'arretait a
+                // mi-chemin et laissait la « zone creusee » beante, lisible
+                // comme « smooth que sur 1 bord » (seul le cote amont, ou le
+                // terrain rejoint naturellement le plateau, paraissait fondu).
+                // Le creusage (drop) conserve la pente historique : lisser ne
+                // doit jamais recreuser. Le remblai reste borne par la cible
+                // elle-meme (fade vers 0 au bord + limitSlope pente <= 2),
+                // donc aucun mur artificiel ne peut naitre.
+                int reachRise = ADAPTIVE_SMOOTH_MAX - Math.max(dx, dz);
+                int allowRise = Math.max(MAX_SMOOTH_RISE, reachRise);
                 int allowDrop = Math.max(MAX_SMOOTH_DROP, reach);
                 // T177 — feather radial vers la frontière de la zone. Un smooth
                 // rectangulaire sans ce masque pouvait encore modifier de 10
@@ -4555,7 +4638,18 @@ public class StructureTerrainPrep {
         // collé a la structure de ne pas etre smoothé et ducoup mal rendre » (log
         // client) : chaque bloc laisse a sa hauteur d'origine est un bloc NON lisse,
         // et la couronne autour du batiment restait brute sur 4 blocs d'epaisseur.
-        double anchorMargin = Math.min(1.0, maxFade * 0.1);
+        // T244 : marge d'ancrage supprimee (1 bloc -> 0). « tu as bien smooth vers
+        // l'interieur mais que sur 1 bord, pas les 4, zone creusee incluse » :
+        // les colonnes collees a l'emprise (dist <= 1) restaient a fade=0, donc
+        // gardaient leur hauteur d'origine -- le creux au pied du mur n'etait
+        // jamais remblaye et le fondu demarrait avec une cassure. Avec 0, le
+        // fade monte progressivement des le premier bloc exterieur (montee vers
+        // le pic a mi-couronne, inchangee), donc la depression au bord de
+        // l'emprise est incluse dans le lissage. Sans danger pour l'emprise :
+        // en phase TERRAIN la protection est levee (T39) et l'emprise est de
+        // toute facon forcee au sol zero (CLEARANCE_PLAN ci-dessous) ; en phase
+        // post-pose aucun smooth ne tourne (branche finitions).
+        double anchorMargin = 0.0;
         // Le pic de flou (fade=1) est atteint a mi-couronne : le lissage du
         // paysage environnant reste donc plein, seule la zone pres du batiment
         // est desormais protegee.
@@ -4732,6 +4826,41 @@ public class StructureTerrainPrep {
             }
         }
 
+        // === T244 : ANTI-FALAISE DE BORD DE ZONE ===
+        // Mesure in vivo du diag symetrie (ci-dessous, runs lab 12/10) : les
+        // pires marches (7 a 14 blocs) sont TOUTES a 1-2 colonnes du bord de
+        // la zone (dist-emprise 22-24, le feather T177 y multiplie la fenetre
+        // adaptative par ~0). La fenetre autorisee passe de ~1 bloc (bord) a
+        // +18/+40 blocs (5 colonnes plus loin) : la cible clampee dessinait
+        // une FALAISE nette en bord de zone sur les cotes a denivele, lisible
+        // en jeu comme « smooth que sur 1 bord » (le seul bord sans denivele
+        // paraissait fondu, les trois autres gardaient leur casse).
+        // Correctif borne : une relaxation de pente (<= MAX_SLOPE_STEP)
+        // limitee a la bande externe (20 colonnes, eau exclue), apres le
+        // clamp et l'anti-tranchee. Le premier rang sert de pivot accolle au
+        // naturel ; seule la zone lissee par le lissage se raccorde en pente
+        // douce. La garantie y0 finale (ci-dessous) est inchangee.
+        if (target.length != w || (w > 0 && target[0].length != h)) {
+            LOGGER.warn("[DLB-STRUCTURE] T244 edge-slope : shape inattendue de target {}x{} pour zone {}x{} -- ruban relache sur les dimensions REELLES",
+                    target.length, w == 0 ? 0 : target[0].length, w, h);
+            target = limitOuterEdgeSlope(target, waterMask,
+                    target.length, w == 0 ? 0 : target[0].length);
+        } else {
+            target = limitOuterEdgeSlope(target, waterMask, w, h);
+        }
+
+        // T244 (suite) : RACCORD DE CONTACT au pied des murs. Le diag symetrie
+        // localise la derniere marche residuelle exactement a la frontiere
+        // emprise/couronne (ex. dragon v5 : p5, 96>91, dist-emprise 1) : le
+        // restore y0 de l'emprise (ci-dessous) recreait une cassure nette la
+        // ou la couronne restait plus basse (creux naturel ou ancien creusage
+        // colle au mur -- la « zone creusee » du client). Le ruban externe ne
+        // couvre pas cette frontiere interne. Meme mecanique que limitSlope,
+        // confinee aux 10 premieres colonnes de la couronne, l'emprise
+        // STRICTEMENT figee (pivot) : le restore y0 final conserve donc tout
+        // son sens. Eau exclue. Aucun impact au-dela de 10 blocs des murs.
+        target = limitContactSlope(target, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ);
+
         // Garantie finale du noyau APRÈS tous les garde-fous numériques : aucune
         // étape du smooth ne peut relever l'emprise au-dessus du Y0.
         if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.matches(level, structMin, structMax)) {
@@ -4739,6 +4868,60 @@ public class StructureTerrainPrep {
             for (int i = Math.max(0, sMinI); i <= Math.min(w - 1, sMaxI); i++)
                 for (int j = Math.max(0, sMinJ); j <= Math.min(h - 1, sMaxJ); j++)
                     target[i][j] = y0;
+        }
+
+        // === T244 : DIAG SYMETRIE DU LISSAGE -- preuve « 4 bords » ===
+        // Le client signale « smooth vers l'interieur mais que sur 1 bord, pas
+        // les 4, zone creusee incluse ». Juste avant le rebuild, on mesure par
+        // cote (N/S/E/O ; les coins sont rattaches au cote N/S) l'ampleur
+        // REELLE du remodelage (moyenne et pire |cible - naturel|), le remblai
+        // moyen (preuve que la zone creusee est incluse) et la pire marche
+        // entre colonnes adjacentes, LOCALISEE (coordonnees monde, Y des deux
+        // colonnes, distance a l'emprise) pour distinguer marche de contact
+        // (casse au pied du mur), marche de bord de zone et marche naturelle.
+        {
+            double ampN = 0, ampS = 0, ampE = 0, ampW = 0;
+            double rN = 0, rS = 0, rE = 0, rW = 0;
+            int mxN = 0, mxS = 0, mxE = 0, mxW = 0, cN = 0, cS = 0, cE = 0, cW = 0;
+            int[] st  = {0, 0, 0, 0};
+            int[] stX = new int[4], stZ = new int[4], stA = new int[4], stB = new int[4], stD = new int[4];
+            for (int i = 0; i < w; i++) {
+                for (int j = 0; j < h; j++) {
+                    if (waterMask[i][j]) continue;
+                    boolean inX = i >= sMinI && i <= sMaxI;
+                    boolean inZ = j >= sMinJ && j <= sMaxJ;
+                    if (inX && inZ) continue; // emprise : plateau volontaire (y0)
+                    int side = !inX && j < sMinJ ? 0 : (!inX && j > sMaxJ ? 1 : (inZ && i > sMaxI ? 2 : 3));
+                    int d = Math.abs(target[i][j] - orig[i][j]);
+                    if (side == 0)      { ampN += d; cN++; if (d > mxN) mxN = d; if (target[i][j] > orig[i][j]) rN += d; }
+                    else if (side == 1) { ampS += d; cS++; if (d > mxS) mxS = d; if (target[i][j] > orig[i][j]) rS += d; }
+                    else if (side == 2) { ampE += d; cE++; if (d > mxE) mxE = d; if (target[i][j] > orig[i][j]) rE += d; }
+                    else                { ampW += d; cW++; if (d > mxW) mxW = d; if (target[i][j] > orig[i][j]) rW += d; }
+                    for (int k = 0; k < 2; k++) {
+                        int i2 = i + (k == 0 ? 1 : 0);
+                        int j2 = j + (k == 0 ? 0 : 1);
+                        if (i2 >= w || j2 >= h || waterMask[i2][j2]) continue;
+                        int s = Math.abs(target[i2][j2] - target[i][j]);
+                        if (s > st[side]) {
+                            st[side] = s;
+                            stX[side] = x0 + i;
+                            stZ[side] = z0 + j;
+                            stA[side] = target[i][j];
+                            stB[side] = target[i2][j2];
+                            stD[side] = Math.max(i < sMinI ? sMinI - i : (i > sMaxI ? i - sMaxI : 0),
+                                                 j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0));
+                        }
+                    }
+                }
+            }
+            LOGGER.warn("[DLB-STRUCTURE] " + String.format(
+                    "T244 symetrie lissage [ampleur moy/pire, remblai moy, marche max A>B @(x,z) dist-emprise, nb col] : "
+                            + "N %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d | S %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d"
+                            + " | E %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d | O %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d",
+                    cN == 0 ? 0 : ampN / cN, mxN, cN == 0 ? 0 : rN / cN, st[0], stA[0], stB[0], stX[0], stZ[0], stD[0], cN,
+                    cS == 0 ? 0 : ampS / cS, mxS, cS == 0 ? 0 : rS / cS, st[1], stA[1], stB[1], stX[1], stZ[1], stD[1], cS,
+                    cE == 0 ? 0 : ampE / cE, mxE, cE == 0 ? 0 : rE / cE, st[2], stA[2], stB[2], stX[2], stZ[2], stD[2], cE,
+                    cW == 0 ? 0 : ampW / cW, mxW, cW == 0 ? 0 : rW / cW, st[3], stA[3], stB[3], stX[3], stZ[3], stD[3], cW));
         }
 
         // Reconstruire en batch (toute la zone ; les cols sans changement sont skipees).

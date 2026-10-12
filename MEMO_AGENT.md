@@ -172,3 +172,21 @@ la latence disque du client est un axe de test a part entiere.
   dégradé). Protocole 3+1 ≈260 s <6 mn, aucune régression. Ouvert T244 :
   « smooth vers l'intérieur 1 bord » — attendre capture/coords (garde T26
   anti-enfouissement non touchée). Perf « TROP LONG » obséré de nouveau.
+
+## T244 (12/10/2026) — LISSAGE 4 BORDS + ZONE CREUSEE + PERP
+Diag instrumenté « T244 symetrie lissage » (LOG WARN par passe) : N/S/E/O
+ampleur |cible-naturel|, remblai moy, marche max LOCALISEE (x,z,Y,dist-emprise).
+Preuves : marches de 7-14 blocs TOUTES en bord de zone (d22-24, fenêtre
+adaptative xfeather ≈ 0 au bord puis +18/+40 à 5 colonnes = falaise bride) +
+marche 5 au contact emprise (d1, restore y0) => « 1 seul bord fondu ».
+Fix (StructureTerrainPrep) : limitOuterEdgeSlope (pente<=2, ruban externe 20,
+eau exclue, naturel pivot) ; limitContactSlope (pente<=2, 10 cols couronne,
+emprise pivot figée, restore y0 inchangé) ; anchorMargin 1.0->0.0 ; fenêtre
+REMBLAI refermée 1 bloc/bloc au lieu de 2 (drop inchangé). Perf
+(Structures5Procedure) : reprise attente SAFETY plan-zone 20->2 ticks
+(plan-zone 7667->2084 ms, -73 %, zéro changement de verdict).
+Dev : AIOOBE typo j+1 (au lieu de j-1) dans limitOuterEdgeSlope branche j>0 ->
+corrigé AVANT livraison (diag shape inutile mais gardée défensive).
+Protocole 3+1 v6 : observatory 20,8 s / dragon 15,1 s / circus 10,2 s /
+lac 2,8 s après présage 120 s = **~169 s < 6 mn** (T243=260 s).
+Symétrie finale : remblai + sur 4 côtes, marche max=2 partout. Solde 0.

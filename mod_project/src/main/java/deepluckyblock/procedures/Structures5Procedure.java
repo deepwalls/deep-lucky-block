@@ -2760,8 +2760,18 @@ public class Structures5Procedure {
                 deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-SAFETY] {} : chargement asynchrone de l'emprise finale (reprise {}/{})",
                         nbt, FOOTPRINT_LOAD_RETRIES, MAX_FOOTPRINT_LOAD_RETRIES);
             final BlockPos retryOrigin = origin;
+            // T244 : reprise toutes les 2 ticks au lieu de 20. La file de
+            // generation charge l'emprise en continu ; entre deux reprises on
+            // attendait jusqu'a 1 seconde PUREMENT perdue par candidat (log
+            // lab 12/10 : plan-zone mesure 4,5 a 7,7 s pour 16 chunks, dont
+            // ~2,5-4 s de trous de sondage). Verifier plus souvent (la
+            // verification est O(grille) sur les seuls chunks deja prets,
+            // quelques millisecondes) ne change AUCUNE decision : memes
+            // gardes (T235b, T232, wetRatio), meme pipeline ; seule la
+            // latence de detection de la fin de chargement diminue. Gain
+            // identique sur le candidat FINAL : la pose demarre plus tot.
             deepluckyblock.procedures.TestProcedure.schedule(level,
-                    deepluckyblock.procedures.TestProcedure.currentTick(level) + 20, () -> {
+                    deepluckyblock.procedures.TestProcedure.currentTick(level) + 2, () -> {
                 boolean ok = doPaste(level, retryOrigin, nbt, ox, oy, oz, dist, nf, followSurf, useFlat, keepInt);
                 if (!ok) notifyGenerationAborted(level);
             });

@@ -1,0 +1,100 @@
+============================================================
+T244 — LISSAGE 4 BORDS + ZONE CREUSEE + ACCELERATION
+Date : 12/10/2026 — build [build T244]
+============================================================
+
+DEMANDE CLIENT
+--------------
+« demerde toi pour les deux points ! fais tout pour que ca
+marche a 100%, et plus rapidement »
+ (A) smooth vers l'intérieur sur les 4 bords + zone creusée
+     incluse ;
+ (B) réduire le « TROP LONG ».
+
+DIAGNOSTIC MESURE (diag instrumenté livré, ligne
+« T244 symetrie lissage » dans le log)
+-----------------------------------------------------------
+Le diag mesure cote par cote (N/S/E/O) l'ampleur du
+remodelage, le remblai moyen et la marche maximale entre
+colonnes voisines, avec sa localisation exacte (x,z) et sa
+distance a l'emprise. Resultats avant correction :
+
+ - Les 4 cotes etaient bien lisses ... MAIS les pires marches
+   (7 a 14 blocs !) etaient TOUTES a 1-2 colonnes du BORD de
+   la zone lisse (dist-emprise 22-24) : la fenetre de
+   bridage adaptative (feather x marge) passait de ~1 bloc
+   (bord) a +18/+40 blocs en 5 colonnes -> la cible bride
+   dessinait une FALAISE nette en bord de zone sur les cotes
+   a denivele. Seul le bord sans denivele paraissait fondu
+   => « smooth que sur 1 bord ».
+
+ - Une marche residuelle (jusqu'a 5 blocs) subsistait PILE au
+   contact de l'emprise (dist-emprise 1) : creux naturel ou
+   ancien creusage colle au mur jamais remblaye (le fade
+   d'ancrage conservait le terrain d'origine a 1 bloc du mur)
+   => la « zone creusee » non incluse.
+
+ - A distance, la fenetre de REMBLAI se refermait 2x trop
+   vite (2 blocs par bloc d'eloignement) : un creux de berge
+   cote aval d'une pente ne pouvait pas etre comble.
+
+CORRECTIFS (minimal-touch, regles de fond conservees)
+-----------------------------------------------------
+1. target = limitOuterEdgeSlope(...) : nouvelle relaxation de
+   pente (<= 2 blocs par colonne, eau exclue) confinee au
+   RUBAN EXTERNE (20 colonnes depuis le bord de zone), apres
+   clamp et anti-tranchee. La falaise artificielle de bord
+   de zone disparait ; le naturel hors zone est pivot,
+   jamais touche.
+2. target = limitContactSlope(...) : meme regle, confinee
+   aux 10 PREMIERES colonnes de la couronne au contact du
+   batiment ; l'emprise est un pivot FIGE (jamais ecrite),
+   le restore final a y0 garde tout son sens. La marche au
+   pied du mur (5 blocs mesures) devient une pente douce ;
+   la zone creusee collee au batiment est incluse.
+3. anchorMargin 1.0 -> 0.0 : le fondu demarre des le premier
+   bloc hors emprise (plus aucun bloc gelee « brute » colle
+   a la structure).
+4. Fenetre de REMBLAI refermee 2x moins vite (1 bloc/bloc
+   au lieu de 2) : la depression cote aval est combee. Le
+   CREUSAGE (drop) conserve la pente historique (jamais de
+   re-creusement).
+5. ACCELERATION (B) : la reprise qui attend le chargement de
+   l'emprise finale SAFETY passait de 20 ticks (1 s plein !)
+   a 2 ticks entre deux verifications. Chaque candidat
+   perdait ~0.5 s x 5-8 reprises en attente PURE (mesure :
+   plan-zone 7667 ms -> 2084 ms, soit -73 % sur le candidat
+   retenu). AUCUNE decision changee (memes gardes T232,
+   T235b, verdict final inchange) : seule la latence de
+   detection de fin de chargement baisse.
+
+VALIDATION LAB (seed 20261011, monde frais, protocole 3+1)
+----------------------------------------------------------
+Avant (T242/T243 reference) : ~260 s (zones seches lab).
+T244 :
+ - observatory : 20 769 ms
+ - dragon      : 15 074 ms
+ - circus      : 10 210 ms
+ - crimsonlake : 120 s presage + 2,8 s construction
+ => TOTAL ~169 s << 360 s (6 mn)   [3 structures en 46 s !]
+
+Diag « T244 symetrie lissage » apres correctifs (dragon) :
+ N 1.7/8 +1.7 p2 | S 1.5/6 +1.5 p2 | E 2.9/9 +2.9 p2 | O 3.6/14 +3.6 p2
+ => REMBLAI (+) sur les 4 cotes, marche max = 2 blocs PARTOUT
+    (contre 14 a l'est et 11 a l'ouest avant, bord de zone).
+    Le lissage est desormais fondu vers l'interieur ET vers
+    l'exterieur, 4 bords, zone creusee incluse.
+
+La ligne « T244 symetrie lissage » reste livree dans le mod
+(envoyez le log en cas de doute : elle dit, structure par
+structure, si un bord reste non fondu).
+
+A/B perf detaille (meme seed, meme commande) :
+ - emprise finale du candidat retenu : 7667 ms (T243) vs
+   2084 ms (T244) = -73 %
+ - temps de pose restant depend surtout de la generation
+   vanilla des chunks du monde neuf (incompressible).
+
+CONSEIL : recompiler avec ces sources (zip), run : la
+commande affichera « commande prete ... [build T244] ».
+============================================================
