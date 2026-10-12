@@ -1,23 +1,9 @@
-# ============ CAMPAGNE T248 « 15 runs serveur » (campagne 2) ============
-# Objectif 1 : MESURER le tier charge T245 (attente active « execute if
-# loaded » sur les coins du forceload jusqu'a 210 s — la campagne 1 l'a vu
-# muet car 45 s fixes < temps reel de chargement sur runner 2 CPU).
-# Objectif 2 : resserrer l'optimisation autour du vainqueur T247 (maxR 1024).
-# Objectif 3 : bruit statistique = repetitions de la meme config (r01/r14,
-# r03/r15). Defauts actuels : loadedBudgetMs=480 dryPickGoodSpan=8
-# dryPickMaxR=1024 dryPickMs=900.
-r01-defaut            | 
-r02-tier-off          | -Ddlb.search.loadedFirst=0
-r03-maxr-768          | -Ddlb.search.dryPickMaxR=768
-r04-maxr-1280         | -Ddlb.search.dryPickMaxR=1280
-r05-goodspan-7        | -Ddlb.search.dryPickGoodSpan=7
-r06-goodspan-9        | -Ddlb.search.dryPickGoodSpan=9
-r07-dryms-700         | -Ddlb.search.dryPickMs=700
-r08-dryms-1100        | -Ddlb.search.dryPickMs=1100
-r09-budget-380        | -Ddlb.search.loadedBudgetMs=380
-r10-budget-580        | -Ddlb.search.loadedBudgetMs=580
-r11-comboA            | -Ddlb.search.dryPickMaxR=768 -Ddlb.search.dryPickGoodSpan=9
-r12-comboB            | -Ddlb.search.dryPickMaxR=1280 -Ddlb.search.dryPickGoodSpan=9 -Ddlb.search.dryPickMs=900
-r13-budget-800-diag   | -Ddlb.search.loadedBudgetMs=800
-r14-defaut-bis        | 
-r15-maxr-768-bis      | -Ddlb.search.dryPickMaxR=768
+# ============ CAMPAGNE 3 « TIER » : mesurer le tier charge T245 ============
+# forceload reduit +-16 chunks (1056 au lieu de 1600) + deadline if-loaded
+# 330 s : les coins doivent ENFIN charger sur runner 2 CPU et le tier doit
+# s'activer (log « tier charge T245 : N ms » capturé). 4 runs dont une
+# repetition pour le bruit.
+t01-defaut       | 
+t02-defaut-bis   | 
+t03-budget-300   | -Ddlb.search.loadedBudgetMs=300
+t04-budget-800   | -Ddlb.search.loadedBudgetMs=800
