@@ -1,1 +1,1 @@
-PROGRESS: v04-budget-800 -> OK
+PROGRESS: v05-goodspan-6 -> OK
