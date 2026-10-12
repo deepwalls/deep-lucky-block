@@ -1,1 +1,1 @@
-PROGRESS: v05-goodspan-6 -> OK
+PROGRESS: v06-goodspan-10 -> OK
