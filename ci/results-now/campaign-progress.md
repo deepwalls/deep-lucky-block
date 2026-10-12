@@ -1,1 +1,1 @@
-PROGRESS: r03-maxr-768 -> OK
+PROGRESS: r04-maxr-1280 -> OK
