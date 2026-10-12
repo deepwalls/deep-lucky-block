@@ -190,3 +190,9 @@ corrigé AVANT livraison (diag shape inutile mais gardée défensive).
 Protocole 3+1 v6 : observatory 20,8 s / dragon 15,1 s / circus 10,2 s /
 lac 2,8 s après présage 120 s = **~169 s < 6 mn** (T243=260 s).
 Symétrie finale : remblai + sur 4 côtes, marche max=2 partout. Solde 0.
+
+## T244b (12/10/2026) — zip complet META-INF
+Client : « dans le telechargeable src j'avais main + meta-inf » -> ajoute
+main/resources/META-INF/ (neoforge.mods.toml, enumextensions.json, services/
+mixin connector) extrait de mod.zip a la racine du depot dans le zip T244.
+Commit 196175f, release T244 recreee dessus, liens raw verifies 302. Solde 0.
