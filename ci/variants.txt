@@ -1,15 +1,23 @@
-# ================= CAMPAGNE T246 « 10 runs serveur opti » =================
-# Format : nom | PROPRIETES_JAVA (injectees via JAVA_TOOL_OPTIONS au runServer)
-# Mesure duree de recherche (tier charge T245 vs repli sec T233c), distance,
-# temps total command->fin deco, ringaudit T231. Test point = 1200,90,0 avec
-# ±20 chunks forceload pour simuler le joueur qui pre-charge (client reel).
-v01-defaut           | 
-v02-tier-off         | -Ddlb.search.loadedFirst=0
-v03-budget-300       | -Ddlb.search.loadedBudgetMs=300
-v04-budget-800       | -Ddlb.search.loadedBudgetMs=800
-v05-goodspan-6       | -Ddlb.search.dryPickGoodSpan=6
-v06-goodspan-10      | -Ddlb.search.dryPickGoodSpan=10
-v07-dryms-600        | -Ddlb.search.dryPickMs=600
-v08-dryms-1500       | -Ddlb.search.dryPickMs=1500
-v09-maxr-1024        | -Ddlb.search.dryPickMaxR=1024
-v10-combo            | -Ddlb.search.loadedBudgetMs=700 -Ddlb.search.dryPickGoodSpan=6 -Ddlb.search.dryPickMaxR=1024
+# ============ CAMPAGNE T248 « 15 runs serveur » (campagne 2) ============
+# Objectif 1 : MESURER le tier charge T245 (attente active « execute if
+# loaded » sur les coins du forceload jusqu'a 210 s — la campagne 1 l'a vu
+# muet car 45 s fixes < temps reel de chargement sur runner 2 CPU).
+# Objectif 2 : resserrer l'optimisation autour du vainqueur T247 (maxR 1024).
+# Objectif 3 : bruit statistique = repetitions de la meme config (r01/r14,
+# r03/r15). Defauts actuels : loadedBudgetMs=480 dryPickGoodSpan=8
+# dryPickMaxR=1024 dryPickMs=900.
+r01-defaut            | 
+r02-tier-off          | -Ddlb.search.loadedFirst=0
+r03-maxr-768          | -Ddlb.search.dryPickMaxR=768
+r04-maxr-1280         | -Ddlb.search.dryPickMaxR=1280
+r05-goodspan-7        | -Ddlb.search.dryPickGoodSpan=7
+r06-goodspan-9        | -Ddlb.search.dryPickGoodSpan=9
+r07-dryms-700         | -Ddlb.search.dryPickMs=700
+r08-dryms-1100        | -Ddlb.search.dryPickMs=1100
+r09-budget-380        | -Ddlb.search.loadedBudgetMs=380
+r10-budget-580        | -Ddlb.search.loadedBudgetMs=580
+r11-comboA            | -Ddlb.search.dryPickMaxR=768 -Ddlb.search.dryPickGoodSpan=9
+r12-comboB            | -Ddlb.search.dryPickMaxR=1280 -Ddlb.search.dryPickGoodSpan=9 -Ddlb.search.dryPickMs=900
+r13-budget-800-diag   | -Ddlb.search.loadedBudgetMs=800
+r14-defaut-bis        | 
+r15-maxr-768-bis      | -Ddlb.search.dryPickMaxR=768

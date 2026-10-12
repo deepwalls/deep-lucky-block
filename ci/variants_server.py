@@ -143,9 +143,35 @@ def run_variant(name, props):
         # autour du point de test, puis petit temps de generation.
         try:
             rcon('forceload add 880 -320 1520 320', timeout=60)
-            time.sleep(45)
         except Exception as fe:
             print('forceload ignore: ' + str(fe), flush=True)
+        # CAMPAGNE 2 : attendre ACTIVEMENT que les chunks soient reels (le
+        # forceload charge en asynchrone ; 45 s fixes n'ont pas suffi sur
+        # runner 2 CPU et le tier charge T245 est reste muet). On sonde les
+        # 4 coins via « execute if loaded » (MC 1.21) jusqu'a 210 s.
+        corners_ok = False
+        deadline = time.monotonic() + 210
+        probe_supported = True
+        while time.monotonic() < deadline:
+            try:
+                out = rcon('execute if loaded 880 64 -320 if loaded 1520 64 320'
+                           ' if loaded 880 64 320 if loaded 1520 64 -320'
+                           ' run say DLCORNERS', timeout=30)
+                if 'Unknown or incomplete command' in out:
+                    probe_supported = False
+                    print('if-loaded absent : repli sleep 150 s', flush=True)
+                    time.sleep(150)
+                    corners_ok = True
+                    break
+            except Exception as pe:
+                print('probe ignore: ' + str(pe), flush=True)
+            if any('DLCORNERS' in ln for ln in log[-300:]):
+                corners_ok = True
+                break
+            time.sleep(15)
+        print('corners chargees=' + str(corners_ok) + ' probe=' + str(probe_supported), flush=True)
+        result['corners'] = corners_ok
+        time.sleep(10)
         rcon('execute positioned 1200 90 0 run dlbtest dragon', timeout=240)
         # T231 v2 (CI 2 CPU) : le KPI est la phase RECHERCHE (temps jusqu'au
         # "Zone choisie" + distance), pas la suite du paste/deco, qui ne
@@ -155,7 +181,7 @@ def run_variant(name, props):
         wait_for('Zone choisie a ', 900, phases)
         # Parse : duree de recherche + site choisi
         search_s = None; site = None
-        tier_ms = None; sec_ms = None
+        tier_ms = None; sec_ms = None; tier_fail_ms = None; tier_cands = None
         for ln in phases + log[-400:]:
             m = re.search(r'Zone choisie a (-?\d+),(-?\d+).*?(\d+) s de recherche', ln)
             if m:
@@ -167,10 +193,17 @@ def run_variant(name, props):
                 if m:
                     site = (int(m.group(1)), int(m.group(2)))
         # T245/T246 : duree de la phase de recherche en millisecondes, par voie.
+        # On capture AUSSI le repli du tier (« sans bon candidat ») pour
+        # distinguer « tier muet (0 emprise chargee) » de « tier actif ».
         for ln in phases + log[-600:]:
-            mt = re.search(r'tier charge T245 : (\d+) ms', ln)
+            mt = re.search(r'tier charge T245 : (\d+) ms, (\d+) sondes sechees, \d+ ecartees eau/haut, (\d+) candidats charges', ln)
             if mt and tier_ms is None:
                 tier_ms = int(mt.group(1))
+                tier_cands = int(mt.group(3))
+            mf = re.search(r'tier charge T245 sans bon candidat \((\d+) ms, (\d+) candidats', ln)
+            if mf and tier_fail_ms is None:
+                tier_fail_ms = int(mf.group(1))
+                tier_cands = int(mf.group(2))
             ms = re.search(r'selection seche T233c : (\d+) ms', ln)
             if ms and sec_ms is None:
                 sec_ms = int(ms.group(1))
@@ -186,7 +219,7 @@ def run_variant(name, props):
             dist = ((site[0] - 1200) ** 2 + site[1] ** 2) ** 0.5
             try:
                 rcon(f'dlbringaudit {site[0]} {site[1]}', timeout=180)
-                wait_for('[DLB-RINGAUDIT]', 300, phases)
+                wait_for('[DLB-RINGAUDIT]', 90, phases)
             except Exception as audit_err:
                 result['audit'] = str(audit_err).splitlines()[0][:200]
         else:
@@ -194,6 +227,7 @@ def run_variant(name, props):
         result.update({
             'search_s': search_s, 'site': site, 'dist': dist,
             'tier_ms': tier_ms, 'sec_ms': sec_ms,
+            'tier_fail_ms': tier_fail_ms, 'tier_cands': tier_cands,
             'total': total,
         })
         result['rows'] = 'OK'
@@ -275,13 +309,16 @@ for raw in spec.read_text().splitlines():
 
 rows = []
 for r in results:
+    tier = f"{r['tier_ms']}ms" if r.get('tier_ms') is not None else (
+        f"muet({r.get('tier_fail_ms')}ms,{r.get('tier_cands')}c)" if r.get('tier_fail_ms') is not None else 'absent')
     rows.append(f"{r['name']:<16} | {r['props']:<60}"
-                f" | tier={r.get('tier_ms')}ms | sec={r.get('sec_ms')}ms"
+                f" | tier={tier} | sec={r.get('sec_ms')}ms"
+                f" | coins={r.get('corners')}"
                 f" | site={r.get('site')} | dist={r.get('dist')}"
                 f" | total={r.get('total')}s | {r['rows']} | audit={r.get('audit','-')}")
-record('RESULTATS CAMPAGNE T246 (nom | props | recherche ms par voie)\n' + '\n'.join(rows))
-publish_now('tableau final de la campagne T246')
-annotate('RESULTATS CAMPAGNE T246\n' + '\n'.join(rows))
+record('RESULTATS CAMPAGNE T248 (nom | props | recherche ms par voie)\n' + '\n'.join(rows))
+publish_now('tableau final de la campagne T248')
+annotate('RESULTATS CAMPAGNE T248\n' + '\n'.join(rows))
 
 # Verdict T246 : gagner = recherche la plus courte (duree reelle en ms du
 # serveur, T245 tier charge ou repli sec T233c), tie-break distance + audit.
