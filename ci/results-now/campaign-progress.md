@@ -1,16 +1,1 @@
-RESULTATS CAMPAGNE T248 (nom | props | recherche ms par voie)
-r01-defaut       | defaut                                                       | tier=absent | sec=385ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r02-tier-off     | -Ddlb.search.loadedFirst=0                                   | tier=absent | sec=404ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r03-maxr-768     | -Ddlb.search.dryPickMaxR=768                                 | tier=absent | sec=366ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r04-maxr-1280    | -Ddlb.search.dryPickMaxR=1280                                | tier=absent | sec=393ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r05-goodspan-7   | -Ddlb.search.dryPickGoodSpan=7                               | tier=absent | sec=340ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r06-goodspan-9   | -Ddlb.search.dryPickGoodSpan=9                               | tier=absent | sec=498ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r07-dryms-700    | -Ddlb.search.dryPickMs=700                                   | tier=absent | sec=387ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r08-dryms-1100   | -Ddlb.search.dryPickMs=1100                                  | tier=absent | sec=385ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r09-budget-380   | -Ddlb.search.loadedBudgetMs=380                              | tier=absent | sec=387ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r10-budget-580   | -Ddlb.search.loadedBudgetMs=580                              | tier=absent | sec=382ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r11-comboA       | -Ddlb.search.dryPickMaxR=768 -Ddlb.search.dryPickGoodSpan=9  | tier=absent | sec=369ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r12-comboB       | -Ddlb.search.dryPickMaxR=1280 -Ddlb.search.dryPickGoodSpan=9 -Ddlb.search.dryPickMs=900 | tier=absent | sec=401ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r13-budget-800-diag | -Ddlb.search.loadedBudgetMs=800                              | tier=absent | sec=382ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r14-defaut-bis   | defaut                                                       | tier=absent | sec=384ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-r15-maxr-768-bis | -Ddlb.search.dryPickMaxR=768                                 | tier=absent | sec=406ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
+PROGRESS: t01-defaut -> OK
