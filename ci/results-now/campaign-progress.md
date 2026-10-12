@@ -1,1 +1,1 @@
-PROGRESS: r04-maxr-1280 -> OK
+PROGRESS: r05-goodspan-7 -> OK
