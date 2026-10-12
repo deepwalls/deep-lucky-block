@@ -1,1 +1,1 @@
-PROGRESS: v07-dryms-600 -> OK
+PROGRESS: v08-dryms-1500 -> OK
