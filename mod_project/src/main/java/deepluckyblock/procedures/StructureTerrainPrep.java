@@ -220,10 +220,14 @@ public class StructureTerrainPrep {
             verifyGrassSurface(level, min, max);
             replantTrees(level, trees, min, max, () -> {
                 naturalize(level, min, max, random, () -> {
-                    // T241 : la liberation keeper/chaine est portee par l'appelant
-                    // (decorateFinish -> onDone) : le raccord s'execute a
-                    // l'interieur de la fenetre tenue, avant la liberation.
-                    if (onDone != null) onDone.run();
+                    // T243 : dernier post-check visuel : aucune herbe ne doit
+                    // rester snowy=true exposee (sommet gris << bug connu >>).
+                    unsnowExposedGrass(level, min, max, () -> {
+                        // T241 : la liberation keeper/chaine est portee par l'appelant
+                        // (decorateFinish -> onDone) : le raccord s'execute a
+                        // l'interieur de la fenetre tenue, avant la liberation.
+                        if (onDone != null) onDone.run();
+                    });
                 });
             });
         });
@@ -1061,9 +1065,10 @@ public class StructureTerrainPrep {
                     }
                 }
 
-                if (snowy && level.getBlockState(mut.set(x, targetY + 1, z)).isAir()) {
+                if (snowy && level.getBlockState(mut.set(x, targetY + 1, z)).isAir()
+                        && snowCoverHere(level, level.getSeed() ^ 0x5EED2433L, x, z)) {
                     level.setBlock(mut, Blocks.SNOW.defaultBlockState(), FAST_FLAG);
-                }
+                }   // T243 : degrade + patches (consigne client 12/10)
             }
         }
         if (filled > 0 || capped > 0 || cleared > 0) {
@@ -3158,6 +3163,72 @@ public class StructureTerrainPrep {
     }
 
     // ==================================================================
+    // T243 (retour client 12/10, test T242 en jeu) : NEIGE FONDUE EN
+    // DEGRADE + PATCHES, et bug connu du « grass block snowy gris ».
+    //
+    // Avant : la neige etait decidee AU CHUNK : un chunk de biome enneige
+    // recevait une couche de snow partout (100 %), son voisin non enneige
+    // 0 % -> frontiere nette de 16 blocs. Le client demande (consigne
+    // litterale) : « verifie toujours si les chunks alentours contiennent
+    // de la neige aussi ; si oui, pluie de neige couvrant TOUT le chunk ;
+    // sinon degrade : 2 blocs a 100 % colles au chunk neigeux, 3 a 80 %,
+    // puis 2 a 50 %, 2 a 30 %, 2 a 10 %, puis 0 % », en PATCHES
+    // irreguliers, jamais en lignes geometriques.
+    /** Voisinage neigeux d'un chunk (une fois par chunk). [0]=N(z-), [1]=S(z+), [2]=O(x-), [3]=E(x+). */
+    private static final Map<Long, int[]> SNOW_NEIGHBOR_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static int[] snowyNeighbors(ServerLevel level, int cx, int cz) {
+        long key = (((long) cx) << 32) | (cz & 0xffffffffL);
+        int[] cached = SNOW_NEIGHBOR_CACHE.get(key);
+        if (cached != null) return cached;
+        BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
+        int[] nb = new int[4];
+        nb[0] = isSnowyCell(level, probe.set((cx << 4) + 8, 80, ((cz - 1) << 4) + 8)) ? 1 : 0;
+        nb[1] = isSnowyCell(level, probe.set((cx << 4) + 8, 80, ((cz + 1) << 4) + 8)) ? 1 : 0;
+        nb[2] = isSnowyCell(level, probe.set(((cx - 1) << 4) + 8, 80, (cz << 4) + 8)) ? 1 : 0;
+        nb[3] = isSnowyCell(level, probe.set(((cx + 1) << 4) + 8, 80, (cz << 4) + 8)) ? 1 : 0;
+        SNOW_NEIGHBOR_CACHE.put(key, nb);
+        return nb;
+    }
+
+    /** T243 : bandes de densite selon la distance au bord colle au chunk neigeux (1..16). */
+    private static int snowBand(int d) {
+        if (d <= 2) return 100;   // rangée collee au chunk neigeux : 100 %
+        if (d <= 5) return 80;    // 3 suivants : 80 % (on retourne vers le terrain normal)
+        if (d <= 7) return 50;    // rangée de 2 blocs : 50 %
+        if (d <= 9) return 30;    // 2 suivants : 30 %
+        if (d <= 11) return 10;   // 2 suivants : 10 %
+        return 0;                 // au-dela : 0 %
+    }
+
+    /**
+     * T243 : Pose une neige en (x, z) ? Regle client :
+     * <ul>
+     *   <li>chunks 4 voisins tous neigeux -> couverture integrale (« pluie
+     *   de neige couvrant tout le chunk ») ;</li>
+     *   <li>sinon, densite decroissante EN S'AVANCANT dans le chunk vers
+     *   les cotes non enneiges (min des bandes en cas de coin) ;</li>
+     *   <li>decision par colonne en PATCHES deterministes (hash x,z,seed),
+     *   donc irreguliers : aucune ligne geometrique.</li>
+     * </ul>
+     */
+    private static boolean snowCoverHere(ServerLevel level, long seed, int x, int z) {
+        int cx = x >> 4, cz = z >> 4;
+        int[] nb = snowyNeighbors(level, cx, cz);
+        if ((nb[0] & nb[1] & nb[2] & nb[3]) != 0) return true;   // entoure : couvert complete
+        int lx = (x & 15) + 1, lz = (z & 15) + 1;
+        int pct = 100;
+        if (nb[0] == 0) pct = Math.min(pct, snowBand(lz));        // nord non neigeux : degrade du bord N vers le S
+        if (nb[1] == 0) pct = Math.min(pct, snowBand(17 - lz));   // sud : degrade du bord S vers le N
+        if (nb[2] == 0) pct = Math.min(pct, snowBand(lx));        // ouest
+        if (nb[3] == 0) pct = Math.min(pct, snowBand(17 - lx));   // est
+        if (pct <= 0) return false;
+        long h = seed ^ ((long) x * 0x9E3779B97F4A7C15L) ^ ((long) z * 0xC2B2AE3D27D4EB4FL);
+        h ^= h >>> 33; h *= 0xff51afd7ed558ccdL; h ^= h >>> 33;
+        return ((h >>> 0) % 100 + 100) % 100 < pct;
+    }
+
+    // ==================================================================
     // T-HABILL.4 : PALETTE DE SURFACE (guide, LIVRE IV -- invariant I1)
     // ==================================================================
     // Bloc de surface dominant + sous-sol, echantillonnes AVANT toute edition
@@ -3878,7 +3949,8 @@ public class StructureTerrainPrep {
                     }
                 }
 
-                if (snowy) applySnowLayer(level, mut, x, surfY, z);
+                if (snowy && snowCoverHere(level, vegSeed ^ 0x5EED2432L, x, z))
+                    applySnowLayer(level, mut, x, surfY, z);   // T243 : degrade + patches
             }
 
             // Densité radiale continue : forte dans le cœur, puis ramenée à
@@ -5685,16 +5757,49 @@ public class StructureTerrainPrep {
                                            Runnable onDone) {
         // Toute la zone GIGA lissée : grass en surface, + snow layer si biome enneigé
         // (sinon les blocs d'herbe en zone de neige ont une texture buggée).
-        final int[] counters = {0, 0};   // [0] = grass, [1] = snow
+        final int[] counters = {0, 0, 0};   // [0] = grass, [1] = snow, [2] = snow refusee par le degrade T243
         startColumnPass(level, "verifyGrassSurface",
                 columnsOf(structMin, structMax, terrainRing()), BATCH_COLS, col -> {
                     verifyGrassColumn(level, col[0], col[1], counters);
                 }, () -> {
-                    if (counters[0] > 0 || counters[1] > 0)
-                        deepluckyblock.util.DebugLog.structure("verifyGrassSurface : {} grass, {} snow layers",
-                                counters[0], counters[1]);
+                    if (counters[0] > 0 || counters[1] > 0 || counters[2] > 0)
+                        deepluckyblock.util.DebugLog.structure("verifyGrassSurface : {} grass, {} snow layers, {} refusees par degrade T243",
+                                counters[0], counters[1], counters[2]);
                     if (onDone != null) onDone.run();
                 });
+    }
+
+    /**
+     * T243 (retour client 12/10 : « le dessus des grass blocks version snow
+     * est bugge, gris ! c'est un bug connu ») : un grass_block avec
+     * snowy=true mais AUCUNE neige au-dessus affiche son sommet SANS teinte
+     * biome (gris) -- en vanilla cette face n'est jamais visible, le bug ne
+     * survient que quand le bloc de neige a ete retire sans avertir son
+     * support (clear/smooth). On repasse snowy=false sur toute herbe neige
+     * exposee a ciel ouvert dans la zone travaillee. La teinte reapparait.
+     */
+    private static void unsnowExposedGrass(ServerLevel level, BlockPos min, BlockPos max, Runnable onDone) {
+        final int[] fixed = {0};
+        startColumnPass(level, "unsnowExposedGrass",
+                columnsOf(min, max, terrainRing()), BATCH_COLS, col -> {
+            int x = col[0], z = col[1];
+            int surfY = deepluckyblock.util.SafeSurface.height(
+                    level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+            if (surfY < 1) return;
+            BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+            BlockState s = level.getBlockState(mut.set(x, surfY, z));
+            if (!s.is(Blocks.GRASS_BLOCK) || !s.getValue(BlockStateProperties.SNOWY)) return;
+            if (!level.getBlockState(mut.set(x, surfY + 1, z)).is(Blocks.SNOW)) {
+                level.setBlock(mut.set(x, surfY, z),
+                        s.setValue(BlockStateProperties.SNOWY, false), 2);
+                fixed[0]++;
+            }
+        }, () -> {
+            if (fixed[0] > 0)
+                deepluckyblock.util.DebugLog.structure(
+                        "unsnowExposedGrass : {} herbes snowy=true exposees repasses a snowy=false (bug gris)", fixed[0]);
+            if (onDone != null) onDone.run();
+        });
     }
 
     /** Une colonne de verifyGrassSurface (met a jour counters[grass, snow]). */
@@ -5720,8 +5825,12 @@ public class StructureTerrainPrep {
                     && !s.is(Blocks.SAND) && !s.is(Blocks.SANDSTONE) && !s.is(Blocks.RED_SAND)) {
                 level.setBlock(mut.set(x, surfY, z), Blocks.GRASS_BLOCK.defaultBlockState(), 2); counters[0]++;
             }
+            // T243 : neige en degrade + patches (consigne client 12/10) au
+            // lieu de la couverture binaire au chunk.
             if (level.getBlockState(mut.set(x, surfY + 1, z)).isAir()) {
-                level.setBlock(mut, Blocks.SNOW.defaultBlockState(), 3); counters[1]++;
+                if (snowCoverHere(level, level.getSeed() ^ 0x5EED2431L, x, z)) {
+                    level.setBlock(mut, Blocks.SNOW.defaultBlockState(), 3); counters[1]++;
+                } else if (counters.length > 2) counters[2]++;   // refus gradient (preuve degrade/patches au bord)
             }
         } else if (s.blocksMotion() && isNaturalTerrain(s) && !s.is(Blocks.GRASS_BLOCK)
                 && !s.is(Blocks.SAND) && !s.is(Blocks.SANDSTONE) && !s.is(Blocks.RED_SAND)) {

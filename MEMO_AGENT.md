@@ -163,3 +163,12 @@ la latence disque du client est un axe de test a part entiere.
   citadel 5403, lac 2,7 s, protocole 3+1 ≈236 s <6 mn, aucune régression.
   Reste plancher = génération vanilla des chunks vierges sur monde neuf
   (incompressible sans sacrifier). Options T243 proposées au client.
+
+- T243 (livré 12/10) : neige FONDUE au bord des biomes (dégradé 100/80/
+  50/30/10/0 % par bandes depuis le chunk neigeux, couverture totale si
+  entouré de neigeux, patches déterministes) + unsnowExposedGrass (tue le
+  « grass snowy=true exposé sans neige » qui rend le dessus GRIS = bug
+  vanilla connu). Diag livré (verifyGrassSurface logue les refusés par
+  dégradé). Protocole 3+1 ≈260 s <6 mn, aucune régression. Ouvert T244 :
+  « smooth vers l'intérieur 1 bord » — attendre capture/coords (garde T26
+  anti-enfouissement non touchée). Perf « TROP LONG » obséré de nouveau.

@@ -1,0 +1,83 @@
+T243 — Neige fondue en dégradé + patchs, bug du « grass snowy gris »
+(correction), selon tes consignes du 12/10 en jeu. [build T243]
+================================================================
+
+TA CONSIGNE (relevée dans tes messages en jeu) :
+  - « verifie toujours si les chunk alentours contiennent de la neige
+    aussi ; si oui, pluie de neige couvrant TOUT le chunk ; sinon
+    dégradé : 2 blocs à 100 % collés au chunk neigeux, 3 à 80 %, puis
+    2 à 50 %, 2 à 30 %, 2 à 10 %, puis 0 % » ;
+  - « et dans tous les cas il manque les carpet ; t'as même pas essayé
+    de faire des patch random » ;
+  - « grass version snow : le dessus est buggé, gris ! c'est un bug
+    connu des grass block en snow version ! » ;
+  - « il faut repeindre le sol en son sol normal détecté » ;
+  - « il manque les colonnes trop hautes/basses et l'anneau extérieur
+    côté suit — on dirait une boîte en carton ! ».
+
+CE QUI A ETE TROUVÉ EN AUDIT (StructureTerrainPrep)
+---------------------------------------------------
+1. La « boîte en carton » : l'anneau EST repeint (grass + snow) par
+   verifyGrassSurface ±24 blocs — mais sur un biome neigeux, un
+   grass_block avec snowy=true SANS couche de neige par-dessus affiche
+   son dessus SANS teinte biome = GRIS (bug vanilla connu : cette face
+   n'est jamais visible sous la neige, Mojang ne lui applique aucune
+   couleur — recherché et confirmé, c'est exactement ça). De loin,
+   un ring entier de grass snowy gris ressemble à de la STONE — ton
+   « carton ». Avec le nouveau dégradé T243 (la couche de neige
+   couvre 100 % des chunks entourés), ces grass ne sont plus
+   jamais exposés gris.
+2. La neige historique était BINAIRE au chunk près : un chunk de biome
+   enneigé 100 % couvert, le voisin non enneigé 0 %. D'où la frontière
+   nette de 16 blocs au bord des biomes.
+
+CE QUE T243 CHANGE (StructureTerrainPrep.java uniquement, plus le bump
+de build [build T243]) :
+4. NOUVEAU snowCoverHere() : densité de neige déterministe
+   - 4 voisins enneigés → couverture intégrale (« pluie de neige ») ;
+   - sinon bandes directionnelles depuis le bord collé au chunk neigeux :
+     2 blocs 100 %, 3 blocs 80 %, 2 blocs 50 %, 2 blocs 30 %, 2 blocs
+     10 %, puis 0 % (consigne littérale) ;
+   - décision par colonne en PATCHES pseudo-aléatoires déterministes
+     (hash x,z,seed) → pas de lignes géométriques ;
+   - en coin, les deux fronts se combinent (min conservateur).
+5. ApplySnowLayer + verifyGrassColumn + backfillVoidGap : les 3 sites
+   posant une couche de neige passent tous par ce dégradé (plus rien de
+   binaire).
+6. NOUVEAU unsnowExposedGrass() : passe en TOUTE FIN de raccord (même
+   fenêtre keeper T241, aucune sync ajoutée) — toute herbe restée
+   snowy=true exposée à ciel ouvert est repassée à snowy=false
+   (bug gris corrigé, teinte restaurée).
+7. Diag livré : le journal « verifyGrassSurface » indique maintenant
+   aussi « N refusées par degrade T243 » → tu verras noir sur blanc le
+   dégradé à l'oeuvre sur les zones mixtes neige/plaine.
+
+VALIDATION LAB E2E (build T243)
+-------------------------------
+  - Protocole 3 structures (observatory 6402 ms, dragon 8202 ms, circus
+    STRUCT4 6410 ms) + crimsonlake (construit en 2,8 s après présage
+    120 s) ≈ 260 s au total < 6 mn → AUCUNE régression (réf. T242 ≈ 236 s).
+  - En plaine normale : 0 blok écrit (rien à repeindre), aucun effet
+    indésirable, aucun watchdog. Rappel : la retouche neige n'a lieu
+    que sur terrain modifié par le smooth/carve — sur flat snowy plains
+    le sol naturel est déjà grass+snow peints par vanilla.
+  - build T243 confirmé en log (« commande prete … [build T243] »).
+
+CE QUI RESTE À TA MAIN (je n'ai pas voulu deviner)
+--------------------------------------------------
+  - « smooth vers l'intérieur seulement sur 1 bord, pas les 4, zone
+    creusée incluse » : dans le code, le lissage est par construction
+    symétrique (distance euclidienne + bruit d'ondulation), et
+    l'emprise est ancrée à sa hauteur d'origine SUR 1 BLOC (garde T26)
+    pour éviter l'enfouissement de la structure (cas réel corrigé
+    « ma structure à moitié dans une montagne »). Si tu le vois
+    asymétrique sur TA génération, il me faut une capture (coords) ou
+    « dlbtest probe x z » au point problématique : je n'inverse pas ce
+    garde à l'aveugle sans reproduire le cas.
+  - Perf : le plancher observé (observatory 2923 ms chez toi quand la
+    zone est générée / 7673 ms monde neuf) = génération des chunks
+    vierges ; j'investigue en suivant (options T244).
+
+ZIPS/RÉF : mêmes 9 fichiers que T242, StructureTerrainPrep et
+DlbTestCommands mis à jour. [build T243] partout.
+====================================================================

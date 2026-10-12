@@ -93,3 +93,25 @@ MESURES build T242 (mondes neufs, seed 20261011) :
   NB : ligne « [DLB-LAKE WATCHDOG] pipeline n'a JAMAIS demarre » = faux
   positif pré-existant T239 (lac fini < 10 s => horloge remise à 0).
 ==========================================================
+
+==================== T243 (12/10/2026) ====================
+Cible : retours client en jeu T242 (neige degrade/patches, grass snowy
+gris = bug vanilla connu, anneau « boite en carton »).
+FIX T243 (StructureTerrainPrep only + bump [build T243]) :
+  (a) snowCoverHere() : degrade directionnel 100/80/50/30/10/0 % par
+      bandes de blocs depuis le chunk neigeux, couverture integrale si
+      les 4 voisins sont neigeux, PATCHES deterministes (hash x,z,seed) ;
+      appliqué aux 3 sites posant une couche (applySnowLayer /
+      verifyGrassColumn / backfillVoidGap).
+  (b) unsnowExposedGrass() : rescan fin de raccord ; toute herbe
+      snowy=true exposee a ciel ouvert (sommet GRIS non teinté = bug
+      connu) repasse a snowy=false.
+  (c) Diag livré : verifyGrassSurface logue aussi les « refusees par
+      degrade » -> preuve du gradient en conditions matérielles.
+LAB E2E build T243 (seed fixe 20261011) : protocole 3+1 ≈260 s < 6 mn
+  (obs 6402, dragon 8202, circus 6410, lac 2,8 s / presage 120 s).
+  En plaines : 0 retouche (rien a repeindre) ; aucune régression vs T242.
+  Noté publiquement : « smooth vers l'interieur 1 bord + zone creusee »
+  non tranche sans capture coords (garde T26 anti-enfouissement
+  emprise = hauteur d'origine sur 1 bloc ; pas d'inversion aveugle).
+==========================================================
