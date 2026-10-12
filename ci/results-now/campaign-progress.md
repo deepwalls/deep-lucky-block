@@ -1,1 +1,1 @@
-PROGRESS: v09-maxr-1024 -> OK
+PROGRESS: v10-combo -> OK
