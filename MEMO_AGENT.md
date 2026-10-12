@@ -196,3 +196,26 @@ Client : « dans le telechargeable src j'avais main + meta-inf » -> ajoute
 main/resources/META-INF/ (neoforge.mods.toml, enumextensions.json, services/
 mixin connector) extrait de mod.zip a la racine du depot dans le zip T244.
 Commit 196175f, release T244 recreee dessus, liens raw verifies 302. Solde 0.
+=== T245 (12/10) ===
+T245 (log client 12/10 ~05:19) — 3 chantiers livrés :
+- (C) Recherche <= 0,5 s : NOUVEAU tier « chunks deja charges » en tete de recherche
+  (loadedPickCenter, Structures5Procedure). Enumeration serveur de centres dont
+  l'emprise 9-points est deja en memoire (0 generation), filtres bruit sur 2 threads
+  a indices disjoints (pairs/impairs, AtomicBoolean d'arret commun, budget DUR 480 ms
+  = propInt dlb.search.loadedBudgetMs), tri sec-puis-span, verdict REEL qualityOnReady
+  (slope<=10, wetRatio==0) avant retour. Fallback T233c inchange. Kill-switch
+  -Ddlb.search.loadedFirst=0. ATTENTION : l'accesseur du record FlatQuality est
+  slope() (pas span()) — corrige en revue.
+- (A) Cause racine anneau gris « terre enneigee » : le REFUS du degrade T243 laissait
+  l'herbe heritee snowy=true sans couche -> dessus gris. placeSnowOrUnsnow() partout
+  (verifyGrassColumn, dressAndPlant, naturalize-via-applySnowLayer? non: naturalize
+  garde applySnowLayer ; plateforme secours). Regle : herbe exposee sans neige = snowy=false.
+- (B) snowVaried() : couches 1-3 (55/30/15 %), hash deterministe, applique aux 4 sites neige.
+- Stamps : [build T245] (DlbTestCommands), « T245 symetrie lissage » (diag lissage).
+- Zip 21 fichiers + note + release (meme fabrication que T244).
+ENVIRONNEMENT : le lab (/home/user/dlb-lab, JDK, caches) a DISPARU du sandbox entre
+  les tours (reset comme celui du repo), et l'egress reseau n'autorise que GitHub/PyPI
+  (pas adoptium/gradle.org/maven) -> impossible de compiler/graader localement.
+  Verification T245 = statique (diff complet relu, equilibrage blocs, symboles).
+  Si le workdir retombe A b215420 : timeout 170 git fetch origin arena/... (retenter),
+  puis git reset --hard origin/arena/... — origin est fiable.

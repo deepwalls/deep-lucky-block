@@ -1051,6 +1051,31 @@ public class Structures5Procedure {
     // reprend alors le relais, exactement comme T233 sans T233b).
     private static final boolean SEARCH_DRY_PICK =
             !"0".equals(System.getProperty("dlb.search.dryPick", "1"));
+    // === T245 : RECHERCHE 0,5 s — TIER « CHUNKS DEJA CHARGES » ===============
+    //
+    // Consignes client 12/10 : « la phase de recherche ne doit pas depasser
+    // les 0.5 s ! », « doubles recherches au lieu de une par une », « j'ai
+    // une tonne de chunks charges expres ! » (view distance 20-23), et
+    // enchainer direct la phase suivante.
+    //
+    // Ce tier s'execute AVANT le choix sec T233c : il n'evalue QUE des
+    // centres dont l'emprise est ENTIEREMENT dans les chunks deja en memoire
+    // (rien n'est demande au generateur) ; le filtre bruit tourne sur DEUX
+    // DEMI-CERVEAUX qui ne se marchent pas dessus (indices disjoints,
+    // meilleur score partage, arret commun au premier candidat strictement
+    // bon) ; le verdict REEL (qualityOnReady) passe alors a l'arrivee au
+    // tick suivant dans doPaste — plus de 2 x 50 ticks de re-sondage, plus
+    // de chargement asynchrone : « zone choisie » puis pose directe.
+    // Si aucun candidat charge n'emerge dans la fenetre budget DURE de
+    // SEARCH_LOADED_BUDGET_MS (sous le plafond 0,5 s), on retombe sur le
+    // choix sec T233c inchange.
+    // Desactivable : -Ddlb.search.loadedFirst=0.
+    private static final boolean SEARCH_LOADED_FIRST =
+            !"0".equals(System.getProperty("dlb.search.loadedFirst", "1"));
+    /** Budget dur du tier charge, en ms (defaut 480 : strictement sous le
+     *  plafond client de 0,5 s, marge de tick comprise). */
+    private static final long SEARCH_LOADED_BUDGET_MS =
+            propInt("dlb.search.loadedBudgetMs", 480);
     /** Span sec juge assez plat nativement pour s'areter immediatement
      *  (pour rappel la porte reelle d'acceptation est 10 sur terrain genere). */
     private static final int DRY_PICK_GOOD_SPAN =
@@ -1130,6 +1155,153 @@ public class Structures5Procedure {
      *  jamais de span > SOFT (gaspillage d'emprise vouee au rejet).
      *  Retourne null si tout est epuise sous budget (fil historique relais,
      *  borne F2 au-dessus) ou en cas d'erreur (jamais de choix aveugle). */
+    /**
+     * T245 : choix de centre < 0,5 s sur le TIER DEJA CHARGE. Toutes les
+     * coordonnees proviennent de chunks en memoire (jamais demandes au
+     * generateur) ; les portes bruit tournent sur 2 threads disjoints qui
+     * se coordonnent via un meilleur span partage ; le candidat retenu
+     * passe aussitot au VERDICT REEL (qualityOnReady, oblige known==total)
+     * avec les memes portes qu'en doPaste (relief 10, 0 eau). Un echec
+     * rend null SANS effet de bord et laisse le choix sec T233c operer.
+     */
+    private static BlockPos loadedPickCenter(net.minecraft.server.level.ServerLevel lvl,
+            BlockPos origin, int checkR, int fullCheckR, int structMax, Player p, int minEdgeDist) {
+        final long t0 = System.currentTimeMillis();
+        final long budget = SEARCH_LOADED_BUDGET_MS;
+        if (p == null) return null;
+        net.minecraft.world.level.chunk.ChunkGenerator gen = lvl.getChunkSource().getGenerator();
+        net.minecraft.world.level.levelgen.RandomState rs = lvl.getChunkSource().randomState();
+        final int step = Math.max(32, structMax);
+        final int minCenterDist = minEdgeDist + checkR;
+        final int maxR = Math.max(512, 8 * step);
+        final int px = p.blockPosition().getX(), pz = p.blockPosition().getZ();
+
+        // 1) ENUMERATION (thread serveur, lookups O(1)) : centres dont la
+        //    boite d'emprise entiere (9 points) est deja chargee. Jamais de
+        //    generation ici : c'est tout le sens du tier.
+        final java.util.ArrayList<int[]> cands = new java.util.ArrayList<>();
+        outer:
+        for (int r = Math.max(64, minCenterDist); r <= maxR; r += step) {
+            final double angle0 = (r * 0.6180339887) % (2 * Math.PI);
+            final int n = Math.max(8, (int) Math.ceil((2 * Math.PI * r) / step));
+            for (int k = 0; k < n; k++) {
+                final double a = angle0 + (2 * Math.PI * k) / n;
+                int cx = px + (int) Math.round(Math.cos(a) * r);
+                int cz = pz + (int) Math.round(Math.sin(a) * r);
+                if (!empriseAlreadyLoaded(lvl, cx, cz, checkR)) continue;
+                boolean dejaPropose = false;
+                for (int[] q : DRY_PICK_SUGGESTED)
+                    if (Math.abs(cx - q[0]) + Math.abs(cz - q[1]) < step) { dejaPropose = true; break; }
+                if (dejaPropose) continue;
+                if (REJECTED_RUGGED_CENTERS.contains(BlockPos.asLong(cx, 0, cz))) continue;
+                if (deepluckyblock.util.StructureSites.conflict(lvl, cx, cz, checkR) != null) continue;
+                cands.add(new int[]{cx, cz});
+                if (cands.size() >= 96) break outer;   // 96 candidats, c'est largement assez pour 0,5 s
+            }
+        }
+        if (cands.isEmpty()) return null;
+
+        // 2) DOUBLE CERVEAU : deux workers a indices disjoints (pairs /
+        //    impairs — ils ne se marchent jamais dessus), filtres bruit
+        //    purs identiques au choix sec (getBaseHeight WG est une simple
+        //    fonction du sampler, utilisee en concurrence par vanilla),
+        //    drapeau commun « bon candidat trouve » pour s'arreter ensemble.
+        final java.util.concurrent.atomic.AtomicBoolean good = new java.util.concurrent.atomic.AtomicBoolean();
+        final int[][] scores = new int[cands.size()][2];   // [0]=span (-1=ecarte), [1]=wet
+        final Thread[] workers = new Thread[2];
+        final int[][] wpts;
+        {
+            int w = Math.max(12, checkR / 2);
+            wpts = new int[][]{{-w,0},{w,0},{0,-w},{0,w},{-w,-w},{-w,w},{w,-w},{w,w}};
+        }
+        for (int half = 0; half < 2; half++) {
+            final int h = half;
+            Thread w = new Thread(() -> {
+                for (int i = h; i < cands.size(); i += 2) {
+                    if (good.get() || System.currentTimeMillis() - t0 > budget) return;
+                    int cx = cands.get(i)[0], cz = cands.get(i)[1];
+                    try {
+                        int hy = gen.getBaseHeight(cx, cz,
+                                net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, lvl, rs);
+                        if (hy <= 61 || hy >= 190) { scores[i][0] = -1; continue; }
+                        if (gen.getBaseHeight(cx, cz,
+                                net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG, lvl, rs) <= 61) {
+                            scores[i][0] = -1; continue;
+                        }
+                        int wet = 0;
+                        for (int[] wp : wpts)
+                            if (gen.getBaseHeight(cx + wp[0], cz + wp[1],
+                                    net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG, lvl, rs) <= 61) wet++;
+                        int span = dryRuggedSpan(lvl, cx, cz, fullCheckR);
+                        scores[i][0] = span; scores[i][1] = wet;
+                        if (wet == 0 && span <= DRY_PICK_GOOD_SPAN) good.compareAndSet(false, true);
+                    } catch (Throwable any) { scores[i][0] = -1; }
+                }
+            }, "dlb-search-" + half);
+            w.setDaemon(true);
+            workers[half] = w;
+            w.start();
+        }
+
+        // 3) COORDINATION : le serveur attend la fin des deux cerveaux, la
+        //    decouverte d'un candidat strictement bon, ou l'epuisement du
+        //    budget DUR (0,5 s). Puis le verdict REEL decide, candidats
+        //    tries : secs d'abord, meilleur span en tete.
+        final long limit = t0 + budget;
+        while (System.currentTimeMillis() < limit) {
+            boolean alive = false;
+            for (Thread w : workers) if (w != null && w.isAlive()) { alive = true; break; }
+            if (!alive || good.get()) break;
+            try { Thread.sleep(2); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+        }
+        good.set(true);   // geler les workers (ils verifient le drapeau a chaque iteration)
+        for (Thread w : workers) if (w != null) try { w.join(5); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+
+        final java.util.ArrayList<Integer> order = new java.util.ArrayList<>();
+        int probed = 0, water = 0;
+        for (int i = 0; i < cands.size(); i++) {
+            if (scores[i][0] > 0) { order.add(i); probed++; }
+            else water++;
+        }
+        order.sort((a, b) -> {
+            boolean da = scores[a][1] == 0, db = scores[b][1] == 0;
+            if (da != db) return da ? -1 : 1;
+            return Integer.compare(scores[a][0], scores[b][0]);
+        });
+
+        for (int idx : order) {
+            if (scores[idx][1] != 0) break;            // les humides ne passent plus le verdict reel
+            if (System.currentTimeMillis() - t0 > budget) break;
+            int cx = cands.get(idx)[0], cz = cands.get(idx)[1];
+            FlatQuality q = qualityOnReady(lvl, cx, cz, checkR);
+            if (q == null) continue;
+            if (q.wetRatio() > 0.0) continue;
+            if (q.slope() > 10) continue;              // porte reelle d'acceptation : relief <= 10
+            int realY = deepluckyblock.util.SafeSurface.height(lvl,
+                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx, cz) - 1;
+            if (realY < 1) continue;
+            DRY_PICK_SUGGESTED.add(new int[]{cx, cz});
+            LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (tier charge T245 : {} ms, {} sondes sechees, {} ecartees eau/haut, {} candidats charges, span sec={}, span reel={}, 0 chunk genere, phase suivante directe)",
+                    cx, cz, System.currentTimeMillis() - t0, probed, water, cands.size(), scores[idx][0], q.slope());
+            return new BlockPos(cx, Math.max(realY, 63), cz);
+        }
+        deepluckyblock.util.DebugLog.info(LOGGER,
+                "[STRUCT5-FLAT] tier charge T245 sans bon candidat ({} ms, {} candidats charges, {} sondes) : repli choix sec T233c",
+                System.currentTimeMillis() - t0, cands.size(), probed);
+        return null;
+    }
+
+    /** T245 : l'emprise entiere (boite checkR, 9 points de controle) est-elle
+     *  deja en memoire ? Un seul point manquant disqualifie le candidat :
+     *  ce tier ne doit JAMAIS provoquer de chargement. */
+    private static boolean empriseAlreadyLoaded(net.minecraft.server.level.ServerLevel lvl, int cx, int cz, int checkR) {
+        int[][] pts = {{0,0},{-checkR,-checkR},{checkR,-checkR},{-checkR,checkR},{checkR,checkR},
+                       {-checkR,0},{checkR,0},{0,-checkR},{0,checkR}};
+        for (int[] pt : pts)
+            if (!deepluckyblock.util.SafeSurface.isLoadedAt(lvl, cx + pt[0], cz + pt[1])) return false;
+        return true;
+    }
+
     private static BlockPos dryPickCenter(net.minecraft.server.level.ServerLevel lvl,
             BlockPos origin, int checkR, int fullCheckR, int structMax, Player p, int minEdgeDist) {
         final long t0 = System.currentTimeMillis();
@@ -1720,16 +1892,25 @@ public class Structures5Procedure {
             if (choisi != null) return choisi;
         }
 
+        if (SEARCH_LOADED_FIRST) {
+            // T245 : d'abord le tier « chunks deja charges » — le joueur
+            // pre-charge massivement (view distance 20+), 0 chunk demande,
+            // budget dur 0,5 s, verdict reel immediat en doPaste.
+            BlockPos fast = loadedPickCenter(lvl, searchOrigin, checkR, fullCheckR,
+                    Math.max(structW, structD), p, minEdgeDist);
+            if (fast != null) return fast;
+        }
+
         // T233b : SELECTION SECHE (< 1 s, zero chunk charge). Mesure en jeu
         // (log joueur 10/10, terrain montagneux) : le balayage par couronnes
         // chargeait le terrain pour trier les candidats -> 279 s de selection
         // (et des milliers de chunks generes). On inverse la strategie : le
         // centre est choisi ENTIEREMENT par sondes bruit (API generateur),
         // en quelques centaines de ms ; les portes de terrain REEL (relief,
-        // eau, emprise exhaustive) restent le juge final sur l'emprise
-        // generee ensuite. Si le choix sec y echoue, il est blackliste
-        // (mecanismes existants) et le choix sec suivant est propose ;
-        // l'abandon borne F2 demeure la garde-fou ultime.
+        // eau, emprise exhaustive) restent le juge final ensuite, sur
+        // l'emprise generee ensuite. Si le choix sec y echoue, il est
+        // blackliste (mecanismes existants) et le choix sec suivant est
+        // propose ; l'abandon borne F2 demeure la garde-fou ultime.
         // Desactivable : -Ddlb.search.dryPick=0.
         if (SEARCH_DRY_PICK) {
             BlockPos dry = dryPickCenter(lvl, searchOrigin, checkR, fullCheckR,

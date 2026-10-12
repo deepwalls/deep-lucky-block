@@ -1065,10 +1065,10 @@ public class StructureTerrainPrep {
                     }
                 }
 
-                if (snowy && level.getBlockState(mut.set(x, targetY + 1, z)).isAir()
-                        && snowCoverHere(level, level.getSeed() ^ 0x5EED2433L, x, z)) {
-                    level.setBlock(mut, Blocks.SNOW.defaultBlockState(), FAST_FLAG);
-                }   // T243 : degrade + patches (consigne client 12/10)
+                if (snowy)
+                    placeSnowOrUnsnow(level, level.getSeed() ^ 0x5EED2433L, x, targetY, z);
+                // T245 : degrade + patches + epaisseur variable ; refus =
+                // de-neige de l'herbe exposee (anti dessus gris, anneau externe).
             }
         }
         if (filled > 0 || capped > 0 || cleared > 0) {
@@ -3228,6 +3228,53 @@ public class StructureTerrainPrep {
         return ((h >>> 0) % 100 + 100) % 100 < pct;
     }
 
+    /**
+     * T245 : couche de neige a EPAISSEUR VARIABLE (1, 2 ou 3 couches),
+     * deterministe par colonne. Consigne client 12/10, biomes de neige :
+     * « ajouter des snow carpet a differentes hauteurs » sur herbe enneigee
+     * comme sur simple grass block — la neige vanilla n'est jamais plane.
+     * Repartition : 55 % a 1 couche, 30 % a 2, 15 % a 3 (jamais plus :
+     * le rendu reste un tapis, pas un muret).
+     */
+    private static BlockState snowVaried(ServerLevel level, long seed, int x, int z) {
+        long h = seed ^ ((long) x * 0xA24BAED4963EE407L) ^ ((long) z * 0x9FB21C651E98DF25L);
+        h ^= h >>> 33; h *= 0xC4CEB9FE1A85EC53L; h ^= h >>> 33;
+        int r = (int) (((h >>> 0) % 100 + 100) % 100);
+        int layers = r < 55 ? 1 : (r < 85 ? 2 : 3);
+        return Blocks.SNOW.defaultBlockState()
+                .setValue(BlockStateProperties.LAYERS, layers);
+    }
+
+    /**
+     * T245 : applique la regle degrade + patches T243 AVEC epaisseur
+     * variable, OU — en cas de refus du degrade — des-neige definitivement
+     * un support herbe expose. Cause racine de « l'anneau exterieur avec les
+     * blocs de terre enneigee bugges, dessus gris » (client 12/10) : le
+     * refus du degrade T243 ne replacait PAS la couche enlevee avant le
+     * lissage, et l'herbe heritee snowy=true restait a ciel ouvert — or un
+     * grass_block snowy=true SANS neige affiche un dessus SANS teinte biome
+     * (gris, « bug connu » vanilla). Regle vie du mod : une herbe exposee
+     * sans couche est TOUJOURS snowy=false.
+     *
+     * @return 1 = couche posee, 0 = emplacement occupe (rien fait),
+     *         2 = refus degrade sans support a corriger,
+     *         3 = refus degrade, herbe exposee repassee a snowy=false.
+     */
+    private static int placeSnowOrUnsnow(ServerLevel level, long seed, int x, int surfY, int z) {
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        if (!level.getBlockState(mut.set(x, surfY + 1, z)).isAir()) return 0;
+        if (snowCoverHere(level, seed, x, z)) {
+            level.setBlock(mut, snowVaried(level, seed, x, z), 3);
+            return 1;
+        }
+        BlockState s = level.getBlockState(mut.set(x, surfY, z));
+        if (s.is(Blocks.GRASS_BLOCK) && s.getValue(BlockStateProperties.SNOWY)) {
+            level.setBlock(mut, s.setValue(BlockStateProperties.SNOWY, false), 2);
+            return 3;
+        }
+        return 2;
+    }
+
     // ==================================================================
     // T-HABILL.4 : PALETTE DE SURFACE (guide, LIVRE IV -- invariant I1)
     // ==================================================================
@@ -3783,12 +3830,13 @@ public class StructureTerrainPrep {
         return true;
     }
 
-    /** Couche de neige au-dessus de la surface, si le biome est enneige. */
+    /** Couche de neige au-dessus de la surface, si le biome est enneige.
+     *  T245 : epaisseur variable (1-3 couches) au lieu d'une couche plane. */
     private static void applySnowLayer(ServerLevel level, BlockPos.MutableBlockPos mut,
                                        int x, int surfY, int z) {
         mut.set(x, surfY + 1, z);
         if (level.getBlockState(mut).isAir())
-            level.setBlock(mut, Blocks.SNOW.defaultBlockState(), FAST_FLAG);
+            level.setBlock(mut, snowVaried(level, level.getSeed(), x, z), FAST_FLAG);
     }
 
     // ---- Passe principale ----
@@ -3949,8 +3997,8 @@ public class StructureTerrainPrep {
                     }
                 }
 
-                if (snowy && snowCoverHere(level, vegSeed ^ 0x5EED2432L, x, z))
-                    applySnowLayer(level, mut, x, surfY, z);   // T243 : degrade + patches
+                if (snowy)
+                    placeSnowOrUnsnow(level, vegSeed ^ 0x5EED2432L, x, surfY, z);   // T245 : degrade + patches, epaisseur variable ; refus = de-neige l'herbe exposee (anti dessus gris)
             }
 
             // Densité radiale continue : forte dans le cœur, puis ramenée à
@@ -4915,7 +4963,7 @@ public class StructureTerrainPrep {
                 }
             }
             LOGGER.warn("[DLB-STRUCTURE] " + String.format(
-                    "T244 symetrie lissage [ampleur moy/pire, remblai moy, marche max A>B @(x,z) dist-emprise, nb col] : "
+                    "T245 symetrie lissage [ampleur moy/pire, remblai moy, marche max A>B @(x,z) dist-emprise, nb col] : "
                             + "N %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d | S %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d"
                             + " | E %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d | O %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d",
                     cN == 0 ? 0 : ampN / cN, mxN, cN == 0 ? 0 : rN / cN, st[0], stA[0], stB[0], stX[0], stZ[0], stD[0], cN,
@@ -6008,13 +6056,13 @@ public class StructureTerrainPrep {
                     && !s.is(Blocks.SAND) && !s.is(Blocks.SANDSTONE) && !s.is(Blocks.RED_SAND)) {
                 level.setBlock(mut.set(x, surfY, z), Blocks.GRASS_BLOCK.defaultBlockState(), 2); counters[0]++;
             }
-            // T243 : neige en degrade + patches (consigne client 12/10) au
-            // lieu de la couverture binaire au chunk.
-            if (level.getBlockState(mut.set(x, surfY + 1, z)).isAir()) {
-                if (snowCoverHere(level, level.getSeed() ^ 0x5EED2431L, x, z)) {
-                    level.setBlock(mut, Blocks.SNOW.defaultBlockState(), 3); counters[1]++;
-                } else if (counters.length > 2) counters[2]++;   // refus gradient (preuve degrade/patches au bord)
-            }
+            // T245 : degrade + patches T243, epaisseur variable (snow carpet
+            // a differentes hauteurs), et en cas de refus on DE-NEIGE une
+            // herbe heritee snowy=true laissee exposee (c'est la cause de
+            // l'anneau gris « terre enneigee » toujours visible cote client).
+            int snowCode = placeSnowOrUnsnow(level, level.getSeed() ^ 0x5EED2431L, x, surfY, z);
+            if (snowCode == 1) counters[1]++;
+            else if (snowCode >= 2 && counters.length > 2) counters[2]++;   // refus gradient (preuve degrade/patches au bord)
         } else if (s.blocksMotion() && isNaturalTerrain(s) && !s.is(Blocks.GRASS_BLOCK)
                 && !s.is(Blocks.SAND) && !s.is(Blocks.SANDSTONE) && !s.is(Blocks.RED_SAND)) {
             level.setBlock(mut.set(x, surfY, z), Blocks.GRASS_BLOCK.defaultBlockState(), 2); counters[0]++;

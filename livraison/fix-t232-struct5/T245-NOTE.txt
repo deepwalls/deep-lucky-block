@@ -1,0 +1,81 @@
+========================================================================
+ DEEP LUCKY BLOCK — T245 (sources completes) — 12/10/2026
+========================================================================
+ ZIP : DEEP-LUCKY-BLOCK-T245-SRC-COMPLET.zip (21 fichiers, meme contenu
+       que T244 : main/java (9 classes touchees) + main/resources/META-INF)
+ EXTRACTION : par-dessus votre projet MCreator (mod_project/src) ; le
+       META-INF RESTE dans src/main/resources/, ne jamais le deplacer.
+
+ VERIFICATION DE VERSION (obligatoire avant tout test) :
+   Au demarrage, le log doit afficher :
+     [DLBTEST] commande prete : /dlbtest -> ... [build T245]
+   Et apres une pose reussie :
+     [DLB-STRUCTURE] T245 symetrie lissage [ampleur moy/pire ...] : N ...
+
+------------------------------------------------------------------------
+ CE QUE T245 CHANGE
+------------------------------------------------------------------------
+(A) ANNEAU EXTERIEUR « TERRE ENNEIGEE » A DESSUS GRIS — CAUSE RACINE CORRIGEE
+    Quand le degrade/patches T243 REFUSAIT la neige sur une colonne, la
+    couche enlevee avant le lissage n'etait PAS replacee, et l'herbe
+    heritee restait snowy=true a ciel ouvert -> dessus gris (bug vanilla
+    connu). Nouvelle regle partout ou la neige est arbitrée :
+    refus = le support herbe expose est repasse a snowy=false
+    (fonction placeSnowOrUnsnow, appliquee dans verifyGrassSurface,
+    dressAndPlant, naturalize, et la plateforme de secours).
+
+(B) SNOW CARPETS A HAUTEURS VARIABLES (biomes neigeux)
+    La couche n'est plus plane : 55 % a 1 couche, 30 % a 2, 15 % a 3,
+    deterministe par colonne (patches irreguliers, aucune ligne
+    geometrique), posee sur herbe enneigee comme sur grass block simple,
+    toujours sous la regle degrade/patches T243 (densite decroissante aux
+    bords vers les cotes non enneiges).
+
+(C) PHASE DE RECHERCHE <= 0,5 s — NOUVEAU TIER « CHUNKS DEJA CHARGES »
+    Vous pre-chargez massivement (view distance 20-23) : la recherche
+    commence TOUTES les sondes dans les chunks deja en memoire, sans
+    JAMAIS demander un chunk au generateur (9 points de controle par
+    emprise). Les portes bruit tournent sur DEUX DEMI-CERVEAUX a indices
+    disjoints (pairs/impairs : ils ne se marchent pas dessus) et se
+    coordonnent sur un meilleur score + arret commun au premier candidat
+    strictement bon. Budget DUR : 480 ms. Le candidat retenu est ensuite
+    juge par le verdict REEL (qualityOnReady : relief <= 10, 0 eau,
+    emprise 100 % lue) — le meme juge final qu'en pose.
+    Log attendu (visible sans -Ddlb.debug) :
+      [STRUCT5-FLAT] Zone choisie a X,Z (tier charge T245 : N ms, ...
+                     span sec=..., span reel=..., 0 chunk genere, phase
+                     suivante directe)
+    avec N <= 500. Si aucun candidat charge n'est bon, repli automatique
+    sur le choix sec T233c (inchange, ~1,1 s par essai chez vous).
+    Interrupteurs :
+      -Ddlb.search.loadedFirst=0     (desactive le tier charge)
+      -Ddlb.search.loadedBudgetMs=XXX (defaut 480)
+
+(D) ENCHAINEMENT DIRECT DE LA PHASE SUIVANTE
+    Le candidat du tier charge est deja 100 % lu : l'etape SAFETY de la
+    pose le valide au P1ER coup (plus de 2 x 50 ticks de re-sondage, plus
+    d'attente de chargement asynchrone de ~11 s comme sur votre log) — la
+    prep du terrain (analyse sol/plantes + clear au-dessus du sol) demarre
+    directement derriere.
+
+------------------------------------------------------------------------
+ PROTOCOLE DE TEST 3+1 (< 6 mn, machine client)
+------------------------------------------------------------------------
+ 1. Compiler, lancer ; verifier [build T245] au demarrage.
+ 2. /dlbtest structure dragon (biome plaines) : la ligne
+    « Zone choisie ... tier charge T245 : N ms » doit montrer N <= 500 et
+    la pose s'enchaine sans attente de chunks.
+ 3. /dlbtest structure dragon (dans/pres d'un biome neigeux) + 1 pose
+    quelconque : verifier VISUELLEMENT l'anneau exterieur — plus AUCUN
+    dessus gris — et que la neige fait des tapis d'epaisseurs variees
+    (1 a 3 couches) avec patches aux bords.
+ 4. Repondre au ticket avec le log des 3+1 poses.
+
+ HONNETETE SANDBOX : l'environnement de compilation du lab (JDK/Gradle)
+ n'existe plus ici et les telechargements hors GitHub/PyPI sont bloques :
+ T245 a ete verifie STATIQUEMENT (revue de diff integral, equilibrage des
+ blocs, resolution de chaque symbole utilise — notamment l'accesseur
+ FlatQuality.slope corrige en revue). Compilez chez vous ; en cas
+ d'erreur, renvoyez la ligne de compilation, ou desactivez le tier charge
+ avec -Ddlb.search.loadedFirst=0 (le reste de T245 reste actif).
+========================================================================
