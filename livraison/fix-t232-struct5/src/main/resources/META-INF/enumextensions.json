@@ -1,0 +1,13 @@
+{
+  "entries": [
+    {
+      "enum": "net/minecraft/world/entity/raid/Raid$RaiderType",
+      "name": "DEEP_LUCKY_BLOCK_SAMOUSS_BOSS",
+      "constructor": "(Ljava/util/function/Supplier;[I)V",
+      "parameters": {
+        "class": "deepluckyblock/entity/SamoussBossEntity",
+        "field": "RAIDER_TYPE"
+      }
+    }
+  ]
+}

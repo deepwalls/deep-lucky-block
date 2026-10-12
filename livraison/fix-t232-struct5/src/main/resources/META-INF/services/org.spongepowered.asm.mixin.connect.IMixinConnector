@@ -1,0 +1,7 @@
+# Un connecteur par ligne. NE PAS écraser ce fichier sans garder TA ligne :
+# ton mod enregistre déjà "DeepMixinConnector" ici (visible dans le log :
+# "Successfully loaded Mixin Connector [deepluckyblock.mixin.DeepMixinConnector]").
+# La ligne du glint est un garde-fou : la config est de toute façon passée par
+# le launcher (--mixin.config deep_lucky_block.mixins.json).
+deepluckyblock.mixin.DeepMixinConnector
+deepluckyblock.mixin.GlintMixinConnector

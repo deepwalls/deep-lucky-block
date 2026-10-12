@@ -1,0 +1,40 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Deep Lucky Block — NeoForge 1.21.1
+# Remplace META-INF/mods.toml (format Forge) par META-INF/neoforged.mods.toml
+# ═══════════════════════════════════════════════════════════════════════════
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "Not specified"
+issueTrackerURL = ""
+
+[[mods]]
+modId = "deep_lucky_block"
+version = "1.0"
+enumExtensions = "META-INF/enumextensions.json"
+displayName = "Deep Lucky Block"
+displayURL = "https://discordapp.com/users/252111360580648960"
+logoFile = "logo.png"
+credits = "Author: Dorian Georgel (Deep / DeepWalls) Special Thanks: - The MCreator community - All enchantment mod creators used in this project © 2026 Dorian Georgel - All Rights Reserved"
+authors = "Deep"
+description = '''
+A mod that adds the Supreme Lucky Block — a chaotic drop system focused on weapons and armor. Expect tons of quality tiers, hundreds of enchantments, overpowered items, and a few troll surprises. Good luck!
+'''
+
+# ── Déclaration des mixins (équivalent de l'attribut MixinConfigs du jar) ──
+[[mixins]]
+config = "deep_lucky_block.mixins.json"
+
+# ── Dépendances (format NeoForge : type/ordering/side) ──────────────────────
+[[dependencies.deep_lucky_block]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.22)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.deep_lucky_block]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "BOTH"
