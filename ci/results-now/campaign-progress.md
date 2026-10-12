@@ -1,1 +1,1 @@
-PROGRESS: r11-comboA -> OK
+PROGRESS: r12-comboB -> OK
