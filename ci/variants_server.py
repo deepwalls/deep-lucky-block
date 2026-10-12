@@ -142,7 +142,7 @@ def run_variant(name, props):
         # (« j'ai une tonne de chunks charges ») : forceload +- 20 chunks
         # autour du point de test, puis petit temps de generation.
         try:
-            rcon('forceload add 880 -320 1520 320', timeout=60)
+            rcon('forceload add 944 -256 1456 256', timeout=60)
         except Exception as fe:
             print('forceload ignore: ' + str(fe), flush=True)
         # CAMPAGNE 2 : attendre ACTIVEMENT que les chunks soient reels (le
@@ -150,17 +150,17 @@ def run_variant(name, props):
         # runner 2 CPU et le tier charge T245 est reste muet). On sonde les
         # 4 coins via « execute if loaded » (MC 1.21) jusqu'a 210 s.
         corners_ok = False
-        deadline = time.monotonic() + 210
+        deadline = time.monotonic() + 330
         probe_supported = True
         while time.monotonic() < deadline:
             try:
-                out = rcon('execute if loaded 880 64 -320 if loaded 1520 64 320'
-                           ' if loaded 880 64 320 if loaded 1520 64 -320'
+                out = rcon('execute if loaded 944 64 -256 if loaded 1456 64 256'
+                           ' if loaded 944 64 256 if loaded 1456 64 -256'
                            ' run say DLCORNERS', timeout=30)
                 if 'Unknown or incomplete command' in out:
                     probe_supported = False
                     print('if-loaded absent : repli sleep 150 s', flush=True)
-                    time.sleep(150)
+                    time.sleep(240)
                     corners_ok = True
                     break
             except Exception as pe:

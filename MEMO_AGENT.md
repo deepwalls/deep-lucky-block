@@ -260,3 +260,21 @@ retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard
   bulle 0). 1 run/variante => bruit possible, mais direction theoriquement coherente.
 - Notes : audit [DLB-RINGAUDIT] non logue par la commande dlbringaudit (a investiguer si
   besoin) ; artifacts CI (blob.core.windows.net) NON telechargeables depuis la sandbox.
+
+## T248 (2026-10-12) — CAMPAGNE 2 : 15 RUNS SERVEUR (run GH 38289148270, SUCCESS)
+- Patchs script : attente ACTIVE « execute if loaded » des 4 coins du forceload (deadline 210 s),
+  audit 300->90 s, capture tier_fail/candidats, 2 paires de repetitions (bruit).
+- BRUIT MESURE : defaut x2 = 385/384 ms ; maxr768 x2 = 366/406 ms => bruit ~ +/-40 ms (10%).
+- RESULTATS sec (ms) : r01 defaut 385 | r02 tier-off 404 | r03 maxr768 366 | r04 maxr1280 393 |
+  r05 goodspan7 340(meilleur) | r06 goodspan9 498(pire,sgnf) | r07 dryms700 387 | r08 dryms1100 385 |
+  r09 budget380 387 | r10 budget580 382 | r11 comboA 369 | r12 comboB 401 | r13 budget800 382 |
+  r14 defaut-bis 384 | r15 maxr768-bis 406.
+- TIER : absent des 15 runs => les 4 coins du forceload +-20c (1600 chunks, monde neuf) ne
+  chargent pas en 3min30 sur runner 2 CPU (DLCORNERS jamais dit, confirme log r01).
+- DECISIONS :
+  * goodspan7=340 non retenu : non monotone entre campagnes (6=413/7=340/8=369-385/9=498)
+    et bruit +/-40 ms => pas de preuve ; goodspan9=498 confirme qu'au-dela c'est pire
+    (engorgement candidats) : GARDER goodSpan=8.
+  * dryPickMs 700/1100 = neutre ; maxR 768/1280 = neutre => GARDER maxR 1024 (T247).
+  * SLA 0,5 s tenu sur 25 runs cumules (max 413 ms) sur runner 2 CPU sous-clocké.
+- Synthese 25 runs : aucune prop ne fait mieux que le bruit hormis maxR=1024 ; defauts figes.
