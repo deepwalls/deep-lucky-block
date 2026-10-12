@@ -1175,13 +1175,16 @@ public class Structures5Procedure {
             BlockPos origin, int checkR, int fullCheckR, int structMax, Player p, int minEdgeDist) {
         final long t0 = System.currentTimeMillis();
         final long budget = SEARCH_LOADED_BUDGET_MS;
-        if (p == null) return null;
         net.minecraft.world.level.chunk.ChunkGenerator gen = lvl.getChunkSource().getGenerator();
         net.minecraft.world.level.levelgen.RandomState rs = lvl.getChunkSource().randomState();
         final int step = Math.max(32, structMax);
         final int minCenterDist = minEdgeDist + checkR;
         final int maxR = Math.max(512, 8 * step);
-        final int px = p.blockPosition().getX(), pz = p.blockPosition().getZ();
+        // T246 : sans joueur (RCON/CI, origine de commande), on pivote autour
+        // de l'ORIGINE de la recherche — le tier reste mesurable en CI et ne
+        // declenche de toute facon JAMAIS un chargement.
+        final BlockPos pivot = p != null ? p.blockPosition() : origin;
+        final int px = pivot.getX(), pz = pivot.getZ();
 
         // 1) ENUMERATION (thread serveur, lookups O(1)) : centres dont la
         //    boite d'emprise entiere (9 points) est deja chargee. Jamais de

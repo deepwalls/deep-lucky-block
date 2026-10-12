@@ -91,16 +91,14 @@ def annotate(text, failure=False):
         print(f'::{"error" if failure else "notice"} title=Variants campaign::{part}', flush=True)
 
 
-def run_variant(name, rounds, cap, growth):
+def run_variant(name, props):
     # Monde frais : suppression du niveau precedent.
     lvl = run / 'ci-variants-test'
     if lvl.exists():
         shutil.rmtree(lvl)
     env = dict(os.environ)
     opts = env.get('JAVA_TOOL_OPTIONS', '')
-    env['JAVA_TOOL_OPTIONS'] = (opts +
-        f' -Ddlb.search.deferRounds={rounds} -Ddlb.search.deferCap={cap}'
-        f' -Ddlb.search.growth={growth}').strip()
+    env['JAVA_TOOL_OPTIONS'] = (opts + ' ' + props.strip()).strip()
     proc = subprocess.Popen(['./gradlew', 'runServer', '--console=plain', '--max-workers=2'],
                             cwd=project, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             text=True, start_new_session=True, env=env)
@@ -133,13 +131,21 @@ def run_variant(name, rounds, cap, growth):
                 return
         raise TimeoutError(f'No marker {marker} within {timeout}s')
 
-    result = {'name': name, 'props': f'{rounds}/{cap}/{growth}'}
+    result = {'name': name, 'props': props or 'defaut'}
     phases = []
     t_start = None
     try:
         wait_for('Done (', 360)
         t0 = time.monotonic()
         t_start = t0
+        # T246 : simuler le joueur reel qui pre-charge massivement ses chunks
+        # (« j'ai une tonne de chunks charges ») : forceload +- 20 chunks
+        # autour du point de test, puis petit temps de generation.
+        try:
+            rcon('forceload add 880 -320 1520 320', timeout=60)
+            time.sleep(45)
+        except Exception as fe:
+            print('forceload ignore: ' + str(fe), flush=True)
         rcon('execute positioned 1200 90 0 run dlbtest dragon', timeout=240)
         # T231 v2 (CI 2 CPU) : le KPI est la phase RECHERCHE (temps jusqu'au
         # "Zone choisie" + distance), pas la suite du paste/deco, qui ne
@@ -149,6 +155,7 @@ def run_variant(name, rounds, cap, growth):
         wait_for('Zone choisie a ', 900, phases)
         # Parse : duree de recherche + site choisi
         search_s = None; site = None
+        tier_ms = None; sec_ms = None
         for ln in phases + log[-400:]:
             m = re.search(r'Zone choisie a (-?\d+),(-?\d+).*?(\d+) s de recherche', ln)
             if m:
@@ -159,6 +166,14 @@ def run_variant(name, rounds, cap, growth):
                 m = re.search(r'Zone choisie a (-?\d+),(-?\d+)', ln)
                 if m:
                     site = (int(m.group(1)), int(m.group(2)))
+        # T245/T246 : duree de la phase de recherche en millisecondes, par voie.
+        for ln in phases + log[-600:]:
+            mt = re.search(r'tier charge T245 : (\d+) ms', ln)
+            if mt and tier_ms is None:
+                tier_ms = int(mt.group(1))
+            ms = re.search(r'selection seche T233c : (\d+) ms', ln)
+            if ms and sec_ms is None:
+                sec_ms = int(ms.group(1))
         # prolongement facultatif : paste termine si ca rentre dans 240 s
         if site is not None:
             try:
@@ -178,6 +193,7 @@ def run_variant(name, rounds, cap, growth):
             result['audit'] = 'zone introuvable'
         result.update({
             'search_s': search_s, 'site': site, 'dist': dist,
+            'tier_ms': tier_ms, 'sec_ms': sec_ms,
             'total': total,
         })
         result['rows'] = 'OK'
@@ -244,13 +260,14 @@ for raw in spec.read_text().splitlines():
     line = raw.strip()
     if not line or line.startswith('#'):
         continue
-    name, rounds, cap, growth = (p.strip() for p in line.split('|'))
-    print(f'=== variante {name}: deferRounds={rounds} deferCap={cap} growth={growth} ===', flush=True)
+    name, _, props = line.partition('|')
+    name, props = name.strip(), props.strip()
+    print(f'=== variante {name}: {props or "defaut"} ===', flush=True)
     rres = None
     try:
-        rres = run_variant(name, rounds, cap, growth)
+        rres = run_variant(name, props)
     except Exception as crash:
-        rres = {'name': name, 'props': f'{rounds}/{cap}/{growth}',
+        rres = {'name': name, 'props': props or 'defaut',
                 'rows': 'CRASH: ' + (str(crash).splitlines()[0][:160] if str(crash) else type(crash).__name__)}
     results.append(rres)
     record('PROGRESS: ' + (rres['name'] or '?') + ' -> ' + rres['rows'])
@@ -258,22 +275,29 @@ for raw in spec.read_text().splitlines():
 
 rows = []
 for r in results:
-    rows.append(f"{r['name']:>4} | {r['props']:<13} | search={r.get('search_s')}s"
+    rows.append(f"{r['name']:<16} | {r['props']:<60}"
+                f" | tier={r.get('tier_ms')}ms | sec={r.get('sec_ms')}ms"
                 f" | site={r.get('site')} | dist={r.get('dist')}"
                 f" | total={r.get('total')}s | {r['rows']} | audit={r.get('audit','-')}")
-record('RESULTATS CAMPAGNE T231\n' + '\n'.join(rows))
-publish_now('tableau final de la campagne')
-annotate('RESULTATS CAMPAGNE T231 (nom | prop ronde/cap/growth)\n' + '\n'.join(rows))
+record('RESULTATS CAMPAGNE T246 (nom | props | recherche ms par voie)\n' + '\n'.join(rows))
+publish_now('tableau final de la campagne T246')
+annotate('RESULTATS CAMPAGNE T246\n' + '\n'.join(rows))
 
-# Verdict : gagner = site <= 600 blocs (reference T229: 303) et recherche la
-# plus courte; en cas d'egalite seatside, le minimum de recherche + audit PASS.
-cands = [r for r in results if r.get('search_s') is not None and r.get('dist')
-         and r['dist'] <= 600 and 'FAIL' not in r.get('audit', '')]
+# Verdict T246 : gagner = recherche la plus courte (duree reelle en ms du
+# serveur, T245 tier charge ou repli sec T233c), tie-break distance + audit.
+def dur(r):
+    for k in ('tier_ms', 'sec_ms'):
+        if r.get(k) is not None:
+            return r[k]
+    if r.get('search_s') is not None:
+        return r['search_s'] * 1000
+    return None
+cands = [r for r in results if dur(r) is not None and r.get('dist')
+         and r['dist'] <= 1100 and 'FAIL' not in r.get('audit', '')]
 if cands:
-    # retention de la reference "dev distance" au prorata 50/50 dist+tps
-    winner = min(cands, key=lambda r: r['search_s'] + r['dist'] / 10.0)
+    winner = min(cands, key=lambda r: dur(r) + r['dist'] / 10.0)
     annotate(f"MEILLEURE VARIANTE : {winner['name']} ({winner['props']}) "
-             f"search={winner['search_s']}s dist={winner['dist']}")
+             f"tier={winner.get('tier_ms')}ms sec={winner.get('sec_ms')}ms dist={winner['dist']}")
     (Path(os.environ['RUNNER_TEMP']) / 'variants-summary.txt').write_text(
         '\n'.join(rows) + f"\nWINNER={winner['name']} {winner['props']}")
     record('CAMPAGNE OK\n' + '\n'.join(rows) + f"\nWINNER={winner['name']} {winner['props']}")
