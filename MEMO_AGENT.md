@@ -242,3 +242,21 @@ NOTE compilation sandbox : toujours impossible (pas de JDK, egress GitHub/PyPI
 seuls). Verification = statique (diff relu, equilibrage, symboles).
 Process reset repo : TOUJOURS verifier git log --oneline -1 au debut du tour ;
 retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard origin/...
+
+## T247 (2026-10-12) — CAMPAGNE SERVEUR 10 RUNS (via GitHub Actions)
+- Mecanisme : commit marqueur [variants] -> workflow java21-build.yml -> ci/variants_server.py
+  (10 mondes frais seed 123456789, RCON execute positioned 1200 90 0 run dlbtest dragon).
+- Fix prealable : loadedPickCenter pivotait sur NULL sans joueur RCON -> jamais mesurable ;
+  pivot = origine de recherche si p==null (commit 5f93792).
+- Forceload +-20 chunks ajoute autour du point de test pour simuler le client qui pre-charge,
+  MAIS 45 s insuffisants sur runner 2 CPU : le tier charge T245 n'a jamais trouve d'emprise
+  chargee (sortie silencieuse cands.isEmpty()). Tier donc non mesure en CI.
+- RESULTATS (voie seche T233c = chemin reel quand tier silencieux) :
+  v01 defaut 369 ms | v02 tier-off 408 | v03 budget300 381 | v04 budget800 383 |
+  v05 goodspan6 413 | v06 goodspan10 382 | v07 dryms600 390 | v08 dryms1500 373 |
+  v09 maxr1024 342 (MEILLEUR) | v10 combo 377. Tous site 1018,187 dist 261.
+  => SLA 0,5 s tenu meme sans tier (voie seche seule).
+- DECISION : dryPickMaxR defaut 1536 -> 1024 (gain 7%, coherent : moins de sondes avant
+  bulle 0). 1 run/variante => bruit possible, mais direction theoriquement coherente.
+- Notes : audit [DLB-RINGAUDIT] non logue par la commande dlbringaudit (a investiguer si
+  besoin) ; artifacts CI (blob.core.windows.net) NON telechargeables depuis la sandbox.

@@ -1092,7 +1092,7 @@ public class Structures5Procedure {
      *  plafond qui compte reste le budget temps, jamais le rayon.
      *  -Ddlb.search.dryPickMaxR=N */
     private static final int DRY_PICK_MAX_R =
-            propInt("dlb.search.dryPickMaxR", 1536);
+            propInt("dlb.search.dryPickMaxR", 1024);
     /** Span sec maximal accepte en mode souple (lacs fins toleres : la
      *  plateforme remontee T104 les gere cote pose ; le lissage couvre
      *  jusque ~26 de relief natif). Au-delà : emprise reelle gaspillee et
