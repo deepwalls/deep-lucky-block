@@ -798,6 +798,13 @@ public class Structures5Procedure {
                 }
                 POST_Q.poll();
                 deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] Post-process de {} termine", pj.name);
+                // T246 : dernier FILET VISUEL anti dessus-gris (herbe neigeuse
+                // exposee) — planifie apres toutes les passes tardives, balayage
+                // de l'anneau complet sur chunks deja charges uniquement.
+                final BlockPos sweepMin = pj.min, sweepMax = pj.max;
+                deepluckyblock.procedures.TestProcedure.schedule(pj.level,
+                        deepluckyblock.procedures.TestProcedure.currentTick(pj.level) + 40,
+                        () -> StructureTerrainPrep.antiGrayFinalSweep(pj.level, sweepMin, sweepMax));
                 // T184 : decorateFinish est asynchrone. T183 libérait ici la FIFO
                 // alors que dressAndPlant/replantTrees travaillaient encore 4 s :
                 // le second Dragon recherchait pendant les déchargements du premier.
@@ -1285,21 +1292,30 @@ public class Structures5Procedure {
                     cx, cz, System.currentTimeMillis() - t0, probed, water, cands.size(), scores[idx][0], q.slope());
             return new BlockPos(cx, Math.max(realY, 63), cz);
         }
-        deepluckyblock.util.DebugLog.info(LOGGER,
-                "[STRUCT5-FLAT] tier charge T245 sans bon candidat ({} ms, {} candidats charges, {} sondes) : repli choix sec T233c",
+        LOGGER.info("[STRUCT5-FLAT] tier charge T245 sans bon candidat ({} ms, {} candidats dans les chunks charges, {} sondes sechees) : repli choix sec T233c",
                 System.currentTimeMillis() - t0, cands.size(), probed);
         return null;
     }
 
-    /** T245 : l'emprise entiere (boite checkR, 9 points de controle) est-elle
-     *  deja en memoire ? Un seul point manquant disqualifie le candidat :
-     *  ce tier ne doit JAMAIS provoquer de chargement. */
+    /** T245+T246 : l'emprise (boite checkR, 9 points de controle) est-elle
+     *  deja PRESQUE entierement en memoire ? Regle : centre obligatoire,
+     *  au moins 6 des 8 points peripheriques charges, dont au moins 2 coins
+     *  (mesure en jeu, view distance 20 : le carre charge du joueur coupe
+     *  souvent UN coin de la boite d'emprise ; exiger 9/9 disqualifiait tous
+     *  les bons sites et le tier ne servait jamais). Les 1-2 chunks manquants
+     *  seront combles par le plan-zone SAFETY en tache de fond — le tier ne
+     *  provoque quant a lui JAMAIS de chargement. */
     private static boolean empriseAlreadyLoaded(net.minecraft.server.level.ServerLevel lvl, int cx, int cz, int checkR) {
         int[][] pts = {{0,0},{-checkR,-checkR},{checkR,-checkR},{-checkR,checkR},{checkR,checkR},
                        {-checkR,0},{checkR,0},{0,-checkR},{0,checkR}};
-        for (int[] pt : pts)
-            if (!deepluckyblock.util.SafeSurface.isLoadedAt(lvl, cx + pt[0], cz + pt[1])) return false;
-        return true;
+        if (!deepluckyblock.util.SafeSurface.isLoadedAt(lvl, cx, cz)) return false;   // centre obligatoire
+        int periphery = 0, corners = 0;
+        for (int i = 1; i < pts.length; i++) {
+            if (!deepluckyblock.util.SafeSurface.isLoadedAt(lvl, cx + pts[i][0], cz + pts[i][1])) continue;
+            periphery++;
+            if (i <= 4) corners++;
+        }
+        return periphery >= 6 && corners >= 2;
     }
 
     private static BlockPos dryPickCenter(net.minecraft.server.level.ServerLevel lvl,

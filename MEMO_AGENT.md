@@ -219,3 +219,26 @@ ENVIRONNEMENT : le lab (/home/user/dlb-lab, JDK, caches) a DISPARU du sandbox en
   Verification T245 = statique (diff complet relu, equilibrage blocs, symboles).
   Si le workdir retombe A b215420 : timeout 170 git fetch origin arena/... (retenter),
   puis git reset --hard origin/arena/... — origin est fiable.
+T246 (retour client 12/10 ~06:35) — 4 fuites comblees :
+(A) tier charge T245 jamais utilise : regle 9/9 inatteignable a view distance 20
+  (un coin de l'emprise depasse le carre charge). Assouplie : centre obligatoire,
+  >=6/8 periph., >=2 coins. Repli logge en LOGGER.info (visible sans debug).
+(B) fondu externe : NOUVEAU systeme universel borderFadePick + outsideSoilForSide
+  (spec client 06:40) : cote W/E/N/S par depassement box, sol detecte 1 chunk
+  au-dela du bord (16 sondes, cache OUTSIDE_SOIL_CACHE vide par clearDressingCaches),
+  degrade proba 90%(1-d/R) patches posNoise(SALT_FADE). Applique dans dressAndPlant
+  a TOUTE colonne non-vegetationOnly (inner ET outer ring). isNaturalTerrain inclut
+  ICE/PACKED_ICE/SNOW_BLOCK : fade vers lacs geles OK.
+(C) snow carpets : placeSnowOrUnsnow n'etait appele que dans le bloc
+  `if (inner && !vegetationOnly)` de dressAndPlant -> 3/4 du ring nu. Desormais
+  HORS du bloc inner : couvre inner+outer+emprise naturelle. surface-write cur/chosen
+  mutualize sorti du bloc inner (autrefois inner-only).
+(D) anneau gris : 3 filets : placeSnowOrUnsnow partout + unsnowExposedGrass au
+  ring terrainRing()+NATURALIZE_EXTRA_RING(16) + NOUVEAU antiGrayFinalSweep public
+  (StructureTerrainPrep) balayage ring complet charge-seul (isLoadedAt guard, 0 gen),
+  planifie +40 ticks apres POST_Q dans Structures5Procedure.
+Stamps [build T246] + « T246 symetrie lissage ». Zip 21 fichiers + NOTE + release.
+NOTE compilation sandbox : toujours impossible (pas de JDK, egress GitHub/PyPI
+seuls). Verification = statique (diff relu, equilibrage, symboles).
+Process reset repo : TOUJOURS verifier git log --oneline -1 au debut du tour ;
+retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard origin/...

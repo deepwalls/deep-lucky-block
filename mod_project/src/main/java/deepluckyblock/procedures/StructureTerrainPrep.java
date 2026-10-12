@@ -3245,6 +3245,123 @@ public class StructureTerrainPrep {
                 .setValue(BlockStateProperties.LAYERS, layers);
     }
 
+    // ==================================================================
+    // T246 : FONDU UNIVERSEL DE BORD (spec client 12/10 ~06:40)
+    // ==================================================================
+    // « Faut le faire tout le temps tout seul, peu importe l'environnement :
+    //  on detecte le type de bloc en surface moyen dans le chunk d'apres, et
+    //  on effectue un degrade de 90 a 0 % de notre bloc sol zone modifiee
+    //  jusqu'au sol type detecte dans le chunk d'a cote... tout autour de la
+    //  box : la bordure west qui regarde vers west devant lui, north vers
+    //  le chunk au nord devant lui, etc. »
+    //
+    // Pour chaque colonne de l'anneau travaille (jamais l'emprise protegee) :
+    //  1. cote « facing » = le depassement dominant de la boite-emprise
+    //     (W/E/N/S, les coins obeissent au 45°, rien n'est rectangulaire a
+    //     l'oeil puisque la probabilite suit la distance) ;
+    //  2. le SOL EXTERIEUR est echantillonne 1 chunk au-dela de la bordure
+    //     modifiee, DANS LA DIRECTION DU COTE (cache par segment de 16) ;
+    //  3. p(notre sol) = 90 % x (1 - d/R) : colle a l'emprise -> 90 %,
+    //     bord externe -> 0 % ; patches deterministes (posNoise), aucune
+    //     ligne droite.
+    private static final int SALT_FADE = 0x5A71;
+    /** Cache (cote, segment de 16) -> bloc de sol detecte au-dela du bord. */
+    private static final java.util.Map<Long, Block> OUTSIDE_SOIL_CACHE = new java.util.HashMap<>();
+    /** T246 : part de notre sol colle a l'emprise (decroit lineairement
+     *  jusqu'a 0 % au bord externe de l'anneau). */
+    private static final float BORDER_FADE_MAX = 0.90f;
+
+    /** Sol exterieur detecte pour ce cote/segment : 16 sondes dans le chunk
+     *  situe au-dela de la bordure modifiee, suivant la normale du cote.
+     *  Retourne le bloc naturel dominant, ou null si aucune sonde valide
+     *  (chunk absent, eau, batiment...) : dans ce doute, garder notre sol. */
+    private static Block outsideSoilForSide(ServerLevel level, BlockPos min, BlockPos max,
+                                            int ring, int side, int tangent) {
+        int seg = tangent >> 4;
+        long key = ((long) side << 40) | ((long) seg & 0xFFFFFFFFL);
+        if (OUTSIDE_SOIL_CACHE.containsKey(key)) return OUTSIDE_SOIL_CACHE.get(key);
+        int ox = 0, oz = 0;   // point de depart juste au-dela du bord
+        if (side == 0)      { ox = min.getX() - ring - 1; oz = seg << 4; }        // west : chunks a -X
+        else if (side == 1) { ox = max.getX() + ring + 1; oz = seg << 4; }        // east : chunks a +X
+        else if (side == 2) { ox = seg << 4; oz = min.getZ() - ring - 1; }        // north : chunks a -Z
+        else                { ox = seg << 4; oz = max.getZ() + ring + 1; }        // south : chunks a +Z
+        java.util.Map<Block, Integer> counts = new java.util.HashMap<>();
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        final int[] norm = {2, 6, 10, 14};      // 4 profondeurs dans le chunk voisin
+        final int[] tang = {3, 7, 11, 15};      // 4 points le long de la bordure
+        for (int n : norm) {
+            for (int t : tang) {
+                int px = side <= 1 ? ox + (side == 1 ? n : -n) : ox + t;
+                int pz = side <= 1 ? oz + t : oz + (side == 3 ? n : -n);
+                ChunkAccess chunk = deepluckyblock.util.SafeSurface.chunkFor(level, px >> 4, pz >> 4);
+                if (chunk == null) continue;
+                int y = deepluckyblock.util.SafeSurface.height(
+                        level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, px, pz) - 1;
+                if (y < 1) continue;
+                BlockState s = readBlock(level, chunk, mut, px, y, pz);
+                if (!isNaturalTerrain(s) || !s.blocksMotion()) continue;   // eau, decor, batis : pas un « sol »
+                counts.merge(s.getBlock(), 1, Integer::sum);
+            }
+        }
+        Block best = null; int bestN = 0;
+        for (java.util.Map.Entry<Block, Integer> e : counts.entrySet())
+            if (e.getValue() > bestN) { bestN = e.getValue(); best = e.getKey(); }
+        OUTSIDE_SOIL_CACHE.put(key, best);
+        return best;
+    }
+
+    /**
+     * T246 : degrade 90 % -> 0 % de notre sol (our) vers le sol exterieur
+     * detecte, sur toute la profondeur de l'anneau. La probabilite suit la
+     * distance au bord EXTERIEUR : aucune bande, aucun rectangle.
+     */
+    private static Block borderFadePick(ServerLevel level, BlockPos min, BlockPos max,
+                                        int ring, int x, int z, Block our) {
+        int dxE = Math.max(0, Math.max(min.getX() - x, x - max.getX()));
+        int dzE = Math.max(0, Math.max(min.getZ() - z, z - max.getZ()));
+        int dE = Math.max(dxE, dzE);              // Tchebychev : coins traites en 45 deg
+        if (dE <= 0 || dE >= ring) return our;    // emprise (jamais ici) ou hors de l'anneau
+        int side = dxE >= dzE ? (x < min.getX() ? 0 : 1) : (z < min.getZ() ? 2 : 3);
+        Block outside = outsideSoilForSide(level, min, max, ring, side, side <= 1 ? z : x);
+        if (outside == null || outside == our) return our;
+        float p = BORDER_FADE_MAX * (1.0f - (float) dE / (float) ring);
+        if (p <= 0f) return outside;
+        return posNoise(x, z, SALT_FADE) < p ? our : outside;
+    }
+
+    /**
+     * T246 : filet VISUEL final, planifie apres TOUT le pipeline (post-process
+     * inclus) : le gris « dessus d'herbe neigeuse exposee » peut reapparaitre
+     * via les passes tardives (correctFinalColumn, fix eau, scatter...).
+     * Balayage charge-SEUL (chunk absent -> colonne saute, jamais de
+     * generation), renvoyee a 2 flag petit. Retour client 12/10 : « l'anneau
+     * exterieur avec la texture buggee est toujours presente ».
+     */
+    public static void antiGrayFinalSweep(ServerLevel level, BlockPos min, BlockPos max) {
+        final int ringAll = terrainRing() + NATURALIZE_EXTRA_RING;
+        int x0 = min.getX() - ringAll, x1 = max.getX() + ringAll;
+        int z0 = min.getZ() - ringAll, z1 = max.getZ() + ringAll;
+        final int[] fixed = {0};
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        for (int x = x0; x <= x1; x++) {
+            for (int z = z0; z <= z1; z++) {
+                if (!deepluckyblock.util.SafeSurface.isLoadedAt(level, x, z)) continue;
+                int surfY = deepluckyblock.util.SafeSurface.height(
+                        level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                if (surfY < 1) continue;
+                BlockState s = level.getBlockState(mut.set(x, surfY, z));
+                if (!s.is(Blocks.GRASS_BLOCK) || !s.getValue(BlockStateProperties.SNOWY)) continue;
+                if (!level.getBlockState(mut.set(x, surfY + 1, z)).is(Blocks.SNOW)) {
+                    level.setBlock(mut.set(x, surfY, z),
+                            s.setValue(BlockStateProperties.SNOWY, false), 2);
+                    fixed[0]++;
+                }
+            }
+        }
+        if (fixed[0] > 0)
+            LOGGER.info("[DLB-STRUCTURE] anti-gris final T246 : {} herbe(s) snowy exposee(s) corrigee(s) sur l'anneau", fixed[0]);
+    }
+
     /**
      * T245 : applique la regle degrade + patches T243 AVEC epaisseur
      * variable, OU — en cas de refus du degrade — des-neige definitivement
@@ -3417,6 +3534,7 @@ public class StructureTerrainPrep {
         clearSnowCellCache();
         RESCUE.clear();
         rescueTotal = 0;
+        OUTSIDE_SOIL_CACHE.clear();   // T246 : sols detectes hors bordure
     }
 
     // ==================================================================
@@ -3976,13 +4094,6 @@ public class StructureTerrainPrep {
                     stats[0]++;
                 }
 
-                BlockState cur = readBlock(level, chunk, mut, x, surfY, z);
-                // Regle 6 : ne rien ecrire si c'est deja correct.
-                if (cur.getBlock() != chosen && isNaturalTerrain(cur) && cur.blocksMotion()) {
-                    level.setBlock(mut.set(x, surfY, z), chosen.defaultBlockState(), FAST_FLAG);
-                    stats[2]++;
-                }
-
                 // T189 : après le paste, le rebuild/smooth a déjà reconstruit le
                 // sous-sol. Ne pas réécrire 8–12 000 blocs identiques pendant la
                 // décoration finale ; seule la surface et la végétation comptent.
@@ -3996,10 +4107,36 @@ public class StructureTerrainPrep {
                         stats[3]++;
                     }
                 }
-
-                if (snowy)
-                    placeSnowOrUnsnow(level, vegSeed ^ 0x5EED2432L, x, surfY, z);   // T245 : degrade + patches, epaisseur variable ; refus = de-neige l'herbe exposee (anti dessus gris)
             }
+
+            // T246 (client 12/10 ~06:35-06:42) — DEUX fuites comblees ici :
+            //  (1) « le systeme de fondu de nos chunks modifies vers le
+            //      terrain exterieur ne fonctionne plus » : la couche est
+            //      desormais fondue TOUT AUTOUR de la box, quel que soit le
+            //      biome — pour chaque colonne de l'anneau (jamais l'emprise),
+            //      on detecte le sol du chunk au-dela du bord (cote facing
+            //      W/E/N/S) et on degrade notre sol de 90 % (colle emprise) a
+            //      0 % (bord externe), en patches deterministes.
+            if (!vegetationOnly) {
+                chosen = borderFadePick(level, min, max, outerRing, x, z, chosen);
+            }
+            //  Regle 6 : ne rien ecrire si deja correct. SURFACE-WRITE
+            //  MUTUALISE : il s'applique aussi a la bande externe de l'anneau
+            //  (avant T246, les ecritures de surface restaient dans le bloc
+            //  inner uniquement — d'ou un ring partiellement retouche).
+            BlockState cur = readBlock(level, chunk, mut, x, surfY, z);
+            if (cur.getBlock() != chosen && isNaturalTerrain(cur) && cur.blocksMotion()) {
+                level.setBlock(mut.set(x, surfY, z), chosen.defaultBlockState(), FAST_FLAG);
+                stats[2]++;
+            }
+            //  (2) « tu n'as mis des snow carpets qu'au centre / 3-4 du ring
+            //      nu » + « anneau exterieur toujours gris » : la neige
+            //      (epaisseur variable) et l'anti-dessus-gris etaient enfermes
+            //      dans le bloc inner ; ils couvrent desormais inner + bande
+            //      externe de l'anneau + emprise a ciel ouvert (sur sol
+            //      naturel uniquement : sur la structure ils ne lisent rien).
+            if (snowy)
+                placeSnowOrUnsnow(level, vegSeed ^ 0x5EED2432L, x, surfY, z);   // T245+T246 : degrade + patches, epaisseur variable ; refus = de-neige l'herbe exposee
 
             // Densité radiale continue : forte dans le cœur, puis ramenée à
             // 20 % au bord externe. Évite le rectangle de végétation beaucoup
@@ -4963,7 +5100,7 @@ public class StructureTerrainPrep {
                 }
             }
             LOGGER.warn("[DLB-STRUCTURE] " + String.format(
-                    "T245 symetrie lissage [ampleur moy/pire, remblai moy, marche max A>B @(x,z) dist-emprise, nb col] : "
+                    "T246 symetrie lissage [ampleur moy/pire, remblai moy, marche max A>B @(x,z) dist-emprise, nb col] : "
                             + "N %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d | S %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d"
                             + " | E %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d | O %.1f/%d +%.1f p%d %d>%d@(%d,%d) d%d n%d",
                     cN == 0 ? 0 : ampN / cN, mxN, cN == 0 ? 0 : rN / cN, st[0], stA[0], stB[0], stX[0], stZ[0], stD[0], cN,
@@ -6011,8 +6148,10 @@ public class StructureTerrainPrep {
      */
     private static void unsnowExposedGrass(ServerLevel level, BlockPos min, BlockPos max, Runnable onDone) {
         final int[] fixed = {0};
+        // T246 : l'anneau travaille a grandi (terrainRing + ring naturel) ;
+        // le filet anti-gris couvre toute la zone, y compris la bande externe.
         startColumnPass(level, "unsnowExposedGrass",
-                columnsOf(min, max, terrainRing()), BATCH_COLS, col -> {
+                columnsOf(min, max, terrainRing() + NATURALIZE_EXTRA_RING), BATCH_COLS, col -> {
             int x = col[0], z = col[1];
             int surfY = deepluckyblock.util.SafeSurface.height(
                     level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;

@@ -1,0 +1,80 @@
+========================================================================
+ DEEP LUCKY BLOCK — T246 (sources completes) — 12/10/2026
+========================================================================
+ ZIP : DEEP-LUCKY-BLOCK-T246-SRC-COMPLET.zip (21 fichiers : main/java +
+       main/resources/META-INF, format identique a T245)
+ EXTRACTION : par-dessus votre projet MCreator (mod_project/src). Le
+       META-INF RESTE dans src/main/resources/, ne jamais le deplacer.
+
+ VERIFICATION DE VERSION (obligatoire avant tout test) :
+   Au demarrage : [DLBTEST] commande prete : /dlbtest -> ... [build T246]
+   Apres une pose : [DLB-STRUCTURE] T246 symetrie lissage [...]
+
+------------------------------------------------------------------------
+ CE QUE T246 CORRIGE (retour client 12/10 ~06:35)
+------------------------------------------------------------------------
+(1) FONDU UNIVERSEL DE BORD — « le systeme de fondu ne fonctionne plus »
+    + spec : « tout seul, peu importe l'environnement : on detecte le type
+    de bloc en surface moyen dans le chunk d'a cote, et on fait un degrade
+    de 90 a 0 % de notre bloc sol zone modifiee jusqu'au sol detecte, tout
+    autour de la box — la bordure west regarde vers west, north vers le
+    chunk au nord, etc. »
+    T246 l'implemente exactement : pour chaque colonne de l'anneau
+    travaille (emprise jamais touchee), on determine son cote (W/E/N/S par
+    depassement de la box), on echantillonne LE BLOC DE SOL DOMINANT du
+    chunk situe 1 chunk au-dela de la bordure modifiee DANS LE SENS DU
+    COTE (16 sondes, cache), puis on degrade : 90 % de notre sol colle a
+    l'emprise -> 0 % au bord externe de l'anneau, en patches deterministes
+    (aucune ligne droite, 45 deg dans les coins). Fonctionnel sur herbe,
+    glace, bloc de neige, sable, gravier, podzol, mycelium... — valable
+    partout, pas seulement en neige.
+
+(2) SNOW CARPETS : « tu remplis un chunk, et le 3/4 du temps rien dans le
+    ring » — fuite trouvee : la pose de neige etait enfermee dans la moitie
+    interne des colonnes (et sautee dans l'emprise post-paste). T246 la
+    couvre desormais dans TOUTE l'anneau (interne + bande externe) et dans
+    l'emprise a ciel ouvert quand le sol est naturel. Epaisseurs variees
+    1-3 couches (T245) conservees, patches enumeres T243 conserves.
+
+(3) ANNEAU GRIS « terre enneigee » — triple filet :
+    a. anti-dessus-gris appliquee partout ou la neige est posee/vetoee ;
+    b. le rescan unsnowExposedGrass couvre desormais tout l'anneau
+       (terrainRing + 16) ;
+    c. NOUVEAU balayage anti-gris FINAL planifie +40 ticks apres le
+       post-process : [DLB-STRUCTURE] anti-gris final T246 : N herbe(s)
+       snowy exposee(s) corrigee(s) sur l'anneau
+       (chunks deja charges uniquement, 0 generation).
+
+(4) TIER CHARGE JAMAIS UTILISE (0 zone « tier charge T245 » dans le log) :
+    la regle 9/9 chargés etait inatteignable (a view distance 20, un coin
+    de la boite d'emprise depasse souvent le carre charge). Desormais :
+    centre obligatoire, >= 6/8 points periphériques, dont >= 2 coins — les
+    1-2 chunks manquants sont combles par le plan-zone SAFETY en tache de
+    fond. Repli visible en log (sans -Ddlb.debug) :
+    [STRUCT5-FLAT] tier charge T245 sans bon candidat (... ms, ...) :
+                   repli choix sec T233c
+    Log attendu quand il passe : [STRUCT5-FLAT] Zone choisie a X,Z
+    (tier charge T245 : N ms, ..., 0 chunk genere, phase suivante directe).
+
+------------------------------------------------------------------------
+ PROTOCOLE 3+1 (< 6 mn)
+------------------------------------------------------------------------
+ 1. Compiler, lancer ; verifier [build T246] au demarrage.
+ 2. /dlbtest structure dragon pres de vous : cherchez le message
+    « tier charge T245 : N ms » — N doit etre <= 500 ; sinon, la ligne
+    de repli visible apparaitra et ce sera T233c (normal si rien ne
+    convient dans les chunks charges).
+ 3. /dlbtest structure dragon EN BIOME NEIGE/ICE + 1 pose quelque part :
+    - vu de haut : plus de rectangle coupe net — le sol degorge maintenant
+      vers le type detecte juste au-dela (ex: glace du lac gele) ;
+    - plus AUCUN gris « terre enneigee » dans l'anneau (regardez aussi la
+      ligne « anti-gris final T246 ») ;
+    - snow carpets partout dans l'anneau, epaisseurs 1-3 variees.
+ 4. Repondre avec le log complet des 3+1 poses.
+
+ HONNETETE : l'environnement de compilation du lab reste inaccessible dans
+ ce sandbox (pas de JDK, telechargements bloques hors GitHub/PyPI) : T246
+ a ete verifie statiquement (diff integral relu, equilibrage des blocs,
+ resolution de chaque symbole). En cas d'erreur de compilation chez vous,
+ collez la ligne d'erreur et je corrige immediatement.
+========================================================================
