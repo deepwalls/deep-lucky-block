@@ -1,1 +1,11 @@
-PROGRESS: v10-combo -> OK
+RESULTATS CAMPAGNE T246 (nom | props | recherche ms par voie)
+v01-defaut       | defaut                                                       | tier=Nonems | sec=369ms | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 300s
+v02-tier-off     | -Ddlb.search.loadedFirst=0                                   | tier=Nonems | sec=408ms | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 300s
+v03-budget-300   | -Ddlb.search.loadedBudgetMs=300                              | tier=Nonems | sec=381ms | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 300s
+v04-budget-800   | -Ddlb.search.loadedBudgetMs=800                              | tier=Nonems | sec=383ms | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 300s
+v05-goodspan-6   | -Ddlb.search.dryPickGoodSpan=6                               | tier=Nonems | sec=413ms | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 300s
+v06-goodspan-10  | -Ddlb.search.dryPickGoodSpan=10                              | tier=Nonems | sec=382ms | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 300s
+v07-dryms-600    | -Ddlb.search.dryPickMs=600                                   | tier=Nonems | sec=390ms | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 300s
+v08-dryms-1500   | -Ddlb.search.dryPickMs=1500                                  | tier=Nonems | sec=373ms | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 300s
+v09-maxr-1024    | -Ddlb.search.dryPickMaxR=1024                                | tier=Nonems | sec=342ms | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 300s
+v10-combo        | -Ddlb.search.loadedBudgetMs=700 -Ddlb.search.dryPickGoodSpan=6 -Ddlb.search.dryPickMaxR=1024 | tier=Nonems | sec=377ms | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 300s
