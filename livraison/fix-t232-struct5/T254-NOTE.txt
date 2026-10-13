@@ -1,0 +1,52 @@
+================================================================================
+DEEP LUCKY BLOCK — T254 « NEIGE : TAUX RÉEL, FONDU LARGE, SMOOTH -ICE »
+================================================================================
+
+CONTENU : DEEP-LUCKY-BLOCK-T254-SRC-COMPLET.zip (projet gradle complet a jour,
+./gradlew build ; meme recette d'installation que T246/T253). Build CI : SUCCESS.
+
+CE QUE VOTRE TEST T253 A PROUVE D'ABORD
+---------------------------------------
+- Le tier charge T245 A GAGNE sur votre machine : « tier charge T245 : 383 ms,
+  27 candidats charges, span reel=9, 0 chunk genere » (log 06:11:39).
+  Fast-path reel = OK en conditions joueur. Voie seche courante 224-461 ms.
+
+CORRECTIFS VISUELS NEIGE (vos consignes du 13/10 traitees)
+----------------------------------------------------------
+1) « tu as mis de la neige partout alors que la moitie de la zone etait en
+   biome non neige » + « verifie quels chunks contiennent quoi EN TOP,
+   calcule la moyenne, et la reproduis » :
+   => la couverture neige n'est PLUS decidee par le biome. snowRateCell
+   MESURE le taux reel (couche de neige fine au-dessus du sol ou bloc de
+   neige plein) sur les blocs du dessus des 4 chunks voisins (cache par
+   chunk), et snowCoverHere interpole ces 4 taux en BILINEAIRE sur tout le
+   chunk. Resultat : bord d'un champ de neige -> fondu doux proportionnel
+   au voisinage ; terrain sec -> rien ; biome neigeux entoure -> 100 %
+   comme avant. Fini l'anneau encadre de neige.
+2) « spread un peu plus les gradients » : le fondu court desormais sur TOUT
+   le chunk (16 blocs), au lieu des bandes 11 blocs max — et herite du taux
+   du voisin, donc la transition s'etale aussi dans le chunk d'apres.
+3) « quand tu fais tes smooths, fais des smooths -ice » + « la glace sur
+   l'eau » : cause racine trouvee — verifyGrassColumn REPEIGNAIT la glace
+   des lacs geles en herbe (ICE est un « terrain naturel » mais n'etait pas
+   protege). Desormais ICE/PACKED_ICE/BLUE_ICE ne sont jamais touches.
+4) « tu en as mis tres rarement, 1-2 chunks total » : la passe neige n'est
+   plus gatee au biome — hors biome enneige, si les chunks alentour sont
+   reellement enneiges, le fondu s'applique quand meme.
+5) Patches/anti-lignes : decision par colonne en patches deterministes
+   (hash x,z), epaisseur variable 1-3 couches conservee. Dithering ordonne
+   + spread large = les bonnes pratiques des mods de blend (recherche web
+   faite selon ta consigne : blend 15-63 blocs, dithering des bords,
+   palettes en etapes, jitter anti-geometrie).
+
+RESTE PREVU EN T255 (consignes non encore traitees, tracees au memo)
+--------------------------------------------------------------------
+- Ordre des passes snow : passe SOL apres peinture AVANT replantage, puis
+  passe FINALE apres tout (arbres + structure + mini-structures enneigees,
+  mini-structures pastees apres snow non realistes).
+- Zone interieure (paste priorise) : replanter plantes + repaint du sol.
+- Derniere couche du rayon de terrain a enneiger (anneau visible).
+- Generalisation du comportement aux surfaces moddees equivalentes.
+- Perf : tiers mutes a ~490 ms par vague quand les filtres ecartent tout
+  (budget auto si 0 sonde sechee), bulle 1 a 757-866 ms.
+================================================================================
