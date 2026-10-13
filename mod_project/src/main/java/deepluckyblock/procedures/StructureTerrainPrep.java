@@ -3229,6 +3229,15 @@ public class StructureTerrainPrep {
         SNOW_NEIGHBOR_CACHE.put(key, nb);
         return nb;
     }
+
+    /** T256 : vrai si un voisin du chunk porte de la neige (= le fondu a une
+     *  raison d'exister ici). Filtre bon marche (un tableau cache) pour ne
+     *  lancer placeSnowOrUnsnow hors biome enneige QUE pres d'un champ de
+     *  neige — generalisation aux zones non-biome-neige sans cout en plaine. */
+    private static boolean snowInfluenceNear(ServerLevel level, int x, int z) {
+        float[] nb = snowyRates(level, x >> 4, z >> 4);
+        return nb[0] > 0.02f || nb[1] > 0.02f || nb[2] > 0.02f || nb[3] > 0.02f;
+    }
     /**
      * T254 : Pose une neige en (x, z) ? Regle client (13/10, mesure REELLE) :
      * <ul>
@@ -3250,6 +3259,12 @@ public class StructureTerrainPrep {
         float wN = (17 - lz) / 17f, wS = lz / 17f;       // poids = proximite du bord
         float wO = (17 - lx) / 17f, wE = lx / 17f;
         float pct = (nb[0] * wN + nb[1] * wS + nb[2] * wO + nb[3] * wE) / (wN + wS + wO + wE);
+        // T256 (client 13/10 : « le degrade n'est clairement PAS VISIBLE ») :
+        // un voisin couvert a 100 % avec 3 voisins secs ne pese deja plus
+        // que ~47 % a 1 bloc du bord et <5 % a 16 blocs — fondu trop subtil
+        // une fois passe aux patches : amplification x1,5 plafonnee — le
+        // gradient reste 100 -> 0 mais il se LIT sur plusieurs blocs.
+        if (pct > 0f) pct = Math.min(1f, pct * 1.5f);
         if (pct <= 0.004f) return false;
         long h = seed ^ ((long) x * 0x9E3779B97F4A7C15L) ^ ((long) z * 0xC2B2AE3D27D4EB4FL);
         h ^= h >>> 33; h *= 0xff51afd7ed558ccdL; h ^= h >>> 33;
@@ -3366,10 +3381,12 @@ public class StructureTerrainPrep {
      * exterieur avec la texture buggee est toujours presente ».
      */
     public static void antiGrayFinalSweep(ServerLevel level, BlockPos min, BlockPos max) {
+        clearSnowCellCache();   // T256 : la finale relit des taux d'avant-peinture sinon
         final int ringAll = terrainRing() + NATURALIZE_EXTRA_RING;
         int x0 = min.getX() - ringAll, x1 = max.getX() + ringAll;
         int z0 = min.getZ() - ringAll, z1 = max.getZ() + ringAll;
         final int[] fixed = {0};
+        final int[] covered = {0};
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         for (int x = x0; x <= x1; x++) {
             for (int z = z0; z <= z1; z++) {
@@ -3379,15 +3396,42 @@ public class StructureTerrainPrep {
                 if (surfY < 1) continue;
                 BlockState s = level.getBlockState(mut.set(x, surfY, z));
                 if (!s.is(Blocks.GRASS_BLOCK) || !s.getValue(BlockStateProperties.SNOWY)) continue;
-                if (!level.getBlockState(mut.set(x, surfY + 1, z)).is(Blocks.SNOW)) {
+                BlockState above = level.getBlockState(mut.set(x, surfY + 1, z));
+                if (above.is(Blocks.SNOW)) continue;      // deja couvert : rien a faire
+                if (above.isAir()) {
+                    // T256 (consigne client 13/10 ~20:49 : « IF bloc de dirt
+                    // neige trouve, alors on pose TOUJOURS dessus une petite
+                    // couche de neige min ») : on ne DE-peint plus jamais une
+                    // herbe snowy exposee a ciel ouvert — on la COUVRE d'une
+                    // couche unique (le « min »).
+                    level.setBlock(mut, Blocks.SNOW.defaultBlockState(), 3);
+                    invalidateSnowCell(x >> 4, z >> 4);
+                    covered[0]++;
+                } else {
+                    // dessus occupe par autre chose que de la neige (tronc,
+                    // dalle...) : la face serait invisible/grise — anti-gris
+                    // historique conserve dans ce seul cas.
                     level.setBlock(mut.set(x, surfY, z),
                             s.setValue(BlockStateProperties.SNOWY, false), 2);
                     fixed[0]++;
                 }
             }
         }
-        if (fixed[0] > 0)
-            LOGGER.info("[DLB-STRUCTURE] anti-gris final T246 : {} herbe(s) snowy exposee(s) corrigee(s) sur l'anneau", fixed[0]);
+        if (covered[0] > 0 || fixed[0] > 0)
+            LOGGER.info("[DLB-STRUCTURE] anti-gris final T256 : {} dirt(s) neige COUVERTE(S) d'une couche min (consigne 13/10), {} snowy en zone occupee desenneigee(s)", covered[0], fixed[0]);
+    }
+
+    /** T256 : un setBlock neige modifie le sommet du chunk -> son TAUX mesure
+     *  et les VOISINAGES (N/S/E/W) qui le referenceaient deviennent faux.
+     *  Sans invalidation, le degrade depend de l'ordre de balayage (client
+     *  13/10 : degrades visibles « en partie » W et S, absents N et E). */
+    private static void invalidateSnowCell(int cx, int cz) {
+        SNOW_RATE_CACHE.remove((((long) cx) << 32) | (cz & 0xffffffffL));
+        SNOW_NEIGHBOR_CACHE.remove((((long) cx) << 32) | (cz & 0xffffffffL));
+        SNOW_NEIGHBOR_CACHE.remove((((long) cx) << 32) | ((cz - 1) & 0xffffffffL));
+        SNOW_NEIGHBOR_CACHE.remove((((long) cx) << 32) | ((cz + 1) & 0xffffffffL));
+        SNOW_NEIGHBOR_CACHE.remove((((long) (cx - 1)) << 32) | (cz & 0xffffffffL));
+        SNOW_NEIGHBOR_CACHE.remove((((long) (cx + 1)) << 32) | (cz & 0xffffffffL));
     }
 
     /**
@@ -3410,11 +3454,13 @@ public class StructureTerrainPrep {
         if (!level.getBlockState(mut.set(x, surfY + 1, z)).isAir()) return 0;
         if (snowCoverHere(level, seed, x, z)) {
             level.setBlock(mut, snowVaried(level, seed, x, z), 3);
+            invalidateSnowCell(x >> 4, z >> 4);   // T256 : les taux/voisinages changent
             return 1;
         }
         BlockState s = level.getBlockState(mut.set(x, surfY, z));
         if (s.is(Blocks.GRASS_BLOCK) && s.getValue(BlockStateProperties.SNOWY)) {
             level.setBlock(mut, s.setValue(BlockStateProperties.SNOWY, false), 2);
+            invalidateSnowCell(x >> 4, z >> 4);   // T256
             return 3;
         }
         return 2;
@@ -4037,6 +4083,7 @@ public class StructureTerrainPrep {
     private static void dressAndPlant(ServerLevel level, BlockPos min, BlockPos max,
                                       boolean postPaste, Runnable onDone) {
         if (!dressingEnabled()) { if (onDone != null) onDone.run(); return; }
+        clearSnowCellCache();   // T256 : taux frais (cf. verifyGrassSurface)
         final int innerRing = terrainRing();
         final int outerRing = terrainRing() + NATURALIZE_EXTRA_RING;
         final ChunkMajorZone zone = new ChunkMajorZone(level, new BlockPos(
@@ -4163,7 +4210,11 @@ public class StructureTerrainPrep {
             //      dans le bloc inner ; ils couvrent desormais inner + bande
             //      externe de l'anneau + emprise a ciel ouvert (sur sol
             //      naturel uniquement : sur la structure ils ne lisent rien).
-            if (snowy)
+            // T256 : n'est plus gate au seul biome — hors biome enneige, le
+            // fondu court dès qu'un chunk voisin porte de la neige (taux
+            // reels), comme dans verifyGrassSurface. Sinon, memes trous de
+            // couverture qu'avant sur les cotes « deja en herbe ».
+            if (snowy || snowInfluenceNear(level, x, z))
                 placeSnowOrUnsnow(level, vegSeed ^ 0x5EED2432L, x, surfY, z);   // T245+T246 : degrade + patches, epaisseur variable ; refus = de-neige l'herbe exposee
 
             // Densité radiale continue : forte dans le cœur, puis ramenée à
@@ -6153,6 +6204,9 @@ public class StructureTerrainPrep {
                                            Runnable onDone) {
         // Toute la zone GIGA lissée : grass en surface, + snow layer si biome enneigé
         // (sinon les blocs d'herbe en zone de neige ont une texture buggée).
+        clearSnowCellCache();   // T256 : chaque passe part de taux FRAIS — les
+        // taux caches pendant une passe anterieure dataient d'avant-peinture
+        // (degrade dependant de l'ordre de balayage = asymetrie W/S ok, N/E nu).
         final int[] counters = {0, 0, 0};   // [0] = grass, [1] = snow, [2] = snow refusee par le degrade T243
         startColumnPass(level, "verifyGrassSurface",
                 columnsOf(structMin, structMax, terrainRing()), BATCH_COLS, col -> {
@@ -6237,9 +6291,18 @@ public class StructureTerrainPrep {
             int snowCode = placeSnowOrUnsnow(level, level.getSeed() ^ 0x5EED2431L, x, surfY, z);
             if (snowCode == 1) counters[1]++;
             else if (snowCode >= 2 && counters.length > 2) counters[2]++;   // refus gradient (preuve degrade/patches au bord)
-        } else if (s.blocksMotion() && isNaturalTerrain(s) && !s.is(Blocks.GRASS_BLOCK)
+        } else if (s.blocksMotion() && isNaturalTerrain(s)
                 && !s.is(Blocks.SAND) && !s.is(Blocks.SANDSTONE) && !s.is(Blocks.RED_SAND)) {
-            level.setBlock(mut.set(x, surfY, z), Blocks.GRASS_BLOCK.defaultBlockState(), 2); counters[0]++;
+            // T256 (client 13/10 : degrades visibles W/S « en partie », rien
+            // N/E) — CAUSE TROUVEE : l'exclusion du GRASS_BLOCK laissait un
+            // TROU dans la couverture : hors biome enneige, une colonne deja
+            // en herbe ne passait par AUCUNE branche -> jamais de neige
+            // fondue dessus meme avec des chunks voisins couverts. Les cotes
+            // « prairie deja en herbe » restaient nus, les sols retouches
+            // (dirt/podzol repeints) recevaient le fondu — d'ou l'asymetrie.
+            if (!s.is(Blocks.GRASS_BLOCK)) {
+                level.setBlock(mut.set(x, surfY, z), Blocks.GRASS_BLOCK.defaultBlockState(), 2); counters[0]++;
+            }
             // T254 : la passe snow n'est plus gatee au BIOME (« seulement
             // 1-2 chunks total ») : hors biome enneige, la decision se prend
             // sur le TAUX REEL des chunks alentour (snowCoverHere) — fondu
