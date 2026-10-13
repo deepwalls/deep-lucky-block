@@ -1104,6 +1104,15 @@ public class Structures5Procedure {
      *  main avec le MEILLEUR candidat deja trouve. -Ddlb.search.dryPickMs=N */
     private static final int DRY_PICK_BUDGET_MS =
             propInt("dlb.search.dryPickMs", 900);
+    /** T252 : plafond GLOBAL de la recherche par vague (tier charge T245 +
+     *  choix sec T233c cumules). Campagnes CI 1-5 (33 runs, runner 2 CPU) :
+     *  tier 39-227 ms, sec 184-459 ms => pire cas cumule 686 ms car les
+     *  budgets etaient SEPARES. Desormais le choix sec recoit le RELIQUAT
+     *  (plancher 200 ms : au moins une courte tentative, le fil historique
+     *  F2 reste le relais derriere). 0 = plafond desactive.
+     *  -Ddlb.search.totalBudgetMs=N (defaut 640). */
+    private static final long SEARCH_TOTAL_BUDGET_MS =
+            propInt("dlb.search.totalBudgetMs", 640);
     /** Centres deja PROPOSES par le choix sec pendant la recherche en cours
      *  (coord [x,z]). Ils NE SONT PAS forcement rejetes (les portes reelles
      *  arbitrent), mais on ne doit jamais proposer le meme quartier deux
@@ -1323,6 +1332,14 @@ public class Structures5Procedure {
 
     private static BlockPos dryPickCenter(net.minecraft.server.level.ServerLevel lvl,
             BlockPos origin, int checkR, int fullCheckR, int structMax, Player p, int minEdgeDist) {
+        return dryPickCenter(lvl, origin, checkR, fullCheckR, structMax, p, minEdgeDist, 0);
+    }
+
+    /** T252 : {@code budgetCapMs} > 0 plafonne la duree de CE choix sec
+     *  (reliquat du plafond global de recherche, voir findFlat). */
+    private static BlockPos dryPickCenter(net.minecraft.server.level.ServerLevel lvl,
+            BlockPos origin, int checkR, int fullCheckR, int structMax, Player p, int minEdgeDist,
+            long budgetCapMs) {
         final long t0 = System.currentTimeMillis();
         int probed = 0, water = 0, skipped = 0;
         try {
@@ -1332,7 +1349,7 @@ public class Structures5Procedure {
             final int baseZ = p != null ? p.blockPosition().getZ() : origin.getZ();
             final int minCenterDist = minEdgeDist + checkR;
             final int step = Math.max(32, structMax);
-            final long budget = DRY_PICK_BUDGET_MS;
+            final long budget = budgetCapMs > 0 ? budgetCapMs : DRY_PICK_BUDGET_MS;
             final int[][] bubbles = {{0,0},{1024,0},{-1024,0},{0,1024},{0,-1024},
                                      {1024,1024},{-1024,-1024},{1024,-1024},{-1024,1024}};
             BlockPos bestStrict = null; int bestStrictSpan = Integer.MAX_VALUE;
@@ -1885,6 +1902,9 @@ public class Structures5Procedure {
     }
 
     private static BlockPos findFlat(ServerLevel lvl, BlockPos origin, int structW, int structD, int minEdgeDist) {
+        // T252 : chrono de la vague de recherche (tier charge + choix sec)
+        // pour le plafond global SEARCH_TOTAL_BUDGET_MS.
+        final long searchT0 = System.currentTimeMillis();
         Player p = lvl.getNearestPlayer(origin.getX() + .5, origin.getY() + .5, origin.getZ() + .5, 128, false);
         double lx = 0, lz = 0; BlockPos pp = origin;
         if (p != null) { float yaw = p.getYRot(); lx = -Math.sin(Math.toRadians(yaw)); lz = Math.cos(Math.toRadians(yaw)); pp = p.blockPosition(); }
@@ -1932,8 +1952,15 @@ public class Structures5Procedure {
         // propose ; l'abandon borne F2 demeure la garde-fou ultime.
         // Desactivable : -Ddlb.search.dryPick=0.
         if (SEARCH_DRY_PICK) {
+            // T252 : le choix sec herite du RELIQUAT du plafond global
+            // (tier charge deja consomme dans la meme vague) — la duree de
+            // recherche totale est desormais bornee, pas chaque phase seule.
+            long dryCap = DRY_PICK_BUDGET_MS;
+            if (SEARCH_TOTAL_BUDGET_MS > 0)
+                dryCap = Math.max(200, Math.min(DRY_PICK_BUDGET_MS,
+                        SEARCH_TOTAL_BUDGET_MS - (System.currentTimeMillis() - searchT0)));
             BlockPos dry = dryPickCenter(lvl, searchOrigin, checkR, fullCheckR,
-                    Math.max(structW, structD), p, minEdgeDist);
+                    Math.max(structW, structD), p, minEdgeDist, dryCap);
             if (dry != null) return dry;
         }
 

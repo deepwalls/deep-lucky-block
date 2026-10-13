@@ -1,6 +1,14 @@
-# ===== CAMPAGNE 5 « tier radius 16 » : couvrire le site sec 1018,187 =====
-# radius 16 = +-256 blocs = 33x33 chunks (1089), deadline if-loaded 300 s.
-# Si le site sec connu est dans la zone chargee avant le test, le tier T245
-# peut GAGNER (log « tier charge T245 : N ms »).
-s03-radius16     | 
-s04-radius16-bis | 
+# ====== CAMPAGNE 6 « T252 plafond global + tier interne + derniers resserres » ======
+# Nouveautes mesurees : T252 (totalBudgetMs defaut 640, reliquat herite par le
+# sec), SECOND TIR B au point interne 1300,90,150 (dans les spawn chunks
+# charges) pour tenter le succes franc du tier charge T245.
+g01-defaut         | 
+g02-defaut-bis     | 
+g03-total-500      | -Ddlb.search.totalBudgetMs=500
+g04-total-800      | -Ddlb.search.totalBudgetMs=800
+g05-total-400      | -Ddlb.search.totalBudgetMs=400
+g06-goodspan-7     | -Ddlb.search.dryPickGoodSpan=7
+g07-goodspan-6     | -Ddlb.search.dryPickGoodSpan=6
+g08-t500-g7        | -Ddlb.search.totalBudgetMs=500 -Ddlb.search.dryPickGoodSpan=7
+g09-loadedb-300    | -Ddlb.search.loadedBudgetMs=300
+g10-t500-lb300     | -Ddlb.search.totalBudgetMs=500 -Ddlb.search.loadedBudgetMs=300

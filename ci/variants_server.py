@@ -209,7 +209,7 @@ def run_variant(name, props):
         # prolongement facultatif : paste termine si ca rentre dans 240 s
         if site is not None:
             try:
-                wait_for(['decorate TERMINE', 'Post-process de dragon termine'], 240, phases)
+                wait_for(['decorate TERMINE', 'Post-process de dragon termine'], 180, phases)
                 total = round(time.monotonic() - t0, 1)
             except Exception:
                 total = None
@@ -218,7 +218,7 @@ def run_variant(name, props):
             dist = ((site[0] - 1200) ** 2 + site[1] ** 2) ** 0.5
             try:
                 rcon(f'dlbringaudit {site[0]} {site[1]}', timeout=180)
-                wait_for('[DLB-RINGAUDIT]', 90, phases)
+                wait_for('[DLB-RINGAUDIT]', 75, phases)
             except Exception as audit_err:
                 result['audit'] = str(audit_err).splitlines()[0][:200]
         else:
@@ -230,6 +230,35 @@ def run_variant(name, props):
             'total': total,
         })
         result['rows'] = 'OK'
+        # CAMPAGNE 6 : second tir DANS la zone chargee (spawn chunks 33x33
+        # couvrent 944..1456 x -256..256, charges et prouves coins=True) pour
+        # tenter le succes franc du tier charge T245 sur point interne.
+        try:
+            mark = len(log)
+            rcon('execute positioned 1300 90 150 run dlbtest dragon', timeout=240)
+            wait_for('Zone choisie a ', 300, phases)
+            tierB = None; secB = None; siteB = None; tfb = None
+            for ln in log[mark:] + phases:
+                m = re.search(r'Zone choisie a (-?\d+),(-?\d+).*?tier charge T245 : (\d+) ms.*?(\d+) candidats charges', ln)
+                if m and tierB is None:
+                    siteB = (int(m.group(1)), int(m.group(2))); tierB = int(m.group(3))
+                mf = re.search(r'tier charge T245 sans bon candidat \((\d+) ms', ln)
+                if mf and tfb is None:
+                    tfb = int(mf.group(1))
+                ms = re.search(r'selection seche T233c : (\d+) ms', ln)
+                if ms and secB is None and tierB is None:
+                    # secB = la 1re selection seche APRES le lancement B si
+                    # le tier B n'a pas gagne (sinon ambigu avec un tier gagnant)
+                    pass
+            # secB : la derniere selection seche de la fenetre B (tier B
+            # absent => repli sec) ; si tierB est set, pas de secB utile.
+            secs = [int(x) for x in re.findall(r'selection seche T233c : (\d+) ms',
+                    '\n'.join(log[mark:] + phases))]
+            if tierB is None and secs:
+                secB = secs[-1]
+            result.update({'tierB': tierB, 'secB': secB, 'siteB': siteB, 'tierB_fail': tfb})
+        except Exception as be:
+            result['tierB'] = 'ERR:' + str(be).splitlines()[0][:120]
     except Exception as exc:
         tail = '\n'.join(log[-60:])
         print(f'variante {name} ECHEC:\n{tail}', flush=True)
@@ -313,6 +342,7 @@ for r in results:
     rows.append(f"{r['name']:<16} | {r['props']:<60}"
                 f" | tier={tier} | sec={r.get('sec_ms')}ms"
                 f" | coins={r.get('corners')} sp={r.get('spawn_resp','')[:60]}"
+                f" | B: tier={r.get('tierB')} sec={r.get('secB')} fail={r.get('tierB_fail')} Bsite={r.get('siteB')}"
                 f" | site={r.get('site')} | dist={r.get('dist')}"
                 f" | total={r.get('total')}s | {r['rows']} | audit={r.get('audit','-')}")
 record('RESULTATS CAMPAGNE T248 (nom | props | recherche ms par voie)\n' + '\n'.join(rows))
