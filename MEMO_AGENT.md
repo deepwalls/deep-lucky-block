@@ -405,3 +405,24 @@ retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard
   anti-gris T256, congeres T257. EN ATTENTE test client : T246 « marche
   max » doit tomber p2/p3 + bride ~0. LAGS <5 s toujours ouverts :
   poses 14-72 s, pires ticks 15,5 s pre-chargement + 12,6 s scanTrees.
+- T259 LIVRE (code e3d3e34 + livraison e874182, CI 38484214068 SUCCESS,
+  release T259). Retour client run 00:48 (banner informatif : jamais
+  bumpe depuis T246 -> bumpe en T259 desormais ; run identifie T258
+  via mesures log : bride 2107->1116-1573, marche p2). Cinq plaintes :
+  (1) rectangle vert/delimitations = taux neige re-mesures APRES dress
+  (clearDressingCaches en FIN de chaine, pas en tete) -> ~0 % en zone ->
+  fondu refuse -> desenneigement 3/4 ; FIX : primeSnowRates au
+  streamLoadedChunk (vierge, avec paletteAt) + clearSnowCellCache ne
+  vide plus SNOW_RATE/NEIGHBOR. (2) retombee-a-zero T257 = couronne
+  tondue -> PARITE perimetre 8 bl avec taux reel DEHORS. (3) regle
+  litterale client : grass snowy en contexte neigeux = TOUJOURS layer
+  (placeSnowOrUnsnow), desenneige seulement hors influence. (4) « 2
+  chunks de glace » = grass snowy SANS layer (dessus gris-bleu vanilla),
+  pas de la glace ; spread eau/glace desormais interdit (garde
+  WATER/ICE/*). (5) montagnes 2e ed. = rampe conservee de T258 : cap
+  remblai riseCapNearEmprise (+4 contact, +3/bl jusqu'a 18, coupe
+  libre) applique clampSmoothDelta + limitSlope (param riseLimit) +
+  limitContactSlope ; contact sol/base porte par la motte (confirmee
+  plein ecran gris au coin structure). PERF (T260 plan, promis) :
+  stall 19,4 s 200 reprises capDrops=0 (emprise async), scanTrees
+  43 s+, 1140 chunks epingles tick principal, pose 105 s, total 139 s.
