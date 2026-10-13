@@ -364,3 +364,10 @@ retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard
   encore visible ; spread gradient 2-3 chunks si 1 chunk insuffisant ;
   generaliser comportement aux surfaces moddees equivalentes ; tier CI muet par
   vague (budget auto si 0 sonde).
+- LIENS DE TELECHARGEMENT (retour client 13/10 « les liens ne fonctionnent pas ») :
+  uploads.github.com est BLOQUE depuis le sandbox (EOF immediat) -> pas d'assets
+  de release possibles ici. MAIS le repo est PUBLIC (isPrivate=false) : les liens
+  raw.githubusercontent.com/<org>/<repo>/<sha>/<chemin> fonctionnent cote client
+  (verifie via fetch_page : contenu OK). Toujours COLLER LES URL COMPLETES dans
+  le message de livraison + dans les notes de release — ne jamais ecrire juste
+  « liens verifies » sans les donner.
