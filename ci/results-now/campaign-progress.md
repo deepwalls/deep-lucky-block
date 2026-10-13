@@ -1,1 +1,1 @@
-PROGRESS: g03-total-500 -> OK
+PROGRESS: g04-total-800 -> OK
