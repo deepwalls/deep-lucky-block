@@ -145,16 +145,16 @@ def run_variant(name, props):
         # l'attente, 3 campagnes muettes — echec silencieux via mcrcon).
         # On passe par les SPAWN CHUNKS vanilla, charges en priorite et de
         # facon synchrone : rayon 10 => 21x21 chunks (441) autour du test.
-        r1 = rcon('gamerule spawnChunkRadius 10', timeout=30)
+        r1 = rcon('gamerule spawnChunkRadius 16', timeout=30)
         r2 = rcon('setworldspawn 1200 64 0', timeout=30)
         result['spawn_resp'] = (r1 + ' | ' + r2)[:180]
         corners_ok = False
-        deadline = time.monotonic() + 150
+        deadline = time.monotonic() + 300
         probe_supported = True
         while time.monotonic() < deadline:
             try:
-                out = rcon('execute if loaded 1040 64 -160 if loaded 1360 64 160'
-                           ' if loaded 1040 64 160 if loaded 1360 64 -160'
+                out = rcon('execute if loaded 960 64 -240 if loaded 1440 64 240'
+                           ' if loaded 960 64 240 if loaded 1440 64 -240'
                            ' run say DLCORNERS', timeout=30)
                 if 'Unknown or incomplete command' in out:
                     probe_supported = False

@@ -1,6 +1,6 @@
-# ============ CAMPAGNE 4 « TIER via SPAWN CHUNKS » (2 runs) ============
-# setworldspawn 1200 64 0 + gamerule spawnChunkRadius 10 : 21x21 chunks
-# charges en synchrone prioritaire (le forceload RCON etait silencieusement
-# inerte). Si coins=True, le tier charge T245 DOIT s'activer.
-s01-defaut     | 
-s02-defaut-bis | 
+# ===== CAMPAGNE 5 « tier radius 16 » : couvrire le site sec 1018,187 =====
+# radius 16 = +-256 blocs = 33x33 chunks (1089), deadline if-loaded 300 s.
+# Si le site sec connu est dans la zone chargee avant le test, le tier T245
+# peut GAGNER (log « tier charge T245 : N ms »).
+s03-radius16     | 
+s04-radius16-bis | 
