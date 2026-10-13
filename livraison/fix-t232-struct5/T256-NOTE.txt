@@ -1,0 +1,70 @@
+DEEP LUCKY BLOCK — CORRECTIF T256 (13/10/2026, soir)
+====================================================
+
+CE QUE TON TEST T255 A MONTRÉ (chronologie 20:47:06 → 20:47:50)
+---------------------------------------------------------------
+Pose du dragon complète en 44 s (contre 2 min 23 le matin même) :
+  20:47:06  commande
+  + 21 s    recherche : 14 vagues, 13 sites refusés par les portes réelles
+            — le tier « chunks chargés » n'a coûté que 2 × 189 ms
+            (budget adaptatif T255 ✓) puis saut du tier 16 s, série 2
+            (mémo anti-répétition T255 ✓)
+  + 15 s    pré-chargement (99 chunks cette fois) + lissage + paste 15,9 s
+  + 8 s     finitions (decorate 9,8 s)
+  20:47:50  « ✓ Dragon Sanctuary est entièrement terminée (durée totale 44 s) »
+            + rappel ⏳ vu en cours de route (messages T255 ✓)
+
+Reste honnête : la recherche multi-vagues (21 s ici) dépend du nombre de
+sites que les portes réelles refusent — chaque verdict sincère coûte
+~1-1,5 s sur ta machine. « LE TOUT sous 5000 ms » n'est tenable que si
+le 1er ou 2e site passe ; je continue de chercher un pré-filtre sec plus
+fin, mais je ne te promets pas ce chiffre tant que le verdict exige le
+terrain réel.
+
+CE QUE T256 CORRIGE (tes 3 messages de 20:48→20:51)
+--------------------------------------------------
+1) « le degradé n'est clairement PAS VISIBLE »
+   → Amplification ×1,5 (plafonnée) du fondu dans snowCoverHere : le
+   gradient 100 → 0 % se LIT désormais sur plusieurs blocs au lieu de
+   s'éteindre presque aussitôt une fois passé aux patches.
+
+2) « seulement vers west et south ont en partie fonctionnés, les autres non »
+   → DEUX causes trouvées et corrigées :
+   a) TROU DE COUVERTURE : hors biome neigeux, verifyGrassSurface sautait
+      TOUTE colonne déjà en herbe (branche else-if mutuellement
+      exclusive) → zéro chance de neige sur une prairie intacte ; seuls
+      les sols retouchés (dirt/podzol repeints) recevaient le fondu.
+      Tes côtés N/E « déjà en herbe » restaient donc nus par construction.
+      Désormais le fondu s'applique aussi à l'herbe non repeinte.
+   b) TAUX PÉRIMÉS : les mesures de neige des chunks étaient figées en
+      cache AVANT la peinture, pour toute la chaîne → le dégradé
+      dépendait de l'ordre de balayage (d'où « en partie »).
+      Désormais : caches remis à zéro au départ de chaque passe neige,
+      et chaque couche posée/retirée invalide le taux de SON chunk et
+      les tableaux de voisinage qui s'y réfèrent.
+   + dressAndPlant n'est plus bloqué par le seul biome : dès qu'un chunk
+     voisin porte de la neige (> 2 %), le fondu court (généralisation
+     demandée, sans coût en terrain sec).
+
+3) « IF bloc de dirt neige trouvé, alors on pose obligatoirement toujours
+    dessus une petite couche de neige min »
+   → La toute dernière passe (antiGrayFinalSweep) applique exactement
+   cette règle : bloc de terre/peint snowy + ciel au-dessus
+   ⇒ couche de neige OBLIGATOIRE (1 couche, le « min »), on ne dé-peint
+   plus jamais. Dé-peinture conservée uniquement quand le dessus est
+   occupé par autre chose que de la neige (tronc, dalle…).
+   Log attendu : « anti-gris final T256 : N dirt(s) neige COUVERTE(S)
+   d'une couche min … ».
+
+COMMENT TESTER
+--------------
+1. Remplace les sources (zip complet, ou juste les 8 fichiers de src/
+   comme d'habitude — voir la liste dans la release).
+2. Pose un dragon/observatory au bord d'un champ de neige.
+3. Tu dois voir : le fondu de neige sur les QUATRE côtés (pas seulement
+   W/S), un dégradé lisible sur ~1 chunk, et à la fin TOUT bloc snowé
+   porte au moins 1 couche — plus jamais de « dessus gris ».
+4. Screenshot + log : je compare avec ton 20:47.
+
+Build : CI GitHub run 38451604861 — SUCCESS (Java 21).
+Commits : 57d45d9 (code) + livraison.
