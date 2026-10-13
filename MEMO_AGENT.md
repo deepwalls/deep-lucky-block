@@ -371,3 +371,11 @@ retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard
   (verifie via fetch_page : contenu OK). Toujours COLLER LES URL COMPLETES dans
   le message de livraison + dans les notes de release — ne jamais ecrire juste
   « liens verifies » sans les donner.
+- T256 LIVRE (57d45d9 code + livraison e885cbf, CI 38451604861 SUCCESS,
+  release T256) : degrade neige visible+symetrique (trou herbe hors biome,
+  taux perimes -> invalidation par ecriture + clear par passe, amplification
+  1,5x), dressAndPlant degate biome (snowInfluenceNear), REGLE FINALE client
+  « dirt snowy -> toujours couche SNOW min » dans antiGrayFinalSweep
+  (de-peinture seulement si dessus occupe non-neige). Test client T255 :
+  pose dragon 44 s (vs 2 min 23) — 21 s de recherche 14 vagues restent le
+  goulot (verdict reel ~1-1,5 s/site sur sa machine) ; messages T255 vus.
