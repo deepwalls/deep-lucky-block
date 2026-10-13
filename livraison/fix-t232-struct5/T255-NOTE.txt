@@ -1,0 +1,84 @@
+DEEP LUCKY BLOCK — CORRECTIF T255 (13/10/2026)
+===============================================
+
+POURQUOI CE CORRECTIF
+---------------------
+Ton log runClient (06:05 → 06:26) et tes messages « c'est si long » /
+« j'ai pas eu le message de fini ? » :
+la pose du dragon #2 a pris 2 min 23 s, et pendant tout ce temps… silence
+radio, tu ne savais pas si c'était planté.
+
+Décomposition exacte de ces 2 min 23 (timestamps de TON log) :
+  06:20:05  commande
+  + ~7 s    7 vagues de recherche rejetées par les portes réelles
+            → à CHAQUE vague, le tier « chunks chargés » était REJOUÉ
+              jusqu'au bout du budget (~490 ms) alors qu'il ne trouvait
+              rien (0-2 sondes traitées sur machine lente)
+  + 24,4 s  2 chargements d'emprise complets (12,5 s + 11,9 s) pour des
+            sites ensuite rejetés — coût intrinsèque du verdict réel, il
+            FAUT le terrain chargé pour trancher honnêtement
+  + 85,3 s  prepZone : 878 chunks à charger (144 épinglés par tranche)
+  + ~14 s   paste + verifyGrass + finitions
+  06:22:28  annonce
+
+CE QUE T255 CHANGE (3 correctifs)
+---------------------------------
+1) TIER « CHUNKS CHARGÉS » ANTI-RÉPÉTITION
+   Si la vague précédente n'a RIEN trouvé dans les chunks chargés et que
+   tu n'as pas bougé (±64 blocs), le tier est SKIPÉ pendant 8 s × série
+   (borne 30 s). Le contenu chargé n'a pas changé en 1 seconde : rejouer
+   le scan servait à rien.
+   → 7 vagues = 1 tier joué au lieu de 7. Environ 3 s gagnés par pose
+     multi-vagues, et les vagues suivantes passent direct au choix sec.
+
+2) BUDGET ADAPTATIF MACHINE LENTE
+   Si après 175 ms moins de 20 % des candidats ont un résultat, la machine
+   ne finira JAMAIS la liste avant le budget dur de 480 ms : on coupe à
+   ~175 ms au lieu d'attendre 480 ms.
+   → Une vague stérile coûte ~175 ms sur ta machine au lieu de ~490 ms.
+
+3) MESSAGES DE PROGRESSION + VRAI MESSAGE DE FIN
+   Tu avais raison : le message « STRUCTURE DISCOVERED … has spawned! »
+   partait juste après la POSE BRUTE des blocs, alors que les finitions
+   (terrain, végétation, arbres, anti-neige-grise) pouvaient durer encore
+   jusqu'à 90 s — tu n'avais donc JAMAIS de confirmation finale.
+   Désormais :
+   - toutes les 25 s pendant les travaux :
+       ⏳ Dragon Sanctuary : ajustement du terrain en cours…
+         (travaux démarrés il y a 63 s, encore un instant)
+   - à la toute fin (FIFO réellement libérée) :
+       ✓ Dragon Sanctuary est entièrement terminée
+         (terrain, végétation et arbres compris, durée totale 143 s)
+
+CE QUE ÇA CHANGE POUR TOI
+-------------------------
+- Les recherches multi-vagues ne rejouent plus le même scan en boucle.
+- Tu es informé en continu : plus jamais de « wtf que ce passe il ?? ».
+- Le message de fin arrive VRAIMENT à la fin.
+
+CE QUI RESTE (non traité ici, honnêtement)
+------------------------------------------
+- Les 2×12 s de chargements d'emprise « gâchés » : c'est le prix d'un
+  verdict honnête (on ne peut pas juger un terrain sans le lire). Une
+  piste existe (pré-filtrage sec plus agressif) mais risquée : à étudier.
+- prepZone 85 s : la constante PRELOAD_CHUNKS_PER_TICK était déjà morte ;
+  le vrai goulot est le pipeline de chargement vanilla, pas un réglage
+  du mod. Réduit indirectement par le correctif 1 (moins de vagues =
+  moins de zones à charger).
+- Tes consignes neige visuelles (ordre des passes, dernière couche du
+  rayon, zone intérieure) : planifiées T256.
+
+COMMENT TESTER
+--------------
+1. Remplace les sources du projet par celles du zip (comme d'habitude).
+2. Lance une pose de dragon au même endroit que ton test du 13/10.
+3. Tu dois voir :
+   - des messages ⏳ toutes les 25 s pendant les travaux,
+   - le message ✓ final avec la durée totale,
+   - dans le log, « saut du tier ~8 s, série 2 » aux vagues suivant un
+     échec, « Tier charge T245 sans bon candidat » avec mem armée,
+     « serie » incrémentée.
+4. Envoie le nouveau log : je compare la chronologie à 2 min 23.
+
+Build : CI GitHub run 38350510604 — SUCCESS (Java 21).
+Commit : e236be6 (code) + livraison ci-dessous.
