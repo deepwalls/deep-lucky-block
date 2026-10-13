@@ -1,9 +1,6 @@
-# ============ CAMPAGNE 3 « TIER » : mesurer le tier charge T245 ============
-# forceload reduit +-16 chunks (1056 au lieu de 1600) + deadline if-loaded
-# 330 s : les coins doivent ENFIN charger sur runner 2 CPU et le tier doit
-# s'activer (log « tier charge T245 : N ms » capturé). 4 runs dont une
-# repetition pour le bruit.
-t01-defaut       | 
-t02-defaut-bis   | 
-t03-budget-300   | -Ddlb.search.loadedBudgetMs=300
-t04-budget-800   | -Ddlb.search.loadedBudgetMs=800
+# ============ CAMPAGNE 4 « TIER via SPAWN CHUNKS » (2 runs) ============
+# setworldspawn 1200 64 0 + gamerule spawnChunkRadius 10 : 21x21 chunks
+# charges en synchrone prioritaire (le forceload RCON etait silencieusement
+# inerte). Si coins=True, le tier charge T245 DOIT s'activer.
+s01-defaut     | 
+s02-defaut-bis | 

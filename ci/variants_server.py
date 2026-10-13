@@ -140,27 +140,26 @@ def run_variant(name, props):
         t_start = t0
         # T246 : simuler le joueur reel qui pre-charge massivement ses chunks
         # (« j'ai une tonne de chunks charges ») : forceload +- 20 chunks
-        # autour du point de test, puis petit temps de generation.
-        try:
-            rcon('forceload add 944 -256 1456 256', timeout=60)
-        except Exception as fe:
-            print('forceload ignore: ' + str(fe), flush=True)
-        # CAMPAGNE 2 : attendre ACTIVEMENT que les chunks soient reels (le
-        # forceload charge en asynchrone ; 45 s fixes n'ont pas suffi sur
-        # runner 2 CPU et le tier charge T245 est reste muet). On sonde les
-        # 4 coins via « execute if loaded » (MC 1.21) jusqu'a 210 s.
+        # autour du point de test. CAMPAGNE 4 : le forceload RCON ne
+        # declenchait AUCUNE generation (0 activite serveur pendant toute
+        # l'attente, 3 campagnes muettes — echec silencieux via mcrcon).
+        # On passe par les SPAWN CHUNKS vanilla, charges en priorite et de
+        # facon synchrone : rayon 10 => 21x21 chunks (441) autour du test.
+        r1 = rcon('gamerule spawnChunkRadius 10', timeout=30)
+        r2 = rcon('setworldspawn 1200 64 0', timeout=30)
+        result['spawn_resp'] = (r1 + ' | ' + r2)[:180]
         corners_ok = False
-        deadline = time.monotonic() + 330
+        deadline = time.monotonic() + 150
         probe_supported = True
         while time.monotonic() < deadline:
             try:
-                out = rcon('execute if loaded 944 64 -256 if loaded 1456 64 256'
-                           ' if loaded 944 64 256 if loaded 1456 64 -256'
+                out = rcon('execute if loaded 1040 64 -160 if loaded 1360 64 160'
+                           ' if loaded 1040 64 160 if loaded 1360 64 -160'
                            ' run say DLCORNERS', timeout=30)
                 if 'Unknown or incomplete command' in out:
                     probe_supported = False
-                    print('if-loaded absent : repli sleep 150 s', flush=True)
-                    time.sleep(240)
+                    print('if-loaded absent : repli sleep 120 s', flush=True)
+                    time.sleep(120)
                     corners_ok = True
                     break
             except Exception as pe:
@@ -168,10 +167,10 @@ def run_variant(name, props):
             if any('DLCORNERS' in ln for ln in log[-300:]):
                 corners_ok = True
                 break
-            time.sleep(15)
+            time.sleep(10)
         print('corners chargees=' + str(corners_ok) + ' probe=' + str(probe_supported), flush=True)
         result['corners'] = corners_ok
-        time.sleep(10)
+        time.sleep(5)
         rcon('execute positioned 1200 90 0 run dlbtest dragon', timeout=240)
         # T231 v2 (CI 2 CPU) : le KPI est la phase RECHERCHE (temps jusqu'au
         # "Zone choisie" + distance), pas la suite du paste/deco, qui ne
@@ -313,7 +312,7 @@ for r in results:
         f"muet({r.get('tier_fail_ms')}ms,{r.get('tier_cands')}c)" if r.get('tier_fail_ms') is not None else 'absent')
     rows.append(f"{r['name']:<16} | {r['props']:<60}"
                 f" | tier={tier} | sec={r.get('sec_ms')}ms"
-                f" | coins={r.get('corners')}"
+                f" | coins={r.get('corners')} sp={r.get('spawn_resp','')[:60]}"
                 f" | site={r.get('site')} | dist={r.get('dist')}"
                 f" | total={r.get('total')}s | {r['rows']} | audit={r.get('audit','-')}")
 record('RESULTATS CAMPAGNE T248 (nom | props | recherche ms par voie)\n' + '\n'.join(rows))
