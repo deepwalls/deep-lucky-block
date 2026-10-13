@@ -1732,6 +1732,15 @@ public class StructureTerrainPrep {
         // Palette calculée une seule fois tant que le chunk naturel est intact.
         // paletteAt conserve le résultat confiant dans son cache mod-wide.
         paletteAt(level, cx, cz);
+        // T259 (retour client 14/10 ~00:58 : « les verifications de type de
+        // sol tu les fait TROP TARD, apres nos modifs » ; rectangle vert dans
+        // la neige en vue aerienne) : photographier AUSSI le taux de neige
+        // VIERGE de ce chunk, dans le meme moment d'intactite. Sans ce prime,
+        // le taux etait mesure PARESSEUSEMENT apres l'habillage (chaine
+        // deja tondue) -> ~0 % dans toute la zone -> fondu refuse partout,
+        // herbes snowy desenneigees en masse puis recoiffe d'un rectangle
+        // sans neige lisible depuis le ciel.
+        primeSnowRates(level, cx, cz);
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         int removed = 0, wet = 0;
         // Photographie T103 locale avant la moindre écriture de ce chunk.
@@ -3158,11 +3167,33 @@ public class StructureTerrainPrep {
     }
 
     /** Invalide le cache de neige (entre deux habillages, avant reprise — T254 :
-     *  taux mesures et voisinages invalides en meme temps). */
+     *  taux mesures et voisinages invalides en meme temps).
+     *
+     *  T259 : les TAUX (SNOW_RATE_CACHE / SNOW_NEIGHBOR_CACHE) ne sont PLUS
+     *  effaces ici. Ce sont des photographies VIERGES prises au stream de
+     *  chaque chunk (primeSnowRates, avant toute ecriture) : les effacer en
+     *  milieu de chaine (fin de dressAndPlant) forcait une re-mesure
+     *  paresseuse sur un monde DEJA habille -> ~0 % dans la zone, fondu
+     *  refuse, rectangle vert dans la neige (plainte client du 14/10).
+     *  Chaque nouvelle chaine re-prime les chunks qu'elle stream, donc les
+     *  valeurs restent fraiches ; hors zone, le monde est vierge de toute
+     *  facon. Seul le drapeau biome (immuable en cours de partie) est vide. */
     private static void clearSnowCellCache() {
         SNOWY_CELL_CACHE.clear();
-        SNOW_RATE_CACHE.clear();
-        SNOW_NEIGHBOR_CACHE.clear();
+    }
+
+    /** T259 : photographie le taux de neige d'un chunk VIERGE (appele depuis
+     *  streamLoadedChunk, avant la moindre ecriture) et invalide les
+     *  voisinages qui auraient deja consomme un repli biome de ce chunk. */
+    private static void primeSnowRates(ServerLevel level, int cx, int cz) {
+        long key = (((long) cx) << 32) | (cz & 0xffffffffL);
+        SNOW_RATE_CACHE.remove(key);          // ecrase tout repli anterieur
+        snowRateCell(level, cx, cz);          // mesure vierge -> cache
+        SNOW_NEIGHBOR_CACHE.remove(key);
+        SNOW_NEIGHBOR_CACHE.remove((((long) cx) << 32) | ((cz - 1) & 0xffffffffL));
+        SNOW_NEIGHBOR_CACHE.remove((((long) cx) << 32) | ((cz + 1) & 0xffffffffL));
+        SNOW_NEIGHBOR_CACHE.remove((((long) (cx - 1)) << 32) | (cz & 0xffffffffL));
+        SNOW_NEIGHBOR_CACHE.remove((((long) (cx + 1)) << 32) | (cz & 0xffffffffL));
     }
 
     // ==================================================================
@@ -3259,15 +3290,33 @@ public class StructureTerrainPrep {
         float wN = (17 - lz) / 17f, wS = lz / 17f;       // poids = proximite du bord
         float wO = (17 - lx) / 17f, wE = lx / 17f;
         float pct = (nb[0] * wN + nb[1] * wS + nb[2] * wO + nb[3] * wE) / (wN + wS + wO + wE);
-        // T257a (screenshot client 13/10 23:58 : le speckle s'arretait sur
-        // une LIGNE DROITE au perimetre de la zone) : retombee progressive a
-        // ZERO au bord exterieur de l'anneau travaille — jamais de coupure
-        // rectangle entre zone retouchee et terrain vierge.
+        // T259 (retour client 14/10 ~01:00 : « on voit clairement les
+        // delimitations rectangulaires en pov du dessus », « le fameux anneau
+        // exterieur avec la snow qui n'a pas eu les layer de neige dessus est
+        // clairement visible ») : la retombee a ZERO du T257 creusait une
+        // COURONNE TONDUE entre la zone neigee et le terrain vierge — un
+        // rectangle vert decoupe dans la neige, visible de loin. Remplacee
+        // par une PARITE DE PERIMETRE : sur les 8 derniers blocs de l'anneau,
+        // le taux glisse vers le taux REEL mesure juste DEHORS de la zone
+        // (terrain vierge jamais retouche, ou valeurs figees VIERGES du
+        // prime de stream, cf. T259-prime). A la frontiere dedans == dehors,
+        // quelle que soit la densite exterieure : aucune frontiere lisible,
+        // et plus de ligne droite (le motif anti-speckle du T257 est conserve
+        // par le fondu de taux, pas par un krach a zero).
         if (SNOW_ZONE_MIN != null) {
             int dxE = Math.max(0, Math.max(SNOW_ZONE_MIN.getX() - x, x - SNOW_ZONE_MAX.getX()));
             int dzE = Math.max(0, Math.max(SNOW_ZONE_MIN.getZ() - z, z - SNOW_ZONE_MAX.getZ()));
             int dE = Math.max(dxE, dzE);
-            if (dE > 0) pct *= Math.max(0f, 1f - (float) dE / (float) SNOW_ZONE_RING);
+            if (dE > 0 && dE <= 8) {
+                // Point sonde decale au-dehors, du meme cote que la colonne.
+                int ox = dxE > 0 ? (x < SNOW_ZONE_MIN.getX() ? SNOW_ZONE_MIN.getX() - 8
+                                 : SNOW_ZONE_MAX.getX() + 8) : x;
+                int oz = dzE > 0 ? (z < SNOW_ZONE_MIN.getZ() ? SNOW_ZONE_MIN.getZ() - 8
+                                 : SNOW_ZONE_MAX.getZ() + 8) : z;
+                float outRate = snowRateCell(level, ox >> 4, oz >> 4);
+                float t = dE / 8f;
+                pct = outRate * (1f - t) + pct * t;
+            }
         }
         if (pct <= 0.004f) return false;
         // T257b : CONGERES COHERENTES au lieu de « poussiere » : bruit de
@@ -3476,18 +3525,37 @@ public class StructureTerrainPrep {
      * sans couche est TOUJOURS snowy=false.
      *
      * @return 1 = couche posee, 0 = emplacement occupe (rien fait),
-     *         2 = refus degrade sans support a corriger,
-     *         3 = refus degrade, herbe exposee repassee a snowy=false.
+     *         2 = refus degrade sans support a corriger (ou eau/glace),
+     *         3 = refus degrade HORS contexte neigeux, herbe exposee
+     *         repassee a snowy=false.
      */
     private static int placeSnowOrUnsnow(ServerLevel level, long seed, int x, int surfY, int z) {
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        BlockState s = level.getBlockState(mut.set(x, surfY, z));
+        // T259 (consigne client 14/10 ~01:01 : « on ne spread JAMAIS la
+        // glace ou l'eau ») : une colonne d'eau — ouverte ou gelee — ne
+        // recoit JAMAIS de couche du fondu. Le spread ne concerne que le
+        // sol ferme.
+        if (s.is(Blocks.WATER) || s.is(Blocks.ICE) || s.is(Blocks.PACKED_ICE)
+                || s.is(Blocks.BLUE_ICE) || s.is(Blocks.FROSTED_ICE)) return 2;
         if (!level.getBlockState(mut.set(x, surfY + 1, z)).isAir()) return 0;
         if (snowCoverHere(level, seed, x, z)) {
             level.setBlock(mut, snowVaried(level, seed, x, z), 3);
             return 1;
         }
-        BlockState s = level.getBlockState(mut.set(x, surfY, z));
         if (s.is(Blocks.GRASS_BLOCK) && s.getValue(BlockStateProperties.SNOWY)) {
+            // T259 (consigne client 14/10 ~00:57, verbatim : « il fallait
+            // juste a ce moment la exiger que sur chaque bloc de grass en
+            // mod snow ait sur lui une layer de neige », et 00:58 : desen-
+            // neiger les 3/4 etait « nimporte quoi ») : en contexte ENNEIGE
+            // (voisinage porteur de neige reelle), une herbe snowy exposee
+            // est TOUJOURS COUVERTE d'une couche, jamais desenneigee. La
+            // desenneige (anti-gris historique du 12/10) ne s'applique plus
+            // que hors influence neigeuse.
+            if (snowInfluenceNear(level, x, z)) {
+                level.setBlock(mut, Blocks.SNOW.defaultBlockState(), 3);
+                return 1;
+            }
             level.setBlock(mut, s.setValue(BlockStateProperties.SNOWY, false), 2);
             return 3;
         }
@@ -4502,7 +4570,14 @@ public class StructureTerrainPrep {
      */
     private static int[][] limitSlope(int[][] hm, boolean[][] waterMask, int w, int h,
                                       int sMinI, int sMaxI, int sMinJ, int sMaxJ, int x0, int z0) {
-        return limitSlope(hm, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, x0, z0, null);
+        return limitSlope(hm, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, x0, z0, null, null);
+    }
+
+    /** T258 : variante epinglee (sans cap de remblai). */
+    private static int[][] limitSlope(int[][] hm, boolean[][] waterMask, int w, int h,
+                                      int sMinI, int sMaxI, int sMinJ, int sMaxJ, int x0, int z0,
+                                      boolean[][] pinned) {
+        return limitSlope(hm, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, x0, z0, pinned, null);
     }
 
     /**
@@ -4514,10 +4589,17 @@ public class StructureTerrainPrep {
      * floutee (cone de remblai « montagne » colle au batiment, plainte
      * client du 14/10/2026). {@code pinned == null} = comportement T121
      * historique inchange.
+     *
+     * T259 : {@code riseLimit} (nullable) borne la MONTEE de chaque colonne
+     * (hauteur max admise = naturel + cap anti-butte, grille pre-calculee par
+     * l'appelant). La descente n'est JAMAIS cappee ici : rabattre une paroi
+     * naturelle reste libre (T89). Sans ce cap, la relaxation re-montait en
+     * butte terrassee pres de l'emprise ce que clampSmoothDelta bornait deja
+     * (seconde plainte « montagne » du 14/10).
      */
     private static int[][] limitSlope(int[][] hm, boolean[][] waterMask, int w, int h,
                                       int sMinI, int sMaxI, int sMinJ, int sMaxJ, int x0, int z0,
-                                      boolean[][] pinned) {
+                                      boolean[][] pinned, int[][] riseLimit) {
         int worstBefore = worstNeighbourStep(hm, w, h, waterMask, x0, z0);
         int touched = 0;
         for (int iter = 0; iter < SLOPE_ITERATIONS; iter++) {
@@ -4537,7 +4619,13 @@ public class StructureTerrainPrep {
                     if (j > 0)     { lo = Math.min(lo, hm[i][j - 1]); hi = Math.max(hi, hm[i][j - 1]); }
                     if (j < h - 1) { lo = Math.min(lo, hm[i][j + 1]); hi = Math.max(hi, hm[i][j + 1]); }
                     if (v - lo > MAX_SLOPE_STEP) { hm[i][j] = lo + MAX_SLOPE_STEP; any = true; touched++; }
-                    else if (hi - v > MAX_SLOPE_STEP) { hm[i][j] = hi - MAX_SLOPE_STEP; any = true; touched++; }
+                    else if (hi - v > MAX_SLOPE_STEP) {
+                        // T259 : la montee est cappee (anti-butte) ; la
+                        // descente ne l'est jamais (paroi naturelle, T89).
+                        int t = hi - MAX_SLOPE_STEP;
+                        if (riseLimit != null) t = Math.min(t, riseLimit[i][j]);
+                        if (t > v) { hm[i][j] = t; any = true; touched++; }
+                    }
                 }
             }
             if (!any) break;
@@ -4618,7 +4706,8 @@ public class StructureTerrainPrep {
      * douce de raccord sur les premiers blocs autour du batiment.
      */
     private static int[][] limitContactSlope(int[][] hm, boolean[][] waterMask, int w, int h,
-                                             int sMinI, int sMaxI, int sMinJ, int sMaxJ) {
+                                             int sMinI, int sMaxI, int sMinJ, int sMaxJ,
+                                             int[][] riseLimit) {
         for (int iter = 0; iter < 24; iter++) {
             boolean any = false;
             for (int i = 0; i < w; i++) {
@@ -4638,7 +4727,12 @@ public class StructureTerrainPrep {
                     if (j > 0)     { lo = Math.min(lo, hm[i][j - 1]); hi = Math.max(hi, hm[i][j - 1]); }
                     if (j < h - 1) { lo = Math.min(lo, hm[i][j + 1]); hi = Math.max(hi, hm[i][j + 1]); }
                     if (v - lo > MAX_SLOPE_STEP) { hm[i][j] = lo + MAX_SLOPE_STEP; any = true; }
-                    else if (hi - v > MAX_SLOPE_STEP) { hm[i][j] = hi - MAX_SLOPE_STEP; any = true; }
+                    else if (hi - v > MAX_SLOPE_STEP) {
+                        // T259 : montee cappee (anti-butte), descente libre.
+                        int t = hi - MAX_SLOPE_STEP;
+                        if (riseLimit != null) t = Math.min(t, riseLimit[i][j]);
+                        if (t > v) { hm[i][j] = t; any = true; }
+                    }
                 }
             }
             if (!any) break;
@@ -4661,6 +4755,22 @@ public class StructureTerrainPrep {
      *  la fenetre classique +{@link #MAX_SMOOTH_RISE}/-{@link #MAX_SMOOTH_DROP}
      *  au-dela de ~27-31 blocs : le terrain eloigne reste strictement naturel. */
     private static final int ADAPTIVE_SMOOTH_MAX = 64;
+
+    /** T259 (retour client 14/10 ~01:01 : « tu as encore cree des montagnes
+     *  qui entourent la structure !! » — butte terrassee de 15-28 blocs
+     *  contre les murs quand le sol zero valide est au-dessus du terrain) :
+     *  borne de REMBLAI au contact de l'emprise. Le raccord au niveau de
+     *  base est desormais porte par la MOTTE de la structure (rebouchage
+     *  des fondations sous bottomY, FLOOR_TOLERANCE) et jamais par le
+     *  paysage : +4 blocs au contact, puis +3 par bloc d'eloignement
+     *  jusqu'a 18 blocs ; au-dela, la fenetre T244 historique (remplissage
+     *  des creux en mi-couronne, consigne 12/10) est inchangee. La COUPE
+     *  (rabattre une paroi naturelle, T89) n'est pas bornee par ce cap. */
+    private static int riseCapNearEmprise(int dEm) {
+        if (dEm <= 6) return 4;
+        if (dEm >= 18) return ADAPTIVE_SMOOTH_MAX;
+        return 4 + (dEm - 6) * 3;
+    }
 
     /** T21 : borne ABSOLUE de la variation du lissage par rapport au terrain naturel.
      *  T89 (B9) : la borne est ADAPTATIVE -- plus la colonne est proche de
@@ -4715,7 +4825,11 @@ public class StructureTerrainPrep {
                 // elle-meme (fade vers 0 au bord + limitSlope pente <= 2),
                 // donc aucun mur artificiel ne peut naitre.
                 int reachRise = ADAPTIVE_SMOOTH_MAX - Math.max(dx, dz);
-                int allowRise = Math.max(MAX_SMOOTH_RISE, reachRise);
+                // T259 : le remblai est EN OUTRE borne au contact de
+                // l'emprise (anti-butte, cf. riseCapNearEmprise) — la coupe,
+                // elle, garde toute sa marge (paroi de montagne, T89).
+                int allowRise = Math.min(Math.max(MAX_SMOOTH_RISE, reachRise),
+                        riseCapNearEmprise(Math.max(dx, dz)));
                 int allowDrop = Math.max(MAX_SMOOTH_DROP, reach);
                 // T177 — feather radial vers la frontière de la zone. Un smooth
                 // rectangulaire sans ce masque pouvait encore modifier de 10
@@ -4735,14 +4849,15 @@ public class StructureTerrainPrep {
         }
         if (clamped > 0) {
             LOGGER.warn("[DLB-STRUCTURE] lissage bridé : {} colonne(s) sortaient de la fenetre autorisee "
-                            + "(adaptative T89 : jusqu'a +{}/-{} au bord, +{}/-{} au loin ; derive maximale mesuree : {} blocs, "
+                            + "(adaptative T89+T259 : coupe -{} libre au bord, remblai borne a +4 au contact "
+                            + "puis +3/bl jusqu'a +{} a 18 bl, fond +{}/-{} ; derive maximale mesuree : {} blocs, "
                             + "colonne {},{} de la zone) -- ramenees dans la fenetre",
                     clamped, ADAPTIVE_SMOOTH_MAX, ADAPTIVE_SMOOTH_MAX,
                     MAX_SMOOTH_RISE, MAX_SMOOTH_DROP, worst, x0 + worstX, z0 + worstZ);
         } else {
             deepluckyblock.util.DebugLog.structure(
                     "lissage : derive maximale {} blocs par rapport au terrain naturel "
-                            + "(fenetre adaptative T89 : +{}/-{} au bord, +{}/-{} au loin), aucune colonne bridée",
+                            + "(fenetre adaptative T89+T259 : coupe -{} bord, remblai borne anti-butte jusqu'a +{} a 18 bl, fond +{}/-{}), aucune colonne bridée",
                     worst, ADAPTIVE_SMOOTH_MAX, ADAPTIVE_SMOOTH_MAX, MAX_SMOOTH_RISE, MAX_SMOOTH_DROP);
         }
         return hm;
@@ -5107,7 +5222,27 @@ public class StructureTerrainPrep {
                     pinnedCore[i][j] = true;
                 }
         }
-        target = limitSlope(target, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, x0, z0, pinnedCore);
+        // T259 : grille de borne de REMBLAI (naturel + cap anti-butte, avec
+        // le feather de bord T177 pour rester coherent avec clampSmoothDelta).
+        // Sans elle, les relaxations ci-dessous re-montaient en butte ce que
+        // le clamp venait de borner (seconde plainte « montagne » du 14/10).
+        int[][] riseLimit = null;
+        int[][] refGrid = naturalReference(orig, x0, z0, w, h);
+        if (refGrid != null) {
+            riseLimit = new int[w][h];
+            for (int i = 0; i < w; i++) {
+                for (int j = 0; j < h; j++) {
+                    int ddx = i < sMinI ? sMinI - i : (i > sMaxI ? i - sMaxI : 0);
+                    int ddz = j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0);
+                    int edgeDist = Math.min(Math.min(i, w - 1 - i), Math.min(j, h - 1 - j));
+                    float edgeT = Math.max(0f, Math.min(1f, edgeDist / 16f));
+                    float feather = edgeT * edgeT * (3f - 2f * edgeT);
+                    riseLimit[i][j] = refGrid[i][j]
+                            + Math.round(riseCapNearEmprise(Math.max(ddx, ddz)) * feather);
+                }
+            }
+        }
+        target = limitSlope(target, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, x0, z0, pinnedCore, riseLimit);
         // limitSlope fait converger intérieur et extérieur et peut déplacer le
         // noyau après son bornage. Restaurer strictement Y0, sans nouvelle coupe
         // du monde : la couronne, elle, reste issue des deux smooths larges.
@@ -5199,7 +5334,7 @@ public class StructureTerrainPrep {
         // confinee aux 10 premieres colonnes de la couronne, l'emprise
         // STRICTEMENT figee (pivot) : le restore y0 final conserve donc tout
         // son sens. Eau exclue. Aucun impact au-dela de 10 blocs des murs.
-        target = limitContactSlope(target, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ);
+        target = limitContactSlope(target, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, riseLimit);
 
         // Garantie finale du noyau APRÈS tous les garde-fous numériques : aucune
         // étape du smooth ne peut relever l'emprise au-dessus du Y0.
