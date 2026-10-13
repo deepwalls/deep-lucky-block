@@ -1,0 +1,66 @@
+DEEP LUCKY BLOCK — CORRECTIF T258 (14/10/2026, nuit)
+====================================================
+
+TA PLAINTE (00:12, verbatim)
+----------------------------
+« j'ai l'impression que tu créé des petites surelevation de terrain
+direct collé a la structure, ce qui la bloque dans une montagne »
+
+Confirmé par tes screenshots (00:05 : pente terrassée qui GRIMPE contre
+le bâtiment ; 00:12 : butte sombre qui enveloppe la base) et par ton log :
+après le lissage il restait des colonnes montées de +46/+48 blocs PILE
+au mur, avec des marches résiduelles de 4 à 11 blocs autour de l'emprise.
+
+POURQUOI (cause racine, cette fois au bon endroit)
+--------------------------------------------------
+1. Le lissage calcule une hauteur « moyenne floutée » de l'emprise en
+   mélangeant le relief ALENTOUR (collines comprises).
+2. La relaxation de pente (celle qui arrondit les raccords, T121) ne
+   figeait PAS l'emprise : terrain haut autour + moyenne floutée haute
+   = tout convergent vers un compromis EN L'AIR → le lissage REMBLAYAIT
+   l'anneau jusqu'à ~1-2 blocs du mur (mesuré : 2107-2173 colonnes
+   bridées à +64 autorisées au bord !).
+3. Le niveau final de l'emprise (le « sol zéro » validé) n'était
+   ré-imposé qu'APRÈS → la montagne déjà construite restait debout, et
+   la remise à niveau tardive laissait une cassure nette à la frontière
+   (les marches p4..p11 du diag T246).
+
+CE QUE T258 CHANGE
+------------------
+1. ANTI-MONTAGNE : l'emprise est désormais épinglée au sol zéro AVANT la
+   relaxation et sert d'attracteur FIXE pendant toute la convergence.
+   L'anneau ne monte/descend plus que pour rejoindre le VRAI niveau de
+   base de la structure, en pente douce (≤2 blocs par colonne).
+   → Plus de cône de remblai collé, plus de bosse qui avale le bâtiment,
+     et la cassure de frontière disparaît d'elle-même (relaxée).
+2. Ce qui reste, volontairement : la rampe STRICTEMENT nécessaire au
+   raccord — si la structure a été posée au-dessus d'un creux, le
+   terrain monte en pente douce jusqu'à sa base (sinon elle flotterait).
+   Mais jamais AU-DESSUS du niveau de base : la structure n'est plus
+   « bloquée dans une montagne ».
+3. BONUS PERF : la mémoire anti-répétition du tier de recherche se clait
+   sur ta position ; en vol (>64 blocs en quelques secondes) le saut
+   n'agissait jamais et le tier était rejoué toutes les 6-8 s pour rien.
+   Clé = le lucky block (immobile) → le saut fonctionne enfin.
+
+NON RÉGRESSION : fenêtre adaptative T89 inchangée (la montagne coupée à
+vif sur un flanc reste rabattue en coupe, pas en remblai), anti-gris
+T256, congères/retombée T257, décor, ordre des passes : rien d'autre ne
+bouge.
+
+COMMENT TESTER
+--------------
+1. Remplace les sources (zip complet ci-dessous).
+2. Pose un dragon/structure sur un terrain EN PENTE ou au pied d'une
+   colline (comme tes spots de 00:05 et 00:12) : la base doit être
+   dégagée, terrain rejoignant les murs en pente douce, plus de mottes.
+3. Envoie log + screenshots : en log, la ligne T246 « marche max » doit
+   tomber à p2/p3, « lissage bridé » proche de 0 colonne.
+
+RAPPEL LAGS (toujours sur la table, non traité ici) : LE TOUT sous
+5000 ms — tes poses restent à 14-72 s selon chunks déjà chargés (pires
+ticks 15,5 s pré-chargement, 12,6 s scan arbres). C'est un chantier à
+part entière, je m'y attaque dès que tu confirmes le terrain.
+
+Build : CI GitHub run 38477737485 — SUCCESS (Java 21).
+Commits : code (48af188) + livraison ci-dessous.
