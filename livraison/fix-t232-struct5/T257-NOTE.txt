@@ -1,0 +1,56 @@
+DEEP LUCKY BLOCK — CORRECTIF T257 (13/10/2026, nuit)
+====================================================
+
+CE QUE TES SCREENSHOTS (23:58) MONTRAIENT
+------------------------------------------
+1. La neige recouvrait toute la zone en « POUSSIÈRE » salée — des
+   confettis blancs partout au lieu de vraies plaques de neige.
+2. La poussière s'arrêtait sur une LIGNE DROITE au périmètre de la zone
+   retouchée → découpe rectangle contre le terrain vierge.
+
+POURQUOI
+--------
+- La décision neige/pas-neige était un hachage aléatoire COLONNE PAR
+  COLONNE (bruit blanc) → à taux moyen chaque case décidait toute seule :
+  effet confettis, jamais des congères.
+- Le fondu bilinéaire ne connaissait pas le bord de la zone travaillée :
+  il tombait sous le seuil pile au périmètre → coupure nette.
+- Pire : T256 re-mesurait les taux APRÈS peinture → la poussière posée
+  gonflait les taux mesurés → encore plus de poussière (rétroaction).
+
+CE QUE T257 CHANGE
+------------------
+1. CONGÈRES COHÉRENTES : le hachage blanc devient un bruit de valeur 2D
+   (cellules de ~8 blocs, interpolation lisse) seuillé par le taux
+   local. La neige se regroupe en plaques naturelles, comme en vanilla.
+   UN SEUL champ de bruit par monde : toutes les passes dessinent les
+   MÊMES congères au lieu de se contredire.
+2. RETOMBÉE À ZÉRO AU PÉRIMÈTRE : le taux est multiplié par
+   (1 − distance/rayon de l'anneau) — le fondu s'éteint progressivement
+   et atteint 0 EXACTEMENT au dernier bloc travaillé. Fini la frontière
+   dure zone/terrain vierge, jamais de ligne droite.
+3. RÉTROACTION COUPÉE : les taux de neige restent figés depuis le tout
+   début de la chaîne (cliché pré-peinture) → fondu symétrique par
+   construction. L'amplification ×1,5 du T256 est retirée (inutile avec
+   les congères + la retombée, elle y était pour beaucoup dans
+   l'invasion).
+
+NON RÉGRESSION : le trou « herbe hors biome jamais enneigée » (cause de
+l'asymétrie W/S vs N/E) et la règle finale « dirt snowy → toujours une
+couche de neige min » restent en place.
+
+COMMENT TESTER
+--------------
+1. Remplace les sources (zip, ou les mêmes fichiers src/ qu'avant).
+2. REFAIS la pose au même endroit (ou proche) et reprends le screenshot
+   d'en haut : tu dois voir des plaques de neige groupées qui décroissent
+   en s'éloignant, plus de confettis, plus de bord droit.
+3. Envoie log + screenshot : je compare.
+
+À noter : sur tes screenshots on voit aussi une marche de hauteur nette
+sur le bord gauche de la zone (mur de lissage). Ce n'est pas corrigé ici
+(c'est la fenêtre de lissage adaptative) — dis-moi si tu la veux adoucie,
+je m'y attaque au prochain correctif.
+
+Build : CI GitHub run 38475481559 — SUCCESS (Java 21).
+Commits : code + livraison ci-dessous.
