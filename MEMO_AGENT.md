@@ -379,3 +379,12 @@ retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard
   (de-peinture seulement si dessus occupe non-neige). Test client T255 :
   pose dragon 44 s (vs 2 min 23) — 21 s de recherche 14 vagues restent le
   goulot (verdict reel ~1-1,5 s/site sur sa machine) ; messages T255 vus.
+- T257 LIVRE (code + livraison fdf20a9, CI 38475481559 SUCCESS, release T257) :
+  screenshots client 23:58 = « poussiere » partout + coupure rectangle au
+  perimetre. Fixes : bruit blanc -> bruit de valeur 2D (cellules 8 blocs,
+  semence fixe, congeres coherentes) ; SNOW_ZONE_* + retombee pct*(1-dE/ring)
+  a 0 au perimetre ; retroaction coupee (taux figes toute la chaine, amplif
+  1,5 et invalidation-par-ecriture du T256 retirees). Trou-herbe T256 et
+  couche-min finale conserves. NOTE : marche de hauteur visible bord gauche
+  de la zone sur ses screenshots (fenetre lissage adaptative) — propose au
+  client pour prochain correctif.
