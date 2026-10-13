@@ -1,1 +1,1 @@
-PROGRESS: g02-defaut-bis -> OK
+PROGRESS: g03-total-500 -> OK
