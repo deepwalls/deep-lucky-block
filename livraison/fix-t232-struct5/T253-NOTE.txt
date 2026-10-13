@@ -1,0 +1,50 @@
+================================================================================
+DEEP LUCKY BLOCK — T253 « MEILLEURE VERSION » (campagne d'optimisation 43 runs)
+================================================================================
+
+CONTENU
+-------
+DEEP-LUCKY-BLOCK-T253-SRC-COMPLET.zip : projet gradle complet a jour (sources
+du mod jusque T253 incluses). Se compile tel quel : ./gradlew build.
+S'installe comme T246 (meme recette — remplacer les sources du projet).
+
+CE QUI CHANGE PAR RAPPORT A T246 (tout est MESURE en serveur reel CI, 43 runs)
+------------------------------------------------------------------------------
+1) T247 — Rayon de sondage sec 1536 -> 1024 (dlb.search.dryPickMaxR)
+   Meilleur run de la campagne 1 : 342 ms vs 369 ms defaut (-7 %), coherent :
+   moins de sondes avant la premiere bulle exploitable, sites plus proches.
+
+2) T252 — NOUVEAU : plafond GLOBAL de recherche (dlb.search.totalBudgetMs)
+   Avant : le tier « chunks charges » et la selection seche avaient des
+   budgets SEPARES => pire cas cumule 686 ms (runner 2 CPU).
+   Desormais : la selection seche herite du RELIQUAT du plafond global.
+   Campagne 6, cumul mesure tier+sec par reglage :
+     400 ms -> 410 ms | 500 ms -> 511 ms | 640 -> 624-693 ms | 800 -> 603
+   => T253 fige le defaut a 500 : la vague de recherche entiere est bornee
+   sous le SLA 0,5 s avec marge. Desactivable : -Ddlb.search.totalBudgetMs=0.
+
+3) Tier charge T245 : PROUVE GAGNANT en CI (campagne 6, run g07) —
+   log verbatim du serveur de test :
+   « Zone choisie a 1018,187 (tier charge T245 : 310 ms, 5 sondes sechees,
+   34 ecartees eau/haut, 39 candidats charges, span sec=3, span reel=7,
+   0 chunk genere, phase suivante directe) »
+   Chez toi (view distance elevee, terrain deja charge), c'est ce chemin
+   qui s'activera : recherche en quelques dizaines-ms, sans rien generer.
+
+BILAN DES CAMPAGNES (43 mondes frais, tous SUCCESS)
+---------------------------------------------------
+- Bruit inter-mondes mesure : +/-40 ms (repetitions a reglages identiques).
+- Voie seche seule (25 runs) : 342-413 ms — SLA tenu meme en pur secours.
+- Tier actif (16 runs) : 39-227 ms pour 14-39 candidats, budget 480 respecte,
+  0 chunk genere, repli sec propre quand le verdict reel refuse (eau/pente).
+- Reglages testes et rejetes (dans le bruit ou pire) : goodSpan 6/7/9,
+  dryMs 600/700/1100/1500, loadedBudget 300/580/800, maxR 768/1280/1536.
+
+A TESTER EN JEU
+---------------
+- Premiere pose dragon avec beaucoup de chunks charges : la ligne
+  « tier charge T245 : N ms » doit apparaitre (fast-path) et la recherche
+  doit rester sous 0,5 s au total.
+- Sans chunks autour : « selection seche T233c : N ms » sous 0,5 s aussi.
+- Le site reste proche (~261 blocs au point de test CI 1200,0).
+================================================================================

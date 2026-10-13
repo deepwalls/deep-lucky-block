@@ -299,3 +299,17 @@ retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard
   (+/-40 ms) ; maxR 1024 reste le seul changement retenu (T247).
 - POINT DE VIGILANCE : cumul tier+sec pire cas = 227+459 = 686 ms sur runner 2 CPU
   (budgets separes). Si le SLA 0,5 s doit couvrir le TOTAL, prevoir un plafond global.
+
+## T252-T253 (2026-10-12) — PLAFOND GLOBAL + TIER GAGNANT PROUVE + BEST VERSION
+- T252 : plafond global de recherche par vague (prop dlb.search.totalBudgetMs) :
+  le choix sec recoit le RELIQUAT (plancher 200 ms). Overload dryPickCenter(budgetCapMs).
+- Campagne 6 (10 runs, run 38335411874, SUCCESS) : cumul tier+sec par plafond :
+  400->410 ms | 500->511 ms | 800->603 | 640(defaut d'origine)->624-693.
+  GOODSPAN-6 : LE TIER CHARGE A GAGNE (log verbatim) :
+  « Zone choisie a 1018,187 (tier charge T245 : 310 ms, 5 sondes sechees, 34 ecartees
+  eau/haut, 39 candidats charges, span sec=3, span reel=7, 0 chunk genere, phase suivante
+  directe) » => fast-path prouve de bout en bout sur runner 2 CPU.
+  Note : depassement residuel possible (~50 ms) car le budget sec est verifie par etapes.
+- DECISION FINALE : totalBudgetMs defaut 640 -> 500 (borne la vague sous SLA 0,5 s ;
+  400 juge trop agressif pour terrain oceanique, n=1).
+- 43 runs serveur au total sur 6 campagnes, tous SUCCESS apres l'infra spawn-chunks.

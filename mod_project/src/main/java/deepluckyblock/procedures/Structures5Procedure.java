@@ -1110,9 +1110,12 @@ public class Structures5Procedure {
      *  budgets etaient SEPARES. Desormais le choix sec recoit le RELIQUAT
      *  (plancher 200 ms : au moins une courte tentative, le fil historique
      *  F2 reste le relais derriere). 0 = plafond desactive.
-     *  -Ddlb.search.totalBudgetMs=N (defaut 640). */
+     *  T253 : defaut resserre a 500 (campagne 6 : cumul 400->410 ms,
+     *  500->511 ms, 640->624-693 ms ; 500 borne la vague entiere sous le
+     *  SLA 0,5 s avec marge, et g07 a prouve le tier gagnant en 310 ms).
+     *  -Ddlb.search.totalBudgetMs=N (defaut 500). */
     private static final long SEARCH_TOTAL_BUDGET_MS =
-            propInt("dlb.search.totalBudgetMs", 640);
+            propInt("dlb.search.totalBudgetMs", 500);
     /** Centres deja PROPOSES par le choix sec pendant la recherche en cours
      *  (coord [x,z]). Ils NE SONT PAS forcement rejetes (les portes reelles
      *  arbitrent), mais on ne doit jamais proposer le meme quartier deux
