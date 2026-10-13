@@ -3259,17 +3259,56 @@ public class StructureTerrainPrep {
         float wN = (17 - lz) / 17f, wS = lz / 17f;       // poids = proximite du bord
         float wO = (17 - lx) / 17f, wE = lx / 17f;
         float pct = (nb[0] * wN + nb[1] * wS + nb[2] * wO + nb[3] * wE) / (wN + wS + wO + wE);
-        // T256 (client 13/10 : « le degrade n'est clairement PAS VISIBLE ») :
-        // un voisin couvert a 100 % avec 3 voisins secs ne pese deja plus
-        // que ~47 % a 1 bloc du bord et <5 % a 16 blocs — fondu trop subtil
-        // une fois passe aux patches : amplification x1,5 plafonnee — le
-        // gradient reste 100 -> 0 mais il se LIT sur plusieurs blocs.
-        if (pct > 0f) pct = Math.min(1f, pct * 1.5f);
+        // T257a (screenshot client 13/10 23:58 : le speckle s'arretait sur
+        // une LIGNE DROITE au perimetre de la zone) : retombee progressive a
+        // ZERO au bord exterieur de l'anneau travaille — jamais de coupure
+        // rectangle entre zone retouchee et terrain vierge.
+        if (SNOW_ZONE_MIN != null) {
+            int dxE = Math.max(0, Math.max(SNOW_ZONE_MIN.getX() - x, x - SNOW_ZONE_MAX.getX()));
+            int dzE = Math.max(0, Math.max(SNOW_ZONE_MIN.getZ() - z, z - SNOW_ZONE_MAX.getZ()));
+            int dE = Math.max(dxE, dzE);
+            if (dE > 0) pct *= Math.max(0f, 1f - (float) dE / (float) SNOW_ZONE_RING);
+        }
         if (pct <= 0.004f) return false;
-        long h = seed ^ ((long) x * 0x9E3779B97F4A7C15L) ^ ((long) z * 0xC2B2AE3D27D4EB4FL);
-        h ^= h >>> 33; h *= 0xff51afd7ed558ccdL; h ^= h >>> 33;
-        return ((h >>> 0) % 1000 + 1000) % 1000 < (int) (pct * 1000f);
+        // T257b : CONGERES COHERENTES au lieu de « poussiere » : bruit de
+        // valeur 2D (cellules ~8 blocs, interpolation lisse) seuille par le
+        // taux local — la neige se regroupe en plaques naturelles comme en
+        // vanilla. Le hachage blanc colonne-par-colonne du T254 donnait le
+        // sale « neige partout effet bruit » du screenshot. UN SEUL champ de
+        // bruit par monde (semence fixe) : toutes les passes dessinent les
+        // MEMES congeres au lieu de se contredire.
+        return snowDriftNoise(level.getSeed() ^ 0xD217F00DL, x, z) < pct;
     }
+
+    /** T257 : bruit de valeur 2D coherent (interpolation smoothstep entre
+     *  cellules de 8 blocs) en [0,1) — support des congeres. */
+    private static double snowDriftNoise(long seed, int x, int z) {
+        final int CELL = 8;
+        int gx = Math.floorDiv(x, CELL), gz = Math.floorDiv(z, CELL);
+        double fx = (x - gx * CELL) / (double) CELL, fz = (z - gz * CELL) / (double) CELL;
+        fx = fx * fx * (3.0 - 2.0 * fx);
+        fz = fz * fz * (3.0 - 2.0 * fz);
+        double v00 = driftHash01(seed, gx, gz);
+        double v10 = driftHash01(seed, gx + 1, gz);
+        double v01 = driftHash01(seed, gx, gz + 1);
+        double v11 = driftHash01(seed, gx + 1, gz + 1);
+        double lo = v00 + (v10 - v00) * fx;
+        double hi = v01 + (v11 - v01) * fx;
+        return lo + (hi - lo) * fz;
+    }
+
+    private static double driftHash01(long seed, int gx, int gz) {
+        long h = seed ^ ((long) gx * 0x9E3779B97F4A7C15L) ^ ((long) gz * 0xC2B2AE3D27D4EB4FL);
+        h ^= h >>> 33; h *= 0xff51afd7ed558ccdL; h ^= h >>> 33;
+        return ((h >>> 11) & 0xFFFFFL) / 1048576.0;
+    }
+
+    /** T257 : zone courante (emprise + anneau) pendant les passes neige, pour
+     *  la retombee du fondu a 0 au perimetre (cf. snowCoverHere). Positionnee
+     *  par verifyGrassSurface / dressAndPlant ; null hors chaine. */
+    private static BlockPos SNOW_ZONE_MIN = null;
+    private static BlockPos SNOW_ZONE_MAX = null;
+    private static int SNOW_ZONE_RING = 1;
 
     /**
      * T245 : couche de neige a EPAISSEUR VARIABLE (1, 2 ou 3 couches),
@@ -3381,7 +3420,6 @@ public class StructureTerrainPrep {
      * exterieur avec la texture buggee est toujours presente ».
      */
     public static void antiGrayFinalSweep(ServerLevel level, BlockPos min, BlockPos max) {
-        clearSnowCellCache();   // T256 : la finale relit des taux d'avant-peinture sinon
         final int ringAll = terrainRing() + NATURALIZE_EXTRA_RING;
         int x0 = min.getX() - ringAll, x1 = max.getX() + ringAll;
         int z0 = min.getZ() - ringAll, z1 = max.getZ() + ringAll;
@@ -3405,7 +3443,6 @@ public class StructureTerrainPrep {
                     // herbe snowy exposee a ciel ouvert — on la COUVRE d'une
                     // couche unique (le « min »).
                     level.setBlock(mut, Blocks.SNOW.defaultBlockState(), 3);
-                    invalidateSnowCell(x >> 4, z >> 4);
                     covered[0]++;
                 } else {
                     // dessus occupe par autre chose que de la neige (tronc,
@@ -3421,18 +3458,11 @@ public class StructureTerrainPrep {
             LOGGER.info("[DLB-STRUCTURE] anti-gris final T256 : {} dirt(s) neige COUVERTE(S) d'une couche min (consigne 13/10), {} snowy en zone occupee desenneigee(s)", covered[0], fixed[0]);
     }
 
-    /** T256 : un setBlock neige modifie le sommet du chunk -> son TAUX mesure
-     *  et les VOISINAGES (N/S/E/W) qui le referenceaient deviennent faux.
-     *  Sans invalidation, le degrade depend de l'ordre de balayage (client
-     *  13/10 : degrades visibles « en partie » W et S, absents N et E). */
-    private static void invalidateSnowCell(int cx, int cz) {
-        SNOW_RATE_CACHE.remove((((long) cx) << 32) | (cz & 0xffffffffL));
-        SNOW_NEIGHBOR_CACHE.remove((((long) cx) << 32) | (cz & 0xffffffffL));
-        SNOW_NEIGHBOR_CACHE.remove((((long) cx) << 32) | ((cz - 1) & 0xffffffffL));
-        SNOW_NEIGHBOR_CACHE.remove((((long) cx) << 32) | ((cz + 1) & 0xffffffffL));
-        SNOW_NEIGHBOR_CACHE.remove((((long) (cx - 1)) << 32) | (cz & 0xffffffffL));
-        SNOW_NEIGHBOR_CACHE.remove((((long) (cx + 1)) << 32) | (cz & 0xffffffffL));
-    }
+    // T257 : l'invalidation par ecriture du T256 est SUPPRIMEE — re-mesurer
+    // un chunk APRES peinture faisait courir la couverture (la poussiere
+    // posee gonflait le taux mesure -> plus de poussiere). Regle desormais :
+    // taux figes depuis le debut de la chaine (clearDressingCaches en tete
+    // de prepZone), symetriques par construction.
 
     /**
      * T245 : applique la regle degrade + patches T243 AVEC epaisseur
@@ -3454,13 +3484,11 @@ public class StructureTerrainPrep {
         if (!level.getBlockState(mut.set(x, surfY + 1, z)).isAir()) return 0;
         if (snowCoverHere(level, seed, x, z)) {
             level.setBlock(mut, snowVaried(level, seed, x, z), 3);
-            invalidateSnowCell(x >> 4, z >> 4);   // T256 : les taux/voisinages changent
             return 1;
         }
         BlockState s = level.getBlockState(mut.set(x, surfY, z));
         if (s.is(Blocks.GRASS_BLOCK) && s.getValue(BlockStateProperties.SNOWY)) {
             level.setBlock(mut, s.setValue(BlockStateProperties.SNOWY, false), 2);
-            invalidateSnowCell(x >> 4, z >> 4);   // T256
             return 3;
         }
         return 2;
@@ -4083,9 +4111,11 @@ public class StructureTerrainPrep {
     private static void dressAndPlant(ServerLevel level, BlockPos min, BlockPos max,
                                       boolean postPaste, Runnable onDone) {
         if (!dressingEnabled()) { if (onDone != null) onDone.run(); return; }
-        clearSnowCellCache();   // T256 : taux frais (cf. verifyGrassSurface)
         final int innerRing = terrainRing();
         final int outerRing = terrainRing() + NATURALIZE_EXTRA_RING;
+        // T257 : taux figes depuis le debut de la chaine (cf. verifyGrassSurface) ;
+        // zone pour la retombee a 0 au bord EXTERIEUR de l'anneau elargi.
+        SNOW_ZONE_MIN = min; SNOW_ZONE_MAX = max; SNOW_ZONE_RING = Math.max(1, outerRing);
         final ChunkMajorZone zone = new ChunkMajorZone(level, new BlockPos(
                 (min.getX() + max.getX()) / 2, min.getY(), (min.getZ() + max.getZ()) / 2),
                 min, max, outerRing);
@@ -6204,9 +6234,10 @@ public class StructureTerrainPrep {
                                            Runnable onDone) {
         // Toute la zone GIGA lissée : grass en surface, + snow layer si biome enneigé
         // (sinon les blocs d'herbe en zone de neige ont une texture buggée).
-        clearSnowCellCache();   // T256 : chaque passe part de taux FRAIS — les
-        // taux caches pendant une passe anterieure dataient d'avant-peinture
-        // (degrade dependant de l'ordre de balayage = asymetrie W/S ok, N/E nu).
+        // T257 : les taux RESTENT figes depuis le debut de la chaine (cliche
+        // pre-peinture = fondu symetrique, aucune retroaction poussiere) ;
+        // on positionne la zone pour la retombee a 0 au perimetre.
+        SNOW_ZONE_MIN = structMin; SNOW_ZONE_MAX = structMax; SNOW_ZONE_RING = Math.max(1, terrainRing());
         final int[] counters = {0, 0, 0};   // [0] = grass, [1] = snow, [2] = snow refusee par le degrade T243
         startColumnPass(level, "verifyGrassSurface",
                 columnsOf(structMin, structMax, terrainRing()), BATCH_COLS, col -> {
