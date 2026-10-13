@@ -1,1 +1,1 @@
-PROGRESS: g05-total-400 -> OK
+PROGRESS: g06-goodspan-7 -> OK
