@@ -313,3 +313,32 @@ retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard
 - DECISION FINALE : totalBudgetMs defaut 640 -> 500 (borne la vague sous SLA 0,5 s ;
   400 juge trop agressif pour terrain oceanique, n=1).
 - 43 runs serveur au total sur 6 campagnes, tous SUCCESS apres l'infra spawn-chunks.
+
+## T254 (2026-10-13) — RETOUR VISUEL CLIENT T253 EN JEU + CHANTIER NEIGE
+- Preuve site client : LE TIER CHARGE T245 A GAGNE CHEZ LE JOUEUR (log 06:11:39 :
+  « tier charge T245 : 383 ms, 27 candidats charges, span reel=9, 0 chunk genere »).
+  Voie seche 224-461 ms courant. Points perf restants : tier 490-495 ms par vague
+  quand filtres tout ecartent (0-2 sondes sechees), bulle 1 757-866 ms (depassement
+  cap connu), vagues multiples quand portes reelles refusent en serie, prepZone 85 s.
+- RECHERCHE WEB effectuee (gradients biomes) : blend 15-63 blocs (Ultimate Biome
+  Blend), dithering ordonne aux bords (Floyd-Steinberg/Bayer, Reddit fttb),
+  palettes de transition en etapes 45/25/20/10 (minecraftgradient.blog), jitter
+  brise-lignes (noiseposti.ng). Applique : fondu bilineaire + patches hashes.
+- IMPLEMENTE T254 dans StructureTerrainPrep.java :
+  * snowCoverHere DESORMAIS piloté par le TAUX REEL de neige mesure sur les tops
+    des 4 chunks voisins (snowRateCell, cache ; SNOW layer au-dessus du sol ou
+    SNOW_BLOCK ; repli froid-biome si chunk absent). Couverture = interpolation
+    BILINEAIRE des 4 taux sur tout le chunk + patches deterministes (1000/1000) ;
+    >=85 % partout -> couverture integrale conservee. Fini « neige partout en
+    biome non neigeux » ET « 1-2 chunks seulement » ; fondu plein chunk (spread).
+  * verifyGrassColumn : « smooth -ice » strict — ICE/PACKED_ICE/BLUE_ICE jamais
+    repeints (avant : la glace des lacs etait convertie en herbe = rendu bugge
+    « glace sur l'eau »). + snow appelée aussi hors biome neigeux (taux decide).
+  * clearSnowCellCache vide aussi SNOW_RATE_CACHE + SNOW_NEIGHBOR_CACHE.
+  * Supprime snowyNeighbors(int[])/snowBand (remplaces par snowyRates/bilineaire).
+- A FAIRE (T255, consignes client en attente) : ordre des passes snow (passe sol
+  apres peinture AVANT replantage + passe FINALE apres tout, arbres + structure +
+  mini-structures enneigees) ; zone interieure paste : replanter plantes + repaint
+  sol ; derniere couche du rayon de terrain a enneiger si encore visible ; spread
+  gradient 2-3 chunks si 1 chunk insuffisant ; generaliser comportement aux
+  surfaces moddees equivalentes ; tier CI muet par vague (budget auto si 0 sonde).

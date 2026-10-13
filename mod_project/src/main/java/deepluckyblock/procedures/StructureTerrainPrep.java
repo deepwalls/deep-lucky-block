@@ -3157,75 +3157,103 @@ public class StructureTerrainPrep {
         return snowy;
     }
 
-    /** Invalide le cache de neige (entre deux habillages, avant reprise). */
+    /** Invalide le cache de neige (entre deux habillages, avant reprise — T254 :
+     *  taux mesures et voisinages invalides en meme temps). */
     private static void clearSnowCellCache() {
         SNOWY_CELL_CACHE.clear();
+        SNOW_RATE_CACHE.clear();
+        SNOW_NEIGHBOR_CACHE.clear();
     }
 
     // ==================================================================
     // T243 (retour client 12/10, test T242 en jeu) : NEIGE FONDUE EN
     // DEGRADE + PATCHES, et bug connu du « grass block snowy gris ».
     //
-    // Avant : la neige etait decidee AU CHUNK : un chunk de biome enneige
-    // recevait une couche de snow partout (100 %), son voisin non enneige
-    // 0 % -> frontiere nette de 16 blocs. Le client demande (consigne
-    // litterale) : « verifie toujours si les chunks alentours contiennent
-    // de la neige aussi ; si oui, pluie de neige couvrant TOUT le chunk ;
-    // sinon degrade : 2 blocs a 100 % colles au chunk neigeux, 3 a 80 %,
-    // puis 2 a 50 %, 2 a 30 %, 2 a 10 %, puis 0 % », en PATCHES
-    // irreguliers, jamais en lignes geometriques.
-    /** Voisinage neigeux d'un chunk (une fois par chunk). [0]=N(z-), [1]=S(z+), [2]=O(x-), [3]=E(x+). */
-    private static final Map<Long, int[]> SNOW_NEIGHBOR_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+    // T254 (retour client 13/10, test T253 en jeu — consignes verbatim) :
+    //  « tu as mis de la neige partout, alors que la moitié de la zone etait
+    //   dans un biome non neige [...] vérifie bien quels chunks contiennent
+    //   quoi EN TOP, calcule la moyenne, et la reproduis » + « spread un peu
+    //   plus les gradients quand on change de type de terrain ».
+    //  => DECISION PAR CONTENU REEL DESORMAIS : le taux de neige est MESURE
+    //  sur les blocs du dessus de chaque chunk voisin (snowRateCell), PAS
+    //  deduit du biome ; la couverture d'un chunk = interpolation bilineaire
+    //  des 4 taux voisins (fondu plein chunk 16 blocs, jamais geometrique
+    //  grace aux patches deterministes). Biome neigeux entoure = 100 % comme
+    //  avant ; biome « moitie neige » = ~la moyenne reelle, plus de zone
+    //  encadree de neige ni de chunk oublie.
 
-    private static int[] snowyNeighbors(ServerLevel level, int cx, int cz) {
+    /** Voisinage neigeux RÉEL d'un chunk (une fois par chunk). [0]=N(z-), [1]=S(z+), [2]=O(x-), [3]=E(x+). */
+    private static final Map<Long, float[]> SNOW_NEIGHBOR_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** T254 : taux REEL de neige en surface d'un chunk (blocs du dessus lus
+     *  reellement) : SNOW layer au-dessus du sol ou SNOW_BLOCK. Repli sur le
+     *  froid du biome si le chunk est indisponible (jamais de generation). */
+    private static final Map<Long, Float> SNOW_RATE_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+    private static float snowRateCell(ServerLevel level, int cx, int cz) {
         long key = (((long) cx) << 32) | (cz & 0xffffffffL);
-        int[] cached = SNOW_NEIGHBOR_CACHE.get(key);
+        Float cached = SNOW_RATE_CACHE.get(key);
         if (cached != null) return cached;
         BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
-        int[] nb = new int[4];
-        nb[0] = isSnowyCell(level, probe.set((cx << 4) + 8, 80, ((cz - 1) << 4) + 8)) ? 1 : 0;
-        nb[1] = isSnowyCell(level, probe.set((cx << 4) + 8, 80, ((cz + 1) << 4) + 8)) ? 1 : 0;
-        nb[2] = isSnowyCell(level, probe.set(((cx - 1) << 4) + 8, 80, (cz << 4) + 8)) ? 1 : 0;
-        nb[3] = isSnowyCell(level, probe.set(((cx + 1) << 4) + 8, 80, (cz << 4) + 8)) ? 1 : 0;
+        float rate;
+        ChunkAccess chunk = deepluckyblock.util.SafeSurface.chunkFor(level, cx, cz);
+        int snow = 0, valid = 0;
+        if (chunk != null) {
+            for (int lx : WITNESS) {
+                for (int lz : WITNESS) {
+                    int x = (cx << 4) + lx, z = (cz << 4) + lz;
+                    int y = deepluckyblock.util.SafeSurface.height(
+                            level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                    if (y < 1) continue;
+                    valid++;
+                    BlockState top = readBlock(level, chunk, probe, x, y, z);
+                    BlockState above = readBlock(level, chunk, probe, x, y + 1, z);
+                    if (top.is(Blocks.SNOW_BLOCK) || above.is(Blocks.SNOW)) snow++;
+                }
+            }
+        }
+        if (valid >= 6) rate = (float) snow / (float) valid;
+        else rate = isSnowyCell(level, probe.set((cx << 4) + 8, 80, (cz << 4) + 8)) ? 1f : 0f;
+        SNOW_RATE_CACHE.put(key, rate);
+        return rate;
+    }
+
+    private static float[] snowyRates(ServerLevel level, int cx, int cz) {
+        long key = (((long) cx) << 32) | (cz & 0xffffffffL);
+        float[] cached = SNOW_NEIGHBOR_CACHE.get(key);
+        if (cached != null) return cached;
+        float[] nb = new float[4];
+        nb[0] = snowRateCell(level, cx, cz - 1);
+        nb[1] = snowRateCell(level, cx, cz + 1);
+        nb[2] = snowRateCell(level, cx - 1, cz);
+        nb[3] = snowRateCell(level, cx + 1, cz);
         SNOW_NEIGHBOR_CACHE.put(key, nb);
         return nb;
     }
-
-    /** T243 : bandes de densite selon la distance au bord colle au chunk neigeux (1..16). */
-    private static int snowBand(int d) {
-        if (d <= 2) return 100;   // rangée collee au chunk neigeux : 100 %
-        if (d <= 5) return 80;    // 3 suivants : 80 % (on retourne vers le terrain normal)
-        if (d <= 7) return 50;    // rangée de 2 blocs : 50 %
-        if (d <= 9) return 30;    // 2 suivants : 30 %
-        if (d <= 11) return 10;   // 2 suivants : 10 %
-        return 0;                 // au-dela : 0 %
-    }
-
     /**
-     * T243 : Pose une neige en (x, z) ? Regle client :
+     * T254 : Pose une neige en (x, z) ? Regle client (13/10, mesure REELLE) :
      * <ul>
-     *   <li>chunks 4 voisins tous neigeux -> couverture integrale (« pluie
-     *   de neige couvrant tout le chunk ») ;</li>
-     *   <li>sinon, densite decroissante EN S'AVANCANT dans le chunk vers
-     *   les cotes non enneiges (min des bandes en cas de coin) ;</li>
-     *   <li>decision par colonne en PATCHES deterministes (hash x,z,seed),
-     *   donc irreguliers : aucune ligne geometrique.</li>
+     *   <li>4 voisins TOUS quasi couverts (>= 85 %) -> couverture integrale
+     *   (« pluie de neige couvrant tout le chunk », inchange) ;</li>
+     *   <li>sinon : couverture = interpolation BILINEAIRE des taux reels
+     *   mesures aux 4 chunks voisins — le fondu court sur TOUT le chunk
+     *   (spread « plus que 1 chunk » demande : la bordure herite du taux du
+     *   voisin, le fond descend vers la moyenne, aucune marche de 16 blocs) ;</li>
+     *   <li>decision par colonne en PATCHES deterministes (hash x,z,seed) —
+     *   aucune ligne droite, effet dithering ordonne.
      * </ul>
      */
     private static boolean snowCoverHere(ServerLevel level, long seed, int x, int z) {
         int cx = x >> 4, cz = z >> 4;
-        int[] nb = snowyNeighbors(level, cx, cz);
-        if ((nb[0] & nb[1] & nb[2] & nb[3]) != 0) return true;   // entoure : couvert complete
-        int lx = (x & 15) + 1, lz = (z & 15) + 1;
-        int pct = 100;
-        if (nb[0] == 0) pct = Math.min(pct, snowBand(lz));        // nord non neigeux : degrade du bord N vers le S
-        if (nb[1] == 0) pct = Math.min(pct, snowBand(17 - lz));   // sud : degrade du bord S vers le N
-        if (nb[2] == 0) pct = Math.min(pct, snowBand(lx));        // ouest
-        if (nb[3] == 0) pct = Math.min(pct, snowBand(17 - lx));   // est
-        if (pct <= 0) return false;
+        float[] nb = snowyRates(level, cx, cz);
+        if (nb[0] >= 0.85f && nb[1] >= 0.85f && nb[2] >= 0.85f && nb[3] >= 0.85f) return true;
+        int lx = (x & 15) + 1, lz = (z & 15) + 1;        // 1..16 dans le chunk
+        float wN = (17 - lz) / 17f, wS = lz / 17f;       // poids = proximite du bord
+        float wO = (17 - lx) / 17f, wE = lx / 17f;
+        float pct = (nb[0] * wN + nb[1] * wS + nb[2] * wO + nb[3] * wE) / (wN + wS + wO + wE);
+        if (pct <= 0.004f) return false;
         long h = seed ^ ((long) x * 0x9E3779B97F4A7C15L) ^ ((long) z * 0xC2B2AE3D27D4EB4FL);
         h ^= h >>> 33; h *= 0xff51afd7ed558ccdL; h ^= h >>> 33;
-        return ((h >>> 0) % 100 + 100) % 100 < pct;
+        return ((h >>> 0) % 1000 + 1000) % 1000 < (int) (pct * 1000f);
     }
 
     /**
@@ -6180,6 +6208,13 @@ public class StructureTerrainPrep {
         if (surfY < 1) return;
         BlockState s = level.getBlockState(mut.set(x, surfY, z));
         if (s.isAir() || isLog(s) || isLeaf(s)) return;
+        // T254 « smooth -ice » (consigne client 13/10 : « quand tu fais tes
+        // smooths, fais des smooths -ice » + « je parle de la glace sur
+        // l'eau ») : JAMAIS repeindre la glace d'un lac gele — avant, ICE
+        // (bloc "terrain naturel" non protege ici) etait converti en herbe :
+        // dessus gris au milieu du lac, glace cassee au bord. On ne touche
+        // a aucune forme de glace, dans aucune branche.
+        if (s.is(Blocks.ICE) || s.is(Blocks.PACKED_ICE) || s.is(Blocks.BLUE_ICE)) return;
         // T-HABILL.3 : neige une fois par chunk (cache) au lieu d'une comparaison
         // de chaine par colonne. Nuance assume vs l'ancienne chaine : grove/
         // snowy_slopes (biomes enneiges sans "snow/ice/frozen" dans le nom)
@@ -6205,6 +6240,12 @@ public class StructureTerrainPrep {
         } else if (s.blocksMotion() && isNaturalTerrain(s) && !s.is(Blocks.GRASS_BLOCK)
                 && !s.is(Blocks.SAND) && !s.is(Blocks.SANDSTONE) && !s.is(Blocks.RED_SAND)) {
             level.setBlock(mut.set(x, surfY, z), Blocks.GRASS_BLOCK.defaultBlockState(), 2); counters[0]++;
+            // T254 : la passe snow n'est plus gatee au BIOME (« seulement
+            // 1-2 chunks total ») : hors biome enneige, la decision se prend
+            // sur le TAUX REEL des chunks alentour (snowCoverHere) — fondu
+            // naturel au bord d'un champ de neige, rien en terrain sec.
+            int snowCode2 = placeSnowOrUnsnow(level, level.getSeed() ^ 0x5EED2434L, x, surfY, z);
+            if (snowCode2 == 1) counters[1]++;
         }
     }
 
