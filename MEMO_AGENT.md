@@ -388,3 +388,20 @@ retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard
   couche-min finale conserves. NOTE : marche de hauteur visible bord gauche
   de la zone sur ses screenshots (fenetre lissage adaptative) — propose au
   client pour prochain correctif.
+- T258 LIVRE (code 48af188 + livraison 5ad3f94, CI 38477737485 SUCCESS,
+  release T258) : plainte client 00:12 « surelevation de terrain direct
+  colle a la structure, bloquee dans une montagne ». CAUSE RACINE (bons
+  yeux) : la relaxation de pente (T121, emprise non exclue) convergent
+  VERS la moyenne floutee de l'emprise (blur incluant les collines) —
+  cone de compromis en l'air, anneau remblaye jusqu'a +46/+48 au mur
+  (lissage bride 2107-2173 colonnes), restore y0 TROP TARD -> cassure
+  frontiere = marches T246 p4..p11. FIX : emprise epinglee au sol zero
+  (CLEARANCE_PLAN) AVANT limitSlope (nouveau param pinned ; null =
+  comportement legacy) ; l'anneau rejoint le vrai niveau de base en
+  pente <=2, never au-dessus ; restores finaux idempotents. BONUS :
+  TIER_MISS memoire clee sur origin (etait position joueur -> en vol
+  >64 blocs le skip n'agissait jamais, tier rejoue toutes les 6-8 s).
+  NON TOUCHE : fenetre T89 +64/-64 (coupe flanc de montagne conservee),
+  anti-gris T256, congeres T257. EN ATTENTE test client : T246 « marche
+  max » doit tomber p2/p3 + bride ~0. LAGS <5 s toujours ouverts :
+  poses 14-72 s, pires ticks 15,5 s pre-chargement + 12,6 s scanTrees.
