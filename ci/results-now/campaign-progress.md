@@ -1,3 +1,1 @@
-RESULTATS CAMPAGNE T248 (nom | props | recherche ms par voie)
-s03-radius16     | defaut                                                       | tier=muet(153ms,39c) | sec=250ms | coins=True sp=Gamerule spawnChunkRadius is now set to: | Set the world spa | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-s04-radius16-bis | defaut                                                       | tier=muet(227ms,39c) | sec=459ms | coins=True sp=Gamerule spawnChunkRadius is now set to: | Set the world spa | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
+PROGRESS: g01-defaut -> OK
