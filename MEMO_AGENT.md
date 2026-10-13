@@ -278,3 +278,24 @@ retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard
   * dryPickMs 700/1100 = neutre ; maxR 768/1280 = neutre => GARDER maxR 1024 (T247).
   * SLA 0,5 s tenu sur 25 runs cumules (max 413 ms) sur runner 2 CPU sous-clocké.
 - Synthese 25 runs : aucune prop ne fait mieux que le bruit hormis maxR=1024 ; defauts figes.
+
+## T249-T251 (2026-10-12) — MESURE DU TIER CHARGE T245 EN CI : REUSSIE
+- Campagne 3 (forceload reduit +-16c, deadline 330s) : ECHEC — le log t01 montre ZERO
+  activite serveur pendant toute l'attente => la commande forceload via mcrcon est
+  silencieusement inerte (probablement non delivree). Ne plus utiliser forceload en CI.
+- FIX INFRA : setworldspawn 1200 64 0 + gamerule spawnChunkRadius R (vanilla, charge
+  prioritaire et synchrone) + sonde « execute if loaded » sur 4 coins + reponse RCON
+  capturee dans le tableau (spawn_resp). 
+- Campagne 4 (radius 10 = 441 chunks, deadline 150s) : tier ACTIF enfin !
+  « sans bon candidat » 46/39 ms, 14 candidats charges. Bords pas encore prets (coins=False).
+- Campagne 5 (radius 16 = 1089 chunks, deadline 300s) : coins=True, tier 153/227 ms,
+  39 candidats, budget 480 respecte, 0 chunk genere, repli sec propre. Le site sec
+  1018,187 ETAIT dans la zone chargee mais tous les verdicts reels des 39 centres
+  ont ete refuses (eau/pente) => repli sec = comportement des portes reelles correct.
+- EFFET DE BORD MESURE : spawn pret du test => sec 184-250 ms (vs 369-413 avant) :
+  la generation async des chunks du spawn d'origine volait du CPU aux sondes bruit.
+- BILAN 33 runs au total : tier prouve fonctionnel (enum + double cerveau + budget +
+  verdict reel + repli) ; aucun reglage supplementaire justifie au-dela du bruit
+  (+/-40 ms) ; maxR 1024 reste le seul changement retenu (T247).
+- POINT DE VIGILANCE : cumul tier+sec pire cas = 227+459 = 686 ms sur runner 2 CPU
+  (budgets separes). Si le SLA 0,5 s doit couvrir le TOTAL, prevoir un plafond global.
