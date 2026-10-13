@@ -1,0 +1,80 @@
+DEEP LUCKY BLOCK — CORRECTIF T259 (14/10/2026, ~01h30)
+======================================================
+
+TES PLAINTES (run de 00:48-01:02, verbatim)
+-------------------------------------------
+- « créé des delimitations » / « delimitations rectangulaires en pov du
+  dessus » / « l'anneau extérieur avec la snow qui n'a pas eu les layer »
+- « tu as remplacé les 3/4 des grass blocs snow buggés par des grass
+  block normaux, genre WTF » et « sur chaque bloc de grass en mode snow
+  il faut une layer de neige »
+- « les vérifications de type de sol tu les fait TROP TARD, après nos
+  modifs »
+- « deux chunks de glace wtf » + « on ne spread JAMAIS la glace ou l'eau »
+- « tu as encore créé des montagnes qui entourent la structure !! »
+
+POURQUOI (causes racines trouvées dans le code, pas au hasard)
+--------------------------------------------------------------
+1. RECTANGLE VERT : le taux de neige était mesuré PARESSEUSEMENT après
+   l'habillage (le « clear » des caches tombait en FIN de dressage, pas
+   en tête). Dans la zone déjà re-dressée, le taux mesuré valait ~0 %
+   → fondu refusé PARTOUT → règle « herbe snowy sans couche = desenneigée »
+   appliquée aux 3/4 du terrain → rectangle vert tondue dans la neige.
+   C'est aussi ce que tu lisais comme « glace » : un grass snow SANS
+   layer prend un dessus gris-bleu (bug texture vanilla) = les deux
+   chunks « gelés ».
+2. MONTAGNE (2e édition) : T258 a supprimé le cône flouté (tes mesures
+   log : bridé 2107→1116-1573 colonnes, marche max p2 partout ✔) mais
+   j'avais gardé la « rampe nécessaire » vers le niveau de base → butte
+   terrassée de 15-28 blocs contre les murs.
+
+CE QUE T259 CHANGE
+------------------
+1. TAUX PHOTOGRAPHIES VIERGES : chaque chunk voit son taux de neige
+   mesuré à son arrivée, AVANT la moindre écriture (même instant que la
+   photo de palette d'habillage). Plus d'effacement des taux en cours
+   de chaîne. → Ta phrase exacte (« vérifications de type de sol trop
+   tard ») est corrigée à la source.
+2. PARITÉ DE PÉRIMÈTRE : la retombée-à-zéro du T257 (qui créait la
+   couronne tondue) est remplacée par une glisse vers le taux RÉEL
+   mesuré juste DEHORS sur les 8 derniers blocs. A la frontière,
+   dedans == dehors : aucune délimitation, quelle que soit la densité.
+3. TA RÈGLE LITTÉRALE : en contexte neigeux, un grass block snowy a
+   TOUJOURS une layer au-dessus (jamais désenneigé — la désenneige ne
+   s'applique plus que hors influence neigeuse, anti-gris du 12/10).
+4. « ON NE SPREAD JAMAIS LA GLACE OU L'EAU » : effet de bord du fondu
+   désactivé sur TOUTE colonne d'eau, ouverte ou gelée.
+5. ANTI-BUTTE : remblai du terrain borné à +4 blocs au contact des murs,
+   +3/bloc jusqu'à 18 blocs, au-delà inchangé (creux mi-couronne
+   conservés). La COUPE reste libre (paroi de montagne naturelle toujours
+   rabattue). Appliqué au clamp ET aux trois relaxations (sinon elles
+   re-montaient ce que le clamp bornait). Le contact sol/base est porté
+   par la motte de la structure, plus par le paysage.
+6. Banner [build T259] en jeu : vérifie-le dans /dlbtest pour confirmer
+   que tu fais tourner ce build.
+
+NON RÉGRESSION : congères bruit-valeur et layer d'épaisseur variable
+(T245/T257), trou-herbe T256, anti-gris final « dirt snowy → couche
+min » (T256), épinglage T258 du sol zéro, fenêtre T89 coupe -64 : tout
+reste en place.
+
+COMMENT TESTER
+--------------
+1. Remplace les sources (zip complet ci-dessous), relance, vérifie
+   [build T259] dans /dlbtest.
+2. Pose un dragon dans la MÊME plaine neigeuse qu'à 01:00 (1091,121 /
+   1053,52) : la zone doit rester couverte de neige comme le dehors,
+   congères comprises, SANS rectangle ni anneau. Les pieds des murs ne
+   doivent PLUS monter en butte : terrain quasi naturel, contact porté
+   par la motte.
+3. Envoie log + screenshots : la ligne T246 doit afficher remblai moy
+   ≈ 0 sur les 4 côtés.
+
+LAG : ton prepZone à 100 s + pose à 105 s + total 139 s reste entier
+(je n'y touche pas dans T259) — vulnérabilités déjà repérées pour T260
+(stall de 19,4 s avec 200 reprises identiques à capDrops=0, scanTrees
+43 s+, ~1140 chunks épinglés via tick principal). Te confirme d'abord le
+rendu terrain, j'enchaîne direct sur la perf derrière.
+
+Build : CI GitHub run 38484214068 — SUCCESS (Java 21).
+Commits : code (e3d3e34) + livraison ci-dessous.
