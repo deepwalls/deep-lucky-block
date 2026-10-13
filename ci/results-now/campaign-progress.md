@@ -1,1 +1,1 @@
-PROGRESS: g07-goodspan-6 -> OK
+PROGRESS: g08-t500-g7 -> OK
