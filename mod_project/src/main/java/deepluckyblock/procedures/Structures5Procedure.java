@@ -654,6 +654,9 @@ public class Structures5Procedure {
                     j.name, rq, j.defer.size(), j.waitTicks);
     }
 
+    /** T255 : dernier rappel de progression envoye aux joueurs (anti-silence). */
+    private static long PROGRESS_MSG_LAST_MS = 0L;
+
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post e) {
         // FIX T7 : relance la file d'attente des qu'elle peut repartir. Sans ca,
@@ -662,6 +665,29 @@ public class Structures5Procedure {
         // n'appelait startNextPending qu'a la FIN d'une generation).
         if (DEFER_WAIT_TICKS > 0 && !GENERATION_BUSY && !PENDING_STRUCTURES.isEmpty()) {
             startNextPending(null);
+        }
+        // T255 (retour client 13/10, pose de 2 min 23 : « wtf, c'est si long ») :
+        // pendant les tranches actives (paste / carve / post) on rappelle toutes
+        // les 25 s que les travaux continuent, avec la phase en cours — le
+        // joueur ne croit plus a un plantage pendant les longues finitions.
+        if (!PASTE_Q.isEmpty() || !CARVE_Q.isEmpty() || !POST_Q.isEmpty()) {
+            long nowMs = System.currentTimeMillis();
+            if (nowMs - PROGRESS_MSG_LAST_MS >= 25000L) {
+                PROGRESS_MSG_LAST_MS = nowMs;
+                String n; ServerLevel lv; String phase;
+                if (!PASTE_Q.isEmpty())      { PasteJob pj = PASTE_Q.peek(); n = pj.name; lv = pj.level; phase = "pose des blocs"; }
+                else if (!CARVE_Q.isEmpty()) { CarveJob cj = CARVE_Q.peek(); n = cj.name; lv = cj.level; phase = "ajustement du terrain"; }
+                else                         { PostJob pj = POST_Q.peek();   n = pj.name; lv = pj.level; phase = "finitions"; }
+                long el = GENERATION_START_MS == 0L ? -1L : nowMs - GENERATION_START_MS;
+                if (lv != null && lv.getServer() != null) {
+                    Component msg = Component.literal("\u00a7e\u23f3 \u00a7l" + structureDisplayName(n)
+                            + "\u00a7r\u00a7e : " + phase + " en cours\u2026"
+                            + (el > 0 ? " \u00a77(travaux d\u00e9marr\u00e9s il y a " + (el / 1000) + " s, encore un instant)" : ""));
+                    for (Player pl : lv.getServer().getPlayerList().getPlayers()) {
+                        if (pl != null) pl.sendSystemMessage(msg);
+                    }
+                }
+            }
         }
         if (!PASTE_Q.isEmpty()) {
             PasteJob j = PASTE_Q.peek();
@@ -1183,6 +1209,22 @@ public class Structures5Procedure {
      * avec les memes portes qu'en doPaste (relief 10, 0 eau). Un echec
      * rend null SANS effet de bord et laisse le choix sec T233c operer.
      */
+    // ==================================================================
+    // T255 (retour client 13/10 ~06:21 « wtf, c'est si long ») : une pose
+    // rejetee 6 fois par les portes reelles a REJOUE le tier a ~490 ms a
+    // chaque vague (budget dur presque toujours epuise, 0-2 sondes utiles
+    // sur machine lente) — ~3 s perdus avant meme le sec. Deux gardes :
+    //  (a) TIER-MISS MEMOIRE : si la vague precedente n'a RIEN trouve dans
+    //      les chunks charges et que le pivot n'a pas bouge (< 64 blocs),
+    //      on saute le tier pendant 8 s x serie (le chargement ne change
+    //      pas entre deux vagues d'une seconde) ;
+    //  (b) BUDGET ADAPTATIF : si apres 150 ms moins d'un quart des
+    //      candidats est traite, la machine ne finira JAMAIS la liste avant
+    //      le budget dur — on coupe tot au lieu d'attendre 480 ms.
+    private static BlockPos TIER_MISS_PIVOT = null;
+    private static long TIER_MISS_UNTIL_MS = 0L;
+    private static int TIER_MISS_STREAK = 0;
+
     private static BlockPos loadedPickCenter(net.minecraft.server.level.ServerLevel lvl,
             BlockPos origin, int checkR, int fullCheckR, int structMax, Player p, int minEdgeDist) {
         final long t0 = System.currentTimeMillis();
@@ -1197,6 +1239,14 @@ public class Structures5Procedure {
         // declenche de toute facon JAMAIS un chargement.
         final BlockPos pivot = p != null ? p.blockPosition() : origin;
         final int px = pivot.getX(), pz = pivot.getZ();
+
+        // T255(a) : tier-miss memoire — meme pivot, rien trouve la derniere
+        // fois, fenetre encore ouverte : le chunk-set charge n'a pas change,
+        // rejouer le tier couterait ~0,5 s pour le meme verdict.
+        if (TIER_MISS_PIVOT != null && System.currentTimeMillis() < TIER_MISS_UNTIL_MS
+                && Math.abs(TIER_MISS_PIVOT.getX() - px) + Math.abs(TIER_MISS_PIVOT.getZ() - pz) <= 64) {
+            return null;
+        }
 
         // 1) ENUMERATION (thread serveur, lookups O(1)) : centres dont la
         //    boite d'emprise entiere (9 points) est deja chargee. Jamais de
@@ -1269,11 +1319,24 @@ public class Structures5Procedure {
         //    decouverte d'un candidat strictement bon, ou l'epuisement du
         //    budget DUR (0,5 s). Puis le verdict REEL decide, candidats
         //    tries : secs d'abord, meilleur span en tete.
+        //    T255(b) : budget ADAPTATIF — si apres 150 ms moins d'un quart
+        //    des candidats a ete traite, cette machine ne verra jamais le
+        //    reste de la liste avant le budget dur : on coupe (une vague
+        //    "sans bon candidat" passe ainsi de ~490 ms a ~150 ms).
         final long limit = t0 + budget;
         while (System.currentTimeMillis() < limit) {
             boolean alive = false;
             for (Thread w : workers) if (w != null && w.isAlive()) { alive = true; break; }
             if (!alive || good.get()) break;
+            long el = System.currentTimeMillis() - t0;
+            if (el > 175) {
+                // Un candidat a un "resultat" quand ses workers l'ont marque
+                // (-1 = ecarte eau/hauteur, span>0 ou wet>0 = traite/garde).
+                int scored = 0;
+                for (int i = 0; i < cands.size(); i++)
+                    if (scores[i][0] != 0 || scores[i][1] != 0) scored++;
+                if (scored < Math.max(1, cands.size() / 5)) break;
+            }
             try { Thread.sleep(2); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
         }
         good.set(true);   // geler les workers (ils verifient le drapeau a chaque iteration)
@@ -1305,9 +1368,16 @@ public class Structures5Procedure {
             DRY_PICK_SUGGESTED.add(new int[]{cx, cz});
             LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (tier charge T245 : {} ms, {} sondes sechees, {} ecartees eau/haut, {} candidats charges, span sec={}, span reel={}, 0 chunk genere, phase suivante directe)",
                     cx, cz, System.currentTimeMillis() - t0, probed, water, cands.size(), scores[idx][0], q.slope());
+            TIER_MISS_PIVOT = null; TIER_MISS_UNTIL_MS = 0L; TIER_MISS_STREAK = 0;   // T255 : succes -> raz
             return new BlockPos(cx, Math.max(realY, 63), cz);
         }
-        LOGGER.info("[STRUCT5-FLAT] tier charge T245 sans bon candidat ({} ms, {} candidats dans les chunks charges, {} sondes sechees) : repli choix sec T233c",
+        // T255 : echec -> memoire anti-repetition (saute ce tier jusqu'a
+        // 8 s x serie, borne 30 s, tant que le pivot ne bouge pas).
+        if (TIER_MISS_STREAK < 4) TIER_MISS_STREAK++;
+        TIER_MISS_PIVOT = pivot;
+        TIER_MISS_UNTIL_MS = System.currentTimeMillis()
+                + Math.min(30000L, 8000L * TIER_MISS_STREAK);
+        LOGGER.info("[STRUCT5-FLAT] tier charge T245 sans bon candidat ({} ms, {} candidats dans les chunks charges, {} sondes sechees) : repli choix sec T233c" + (TIER_MISS_STREAK > 1 ? " (saut du tier ~" + Math.min(30, 8 * TIER_MISS_STREAK) + " s, serie " + TIER_MISS_STREAK + ")" : ""),
                 System.currentTimeMillis() - t0, cands.size(), probed);
         return null;
     }
@@ -1499,6 +1569,22 @@ public class Structures5Procedure {
                 : System.currentTimeMillis() - GENERATION_START_MS;
         deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] {} entièrement terminé (recherche, pose, terrain, végétation et arbres) en {} ms : FIFO libérée",
                 name, totalMs);
+        // T255 (retour client 13/10 « j'ai pas eu le message de fini ? ») :
+        // « STRUCTURE DISCOVERED » part juste APRES le paste brut, or les
+        // finitions (carve, dressing, replant, smooth) peuvent durer des
+        // dizaines de secondes ensuite — aucune confirmation finale
+        // n'arrivait. Annonce de cloture ici, quand la TOUTE la chaine est
+        // reellement terminee (FIFO liberee).
+        if (level != null && level.getServer() != null) {
+            Component done = Component.literal(
+                    "\u00a7a\u2713 \u00a7l" + structureDisplayName(name) + "\u00a7r\u00a7a est enti\u00e8rement termin\u00e9e"
+                            + " \u00a77(terrain, v\u00e9g\u00e9tation et arbres compris"
+                            + (totalMs > 0 ? ", dur\u00e9e totale " + (totalMs / 1000) + " s" : "") + ")");
+            for (Player pl : level.getServer().getPlayerList().getPlayers()) {
+                if (pl != null) pl.sendSystemMessage(done);
+            }
+        }
+        PROGRESS_MSG_LAST_MS = 0L;
         notifyGenerationFinished(level);
     }
 
@@ -1517,6 +1603,10 @@ public class Structures5Procedure {
         PENDING_ACHIEVEMENT_PLAYER = null;
         MANUAL_TEST_SPAWN = false;
         CURRENT_MANUAL_TEST = false;
+        TIER_MISS_PIVOT = null;   // T255 : la memoire anti-repetition ne survit pas a la generation
+        TIER_MISS_UNTIL_MS = 0L;
+        TIER_MISS_STREAK = 0;
+        PROGRESS_MSG_LAST_MS = 0L;
         GenerateLuckyItemProcedure.releaseStructureReservation(CURRENT_STRUCTURE_ID);
         CURRENT_STRUCTURE_ID = -1;
         GENERATION_BUSY = false;
@@ -3738,10 +3828,9 @@ public class Structures5Procedure {
                 Math.floorDiv(min.getX() + max.getX(), 2), Math.floorDiv(min.getZ() + max.getZ(), 2));
     }
 
-    private static void announceStructureSpawn(Player player, String rawName, BlockPos min, BlockPos max) {
-        if (player == null) return;
-
-        String structureName = switch (rawName.toLowerCase(Locale.ROOT)) {
+    /** T255 : nom d'affichage partage entre l'annonce de decouverte et l'annonce de fin. */
+    private static String structureDisplayName(String rawName) {
+        return switch (rawName.toLowerCase(Locale.ROOT)) {
             case "citadel" -> "Sylvan Citadel";
             case "observatory" -> "Fae Observatory";
             case "dragon" -> "Dragon Sanctuary";
@@ -3750,6 +3839,12 @@ public class Structures5Procedure {
             case "everest" -> "Inoxtag Everest";
             default -> rawName;
         };
+    }
+
+    private static void announceStructureSpawn(Player player, String rawName, BlockPos min, BlockPos max) {
+        if (player == null) return;
+
+        String structureName = structureDisplayName(rawName);
 
         int centerX = Math.floorDiv(min.getX() + max.getX(), 2);
         int centerY = Math.floorDiv(min.getY() + max.getY(), 2);
