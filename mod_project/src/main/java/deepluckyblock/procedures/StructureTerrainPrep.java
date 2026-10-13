@@ -4502,6 +4502,22 @@ public class StructureTerrainPrep {
      */
     private static int[][] limitSlope(int[][] hm, boolean[][] waterMask, int w, int h,
                                       int sMinI, int sMaxI, int sMinJ, int sMaxJ, int x0, int z0) {
+        return limitSlope(hm, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, x0, z0, null);
+    }
+
+    /**
+     * T258 : variante avec colonnes EPINGLEES ({@code pinned}). Une colonne
+     * epinglee sert d'attracteur fixe a ses voisines mais n'est JAMAIS
+     * relaxee elle-meme. Usage : l'emprise de la structure restauree au
+     * sol zero valide (CLEARANCE_PLAN) AVANT la relaxation, pour que les
+     * anneaux convergent vers le vrai niveau de base au lieu de la moyenne
+     * floutee (cone de remblai « montagne » colle au batiment, plainte
+     * client du 14/10/2026). {@code pinned == null} = comportement T121
+     * historique inchange.
+     */
+    private static int[][] limitSlope(int[][] hm, boolean[][] waterMask, int w, int h,
+                                      int sMinI, int sMaxI, int sMinJ, int sMaxJ, int x0, int z0,
+                                      boolean[][] pinned) {
         int worstBefore = worstNeighbourStep(hm, w, h, waterMask, x0, z0);
         int touched = 0;
         for (int iter = 0; iter < SLOPE_ITERATIONS; iter++) {
@@ -4509,6 +4525,9 @@ public class StructureTerrainPrep {
             for (int i = 0; i < w; i++) {
                 for (int j = 0; j < h; j++) {
                     if (waterMask != null && waterMask[i][j]) continue;
+                    // T258 : une colonne epinglee ne bouge jamais ; elle ne
+                    // sert que de reference aux voisines (attracteur fixe).
+                    if (pinned != null && pinned[i][j]) continue;
                     // T121 : ne plus exclure l'emprise ; interieur et exterieur
                     // convergent dans le meme champ de pente.
                     int v = hm[i][j];
@@ -5061,7 +5080,34 @@ public class StructureTerrainPrep {
         // cible (relaxation sur les 4 voisins, quelques iterations). Les marches
         // deviennent des pentes continues, sans toucher aux niveaux voulus (plateau
         // de la structure, emprise, plans d'eau).
-        target = limitSlope(target, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, x0, z0);
+        // T258 (retour client 14/10/2026 : « j'ai l'impression que tu créé des
+        // petites surelevation de terrain direct collé a la structure, ce qui
+        // la bloque dans une montagne ») : l'attracteur de la relaxation doit
+        // etre le SOL ZERO VALIDE de la structure (CLEARANCE_PLAN), jamais la
+        // hauteur FLOUTEE de l'emprise. Avant ce fix, target[emprise] portait
+        // encore la moyenne floutee (fade=1 dedans, T121) : une emprise prise
+        // entre des reliefs hauts voyait TOUS les anneaux voisins tires vers
+        // cette valeur fantome (pente <= 2 rayonnant depuis un faux sommet)
+        // -> cone de remblai colle au batiment (mesures en jeu : amplitude
+        // jusqu'a +46/+48 blocs au mur, « lissage bride : 2107-2173 colonnes »,
+        // puis le restore y0 a posteriori laissait une cassure de frontiere
+        // lue par T246 en marche jamais < p4). Desormais l'emprise est
+        // restauree a y0 AVANT la relaxation et EPINGLEE (attracteur fixe,
+        // jamais relaxee) : les anneaux convergent en pente douce vers le
+        // VRAI niveau de base de la structure -- la rampe strictement
+        // necessaire au raccord, plus la montagne. Le restore final en fin
+        // de pipeline devient une simple garantie idempotente.
+        boolean[][] pinnedCore = null;
+        if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.matches(level, structMin, structMax)) {
+            pinnedCore = new boolean[w][h];
+            int y0 = CLEARANCE_PLAN.groundY();
+            for (int i = Math.max(0, sMinI); i <= Math.min(w - 1, sMaxI); i++)
+                for (int j = Math.max(0, sMinJ); j <= Math.min(h - 1, sMaxJ); j++) {
+                    target[i][j] = y0;
+                    pinnedCore[i][j] = true;
+                }
+        }
+        target = limitSlope(target, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, x0, z0, pinnedCore);
         // limitSlope fait converger intérieur et extérieur et peut déplacer le
         // noyau après son bornage. Restaurer strictement Y0, sans nouvelle coupe
         // du monde : la couronne, elle, reste issue des deux smooths larges.

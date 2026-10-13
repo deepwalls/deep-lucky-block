@@ -1243,8 +1243,14 @@ public class Structures5Procedure {
         // T255(a) : tier-miss memoire — meme pivot, rien trouve la derniere
         // fois, fenetre encore ouverte : le chunk-set charge n'a pas change,
         // rejouer le tier couterait ~0,5 s pour le meme verdict.
+        // T258 : la memoire se cle sur l'ORIGINE de la recherche (le lucky
+        // block est immobile), PAS sur la position du joueur : un joueur en
+        // vol couvre 64+ blocs en quelques secondes, ce qui rendait le saut
+        // inerte -- le tier etait rejoue toutes les 6-8 s sans jamais rien
+        // trouver (constate en jeu le 14/10/2026). L'enumeration des
+        // candidats, elle, reste centree sur `pivot` (experience inchangee).
         if (TIER_MISS_PIVOT != null && System.currentTimeMillis() < TIER_MISS_UNTIL_MS
-                && Math.abs(TIER_MISS_PIVOT.getX() - px) + Math.abs(TIER_MISS_PIVOT.getZ() - pz) <= 64) {
+                && Math.abs(TIER_MISS_PIVOT.getX() - origin.getX()) + Math.abs(TIER_MISS_PIVOT.getZ() - origin.getZ()) <= 64) {
             return null;
         }
 
@@ -1373,8 +1379,9 @@ public class Structures5Procedure {
         }
         // T255 : echec -> memoire anti-repetition (saute ce tier jusqu'a
         // 8 s x serie, borne 30 s, tant que le pivot ne bouge pas).
+        // T258 : cle = ORIGINE de la recherche (immobile), cf. garde ci-dessus.
         if (TIER_MISS_STREAK < 4) TIER_MISS_STREAK++;
-        TIER_MISS_PIVOT = pivot;
+        TIER_MISS_PIVOT = origin;
         TIER_MISS_UNTIL_MS = System.currentTimeMillis()
                 + Math.min(30000L, 8000L * TIER_MISS_STREAK);
         LOGGER.info("[STRUCT5-FLAT] tier charge T245 sans bon candidat ({} ms, {} candidats dans les chunks charges, {} sondes sechees) : repli choix sec T233c" + (TIER_MISS_STREAK > 1 ? " (saut du tier ~" + Math.min(30, 8 * TIER_MISS_STREAK) + " s, serie " + TIER_MISS_STREAK + ")" : ""),
