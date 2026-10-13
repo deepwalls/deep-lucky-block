@@ -336,9 +336,31 @@ retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard
     « glace sur l'eau »). + snow appelée aussi hors biome neigeux (taux decide).
   * clearSnowCellCache vide aussi SNOW_RATE_CACHE + SNOW_NEIGHBOR_CACHE.
   * Supprime snowyNeighbors(int[])/snowBand (remplaces par snowyRates/bilineaire).
-- A FAIRE (T255, consignes client en attente) : ordre des passes snow (passe sol
-  apres peinture AVANT replantage + passe FINALE apres tout, arbres + structure +
-  mini-structures enneigees) ; zone interieure paste : replanter plantes + repaint
-  sol ; derniere couche du rayon de terrain a enneiger si encore visible ; spread
-  gradient 2-3 chunks si 1 chunk insuffisant ; generaliser comportement aux
-  surfaces moddees equivalentes ; tier CI muet par vague (budget auto si 0 sonde).
+- T254 LIVRE (98e0cbf + livraison 6fa39da, CI 38347545394 SUCCESS) : neige =
+  taux REEL par chunk (snowRateCell, cache, fondu bilineaire plein chunk),
+  smooth -ice strict (ICE/PACKED/BLUE jamais repeint), snow hors-biome gate
+  aux voisins, purge des 3 caches a clearSnowCellCache.
+- T255 LIVRE (e236be6 + livraison ff4c4f1, CI 38350510604 SUCCESS, release T255) :
+  retour client 13/10 « c'est si long » (pose dragon 2 min 23 : 7 vagues rejouant
+  le tier a ~490 ms pour rien, 2x12 s d'emprises, prepZone 85 s) —
+  (a) TIER_MISS_PIVOT/UNTIL/STREAK : skip du tier 8 s x serie (borne 30 s)
+      si miss recent au meme pivot (+-64 blocs) — 7 vagues = 1 tier joue ;
+  (b) budget adaptatif : a >175 ms, si <20 % des candidats ont un resultat,
+      coupe la vague sterile (~490 ms -> ~175 ms) ;
+  (c) chat : rappel toutes les 25 s (phase + duree) pendant paste/carve/post
+      (PROGRESS_MSG_LAST_MS) + annonce finale reelle dans
+      finishWhenTerrainReleased (« entierement terminee », duree totale) —
+      le client n'avait jamais de confirmation apres les finitions.
+  Honnetete : 2x12 s d'emprises = prix du verdict reel (pas de fix trivial),
+  PRELOAD_CHUNKS_PER_TICK est une constante MORTE (aucun usage) — le goulot
+  prepZone est le pipeline vanilla, indirectement reduit par (a).
+  Zip = mod.zip (base 1881 fichiers) + ecrasement mod_project/src (1899 au
+  total, 21,2 Mo). raw.githubusercontent.com bloque TLS dans le sandbox :
+  verifier les liens via https://github.com/<repo>/raw/<sha>/... (302 attendu).
+- A FAIRE (T256, consignes visuelles neige en attente) : ordre des passes snow
+  (passe sol apres peinture AVANT replantage + passe FINALE apres tout, arbres +
+  structure + mini-structures enneigees) ; zone interieure paste : replanter
+  plantes + repaint sol ; derniere couche du rayon de terrain a enneiger si
+  encore visible ; spread gradient 2-3 chunks si 1 chunk insuffisant ;
+  generaliser comportement aux surfaces moddees equivalentes ; tier CI muet par
+  vague (budget auto si 0 sonde).
