@@ -1,5 +1,1 @@
-RESULTATS CAMPAGNE T248 (nom | props | recherche ms par voie)
-t01-defaut       | defaut                                                       | tier=absent | sec=380ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-t02-defaut-bis   | defaut                                                       | tier=absent | sec=373ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-t03-budget-300   | -Ddlb.search.loadedBudgetMs=300                              | tier=absent | sec=378ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
-t04-budget-800   | -Ddlb.search.loadedBudgetMs=800                              | tier=absent | sec=382ms | coins=False | site=(1018, 187) | dist=260.9463546401827 | total=Nones | OK | audit=No marker [DLB-RINGAUDIT] within 90s
+PROGRESS: s01-defaut -> OK
