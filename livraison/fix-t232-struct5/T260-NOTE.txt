@@ -1,0 +1,126 @@
+DEEP LUCKY BLOCK — CORRECTIF T260 (14/10/2026, ~02h15)
+======================================================
+
+TES PLAINTES (run T259 de 01:43-01:51, banner [build T259] confirmé ✔, verbatim)
+---------------------------------------------------------------------------------
+- « encore les fameuses montagnes qui englobent la structure en la
+  frollant » (terrasses de coupe au pied, screenshot terrasses/canyon
+  à l'entrée)
+- « interdit a la zone trop proche de la structure de faire 3 blocs
+  de hauteur plus haut que le y sol structure » + « tu smooth jusqu'a
+  rendre plat »
+- « on voit encore la delimitation, un cadre ou les blocs sont en
+  version neige mais ou tu as oublie la layer de snow dessus — et ca
+  fait tout le tour »
+- « est-ce que ce rayon est en dehors de notre zone principale... ou
+  la derniere layer ? »
+- « ENORME PROBLEME : il y a de la terre dans la maison, cense etre
+  IMPOSSIBLE — la zone maison aurait du etre clear du sol au plafond,
+  puis smooth, repeinte, puis paste »
+- « trouve si pas possible de contourner le bug des textures via une
+  id plus specifique, fais un max de recherches web »
+
+RÉPONSE À TA QUESTION « CE RAYON, C'EST QUOI ? »
+------------------------------------------------
+Ce rayon n'est PAS le monde extérieur : c'est la DERNIÈRE couche de
+NOTRE zone de raccord (le ruban que le smooth T240 aplique autour de
+l'emprise pour fondre la coupe dans le paysage). C'est notre dernier
+geste avant de te rendre la main — d'où l'importance de la corriger
+(voir §3) : avant T260, le filet anti-gris passait AVANT ce ruban.
+
+RÉPONSE À TA DEMANDE WEB « UNE ID PLUS SPÉCIFIQUE POUR LE BUG TEXTURE »
+-----------------------------------------------------------------------
+Recherche faite (wiki Minecraft mcdf.wiki.gg, tracker Mojang, Reddit) :
+le bug est documenté officiellement — MC-181555 / MC-182423.
+Le dessus d'un grass_block snowy SANS couche de neige est GRIS PAR
+DESIGN VANILLA : la texture du dessus « enneigé » est stockée en
+niveaux de gris et n'est JAMAIS teintée par le biome (contrairement
+au dessus d'une herbe normale) — le jeu suppose qu'une vraie couche
+de neige (SNOW layer) la recouvre. Ça arrive en vanilla quand le
+worldgen ou un enderman retire la layer sans mettre à jour le bloc.
+CONCLUSION FERME : il n'existe AUCUNE id, blockstate ou variante de
+registre qui contourne le problème en 1.21 — un grass snowy sans
+layer sera TOUJOURS gris vu de haut. Les deux seules issues propres :
+  (a) garder une couche SNOW au-dessus (contexte neigeux) — TA règle,
+      c'est la bonne, c'est ce que T260 applique maintenant partout ;
+  (b) repasser snowy=false (hors contexte neigeux seulement).
+Notre stratégie EST le fix ; ce qui restait à corriger, c'était
+l'ORDRE des passes et un dernier « faiseur d'anneau » interne (§3).
+
+CE QUE T260 CHANGE (3 correctifs, causes racines)
+-------------------------------------------------
+1. MONTAGNES FROLLANTES → RÈGLE DURE DU TABLIER (ta consigne 01:46).
+   Cause : dans la zone proche (0-10 blocs des murs), le rabattage
+   d'une paroi naturelle était laissé libre (règle T89 historique) —
+   le relief naturel plus haut que le sol était donc « terrassé » en
+   gradins juste au pied. Correctif : après toute la chaîne de lissage,
+   AUCUNE colonne du ruban de contact (distance aux murs 1 à 10)
+   ne dépasse Y0+3 — la coupe naturelle comprise — puis la relaxation
+   de pente est rejouée pour fondre la marche. « Interdit plus haut
+   que Y0+3 » est désormais garanti en DUR, et le tablier part à plat.
+   Preuve en log : « T260 tablier : N colonnes du ruban de contact
+   ecretees a Y0+3 (regle dure client) ».
+2. TERRE DANS LA MAISON (ta consigne 01:49, tolérance zéro).
+   Cause : le nettoyage « du sol au plafond » ne touchait que les
+   colonnes contenant un bloc du template ; les poches prises entre
+   seuil et linteau de porte et les colonnes d'air totalement
+   enfermées (porches, coins de porte) n'étaient jamais balayées.
+   Correctif : SWEEP INTÉRIEUR DÉTERMINISTE en fin de post-pose —
+   (A) chaque colonne de structure est nettoyée de son bloc le plus
+   bas à son bloc le plus haut, sauf les blocs posés par le template ;
+   (B) toute colonne d'air enfermée dans l'empreinte (4 voisins
+   occupés) est nettoyée du niveau de sol médian jusqu'au toit.
+   Jamais en dessous du niveau de sol : la motte de fondation est
+   préservée. Preuve en log : « [STRUCT5] T260 sweep interieur de
+   <nom> : N blocs de terrain naturel retires de l'enveloppe ».
+   Si N=0 sur un run où tu vois de la terre dedans, envoie-moi la
+   coordonnée exacte : c'est un bug template, je le traite au cas par cas.
+3. CADRE GRIS « SNOWY SANS LAYER » (ça faisait tout le tour).
+   DEUX causes cumulées, toutes les deux corrigées :
+   (a) ORDRE DES PASSES : le filet anti-gris tournait sur un tick
+       planifié +40 qui s'exécutait AVANT le ruban de raccord T240 —
+       le ruban re-créait ensuite de l'herbe snowy nue derrière lui.
+       T260 : le filet anti-gris est désormais le DERNIER geste de la
+       chaîne de raccord, inconditionnel, rien ne passe après.
+   (b) LE FAISEUR D'ANNEAU : la passe « unsnowExposedGrass » voyait une
+       herbe snowy exposée et lui mettait snowy=false MÊME en biome
+       neigeux (tes « 7 snowy désenneigées » des logs... puis le ruban
+       en refermait d'autres). T260 : flip de la règle — en contexte
+       neigeux elle POSE la couche SNOW manquante au lieu de
+       désenneiger ; snowy=false seulement hors contexte neigeux ou
+       quand le dessus est occupé par une plante. Ta règle « grass
+       snowy => TOUJOURS une couche dessus » est maintenant appliquée
+       par toutes les passes, sans exception.
+   Preuve en log : « unsnowExposedGrass : X herbes snowy exposees
+   recouvertes d'une layer SNOW, Y repassees a snowy=false (hors
+   contexte neigeux) » — tu dois voir X>0 et Y petit.
+
+CE QUE TU DOIS VOIR / VÉRIFIER EN JEU
+-------------------------------------
+1. Le banner au lancement du test affiche [build T260] (sinon ce n'est
+   pas ce jar — c'est le traçage qui nous a manqué la dernière fois).
+2. Tablier : tout le tour au pied des murs est à y-sol+3 MAXIMUM, à
+   plat ; plus de terrasses/gradins contre les murs. Au-delà de ~10
+   blocs, le relief naturel reprend (fondu en pente, pas en butte).
+3. Le tour de la zone : plus AUCUN cadre gris — les herbes snowy sont
+   toutes sous une couche de neige.
+4. L'intérieur de la maison : ZÉRO terre/herbe naturelle, du sol au
+   plafond, y compris au-dessus et autour de la porte.
+5. Tes mesures habituelles : log « T260 tablier » + « T260 sweep
+   interieur » ci-dessus, et le post-pose T246 doit rester E≈0/O≈0.
+
+PERF (chantier toujours ouvert)
+-------------------------------
+Run T259 : pose 8,1 s / total 23 s (meilleur run à ce jour) mais pas
+encore sous ta barre des 5000 ms. T260 ajoute ~0,2-0,3 s de sweeps
+déterministes ; le gros morceau restant (scan arbres 43 s amorti,
+prepZone, 1140 chunks épinglés, stall 19,4 s capDrops=0) est le
+chantier T261 « blitz » — je ne le mélange pas à ce correctif visuel
+pour ne pas risquer de régression terrain.
+
+BUILD / TECHNIQUE
+-----------------
+CI GitHub run 38488242568 : SUCCESS (Java 21). Commit code : c00ec3c.
+Zip complet (même format que T259 : projet entier + sources) :
+DEEP-LUCKY-BLOCK-T260-SRC-COMPLET.zip dans ce dossier.
+Les liens raw complets sont dans les notes de la release T260.
