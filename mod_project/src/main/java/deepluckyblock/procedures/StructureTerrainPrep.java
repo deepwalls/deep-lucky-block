@@ -5250,6 +5250,31 @@ public class StructureTerrainPrep {
                 }
             }
         }
+        // T261 (run T260 du 14/10 03:05 : « toujours la montagne » — paroi de
+        // ~13 blocs PILE au mur cote crevasse, mesuree par T246 post-pose
+        // « p13 ... d1 ») : le raccord de contact etait cappe a NATUREL+4
+        // (anti-butte T259) ; quand le pied naturel est un creux bien sous Y0,
+        // la couronne ne pouvait JAMAIS remonter au niveau de base -> falaise
+        // definitive le long de l'emprise. Plancher du ruban : montee
+        // autorisee JUSQU'A Y0+3 (la regle dure T260 — jamais au-dela, le cap
+        // tablier reste applique juste apres) : le raccord refait un tablier
+        // PLAT au niveau de base au lieu de tailler un mur.
+        if (riseLimit != null && CLEARANCE_PLAN != null && CLEARANCE_PLAN.matches(level, structMin, structMax)) {
+            int floorCap = CLEARANCE_PLAN.groundY() + 3;
+            int raised = 0;
+            for (int i = 0; i < w; i++) {
+                for (int j = 0; j < h; j++) {
+                    int ddx = i < sMinI ? sMinI - i : (i > sMaxI ? i - sMaxI : 0);
+                    int ddz = j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0);
+                    int dd = Math.max(ddx, ddz);
+                    if (dd < 1 || dd > 10) continue;             // ruban de contact 1..10
+                    if (riseLimit[i][j] < floorCap) { riseLimit[i][j] = floorCap; raised++; }
+                }
+            }
+            if (raised > 0)
+                deepluckyblock.util.DebugLog.structure(
+                        "T261 tablier bidirectionnel : {} colonnes du ruban de contact autorisees a remonter jusqu'a Y0+3 (plus de paroi au mur)", raised);
+        }
         target = limitSlope(target, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, x0, z0, pinnedCore, riseLimit);
         // limitSlope fait converger intérieur et extérieur et peut déplacer le
         // noyau après son bornage. Restaurer strictement Y0, sans nouvelle coupe
@@ -5986,8 +6011,20 @@ public class StructureTerrainPrep {
      *   - on ne remonte JAMAIS au-dessus de la mediane locale (on comble le
      *     trou, on ne cree pas de bosse).
      */
+    /** T261 (retour client run T260, 14/10 03:07 : « Wtf il y a des trous » —
+     *  crevasse de ~12-16 blocs de large avec lave au fond, au bord de la zone
+     *  de raccord) : le rayon 3 historique ne voyait que les ravins etroits
+     *  (les berges sortaient de la fenetre d'analyse). Double passe : R=3
+     *  (comportement historique intact) puis R=7 qui attrape les fosses et
+     *  crevasses larges ordinaires avant le flou — la cible redevient une
+     *  surface continue, le trou se materialise en terrain comble, pas en
+     *  vide baille avec de la lave au fond. */
     private static int[][] fillCrevasses(int[][] src, int w, int h) {
-        final int R = 3;                    // rayon d'analyse
+        int[][] out = fillCrevassesPass(src, w, h, 3);
+        return fillCrevassesPass(out, w, h, 7);
+    }
+
+    private static int[][] fillCrevassesPass(int[][] src, int w, int h, final int R) {
         final int CREVASSE_MIN_DEPTH = 4;   // profondeur minimale pour agir
         int[][] out = new int[w][h];
         for (int i = 0; i < w; i++) out[i] = src[i].clone();
@@ -6039,7 +6076,7 @@ public class StructureTerrainPrep {
             }
         }
         if (filled > 0)
-            deepluckyblock.util.DebugLog.structure("fillCrevasses : {} colonnes de ravin comblees (trous fermes, relief reel preserve)", filled);
+            deepluckyblock.util.DebugLog.structure("fillCrevasses (rayon {}) : {} colonnes de ravin comblees (trous fermes, relief reel preserve)", R, filled);
         return out;
     }
 
@@ -6607,7 +6644,7 @@ public class StructureTerrainPrep {
         private final BlockPos min, max;
         private final Runnable onDone;
         private final Set<Long> visited = new HashSet<>();
-        private int cursor, planted, duplicates, protectedSkipped;
+        private int cursor, planted, duplicates, protectedSkipped, refused, shrunken, unloadedSkipped;
         private boolean done;
 
         ReplantJob(ServerLevel level, List<SavedTree> trees, BlockPos min, BlockPos max, Runnable onDone) {
@@ -6648,18 +6685,34 @@ public class StructureTerrainPrep {
                     BlockPos a = new BlockPos(x - 16, min.getY(), z - 16);
                     BlockPos b = new BlockPos(x + 16, max.getY(), z + 16);
                     // T157 : ne jamais agrandir la zone pour replanter un arbre
-                    // de bord. Sur citadel, 236 arbres ont ajouté 63 chunks et
-                    // coûté 14,8 s. Les chunks centraux sont déjà garantis ; si
-                    // le halo vanilla dépasse la zone chargée, on saute cet arbre
-                    // plutôt que de générer du monde uniquement pour du décor.
+                    // de bord (sur citadel, 236 arbres ont ajouté 63 chunks et
+                    // coûté 14,8 s). T261 (retour client run T260, 14/10 03:06
+                    // « LES ARBRES N ONT PAS TOUS ETES REMIS ») : le halo hors
+                    // zone ne doit plus faire DISPARAITRE l'arbre — repli sur
+                    // le petit type (halo 8) plutôt que le skip ; le skip pur
+                    // ne reste que pour l'extérieur franc non charge.
+                    String variant = naturalVariantOf(tree);
                     if (!deepluckyblock.util.ChunkKeeper.zoneLoaded(level, a, b)) {
-                        visited.add(key); cursor++; protectedSkipped++;
-                        continue;
+                        BlockPos a8 = new BlockPos(x - 8, min.getY(), z - 8);
+                        BlockPos b8 = new BlockPos(x + 8, max.getY(), z + 8);
+                        if (!deepluckyblock.util.ChunkKeeper.zoneLoaded(level, a8, b8)) {
+                            visited.add(key); cursor++; unloadedSkipped++;
+                            continue;
+                        }
+                        variant = tree.type();          // petit halo => petit arbre
+                        shrunken++;
                     }
                     visited.add(key); cursor++; attempts++;
                     int y = findNaturalGroundY(level, x, z);
                     if (y > level.getMinBuildHeight()) {
                         BlockPos plantPos = new BlockPos(x, y, z);
+                        // T261 (meme retour) : verifyGrassSurface pose les
+                        // couches de neige AVANT le replant et naturalize a
+                        // deja plante des herbes — la feature vanilla exige
+                        // une case LIBRE au pied et refusait l'arbre
+                        // silencieusement. Purge du cylindre de tronc (snow
+                        // layers / plantes remplacables) avant la pose.
+                        clearTrunkColumn(level, plantPos, variant);
                         // T231 (anneau nettoye non rendu) : le replant utilisait
                         // toujours le PETIT feature vanilla (epicea ~10 h,
                         // jungle ~11 h) meme pour les arbres photographies de
@@ -6668,11 +6721,10 @@ public class StructureTerrainPrep {
                         // etre rendue ». On choisit la variante naturelle
                         // selon la hauteur sauvegardee (repli sur le petit
                         // feature si la grande variante refuse la case).
-                        String variant = naturalVariantOf(tree);
                         boolean ok = placeRealTree(level, variant, plantPos, level.getRandom());
                         if (!ok && !variant.equals(tree.type()))
                             ok = placeRealTree(level, tree.type(), plantPos, level.getRandom());
-                        if (ok) planted++;
+                        if (ok) planted++; else refused++;
                     }
                     }
                 }
@@ -6685,9 +6737,29 @@ public class StructureTerrainPrep {
             }
             done = true;
             deepluckyblock.util.DebugLog.structure(
-                    "replantTrees: {} trees planted, {} duplicate columns ignored, {} covered footprint columns skipped (T92)",
-                    planted, duplicates, protectedSkipped);
+                    "replantTrees: {} trees planted ({} shrunken small-halo T261, {} refused by feature), "
+                            + "{} duplicate columns ignored, {} covered footprint columns skipped (T92), {} skipped unloaded halo (T157)",
+                    planted, shrunken, refused, duplicates, protectedSkipped, unloadedSkipped);
             if (onDone != null) onDone.run();
+        }
+    }
+
+    /** T261 : purge le cylindre du futur tronc avant un replant — les couches
+     *  de neige posees par verifyGrassSurface et les plantes de naturalize
+     *  faisaient REFUSER la feature vanilla (la case du pied doit etre libre).
+     *  Seuls les blocs franchement remplacables (snow layers, plantes) sont
+     *  retires, dans les premiers blocs au-dessus du sol ; au premier bloc
+     *  solide rencontre on s'arrete (jamais de casse du terrain du raccord). */
+    private static void clearTrunkColumn(ServerLevel level, BlockPos plantPos, String variant) {
+        int top = "mega_spruce".equals(variant) || "mega_jungle".equals(variant) ? 10 : 7;
+        BlockPos.MutableBlockPos mut = plantPos.mutable();
+        for (int dy = 0; dy < top; dy++) {
+            BlockState s = level.getBlockState(
+                    mut.set(plantPos.getX(), plantPos.getY() + dy, plantPos.getZ()));
+            if (s.isAir()) continue;
+            if (s.is(Blocks.SNOW) || s.canBeReplaced())
+                level.setBlock(mut, Blocks.AIR.defaultBlockState(), 2);
+            else break;
         }
     }
 
