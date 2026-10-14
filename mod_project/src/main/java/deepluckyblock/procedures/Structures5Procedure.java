@@ -504,7 +504,69 @@ public class Structures5Procedure {
 
     private static class PostJob {
         final ServerLevel level; final BlockPos min, max; final String name; int y;
-        PostJob(ServerLevel l, BlockPos mn, BlockPos mx, String n) { level = l; min = mn; max = mx; name = n; y = mn.getY(); }
+        // T260 : donnees du carve conservees pour le sweep interieur post-pose
+        // (null pour le repli « NBT vide » qui ne touche pas au terrain).
+        final List<int[]> columns; final Set<Long> baseCols; final Set<Long> occupied; final int baseLevel;
+        PostJob(ServerLevel l, BlockPos mn, BlockPos mx, String n) { this(l, mn, mx, n, null, null, null, 0); }
+        PostJob(ServerLevel l, BlockPos mn, BlockPos mx, String n,
+                List<int[]> cols, Set<Long> base, Set<Long> occ, int bl) {
+            level = l; min = mn; max = mx; name = n; y = mn.getY();
+            columns = cols; baseCols = base; occupied = occ; baseLevel = bl;
+        }
+    }
+
+    /** T260 (retour client 14/10 01:49 : « ENORME PROBLEME : il y a de la terre
+     *  dans la maison » — l'interieur est cense etre IMPOSSIBLE a salir, clear
+     *  du sol au plafond) : balayage deterministe post-pose de l'enveloppe
+     *  interieure. Deux regles :
+     *  (A) chaque colonne de structure est nettoyee entre son bloc le plus bas
+     *      et son bloc le plus haut (plancher -> plafond/linteau = air garanti
+     *      par le template ; la terre au-dessus de la porte du client etait une
+     *      poche prise entre linteau et seuil) ;
+     *  (B) les colonnes d'air ENTIEREMENT enfermees dans l'empreinte (4 voisins
+     *      cardinaux occupes — porches, coins de porte sans aucun bloc template
+     *      vertical, que le carve n'a jamais touchées car sans entree template)
+     *      sont nettoyees du niveau de sol median jusqu'au toit.
+     *  Jamais en dessous du niveau de sol median : la motte des fondations est
+     *  preservee. Seul du terrain NATUREL non pose par le template est retire.
+     *  Compteurs journalises. */
+    private static void sweepInteriorTerrain(PostJob pj) {
+        if (pj.columns == null || pj.occupied == null) return;
+        ServerLevel level = pj.level;
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        int cleared = 0;
+        // (A) colonnes de structure : entre loY et hiY, tout terrain naturel
+        // non pose par le template doit partir.
+        for (int[] col : pj.columns) {
+            int x = col[0], z = col[1], lo = col[2], hi = col[3];
+            for (int y = lo; y <= hi; y++) {
+                if (pj.occupied.contains(BlockPos.asLong(x, y, z))) continue;
+                BlockState s = level.getBlockState(mut.set(x, y, z));
+                if (isNaturalTerrain(s)) { level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG); cleared++; }
+            }
+        }
+        // (B) colonnes d'air totalement enfermees dans l'empreinte.
+        if (pj.baseCols != null) {
+            int minX = pj.min.getX(), maxX = pj.max.getX(), minZ = pj.min.getZ(), maxZ = pj.max.getZ();
+            int top = pj.max.getY();
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    if (pj.baseCols.contains(colKey(x, z))) continue;
+                    if (!pj.baseCols.contains(colKey(x + 1, z)) || !pj.baseCols.contains(colKey(x - 1, z))
+                            || !pj.baseCols.contains(colKey(x, z + 1)) || !pj.baseCols.contains(colKey(x, z - 1)))
+                        continue;
+                    for (int y = pj.baseLevel; y <= top; y++) {
+                        if (pj.occupied.contains(BlockPos.asLong(x, y, z))) continue;
+                        BlockState s = level.getBlockState(mut.set(x, y, z));
+                        if (isNaturalTerrain(s)) { level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG); cleared++; }
+                    }
+                }
+            }
+        }
+        if (cleared > 0)
+            deepluckyblock.util.DebugLog.info(LOGGER,
+                    "[STRUCT5] T260 sweep interieur de {} : {} blocs de terrain naturel retires de l'enveloppe (regle « terre dans la maison »)",
+                    pj.name, cleared);
     }
 
     /**
@@ -810,7 +872,8 @@ public class Structures5Procedure {
                 // T240 parallele relachait la zone sous ses pieds (hang client
                 // 6+ min sur machine lente : chargements synchrones de chunks).
                 StructureTerrainPrep.decorateFinish(cj.level, cj.min, cj.max, true);   // T39 : finitions post-pose
-                POST_Q.offer(new PostJob(cj.level, cj.min, cj.max, cj.name));
+                POST_Q.offer(new PostJob(cj.level, cj.min, cj.max, cj.name,
+                        cj.columns, cj.baseCols, cj.occupied, cj.baseLevel));   // T260 : sweep interieur en fin de post
                 deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] decorate + post de {} termine", cj.name);
             }
         }
@@ -824,13 +887,13 @@ public class Structures5Procedure {
                 }
                 POST_Q.poll();
                 deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] Post-process de {} termine", pj.name);
-                // T246 : dernier FILET VISUEL anti dessus-gris (herbe neigeuse
-                // exposee) — planifie apres toutes les passes tardives, balayage
-                // de l'anneau complet sur chunks deja charges uniquement.
-                final BlockPos sweepMin = pj.min, sweepMax = pj.max;
-                deepluckyblock.procedures.TestProcedure.schedule(pj.level,
-                        deepluckyblock.procedures.TestProcedure.currentTick(pj.level) + 40,
-                        () -> StructureTerrainPrep.antiGrayFinalSweep(pj.level, sweepMin, sweepMax));
+                // T260 : le filet anti-gris planifie +40 est SUPPRIME d'ici —
+                // il tournait AVANT la fin du raccord T240 (ordre non garanti,
+                // cause exacte de l'anneau gris residuel du run T259) ; il est
+                // desormais la derniere etape de smoothAround, inconditionnelle.
+                // A la place : le sweep interieur deterministe post-pose
+                // (« terre dans la maison », consigne client 14/10 01:49).
+                sweepInteriorTerrain(pj);
                 // T184 : decorateFinish est asynchrone. T183 libérait ici la FIFO
                 // alors que dressAndPlant/replantTrees travaillaient encore 4 s :
                 // le second Dragon recherchait pendant les déchargements du premier.

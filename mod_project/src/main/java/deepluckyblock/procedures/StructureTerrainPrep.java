@@ -223,6 +223,14 @@ public class StructureTerrainPrep {
                     // T243 : dernier post-check visuel : aucune herbe ne doit
                     // rester snowy=true exposee (sommet gris << bug connu >>).
                     unsnowExposedGrass(level, min, max, () -> {
+                        // T260 : le filet anti-gris final se rejoue APRES toute
+                        // la chaine (surface/arbres/naturalize/unsnow). Avant,
+                        // il tournait dans Structures5Procedure a un tick
+                        // planifie +40 qui passait AVANT le raccord T240 —
+                        // l'anneau gris residuel (« cadre snowy sans layer »,
+                        // overlay neige gris par design vanilla, MC-181555)
+                        // venait de cet ordre. Desormais dernier geste du raccord.
+                        antiGrayFinalSweep(level, min, max);
                         // T241 : la liberation keeper/chaine est portee par l'appelant
                         // (decorateFinish -> onDone) : le raccord s'execute a
                         // l'interieur de la fenetre tenue, avant la liberation.
@@ -5336,6 +5344,38 @@ public class StructureTerrainPrep {
         // son sens. Eau exclue. Aucun impact au-dela de 10 blocs des murs.
         target = limitContactSlope(target, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, riseLimit);
 
+        // T260 (ordre client 14/10 01:46 : « interdit a la zone trop proche de
+        // la structure de faire 3 blocs de hauteur plus haut que le y sol
+        // structure » + « tu smooth jusqu'a rendre plat ») : REGLE DURE DU
+        // TABLIER. Dans le ruban de contact (dEm 1..10, meme ruban que
+        // limitContactSlope), AUCUNE colonne ne depasse Y0+3 — la coupe d'une
+        // paroi naturelle comprise (les « terrasses au pied / montagnes
+        // frollantes » du run T259 venaient de cette coupe laissee libre).
+        // La relaxation de contact est ensuite rejouee pour fondre la marche
+        // que l'ecretage a pu creer dans la couronne. L'emprise reste figee Y0
+        // par le restore ci-dessous.
+        if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.matches(level, structMin, structMax)) {
+            int cap = CLEARANCE_PLAN.groundY() + 3;
+            int clamped = 0;
+            for (int i = 0; i < w; i++) {
+                for (int j = 0; j < h; j++) {
+                    if (waterMask != null && waterMask[i][j]) continue;
+                    boolean inX = i >= sMinI && i <= sMaxI;
+                    boolean inZ = j >= sMinJ && j <= sMaxJ;
+                    if (inX && inZ) continue;                    // emprise : restore Y0 ci-dessous
+                    int ddI = i < sMinI ? sMinI - i : (i > sMaxI ? i - sMaxI : 0);
+                    int ddJ = j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0);
+                    int dd = Math.max(ddI, ddJ);
+                    if (dd < 1 || dd > 10) continue;             // ruban de contact 1..10
+                    if (target[i][j] > cap) { target[i][j] = cap; clamped++; }
+                }
+            }
+            target = limitContactSlope(target, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, riseLimit);
+            if (clamped > 0)
+                deepluckyblock.util.DebugLog.structure(
+                        "T260 tablier : {} colonnes du ruban de contact ecretees a Y0+3 (regle dure client)", clamped);
+        }
+
         // Garantie finale du noyau APRÈS tous les garde-fous numériques : aucune
         // étape du smooth ne peut relever l'emprise au-dessus du Y0.
         if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.matches(level, structMin, structMax)) {
@@ -6442,6 +6482,7 @@ public class StructureTerrainPrep {
      */
     private static void unsnowExposedGrass(ServerLevel level, BlockPos min, BlockPos max, Runnable onDone) {
         final int[] fixed = {0};
+        final int[] covered = {0};
         // T246 : l'anneau travaille a grandi (terrainRing + ring naturel) ;
         // le filet anti-gris couvre toute la zone, y compris la bande externe.
         startColumnPass(level, "unsnowExposedGrass",
@@ -6453,15 +6494,29 @@ public class StructureTerrainPrep {
             BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
             BlockState s = level.getBlockState(mut.set(x, surfY, z));
             if (!s.is(Blocks.GRASS_BLOCK) || !s.getValue(BlockStateProperties.SNOWY)) return;
-            if (!level.getBlockState(mut.set(x, surfY + 1, z)).is(Blocks.SNOW)) {
+            BlockState above = level.getBlockState(mut.set(x, surfY + 1, z));
+            if (above.is(Blocks.SNOW)) return;
+            if (above.isAir() && snowInfluenceNear(level, x, z)) {
+                // T260 (regle client 14/10 : « grass snowy => TOUJOURS une couche
+                // de neige dessus ») : en contexte neigeux on ne desennneige plus
+                // JAMAIS (c'etait le faiseur de l'anneau gris qui revenait APRES
+                // chaque sweep) — on pose la layer SNOW manquante. Le dessus gris
+                // est vanilla par design (overlay neige en niveaux de gris, jamais
+                // teinte biome, MC-181555/MC-182423) : seule une layer le corrige.
+                level.setBlock(mut, Blocks.SNOW.defaultBlockState(), 2);
+                covered[0]++;
+            } else {
+                // Hors contexte neigeux (ou dessus occupe par une plante, ou la
+                // layer est impossible) : retour a une herbe normale.
                 level.setBlock(mut.set(x, surfY, z),
                         s.setValue(BlockStateProperties.SNOWY, false), 2);
                 fixed[0]++;
             }
         }, () -> {
-            if (fixed[0] > 0)
+            if (fixed[0] > 0 || covered[0] > 0)
                 deepluckyblock.util.DebugLog.structure(
-                        "unsnowExposedGrass : {} herbes snowy=true exposees repasses a snowy=false (bug gris)", fixed[0]);
+                        "unsnowExposedGrass : {} herbes snowy exposees recouvertes d'une layer SNOW, {} repassees a snowy=false (hors contexte neigeux)",
+                        covered[0], fixed[0]);
             if (onDone != null) onDone.run();
         });
     }
