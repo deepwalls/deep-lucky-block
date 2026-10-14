@@ -1,0 +1,91 @@
+DEEP LUCKY BLOCK — CORRECTIF T261 (14/10/2026, ~03h30)
+======================================================
+
+TES PLAINTES (run T260 de 03:00-03:07, banner [build T260] confirmé ✔, verbatim)
+---------------------------------------------------------------------------------
+- « toujours la montagne » (03:05:51) — paroi/butte longeant la zone,
+  coin crevasse
+- « LES ARBRES N ONT PAS TOUS ETES REMIS » (03:06:40)
+- « Wtf il y a des trous » (03:07:00) — crevasse béante avec lave au
+  fond, au bord de la zone de raccord
+
+CAUSES RACINES (toutes retrouvées dans le code + tes logs, pas au hasard)
+--------------------------------------------------------------------------
+1. LA PAROI AU MUR. Ton T260 a bien écrêté tout ce qui dépassait Y0+3
+   (aucun remblai haut ce run — le terrain naturel était ENTIÈREMENT
+   EN DESSOUS de la base : « uneven ground remains selected=69,
+   median=67, min=53, max=68 »). Mais le raccord de contact était
+   cappé à NATUREL+4 (anti-butte T259) : quand le pied naturel est un
+   creux à 53-58 et la base figée à 69, la couronne ne pouvait JAMAIS
+   remonter au niveau de base → falaise définitive pile contre les
+   murs. Ton propre log le mesurait : T246 post-pose « p13 ... d1 » =
+   marche de 13 blocs à distance 1 de l'emprise. C'est cette paroi
+   (vue de profil, avec ses couches de neige en escalier) que tu as
+   photographiée et lue comme « la montagne ».
+2. LES TROUS. Le combleur de ravins (fillCrevasses) analyse un rayon
+   de 3 blocs : ta crevasse de lave fait ~12-16 blocs de large — ses
+   berges sortent de la fenêtre d'analyse → jamais détectée → jamais
+   comblée. Nos passes de surface ont ensuite posé des couches de
+   neige jusque sur les flancs du vide (les « escaliers » blancs de
+   tes screenshots), ce qui la rendait encore plus visible.
+3. LES ARBRES. Deux causes cumulées, toutes deux dans ReplantJob :
+   (a) verifyGrassSurface pose les couches de neige AVANT le replant,
+   et naturalize a déjà planté des herbes — la feature vanilla exige
+   une case LIBRE au pied du futur tronc → l'arbre était refusé
+   silencieusement ; (b) un arbre de bordure dont le halo vanilla
+   (±16 blocs) débordait la zone chargée était purement SAUTÉ
+   (garde anti-coût T157) → trous de forêt pile au pourtour du
+   raccord.
+
+CE QUE T261 CHANGE
+------------------
+1. TABLIER BIDIRECTIONNEL (paroi au mur tuée). Le ruban de contact
+   (1-10 blocs des murs) a désormais un PLANCHER de montée à Y0+3 en
+   plus du PLAFOND Y0+3 de T260 : le raccord remonte toujours au
+   niveau de base, jamais au-dessus. Tablier plat dans les deux sens,
+   plus de marche à d1, plus de falaise portrait. Log de preuve :
+   « T261 tablier bidirectionnel : N colonnes du ruban de contact
+   autorisees a remonter jusqu'a Y0+3 ».
+2. CREVASSES LARGES COMBLÉES. fillCrevasses passe en double analyse :
+   rayon 3 (comportement historique intact) puis rayon 7 — les fosses
+   et crevasses de 5 à ~14 blocs de large sont détectées et comblées
+   à 80 % de la médiane des berges AVANT le flou. La cible redevient
+   une surface continue : la crevasse de lave se matérialise en
+   terrain comblé, pas en trou béant. Log : « fillCrevasses (rayon 7)
+   : N colonnes de ravin comblees ».
+3. ARBORESCENCE RESTAURÉE. (a) Purge du cylindre de tronc avant chaque
+   replant (couches de neige + plantes remplaçables sur les premiers
+   blocs — jamais de casse du terrain) : la feature vanilla retrouve
+   sa case libre. (b) Halo débordant → repli sur le PETIT type d'arbre
+   (halo 8) au lieu de disparaître ; le skip pur ne reste que pour
+   l'extérieur franchement non chargé. Log enrichi de preuve :
+   « replantTrees: N trees planted (S shrunken small-halo T261,
+   R refused by feature), D duplicates, C covered skipped, U skipped
+   unloaded halo » — tu dois voir R et U proches de 0.
+
+CE QUE TU DOIS VOIR / VÉRIFIER EN JEU
+-------------------------------------
+1. Banner [build T261] au lancement du /dlbtest (sinon mauvais jar).
+2. Au pied des murs : tablier plat à Y0+3 max, AUCUNE paroi/marche
+   contre la structure, même au-dessus d'un creux ou d'une crevasse.
+3. Plus de trou béant dans la zone de raccord ; la lave reste sous
+   terre, la surface est continue et enneigée.
+4. Les 508 arbres du scan reviennent (comparer la ligne replantTrees
+   : planted ≈ scanned, refused ≈ 0, unloaded ≈ 0).
+5. T246 post-pose : la pire marche doit redescendre vers p2-p3, et le
+   « d1 » ne doit plus apparaître avec une valeur > 3.
+
+PERF
+----
+Run T260 : total 51 s (ton message chat), pose ~38 s — la barre 5000 ms
+reste le chantier blitz ouvert (stall emprise 8,4 s ce run, capDrops=0 ;
+pré-chargement 6,7-7,1 s ; dressAndPlant 2,4 s / 5 colonnes lentes
+2,3 s). T261 ajoute ~0,1-0,2 s (passe R=7 + purges). Le blitz reste
+planifié séparément pour ne pas mélanger régression terrain et perf.
+
+BUILD / TECHNIQUE
+-----------------
+CI GitHub : run 38654589890 (Java 21). Commit code : 8748797.
+Zip complet (même format que T259/T260 : projet entier + sources) :
+DEEP-LUCKY-BLOCK-T261-SRC-COMPLET.zip dans ce dossier.
+Les liens raw complets sont dans les notes de la release T261.
