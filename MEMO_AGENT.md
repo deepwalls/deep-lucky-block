@@ -426,3 +426,50 @@ retombe 3 fois a b215420 ; heal = fetch (retenter si timeout 170) + reset --hard
   plein ecran gris au coin structure). PERF (T260 plan, promis) :
   stall 19,4 s 200 reprises capDrops=0 (emprise async), scanTrees
   43 s+, 1140 chunks epingles tick principal, pose 105 s, total 139 s.
+
+T260 (livre 14/10 ~02h20) — code c00ec3c, livraison cf500fc, CI
+  38488242568 SUCCESS (Java 21), release T260 (liens raw au SHA
+  verifies : note 200 integral, zip SHA = 20 851 225 o / 1881
+  fichiers). Retour run T259 client (banner [build T259] confirme,
+  pose 8,1 s / total 23 s) : 3 plaintes + 1 regle dure.
+  FIX 1 tablier dur (consigne 01:46 « interdit a la zone proche de
+  faire 3 blocs plus haut que le y sol » + « smooth jusqu'a rendre
+  plat ») : dans smoothPassAfterPreload, apres limitContactSlope,
+  ruban contact dEm 1..10 cappé a Y0+3 (coupe naturelle COMPRISE —
+  c'etaient les « montagnes frollantes » = terrasses de coupe au
+  pied) + re-relaxation contact ; log « T260 tablier : N ... ecretees
+  a Y0+3 ». VIGILANCE T261 : si paroi naturelle haute persiste au-
+  dela de dEm 10, une marche unique peut rester a la frontiere
+  10/11 (ruban cappé par riseLimit cote montee) — etendre la
+  relaxation a dEm<=14 si le client le signale.
+  FIX 2 anneau gris (cadre snowy sans layer tout le tour) : le
+  filet antiGrayFinalSweep tournait sur tick +40 dans POST_Q.poll
+  AVANT la fin du raccord T240 (ordre non garanti) => supprime de
+  Structures5Procedure, devenu le DERNIER geste inconditionnel de
+  smoothAround (apres unsnowExposedGrass). Et flip du faiseur
+  d'anneau : unsnowExposedGrass posait snowy=false meme en biome
+  neigeux => en contexte neigeux (snowInfluenceNear) + dessus air,
+  il POSE la layer SNOW ; snowy=false seulement hors contexte ou
+  dessus occupe. Log « X recouvertes d'une layer SNOW, Y ...
+  hors contexte ». REPONSE WEB (demande client « id plus
+  specifique ») : MC-181555/MC-182423 — top snowy sans layer GRIS
+  PAR DESIGN vanilla (overlay niveaux de gris jamais teinte biome) ;
+  AUCUNE id/blockstate de contournement en 1.21 ; seule la layer
+  (contexte neigeux) ou snowy=false (hors contexte) resout ; notre
+  strategie EST le fix. Rayon vu par le client = DERNIERE couche de
+  notre zone de raccord (ruban T240), pas le monde exterieur.
+  FIX 3 terre dans la maison (consigne 01:49 tolerance zero) : sweep
+  interieur deterministe post-pose dans POST_Q.poll (remplace le
+  schedule +40) : PostJob enrichi (columns/baseCols/occupied/
+  baseLevel du CarveJob) ; (A) colonnes structure nettoyees loY..hiY
+  sauf occupied ; (B) colonnes d'air enfermees (4 voisins cardinaux
+  dans baseCols, colonnes SANS entree template jamais carvees =
+  poches seuil/linteau de porte) nettoyees baseLevel..maxY ; motte
+  preservee (jamais < baseLevel). Log « T260 sweep interieur : N
+  blocs ... retires ». Si N=0 avec terre visible => bug template,
+  demander coordonnee exacte au client.
+  PERF : chantier blitz T261 toujours ouvert (stall 19,4 s
+  capDrops=0, scanTrees 43 s, 1140 chunks epingles, cible 5000 ms) ;
+  T260 ajoute ~0,2-0,3 s de sweeps.
+  PIEGE GIT : push du zip 20 Mo => premier push « remote hung up » ;
+  retry avec git -c http.postBuffer=524288000 push => OK.
