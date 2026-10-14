@@ -473,3 +473,40 @@ T260 (livre 14/10 ~02h20) — code c00ec3c, livraison cf500fc, CI
   T260 ajoute ~0,2-0,3 s de sweeps.
   PIEGE GIT : push du zip 20 Mo => premier push « remote hung up » ;
   retry avec git -c http.postBuffer=524288000 push => OK.
+
+T261 (livre 14/10 ~03h45) — code 8748797, livraison 0bec1a5, CI
+  38654589890 SUCCESS, release T261 (note raw 200, zip SHA = 20 852 523 o).
+  Run T260 client (banner confirme, dragon Y 169->69, 51 s total) :
+  3 plaintes : « toujours la montagne » (03:05), « LES ARBRES N ONT
+  PAS TOUS ETES REMIS » (03:06), « Wtf il y a des trous » (03:07).
+  INCIDENT SANDBOX : workspace local reset a b215420 au demarrage du
+  tour (tous commits T260 absents localement) ; restaure via
+  git fetch + git reset --hard origin/arena (origin = source de
+  verite, verifiee 4847a7f + tag T260). Si ca se reproduit : meme
+  procedure, jamais de force-push.
+  FIX 1 paroi au mur (« montagne ») : cause = riseLimit = NATUREL +
+  cap(T259) — au-dessus d'un creux (terrain min 53 vs base 69) le
+  ruban contact ne pouvait jamais remonter a Y0 ; T246 post-pose
+  « p13 d1 » le mesurait. FIX : plancher riseLimit = Y0+3 pour
+  dEm 1..10 quand CLEARANCE_PLAN matches (tablier bidirectionnel,
+  symetrique du cap T260). Log « T261 tablier bidirectionnel : N
+  autorisees a remonter jusqu'a Y0+3 ».
+  FIX 2 trous : fillCrevasses rayon 3 invisible pour crevasse 12-16
+  blocs (berges hors fenetre) ; double passe R=3 + R=7 (wrapper,
+  comblement 80 % mediane inchange). Crevasse de lave comblee avant
+  flou.
+  FIX 3 arbres : (a) verifyGrassSurface pose couches SNOW AVANT
+  replant -> feature vanilla exige case libre au pied -> refus
+  silencieux. FIX : clearTrunkColumn (snow/plantes canBeReplaced,
+  break au 1er solide, top 10 mega / 7 petit) avant placeRealTree.
+  (b) halo 16 hors zone chargee -> skip pur (T157) ; repli petit
+  type halo 8 (shrunken++), skip seulement si halo 8 hors zone
+  (unloadedSkipped++). Log enrichi : planted (shrunken, refused),
+  duplicates, protectedSkipped (T92), unloadedSkipped.
+  VIGILANCES T262 : (1) ruban contact peut remonter de +16 blocs au-
+  dessus d'une crevasse comblee — verifier visuellement que le
+  client ne relit pas ca comme un « remblai » ; (2) fillCrevasses
+  R=7 ne comble pas les canyons > ~14 blocs (gamma : elargir R ou
+  rejet de zone sur span > 12 — non fait pour eviter les boucles de
+  repli de selection) ; (3) perf : chantier blitz toujours ouvert
+  (stall 8,4 s capDrops=0, pre-chargement ~7 s, dressAndPlant 2,4 s).
