@@ -627,3 +627,24 @@ T265 (livre 15/10 ~07h55) — code 6cd8087, livraison 03324d9, CI
   rectangles gris-plat internes (roche, attente confirmation) ;
   perf 13-22 s (cible 5000 ms) ; Broken Path / damier congeres sans
   ordre.
+
+T266 (livre 15/10 ~08h35) — code 9695d1f, livraison 8ac0eda, CI
+  38681744434 SUCCESS, release T266. SRC-SEUL 9 175 073 o, COMPLET
+  20 807 057 o, checksums 8/8, kit 241 f. preserves, parite 1881/1617.
+  RUN T265 CLIENT (banner OK 06:16:14, dragon @-95,90,-363, 28 s) :
+  sweep 99 chunks / 20 800 col / 14 068 snowy trouves (13 863 via
+  probe !) / 779 posees + 3 389 relevees / 182 ms. PLAINTES : (1) « il
+  manque plus de la moitie » → ~9 900 snowy TROUVES restes nus =
+  garde-fou « above air|snow » : abandons silencieux sous feuilles/
+  troncs (canopee dense > moitie de l'anneau), murs/toit structure
+  (« trous colles a la structure »), herbe haute. (2) « etape finale
+  apres replantation pour neiger arbres/structures » → exists deja
+  (sweep APRES decorate) mais condition sautait. (3) « trou ENORME
+  wtf » → montagne O/S 83-94 bl denivele + smooth descente bride -64
+  = paroi franche ; PAS touche au terrain en T266 ; 3 options
+  proposees (A glacis interne ring+16 [reco], B fenetre ring+48/64,
+  C falaise habillee) — ATTENDRE son choix. FIX T266 : canBeReplaced
+  = air ; pose sur-obstacle par remontee colonne jusqu'au 1er niveau
+  libre (plafond sky+40) → neige sur canopee/structure/corniches ;
+  compteurs capped/deja-epais/skips-obstacle ; log T266 detaille.
+  ATTENDU prochain run : C ≈ 9-10 k, N+M+C ≈ Z, skips ≈ 0.
