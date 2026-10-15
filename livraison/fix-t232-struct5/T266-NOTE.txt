@@ -1,0 +1,89 @@
+DEEP LUCKY BLOCK — CORRECTIF T266 (15/10/2026, ~08h35)
+======================================================
+
+TON RUN T265 (banner [build T265] confirme a 06:16:14) — ANALYSE
+=================================================================
+Dragon @-95,90,-363 (New World), 28 s. Le sweep a enfin vu le terrain :
+14 068 snowy trouves (dont 13 863 via la sonde !), en 182 ms.
+MAIS : 779 posees + 3 389 relevees seulement. Ta remarque « il manque
+plus de la moitie » est confirmee par les maths : ~9 900 snowy TROUVES
+sont restes nus.
+
+REPONSES A TES PLAINTES (06:20-06:23)
+======================================
+1) « certains ont bien ete poses, mais il manque plus de la moitie »
+   + « encore des trous colles a la structure » + « trou = grass
+   version neige mais SANS la couche ».
+   CAUSE TROUVEE : le garde-fou de pose n'acceptait que « air ou
+   couche de neige » juste au-dessus du snowy. Tout le reste =
+   abandon SILENCIEUX : les 9 900 manquants = les snowy SOUS LES
+   FEUILLES et les TRONCS de la canopee dense replantee (plus de la
+   moitie de l'anneau est forestier, tu le vois sur ton zénith), les
+   snowy COINS DANS LE MUR/toit de la structure (tes « trous colles a
+   la structure »), et l'herbe haute replantee.
+2) « tu etais sense une seconde fois, apres le paste structure et les
+   replantations, refaire la neige pour en mettre SUR LES ARBRES, LES
+   STRUCTURES » — la passe EXISTE deja a ce moment-la (ton log montre
+   « decorate TERMINE (vegetation + arbres restaures) + sweep-neige »
+   dans la meme etape) : elle tournait bien APRES la replantation,
+   c'est sa condition de pose qui sautait. T266 fait exactement ce
+   que tu demandes : la couche est maintenant posee AU-DESSUS de
+   l'obstacle — canopee et structure blanchies, comme la neige meteo
+   vanilla qui reste sur les feuilles.
+3) « tu as aussi creuse un trou ENORME ! wtf » — vu, et pas touche au
+   terrain dans T266 (aucun risque de regression ajoutee). Explication
+   honnete : la montagne Ouest/Sud avait 83 A 94 BLOCS de denivele
+   (ton log : « lissage bride : 3 964 + 2 201 colonnes, derive max
+   94 »). Le smooth « descente seule » creuse vers le niveau de la
+   structure, et le bridage anti-exces limite la coupe a -64 -> paroi
+   franche en bord de fenetre. Pour le REPARER il faut une passe
+   terrain, je te propose 3 options (neige sur rien d'autre n'a ete
+   touche) :
+   A. GLACIS INTERNE (recommande) : la paroi est re-etalee en pente
+      douce a l'interieur de la MEME fenetre (ring+16). 94 bl de
+      denivele -> grande pente enneigee, plus de vertical franche.
+      Zero chunk en plus, +qques secondes max.
+   B. FENETRE ELARGIE : le smooth travaille jusqu'a ring+48/+64 ->
+      pente naturelle encore plus douce, mais 2-3x plus de chunks
+      epingles (+2-6 s, plus de monde touche).
+   C. FALAISE HABILLEE : on garde la paroi mais on la transforme en
+      falaise « naturelle » (roche -> terre/podzol enneige, quelques
+      arbres en gradins) — purement cosmetique, le creux reste.
+   Dis-moi A, B ou C (ou combine) et je le fais au prochain ticket.
+   BONUS IMMEDIAT de T266 sur le trou : les snowy au pied de la paroi
+   posent desormais leur couche AU SOMMET de la roche -> les corniches
+   du trou seront blanchies des ce run.
+
+CE QUE T266 CHANGE (concretement)
+==================================
+1. « HERBE = AIR » : une petite plante/herbe haute au-dessus du snowy
+   est remplacee par la couche (comme la neige meteo).
+2. POSE SUR-OBSTACLE : si le bloc au-dessus du snowy est une feuille,
+   un tronc, un mur ou un toit, on remonte la colonne jusqu'au premier
+   niveau libre (plafond sky+40) et la couche y est posee : dessus des
+   sapins, toits et rebords de la structure enfin enneiges.
+3. COMPTABILITE TOTALE : plus AUCUN snowy trouve ne disparait
+   silencieusement — le log detaille posées / relevées / sur-obstacle /
+   deja-epais / skips-obstacle.
+
+CE QUE TU DOIS VOIR (banner [build T266])
+==========================================
+1. Log console : « T266 sweep-neige final : X chunks, 20800 colonnes,
+   Z snowy trouves -> N posees + M relevees + C sur-obstacle
+   (arbres/structure), D deja-epais, S skips-obstacle, (taux...), en
+   T ms ». Sur la meme zone, attends-toi a C ≈ 9 000-10 000 (les
+   manquants de T265), N+M+C ≈ Z, S ≈ 0.
+2. En jeu : TOUTE la couronne blanche — sol, dessus des sapins, toits
+   de la structure ; zero snowy nu colle a la structure ; corniches
+   du trou blanchies.
+3. Le trou existe toujours (terrain non touche) : en attente de ton
+   choix A/B/C.
+
+LIVRAISON (rituel)
+===================
+- SRC-SEUL : 9 175 073 o (1617 fichiers, = T265). COMPLET : 20 807 057 o
+  (1881 fichiers, = T265). Kit FIXES_MCREATOR : synchronise, rien
+  supprime (241 fichiers preserves).
+- Controle SHA-256 : 8/8 OK (les 2 sources x 2 emplacements x 2 zips,
+  relus DEPUIS les zips finaux et compares a git) — fait AVANT les liens.
+- CI GitHub run 38681744434 : SUCCESS. Commit code 9695d1f.
