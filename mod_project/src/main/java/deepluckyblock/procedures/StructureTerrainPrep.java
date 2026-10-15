@@ -1310,7 +1310,7 @@ public class StructureTerrainPrep {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         long scanned = 0, snowySeen = 0, placed = 0, raised = 0, k1 = 0, k2 = 0, k3 = 0;
         long chunkCount = 0, skippedChunks = 0, probed = 0, debugShown = 0;
-        long capped = 0, skipObstacle = 0, alreadyDeep = 0;
+        long capped = 0, skipObstacle = 0, alreadyDeep = 0, skippedNoSurf = 0;
         for (int cx = xMin >> 4; cx <= xMax >> 4; cx++) {
             for (int cz = zMin >> 4; cz <= zMax >> 4; cz++) {
                 if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
@@ -1325,22 +1325,24 @@ public class StructureTerrainPrep {
                         scanned++;
                         int sky = chunk.getHeight(
                                 net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
-                        // T265 (run T264 05:33-05:38 : « bordure de dirt version
-                        // neige sans la slab, TOUT autour » + « neige oubliee
-                        // sur les arbres une fois pousses » ; le sweep T264
-                        // trouvait 45..486 snowy et ne posait RIEN) : le sol
-                        // replante sous les gros sapins devient PODZOL (le
-                        // sapin geant vanilla convertit son sol en podzol, qui
-                        // a le meme skin blanc que le grass snowy) -> T263/T264
-                        // ne comptaient que Blocks.GRASS_BLOCK, donc jamais
-                        // ces colonnes. Desormais : toute la famille
-                        // SnowyDirtBlock snowy=true (grass + podzol + mycelium),
-                        // et on probe jusqu'a 12 blocs sous la heightmap pour
-                        // trouver le snowy le plus haut (tolerance heightmap
-                        // en retard apres une pose directe en section). Les
-                        // premiers skips sont logues (debug, 12 max).
+                        // T267 (run T266 12:51-12:56 : « TOUTE la zone structure
+                        // a le sol en grass snow, mais 0 layer » + « le grand
+                        // contour aussi, par tous les cotes » alors que le log
+                        // disait 16 770 poses) : la sonde T265 (sky+2..sky-12)
+                        // ne descendait PAS ASSEZ quand NO_LEAVES vise le haut
+                        // d'un obstacle : toit/murs de la structure (15-40 bl au
+                        // dessus du sol interieur) ou tronc des GRANDS sapins
+                        // replantes (les feuilles sont ignorees par NO_LEAVES,
+                        // pas les troncs) -> le snowy du sol n'etait jamais
+                        // atteint = skip SILENCIEUX, non compte, non pose -> les
+                        // seules poses etaient les zones degagees et les petits
+                        // arbres (d'ou le damier visible la ou ca passait). La
+                        // sonde descend desormais jusqu'a sky-48 : le 1er
+                        // SnowyDirtBlock snowy rencontre en descendant EST le
+                        // sol (la structure n'en contient jamais), et les
+                        // colonnes sans aucun snowy sont COMPTEES (skippedNoSurf).
                         int surfY = -1;
-                        for (int y = sky + 2; y >= sky - 12; y--) {
+                        for (int y = sky + 2; y >= sky - 48; y--) {
                             pos.set(x, y, z);
                             BlockState s = chunk.getBlockState(pos);
                             if (s.getBlock() instanceof net.minecraft.world.level.block.SnowyDirtBlock
@@ -1350,19 +1352,35 @@ public class StructureTerrainPrep {
                             }
                         }
                         if (surfY < 0) {
+                            skippedNoSurf++;
                             if (debugShown < 12) {
                                 pos.set(x, sky - 1, z);
                                 debugShown++;
                                 deepluckyblock.util.DebugLog.structure(
-                                        "T265 sweep debug-skip col {},{} : aucun SnowyDirtBlock snowy entre {} et {} (block(sky-1)={})",
-                                        x, z, sky - 12, sky + 2, chunk.getBlockState(pos));
+                                        "T267 sweep debug-skip col {},{} : aucun SnowyDirtBlock snowy entre {} et {} (block(sky-1)={})",
+                                        x, z, sky - 48, sky + 2, chunk.getBlockState(pos));
                             }
                             continue;
                         }
                         if (surfY != sky - 1) probed++;
                         snowySeen++;
-                        long mix = x * 341873128712L + z * 132897987541L + 104729L;
-                        int k = T263_SNOW_PATTERN[(int) Math.floorMod(mix, T263_SNOW_PATTERN.length)];
+                        // T267 (run T266, client 12:48 : « tu repetes trop
+                        // parfaitement ton pattern de snow » + « je t'ai donne
+                        // des TAUX, pas un pattern exact a repeter betement, ca
+                        // se voit ») : le couple tableau 39 valeurs + mix
+                        // lineaire produisait des stries/diagonales. MEMES TAUX
+                        // EXACTS qu'ordonnes (24x1 / 12x2 / 3x3 sur 39 ≈
+                        // 61,5 / 30,8 / 7,7 %), mais k est desormais tire d'un
+                        // hash fort (splitmix64) de la colonne : aucune structure
+                        // spatiale visible, deterministe (un re-run donne le
+                        // meme tapis), taux identiques en moyenne.
+                        long h = (long) x * 0x9E3779B97F4A7C15L;
+                        h += (long) z + 0x9E3779B97F4A7C15L + (h << 6) + (h >>> 2);
+                        h ^= h >>> 30; h *= 0xBF58476D1CE4E5B9L;
+                        h ^= h >>> 27; h *= 0x94D049BB133111EBL;
+                        h ^= h >>> 31;
+                        double u = (h >>> 11) * 0x1.0p-53;
+                        int k = (u < 24.0 / 39.0) ? 1 : (u < 36.0 / 39.0) ? 2 : 3;
                         pos.set(x, surfY + 1, z);
                         BlockState above = chunk.getBlockState(pos);
                         if (above.isAir() || above.canBeReplaced()) {
@@ -1404,11 +1422,26 @@ public class StructureTerrainPrep {
                                 if (up.isAir() || up.canBeReplaced()) { capY = y; break; }
                             }
                             if (capY >= 0) {
-                                pos.set(x, capY, z);
-                                level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
-                                        net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
-                                capped++;
-                                if (k == 1) k1++; else if (k == 2) k2++; else k3++;
+                                // T267 (consigne client run T266, 12:50-12:50:55,
+                                // verbatim : « lors de modifs terrain, pose de
+                                // sol, etc, si le sol est en ice, on le compte
+                                // comme de l'eau donc on ne modifie pas sa
+                                // surface », « l'ice est intouchable ») : une
+                                // couche dont le SUPPORT serait de la glace est
+                                // refusee — poser dessus serait exactement le
+                                // « spread sur glace » interdit depuis T259.
+                                pos.set(x, capY - 1, z);
+                                BlockState under = chunk.getBlockState(pos);
+                                if (under.is(Blocks.ICE) || under.is(Blocks.PACKED_ICE)
+                                        || under.is(Blocks.BLUE_ICE) || under.is(Blocks.FROSTED_ICE)) {
+                                    skipObstacle++;
+                                } else {
+                                    pos.set(x, capY, z);
+                                    level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
+                                            net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
+                                    capped++;
+                                    if (k == 1) k1++; else if (k == 2) k2++; else k3++;
+                                }
                             } else {
                                 skipObstacle++;
                             }
@@ -1417,12 +1450,13 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T266 sweep-neige final : {} chunks (skippes hors keeper : {}), "
+        LOGGER.info("[DLB-STRUCTURE] T267 sweep-neige final : {} chunks (skippes hors keeper : {}), "
                         + "{} colonnes scannees, {} snowy trouves (dont {} via probe) -> {} posees "
                         + "+ {} relevees + {} sur-obstacle (arbres/structure), {} deja-epais, "
-                        + "{} skips-obstacle (trop haut), (taux 1/2/3 poses = {}/{}/{}), en {} ms",
+                        + "{} skips-obstacle (trop haut/glace), {} colonnes sans snowy meme a -48, "
+                        + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
                 chunkCount, skippedChunks, scanned, snowySeen, probed, placed, raised, capped,
-                alreadyDeep, skipObstacle, k1, k2, k3,
+                alreadyDeep, skipObstacle, skippedNoSurf, k1, k2, k3,
                 System.currentTimeMillis() - tic);
     }
 
@@ -4579,7 +4613,7 @@ public class StructureTerrainPrep {
 
     private static boolean[][] waterColumns(ServerLevel level, int x0, int z0, int w, int h) {
         boolean[][] mask = new boolean[w][h];
-        int n = 0;
+        int n = 0, icy = 0;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
@@ -4588,8 +4622,24 @@ public class StructureTerrainPrep {
                 boolean wet = false;
                 if (deepluckyblock.util.SafeSurface.isLoadedAt(level, x, z)) {
                     int y = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                    wet = level.getBlockState(pos.set(x, y, z)).getFluidState()
-                            .is(net.minecraft.tags.FluidTags.WATER);
+                    BlockState surf = level.getBlockState(pos.set(x, y, z));
+                    wet = surf.getFluidState().is(net.minecraft.tags.FluidTags.WATER);
+                    // T267 (consigne client run T266, 12:50, verbatim : « lors
+                    // de modifs terrain, pose de sol, etc, si le sol est en
+                    // ice, on le compte comme de l'eau donc on ne modifie pas
+                    // sa surface », « l'ice est intouchable », « sauf si elle
+                    // gene le terrain au centre, la elle est supprimee — extra
+                    // centre seulement, zone structure » : l'emprise est deja
+                    // razee par clearFootprint AVANT le smooth, la glace du
+                    // centre y est donc supprimee comme demande) : toute glace
+                    // de surface (lac gele ICE, packed, blue, frosted) est
+                    // exclue du lissage EXACTEMENT comme l'eau : jamais coupee,
+                    // jamais remblayee, jamais reconstruite.
+                    if (!wet && (surf.is(Blocks.ICE) || surf.is(Blocks.PACKED_ICE)
+                            || surf.is(Blocks.BLUE_ICE) || surf.is(Blocks.FROSTED_ICE))) {
+                        wet = true;
+                        icy++;
+                    }
                 }
                 if (wet || deepluckyblock.util.WaterDam.frozenColumn(level, x, z)) {
                     mask[i][j] = true; n++;
@@ -4598,9 +4648,9 @@ public class StructureTerrainPrep {
         }
         if (n > 0) {
             deepluckyblock.util.DebugLog.structure(
-                    "smooth {}x{} : {} colonnes d'eau exclues du lissage (hauteur d'eau conservee, "
-                            + "ni flou ni reconstruction) -- l'eau ne deforme plus le rivage",
-                    w, h, n);
+                    "smooth {}x{} : {} colonnes d'eau (dont {} gelees, intouchables T267) exclues du lissage "
+                            + "(hauteur d'eau conservee, ni flou ni reconstruction) -- l'eau ne deforme plus le rivage",
+                    w, h, n, icy);
             // T103 : memorisation de la nappe vanilla (union des captures des
             // differentes passes de smooth). Zone deplacee (nouveau centre) :
             // on recommence la nappe ; sinon on fusionne par OU logique.
