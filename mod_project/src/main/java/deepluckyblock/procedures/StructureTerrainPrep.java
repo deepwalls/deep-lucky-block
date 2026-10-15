@@ -1246,11 +1246,16 @@ public class StructureTerrainPrep {
                 // liberation : +0 chargement supplementaire, et la FIFO ne se
                 // libere qu'apres la fin reelle du raccord.
                 Runnable release = () -> {
+                    // T263 : tout est pose (raccord T240 compris) -- dernier
+                    // geste : le sweep qui garantit UNE couche de neige sur
+                    // chaque grass snowy de la zone, taux client 1/2/3,
+                    // AVANT le relachement des chunks (fenetre encore tenue).
+                    forceSnowLayerSweep(level, min, max);
                     deepluckyblock.util.TerrainChain.release(chainKey);
                     deepluckyblock.util.ChunkKeeper.release(level);
                     clearFootprintProtection();
                     CLEARANCE_PLAN = null;
-                    step("decorate TERMINE T180 (végétation + arbres restaurés)");
+                    step("decorate TERMINE T180 (végétation + arbres restaurés) + sweep-neige T263");
                 };
                 if (raccordT240) smoothAround(level, min, max, () -> {
                     LOGGER.info("[DLB-STRUCTURE] raccord terrain T240 de {} termine "
@@ -1261,6 +1266,81 @@ public class StructureTerrainPrep {
                 else release.run();
             });
         });
+    }
+
+    // ------------------------------------------------------------------
+    // T263 : SWEEP NEIGE FINAL — « scanne tout a la fin, chunk par chunk »
+    // ------------------------------------------------------------------
+    /** T263 (client 15/10 03:52-03:54, run T261 : « le code qui demande a ce
+     *  qu'il y ait TOUJOURS une layer de snow sur les blocs de grass eneiges
+     *  ne fonctionne pas -- tu vas plutot scanner tout a la fin, chunk par
+     *  chunk (rapidement) pour trouver tous les blocs de grass avec le skin
+     *  neige -- et a EUX, tu vas forcer [pattern] une couche de neige, ou
+     *  plus sur ces blocs ») : DERNIERE etape de la chaine, juste avant la
+     *  liberation des chunks (keeper encore actif -> zero chargement
+     *  supplementaire). Scanne chunk par chunk toutes les colonnes de la
+     *  zone terrain (+ coussin du raccord), repere tout
+     *  {@code grass_block[snowy=true]} et lui FORCE une couche de neige de
+     *  hauteur k tiree selon les taux exacts demandes (le pattern litteral
+     *  du client : 24 fois 1, 12 fois 2, 3 fois 3 = ~61/31/8 %), de facon
+     *  deterministe par position (un second scan ne change plus rien).
+     *  Couche existante plus fine : relevee a k. Dessus occupe par autre
+     *  chose qu'air/neige (fleur, pot, obstacle) : on ne touche a rien. */
+    private static final int[] T263_SNOW_PATTERN = {
+            1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 2,
+            1, 2, 1, 2, 1, 1, 1, 2, 2, 1, 3, 3, 2, 2, 2, 1, 1, 1, 2, 1};
+
+    private static void forceSnowLayerSweep(ServerLevel level, BlockPos structMin, BlockPos structMax) {
+        long tic = System.currentTimeMillis();
+        int r = terrainRing() + 4;   // zone terrain + coussin du raccord T240
+        int xMin = structMin.getX() - r, xMax = structMax.getX() + r;
+        int zMin = structMin.getZ() - r, zMax = structMax.getZ() + r;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        long scanned = 0, snowySeen = 0, placed = 0, raised = 0, k1 = 0, k2 = 0, k3 = 0;
+        long chunkCount = 0;
+        for (int cx = xMin >> 4; cx <= xMax >> 4; cx++) {
+            for (int cz = zMin >> 4; cz <= zMax >> 4; cz++) {
+                ChunkAccess chunk = level.getChunk(cx, cz);
+                chunkCount++;
+                for (int lx = 0; lx < 16; lx++) {
+                    int x = (cx << 4) + lx;
+                    if (x < xMin || x > xMax) continue;
+                    for (int lz = 0; lz < 16; lz++) {
+                        int z = (cz << 4) + lz;
+                        if (z < zMin || z > zMax) continue;
+                        scanned++;
+                        int sky = chunk.getHeight(
+                                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
+                        pos.set(x, sky - 1, z);
+                        BlockState surf = chunk.getBlockState(pos);
+                        if (!surf.is(Blocks.GRASS_BLOCK)
+                                || !surf.getValue(net.minecraft.world.level.block.SnowyDirtBlock.SNOWY)) continue;
+                        snowySeen++;
+                        long mix = x * 341873128712L + z * 132897987541L + 104729L;
+                        int k = T263_SNOW_PATTERN[(int) Math.floorMod(mix, T263_SNOW_PATTERN.length)];
+                        pos.set(x, sky, z);
+                        BlockState above = chunk.getBlockState(pos);
+                        if (above.isAir()) {
+                            level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
+                                    net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
+                            placed++;
+                            if (k == 1) k1++; else if (k == 2) k2++; else k3++;
+                        } else if (above.is(Blocks.SNOW)
+                                && above.getValue(net.minecraft.world.level.block.SnowLayerBlock.LAYERS) < k) {
+                            level.setBlock(pos, above.setValue(
+                                    net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
+                            raised++;
+                            if (k == 1) k1++; else if (k == 2) k2++; else k3++;
+                        }
+                    }
+                }
+            }
+        }
+        LOGGER.info("[DLB-STRUCTURE] T263 sweep-neige final : {} chunks, {} colonnes scannees, "
+                        + "{} grass snowy trouves -> {} couches posees + {} relevees "
+                        + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
+                chunkCount, scanned, snowySeen, placed, raised, k1, k2, k3,
+                System.currentTimeMillis() - tic);
     }
 
     /** Chaine historique complete (terrain PUIS finitions) : appelee par l'appelant
@@ -1490,6 +1570,11 @@ public class StructureTerrainPrep {
                                     // d'eau) ? C'est la reponse chiffree a « le
                                     // paysage est-il detruit ? ».
                                     logTerrainDelta(level, min, max);
+                                    // T263 : idem decorateFinish -- le sweep
+                                    // neige final pendant la fenetre tenue,
+                                    // avant la porte de stabilisation (la
+                                    // lumiere se stabilisera dedans).
+                                    forceSnowLayerSweep(level, min, max);
                                     deepluckyblock.util.DebugLog.setPhase("stabilisation puis relachement des chunks");
                                     deepluckyblock.util.SettleGate.wait(level, min, max, () -> {
                                     // Fin de chaine : le terrain est definitif et la
@@ -4764,20 +4849,24 @@ public class StructureTerrainPrep {
      *  au-dela de ~27-31 blocs : le terrain eloigne reste strictement naturel. */
     private static final int ADAPTIVE_SMOOTH_MAX = 64;
 
-    /** T259 (retour client 14/10 ~01:01 : « tu as encore cree des montagnes
-     *  qui entourent la structure !! » — butte terrassee de 15-28 blocs
-     *  contre les murs quand le sol zero valide est au-dessus du terrain) :
-     *  borne de REMBLAI au contact de l'emprise. Le raccord au niveau de
-     *  base est desormais porte par la MOTTE de la structure (rebouchage
-     *  des fondations sous bottomY, FLOOR_TOLERANCE) et jamais par le
-     *  paysage : +4 blocs au contact, puis +3 par bloc d'eloignement
-     *  jusqu'a 18 blocs ; au-dela, la fenetre T244 historique (remplissage
-     *  des creux en mi-couronne, consigne 12/10) est inchangee. La COUPE
-     *  (rabattre une paroi naturelle, T89) n'est pas bornee par ce cap. */
+    /** T263 (client 15/10 03:52-03:57 : la montagne « boite » ENTIERE autour
+     *  de la structure persiste ; citation : « le smooth, dans world edit,
+     *  fonctionne comme un etalement, en baissant... les zones smooths
+     *  remontent presque jamais, seulement dans les mini trous, mais JAMAIS
+     *  de quoi former des nouveaux patelins de terre et encore moins des
+     *  montagnes ! ») : l'etalement ne REMBLAYE plus que les mini trous :
+     *  +2 blocs au contact (combeur de fissure), +1 jusqu'a 4 blocs, ZERO
+     *  au-dela. Tout le reste se regle par la DESCENTE (coupe libre au
+     *  bord, T89) : la pente d'approche se creuse au lieu de s'empiler ->
+     *  plus jamais de colline/plateau artificiel autour de la structure.
+     *  Le remblai de fond historique (MAX_SMOOTH_RISE) reste borne par ce
+     *  cap : il ne peut plus depasser la regle des mini trous, nulle part
+     *  hors emprise. La COUPE (rabattre une paroi naturelle, T89) n'est
+     *  toujours pas bornee par ce cap. */
     private static int riseCapNearEmprise(int dEm) {
-        if (dEm <= 6) return 4;
-        if (dEm >= 18) return ADAPTIVE_SMOOTH_MAX;
-        return 4 + (dEm - 6) * 3;
+        if (dEm <= 2) return 2;
+        if (dEm <= 4) return 1;
+        return 0;
     }
 
     /** T21 : borne ABSOLUE de la variation du lissage par rapport au terrain naturel.
@@ -4857,16 +4946,16 @@ public class StructureTerrainPrep {
         }
         if (clamped > 0) {
             LOGGER.warn("[DLB-STRUCTURE] lissage bridé : {} colonne(s) sortaient de la fenetre autorisee "
-                            + "(adaptative T89+T259 : coupe -{} libre au bord, remblai borne a +4 au contact "
-                            + "puis +3/bl jusqu'a +{} a 18 bl, fond +{}/-{} ; derive maximale mesuree : {} blocs, "
-                            + "colonne {},{} de la zone) -- ramenees dans la fenetre",
-                    clamped, ADAPTIVE_SMOOTH_MAX, ADAPTIVE_SMOOTH_MAX,
-                    MAX_SMOOTH_RISE, MAX_SMOOTH_DROP, worst, x0 + worstX, z0 + worstZ);
+                            + "(adaptative T89+T263 : coupe -{} libre au bord, remblai = mini trous SEULEMENT "
+                            + "(+2 contact, +0 au-dela de 4 bl ; etalement par la baisse, style WorldEdit) ; "
+                            + "derive maximale mesuree : {} blocs, colonne {},{} de la zone) -- ramenees dans la fenetre",
+                    clamped, ADAPTIVE_SMOOTH_MAX,
+                    worst, x0 + worstX, z0 + worstZ);
         } else {
             deepluckyblock.util.DebugLog.structure(
                     "lissage : derive maximale {} blocs par rapport au terrain naturel "
-                            + "(fenetre adaptative T89+T259 : coupe -{} bord, remblai borne anti-butte jusqu'a +{} a 18 bl, fond +{}/-{}), aucune colonne bridée",
-                    worst, ADAPTIVE_SMOOTH_MAX, ADAPTIVE_SMOOTH_MAX, MAX_SMOOTH_RISE, MAX_SMOOTH_DROP);
+                            + "(fenetre adaptative T89+T263 : coupe -{} bord, remblai mini-trous seulement, max +2 contact), aucune colonne bridée",
+                    worst, ADAPTIVE_SMOOTH_MAX);
         }
         return hm;
     }
@@ -5250,31 +5339,16 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        // T261 (run T260 du 14/10 03:05 : « toujours la montagne » — paroi de
-        // ~13 blocs PILE au mur cote crevasse, mesuree par T246 post-pose
-        // « p13 ... d1 ») : le raccord de contact etait cappe a NATUREL+4
-        // (anti-butte T259) ; quand le pied naturel est un creux bien sous Y0,
-        // la couronne ne pouvait JAMAIS remonter au niveau de base -> falaise
-        // definitive le long de l'emprise. Plancher du ruban : montee
-        // autorisee JUSQU'A Y0+3 (la regle dure T260 — jamais au-dela, le cap
-        // tablier reste applique juste apres) : le raccord refait un tablier
-        // PLAT au niveau de base au lieu de tailler un mur.
-        if (riseLimit != null && CLEARANCE_PLAN != null && CLEARANCE_PLAN.matches(level, structMin, structMax)) {
-            int floorCap = CLEARANCE_PLAN.groundY() + 3;
-            int raised = 0;
-            for (int i = 0; i < w; i++) {
-                for (int j = 0; j < h; j++) {
-                    int ddx = i < sMinI ? sMinI - i : (i > sMaxI ? i - sMaxI : 0);
-                    int ddz = j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0);
-                    int dd = Math.max(ddx, ddz);
-                    if (dd < 1 || dd > 10) continue;             // ruban de contact 1..10
-                    if (riseLimit[i][j] < floorCap) { riseLimit[i][j] = floorCap; raised++; }
-                }
-            }
-            if (raised > 0)
-                deepluckyblock.util.DebugLog.structure(
-                        "T261 tablier bidirectionnel : {} colonnes du ruban de contact autorisees a remonter jusqu'a Y0+3 (plus de paroi au mur)", raised);
-        }
+        // T263 (run T261 du 15/10 03:49, client 03:52 : la montagne-boite
+        // est TOUJOURS LA, « une passe ou au lieu de smooth vers le bas tu
+        // smooth vers le haut ») : le « tablier bidirectionnel » T261
+        // (plancher Y0+3 sur tout le ruban 1..10) est SUPPRIME — c'etait
+        // lui qui FORCAIT le remblai vers le niveau de base et empilait la
+        // colline autour de la structure. L'anti-boite T263 est porte par
+        // riseCapNearEmprise (mini trous seulement : +2 contact, 0 au-dela
+        // de 4 bl). La falaise p13 ne revient pas : la couronne descend
+        // desormais en pente douce vers le naturel (drop libre au contact)
+        // au lieu de tomber d'un mur ou de remblayer une butte.
         target = limitSlope(target, waterMask, w, h, sMinI, sMaxI, sMinJ, sMaxJ, x0, z0, pinnedCore, riseLimit);
         // limitSlope fait converger intérieur et extérieur et peut déplacer le
         // noyau après son bornage. Restaurer strictement Y0, sans nouvelle coupe
