@@ -1311,6 +1311,7 @@ public class StructureTerrainPrep {
         long scanned = 0, snowySeen = 0, placed = 0, raised = 0, k1 = 0, k2 = 0, k3 = 0;
         long chunkCount = 0, skippedChunks = 0, probed = 0, debugShown = 0;
         long capped = 0, skipObstacle = 0, alreadyDeep = 0, skippedNoSurf = 0;
+        long waterIce = 0;
         for (int cx = xMin >> 4; cx <= xMax >> 4; cx++) {
             for (int cz = zMin >> 4; cz <= zMax >> 4; cz++) {
                 if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
@@ -1341,23 +1342,75 @@ public class StructureTerrainPrep {
                         // SnowyDirtBlock snowy rencontre en descendant EST le
                         // sol (la structure n'en contient jamais), et les
                         // colonnes sans aucun snowy sont COMPTEES (skippedNoSurf).
+                        // T268 (run T267 15/10 23:27, client : « encore le gris
+                        // = dirt version snow buggee ou tu n'as pas mis la layer
+                        // de snow dessus ») — DEUX sources de gris, meme racine
+                        // « pas de couche » : (1) un grass_block (meme snowy=true)
+                        // SANS couche rend son DESSUS en herbe teintee biome
+                        // (gris-sauge) — le blanc vanilla = la COUCHE au-dessus,
+                        // pas le dessus du bloc — et verifyGrassColumn repeint
+                        // le sol en GRASS_BLOCK snowy=false nu ; (2) pierre,
+                        // gravier, podzol, chemin, sable exposes par les coupes
+                        // du lissage ne sont PAS des SnowyDirtBlock : le sonde
+                        // T267 les classait « sans snowy » (les 6097 colonnes,
+                        // 29 % du balayage !) et n'y posait rien. Le scan
+                        // s'arrete desormais au 1er CORPS PLEIN (tout solide
+                        // opaque, plus seulement snowy=true) et la couche vise
+                        // TOUT sol expose au ciel : herbe, terre, pierre,
+                        // gravier, podzol, sable, chemin, bloc de neige,
+                        // canopee (feuilles), troncs, toits, vitres. Restent
+                        // INTOUCHABLES et COMPTEES : toute eau/lave et TOUTE
+                        // glace de surface (ICE/PACKED/BLUE/FROSTED — consigne
+                        // client T267 « ice = eau, on ne modifie pas sa
+                        // surface »), et aucune couche n'est posee si le bloc
+                        // cible est occupe (recoltes/fleurs du village restent).
                         int surfY = -1;
+                        boolean wetCol = false;
                         for (int y = sky + 2; y >= sky - 48; y--) {
                             pos.set(x, y, z);
                             BlockState s = chunk.getBlockState(pos);
-                            if (s.getBlock() instanceof net.minecraft.world.level.block.SnowyDirtBlock
-                                    && s.getValue(net.minecraft.world.level.block.SnowyDirtBlock.SNOWY)) {
-                                surfY = y;
+                            if (s.isAir() || s.canBeReplaced()
+                                    || s.is(Blocks.POWDER_SNOW)) {
+                                continue;   // vide, herbes, poudreuse : on descend
+                            }
+                            if (!s.getFluidState().isEmpty()) {
+                                wetCol = true;   // eau (ou lave) : intouchable
                                 break;
                             }
+                            if (s.is(Blocks.ICE) || s.is(Blocks.PACKED_ICE)
+                                    || s.is(Blocks.BLUE_ICE) || s.is(Blocks.FROSTED_ICE)) {
+                                wetCol = true;   // glace = eau : intouchable (T267)
+                                break;
+                            }
+                            if (s.is(Blocks.SNOW)) {
+                                surfY = y - 1;   // couche deja la : base = son support
+                            } else {
+                                surfY = y;       // 1er corps plein = surface
+                            }
+                            break;
                         }
+                        // T268 / T259 : si la base retenue est de la GLACE (cas
+                        // couche de neige existante posee sur un lac gele :
+                        // surfY = y-1 = ICE, jamais vu par le wetCol du scan),
+                        // l'ELEVER reviendrait a epaissir la neige sur glace =
+                        // spread interdit. La colonne est classee eau/glace,
+                        // comptee, intouchee.
+                        if (!wetCol && surfY >= 0) {
+                            pos.set(x, surfY, z);
+                            BlockState base = chunk.getBlockState(pos);
+                            if (base.is(Blocks.ICE) || base.is(Blocks.PACKED_ICE)
+                                    || base.is(Blocks.BLUE_ICE) || base.is(Blocks.FROSTED_ICE)) {
+                                wetCol = true;
+                            }
+                        }
+                        if (wetCol) { waterIce++; continue; }
                         if (surfY < 0) {
                             skippedNoSurf++;
                             if (debugShown < 12) {
                                 pos.set(x, sky - 1, z);
                                 debugShown++;
                                 deepluckyblock.util.DebugLog.structure(
-                                        "T267 sweep debug-skip col {},{} : aucun SnowyDirtBlock snowy entre {} et {} (block(sky-1)={})",
+                                        "T268 sweep debug-skip col {},{} : aucun corps plein entre {} et {} (block(sky-1)={})",
                                         x, z, sky - 48, sky + 2, chunk.getBlockState(pos));
                             }
                             continue;
@@ -1450,13 +1503,14 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T267 sweep-neige final : {} chunks (skippes hors keeper : {}), "
-                        + "{} colonnes scannees, {} snowy trouves (dont {} via probe) -> {} posees "
+        LOGGER.info("[DLB-STRUCTURE] T268 sweep-neige universel : {} chunks (skippes hors keeper : {}), "
+                        + "{} colonnes scannees, {} corps de surface trouves (dont {} via probe) -> {} posees "
                         + "+ {} relevees + {} sur-obstacle (arbres/structure), {} deja-epais, "
-                        + "{} skips-obstacle (trop haut/glace), {} colonnes sans snowy meme a -48, "
+                        + "{} skips-obstacle (trop haut/glace), {} colonnes eau/glace intouchees, "
+                        + "{} colonnes vides (rien de plein jusqu'a -48), "
                         + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
                 chunkCount, skippedChunks, scanned, snowySeen, probed, placed, raised, capped,
-                alreadyDeep, skipObstacle, skippedNoSurf, k1, k2, k3,
+                alreadyDeep, skipObstacle, waterIce, skippedNoSurf, k1, k2, k3,
                 System.currentTimeMillis() - tic);
     }
 
