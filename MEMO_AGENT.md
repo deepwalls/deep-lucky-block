@@ -648,3 +648,33 @@ T266 (livre 15/10 ~08h35) — code 9695d1f, livraison 8ac0eda, CI
   libre (plafond sky+40) → neige sur canopee/structure/corniches ;
   compteurs capped/deja-epais/skips-obstacle ; log T266 detaille.
   ATTENDU prochain run : C ≈ 9-10 k, N+M+C ≈ Z, skips ≈ 0.
+
+T267 (livre 15/10 ~13h20) — code 7359c42, livraison 80b6491, CI
+  38725858806 SUCCESS, release T267. SRC-SEUL 9 177 349 o, COMPLET
+  20 809 333 o, checksums 8/8, parite 1881/1617, kit 241. 4e RESET
+  sandbox (b215420) en debut de tour -> fetch+reset origin OK.
+  RUN T266 CLIENT (banner OK 12:42:52, 2 dragons @880,90,-139 61 s /
+  @737,87,-155 11 s) : sweeps 12 056/16 770 snowy trouves, 11 868+188
+  puis 15 933+837 poses, 0 skip — MAIS client 12:52 « TOUTE zone
+  structure : 0 layer + grand contour ». CAUSE : sonde sky±12 <
+  hauteur toit structure et troncs grands sapins (NO_LEAVES compte
+  troncs) → sol interieur jamais atteint = skips silencieux hors
+  compteurs ; seules zones degagees posees (d'ou damier visible).
+  FIX 1 : sonde sky-48 + skippedNoSurf compte + debug 12 rebadge T267.
+  PLAINTE 2 « tu repetes trop parfaitement ton pattern : des TAUX pas
+  un pattern bete ». FIX 2 : tableau 39+mix lineaire SUPPRIME, k tire
+  splitmix64(x,z), u ∈ [0,1), seuils 24/39 et 36/39 = TAUX EXACTS
+  (24/12/3), deterministe, zero strie. PLAINTE 3 « ICE = eau, surface
+  intouchable, sauf centre structure = supprimee ». FIX 3 : (a)
+  waterColumns (masque lissage) : ICE/PACKED/BLUE/FROSTED en surface =
+  wet (+ icy count, log « dont Y gelees ») ; (b) sweep : couche refusee
+  si support (capY-1) = glace (skipObstacle) ; (c) centre : deja raze
+  par clearFootprint avant terrain (log run « chunks centraux +
+  clearFootprint termines AVANT preparation »). Deja proteges : T254
+  verifyGrass, T259 placeSnowOrUnsnow, fixLiquids (lac gele ni graine
+  ni traite). ATTENDU run : Z en hausse (sous-toit/tronc comptes), Q
+  (sans snowy a -48) petit, lacs geles intacts. TOUJOURS OUVERT :
+  « trou enorme » T266 = options A/B/C SANS reponse client (A glacis
+  interne / B fenetre ring+48..64 / C falaise habillee) — NE PAS coder
+  sans ordre. MEMO : raw.githubusercontent.com n'est PAS accessible en
+  curl sandbox (HTTP 000) → verif note via fetch_page.
