@@ -6560,12 +6560,26 @@ public class StructureTerrainPrep {
 
     /** Une colonne de verifyGrassSurface (met a jour counters[grass, snow]). */
     private static void verifyGrassColumn(ServerLevel level, int x, int z, int[] counters) {
-        if (isProtected(x, z) || StructureScatterDecor.isInsideDecor(x, z, 1)) return;
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         int surfY = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
         if (surfY < 1) return;
         BlockState s = level.getBlockState(mut.set(x, surfY, z));
         if (s.isAir() || isLog(s) || isLeaf(s)) return;
+        // T262 (retour client run T260, screenshot 03.07.47 : l'emprise reste
+        // un ILOT VERT rectangulaire non enneige en plein champ de neige) :
+        // la protection sautait TOUTE la couverture de l'emprise, pre et
+        // post-pose -> l'herbe rebuildnee a Y0 autour de la tour n'etait
+        // jamais couchee. On ne protege plus que la STRUCTURE elle-meme
+        // (toits, murs, blocs non naturels ou surfaces hautes) ; le sol
+        // interieur naturel a ~Y0 (jardins, pelouses, talwegs sous la hauteur
+        // de la structure) recoit herbe + couche exactement comme le ruban.
+        if (isProtected(x, z) || StructureScatterDecor.isInsideDecor(x, z, 1)) {
+            boolean innerGround = CLEARANCE_PLAN != null
+                    && CLEARANCE_PLAN.contains(level, x, z)
+                    && surfY <= CLEARANCE_PLAN.groundY() + 3
+                    && s.blocksMotion() && isNaturalTerrain(s);
+            if (!innerGround) return;
+        }
         // T254 « smooth -ice » (consigne client 13/10 : « quand tu fais tes
         // smooths, fais des smooths -ice » + « je parle de la glace sur
         // l'eau ») : JAMAIS repeindre la glace d'un lac gele — avant, ICE
