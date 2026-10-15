@@ -1,0 +1,82 @@
+DEEP LUCKY BLOCK — CORRECTIF T267 (15/10/2026, ~13h20)
+======================================================
+
+TON RUN T266 (banner [build T266] confirme a 12:42:52) — ANALYSE
+=================================================================
+2 dragons : @880,90,-139 (61 s) et @737,87,-155 (11 s). Sweeps :
+12 056 puis 16 770 snowy trouves, 11 868 + 15 933 posees, 0 skip.
+ET pourtant tu vois « TOUTE la zone structure : grass snow SANS layer,
+et le grand contour aussi » (12:52-12:54). Les deux vrais : les poses
+= les zones DEGAGEES (ton damier visible le prouve), les nues = les
+zones SOUS OBSTACLE HAUT, jamais atteintes.
+
+TES 3 PLAINTES — TRAITEES
+==========================
+1) « TOUTE la zone structure : 0 layer » + « le grand contour, par
+   tous les cotes » (tu suggeres : chunks hors zone a ouvrir/analyser/
+   placer). CAUSE TROUVEE (pas besoin de charger plus : ils SONT dans
+   la fenêtre, 0 chunk skippé) : la sonde T265 plongea. 12 blocs sous
+   la heightmap NO_LEAVES. Mais NO_LEAVES vise le haut du TOIT/MURS de
+   la structure (15-40 bl au-dessus du sol) et le haut des TRONCS des
+   grands sapins replantes (les feuilles sont ignorees, PAS les
+   troncs). Resultat : la sonde survolait le sol interieur de 10-30
+   blocs -> snowy jamais trouve -> skip SILENCIEUX (ni compte, ni
+   pose) -> la zone structure et la couronne de grands arbres restaient
+   nues, exactement « comme dans les anciennes versions ».
+   FIX : sonde jusqu'a sky-48. Le premier SnowyDirtBlock snowy en
+   descendant EST forcement le sol (la structure n'en contient pas) ;
+   au-dessus = obstacle -> couche posee sur le toit/la canopee (T266),
+   sinon couche au sol interieur. Les colonnes sans snowy meme a -48
+   sont desormais COMPTEES (nouveau champ du log) et les 12 premieres
+   loguees en debug.
+2) « tu repetes trop parfaitement ton pattern de snow — je t'ai donne
+   des TAUX, pas un pattern exact a repeter betement, ca se voit ».
+   FAIT : le tableau litteral de 39 valeurs + mix lineaire est retire
+   (il dessinait des stries). Hauteur desormais tiree d'un hash fort
+   (splitmix64) par colonne : AUCUNE structure spatiale, et TAUX
+   EXACTEMENT identiques a ceux commands (24x1 / 12x2 / 3x3 sur 39 ≈
+   61,5 / 30,8 / 7,7 %). Deterministe : un re-run donne le meme tapis,
+   donc ta verification des taux dans le log reste valable.
+3) « si le sol est en ICE, on le compte comme de l'eau donc on ne
+   modifie pas sa surface » / « l'ice est intouchable » / « sauf si
+   elle gene le terrain au CENTRE (extra centre, zone structure), la
+   elle est supprimee ».
+   FAIT aux 3 endroits de decision :
+   a. LISSAGE : le masque d'exclusion « colonnes d'eau » compte
+      desormais TOUTE glace de surface (lake gele ICE + packed + blue
+      + frosted) -> jamais coupee, jamais remblayee, jamais reconstruite
+      (log : « X colonnes d'eau (dont Y gelees) exclues du lissage »).
+   b. SWEEP NEIGE : une couche dont le support serait de la glace est
+      refusee (poseer dessus = le « spread sur glace » interdit T259).
+   c. CENTRE : l'emprise structure est deja razee par clearFootprint
+      AVANT le terrain (ton log : « prepZone : chunks centraux +
+      clearFootprint termines AVANT preparation ») -> la glace du
+      centre y est bien supprimee, comme tu l'ordonnes.
+   (Deja protege avant : verifyGrass T254 et le fondu neige T259 ne
+   repeignent jamais la glace ; et une couche neige ne se pose JAMAIS
+   par-dessus une surface d'eau/gelee.)
+
+CE QUE TU DOIS VOIR (banner [build T267])
+==========================================
+1. Log console : « T267 sweep-neige final : X chunks, 20800 colonnes,
+   Z snowy trouves (dont P via probe) -> N posees + M relevees +
+   C sur-obstacle, D deja-epais, S skips-obstacle (trop haut/glace),
+   Q colonnes sans snowy meme a -48, (taux...), en T ms ». Z doit
+   GRIMPER (le sol sous toit/grands troncs compte enfin) ; Q devrait
+   etre petit (roche/eau/glace, pas du snowy).
+2. En jeu : sol interieur de la structure enneige, dessus de la
+   structure enneige, grand contour blanc y compris sous/au-dessus des
+   grands sapins ; tapis de hauteurs 1/2/3 SANS motif visible.
+3. Lacs geles intacts (surface jamais retouchee), sauf au coeur de
+   l'emprise ou le clear les supprimait deja.
+
+LIVRAISON (rituel)
+===================
+- SRC-SEUL : 9 177 349 o (1617 fichiers, = T266). COMPLET : 20 809 333 o
+  (1881 fichiers, = T266). Kit FIXES_MCREATOR : synchronise, rien
+  supprime (241 fichiers preserves).
+- Controle SHA-256 : 8/8 OK (2 sources x 2 emplacements x 2 zips,
+  relus DEPUIS les zips finaux vs git) — fait AVANT les liens.
+- CI GitHub run 38725858806 : SUCCESS. Commit code 7359c42.
+- Reset sandbox pendant ce tour (4e) : detecte (HEAD b215420), restaure
+  proprement via origin avant tout edit — aucun impact livraison.
