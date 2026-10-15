@@ -599,3 +599,31 @@ T264 (livre 15/10 ~07h25) — code b144e2b, livraison f0828c8, CI
   ticket sur confirmation client.
   PROCEDURE CONFIRM-RESET : toujours git rev-parse HEAD en debut de
   tour (3 resets deja) -> fetch + reset --hard origin/arena si ecart.
+
+T265 (livre 15/10 ~07h55) — code 6cd8087, livraison 03324d9, CI
+  38678511054 SUCCESS, release T265. SRC-SEUL 9 173 747 o (1617 f.),
+  COMPLET 20 805 731 o (1881 f.), checksums 8/8 OK relus depuis les
+  zips finaux, kit FIXES_MCREATOR 241 f. preserves.
+  RUN T264 CLIENT (banner OK, 3 dragons @-62,98,166 / -216,95,269 /
+  -304,90,296 New World, 22/16/13 s) : fenetre OK (99 chunks, 20 800
+  col, 0 skip) MAIS « 45/486/262 snowy trouves -> 0 posees
+  0 relevees » = detection aveugle. 5 plaintes (05:33-05:38) : (a)
+  bordure dirt-version-neige sans slab TOUT autour ; (b) arbres/
+  structure non neiges ; (c) grassy-snowy nus colles a la structure +
+  big zone ; (d) « rayon exterieur oublie a la repose » ; (e) idem a
+  la neige. CAUSE 1 : mega-sapins replantes convertissent le sol en
+  PODZOL snowy (vanilla) + mycelium -> filtre grass_block seul = 0.
+  CAUSE 2 : heightmap caduque apres pose en section -> garde-fou
+  above bloque meme les snowy trouves. FIX : detection =
+  SnowyDirtBlock entier (grass/podzol/mycelium, SNOWNY=true) + probe
+  vertical sky+2..sky-12 -> surfY, pose a surfY+1, compteurs probed /
+  debugShown (12 premiers skips logues avec block(sky-1)=...). Log
+  « T265 sweep-neige final : ... snowy trouves (dont P via probe) ».
+  RITUEL T254 CONFIRME : --notes-file (pas de backticks), liens raw
+  au SHA livraison, fetch note 200 + gh api tailles fait.
+  CHANTIERS OUVERTS : chevauchement inter-spawns 88-154 bl (zones
+  ring+18 se chevauchent : le raz d'un spawn peut effacer les couches
+  du precedent — a surveiller si bandes residuelles apres T265) ;
+  rectangles gris-plat internes (roche, attente confirmation) ;
+  perf 13-22 s (cible 5000 ms) ; Broken Path / damier congeres sans
+  ordre.
