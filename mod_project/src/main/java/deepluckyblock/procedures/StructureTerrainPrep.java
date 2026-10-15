@@ -1310,6 +1310,7 @@ public class StructureTerrainPrep {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         long scanned = 0, snowySeen = 0, placed = 0, raised = 0, k1 = 0, k2 = 0, k3 = 0;
         long chunkCount = 0, skippedChunks = 0, probed = 0, debugShown = 0;
+        long capped = 0, skipObstacle = 0, alreadyDeep = 0;
         for (int cx = xMin >> 4; cx <= xMax >> 4; cx++) {
             for (int cz = zMin >> 4; cz <= zMax >> 4; cz++) {
                 if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
@@ -1364,7 +1365,9 @@ public class StructureTerrainPrep {
                         int k = T263_SNOW_PATTERN[(int) Math.floorMod(mix, T263_SNOW_PATTERN.length)];
                         pos.set(x, surfY + 1, z);
                         BlockState above = chunk.getBlockState(pos);
-                        if (above.isAir()) {
+                        if (above.isAir() || above.canBeReplaced()) {
+                            // T266 : canBeReplaced (herbe haute, petite plante) =
+                            // la neige tombe et remplace, comme la neige meteo.
                             level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
                                     net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
                             placed++;
@@ -1375,15 +1378,51 @@ public class StructureTerrainPrep {
                                     net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
                             raised++;
                             if (k == 1) k1++; else if (k == 2) k2++; else k3++;
+                        } else if (above.is(Blocks.SNOW)) {
+                            alreadyDeep++;
+                        } else {
+                            // T266 (run T265 06:19 : « il manque plus de la
+                            // moitie », « encore des trous colles a la structure
+                            // = grass version neige SANS la couche », « etape
+                            // finale : refaire la neige sur les arbres, les
+                            // structures ») : sur 14 068 snowy trouves, ~9 900
+                            // restaient nus car le bloc au-dessus direct etait
+                            // une FEUILLE / un TRONC / un MUR / un TOIT (le
+                            // garde-fou T265 abandonnait silencieusement). On
+                            // remonte desormais jusqu'au premier niveau posable
+                            // (air ou remplacable, plafond sky+40 au-dela on
+                            // abandonne et on compte) et on y pose la couche :
+                            // la neige recouvre la CANOPEE et la STRUCTURE,
+                            // pile ce que la neige meteo vanilla aurait fait —
+                            // et c'est exactement la « seconde passe apres
+                            // replantation » demandee (ce sweep tourne deja
+                            // APRES decorate/replant, ligne de log commune).
+                            int capY = -1;
+                            for (int y = surfY + 2; y <= sky + 40; y++) {
+                                pos.set(x, y, z);
+                                BlockState up = chunk.getBlockState(pos);
+                                if (up.isAir() || up.canBeReplaced()) { capY = y; break; }
+                            }
+                            if (capY >= 0) {
+                                pos.set(x, capY, z);
+                                level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
+                                        net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
+                                capped++;
+                                if (k == 1) k1++; else if (k == 2) k2++; else k3++;
+                            } else {
+                                skipObstacle++;
+                            }
                         }
                     }
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T265 sweep-neige final : {} chunks (skippes hors keeper : {}), "
-                        + "{} colonnes scannees, {} snowy trouves (dont {} via probe) -> {} couches posees "
-                        + "+ {} relevees (taux 1/2/3 poses = {}/{}/{}), en {} ms",
-                chunkCount, skippedChunks, scanned, snowySeen, probed, placed, raised, k1, k2, k3,
+        LOGGER.info("[DLB-STRUCTURE] T266 sweep-neige final : {} chunks (skippes hors keeper : {}), "
+                        + "{} colonnes scannees, {} snowy trouves (dont {} via probe) -> {} posees "
+                        + "+ {} relevees + {} sur-obstacle (arbres/structure), {} deja-epais, "
+                        + "{} skips-obstacle (trop haut), (taux 1/2/3 poses = {}/{}/{}), en {} ms",
+                chunkCount, skippedChunks, scanned, snowySeen, probed, placed, raised, capped,
+                alreadyDeep, skipObstacle, k1, k2, k3,
                 System.currentTimeMillis() - tic);
     }
 
