@@ -541,3 +541,42 @@ T262 (livre 15/10 ~01h55) — code 3df8f2f, livraison 3b0d193, CI
   FIXES_MCREATOR (boucle find $FIX -name '*.java' + cp si diff),
   rezip, verif checksums. Liaison grille de verification note dans
   T262-NOTE.
+
+T263 (livre 15/10 ~05h50) — code d67b257, livraison ff634be, CI
+  38669716609 SUCCESS, release T263 (note raw 200 via fetch_page,
+  tailles au SHA = local ; curl direct raw.githubusercontent bloque
+  par proxy sandbox hors allowlist -> toujours utiliser fetch_page).
+  CONTEXT RUN CLIENT (log 03:33-03:57) : banner ENCORE [build T261]
+  (T262 pas importe au lancement). Dragon 90 s total (plus lent que
+  T260 51 s : verifyGrassSurface 12 s, decorate 52,5 s ; stall async
+  32,8 s). Lissage bride 1281+43+2889+112 colonnes, derive max 15 bl,
+  T246 toujours « ... d1 » cote E. Y fallback 166 -> 70 OK.
+  ORDRE 1 « smooth = etalement en baissant, JAMAIS de montagnes
+  (WorldEdit) » : CONFIRME par son log (« remblai +4 contact puis
+  +3/bl jusqu'a +64 », T246 remblai moy +2.8). FIX : riseCapNearEmprise
+  AVANT +4@contact / +3*bl -> +64 ; APRES +2@contact, +1<=4bl, 0
+  au-dela (T263). Suppression du bloc « tablier bidirectionnel » T261
+  (plancher riseLimit=Y0+3 ruban 1..10 = la boite). Textes logs
+  lissage bride adaptative T89+T263. ATTENTION par la suite : la
+  falaise p13 est evitee par LA DESCENTE (drop libre contact) -- si
+  le client re-voit une marche au contact, regarder limitSlope drop
+  cote ruban.
+  ORDRE 2 « scan final chunk-par-chunk, force layer sur tout grass
+  snowy, taux pattern » : methode forceSnowLayerSweep (pattern
+  litteral 39 valeurs client : 24x1, 12x2, 3x3 ; k via
+  floorMod(x*341873128712 + z*132897987541 + 104729, 39),
+  deterministe ; pose si air au-dessus, releve si snow<k, sinon
+  ne touche rien ; Heightmap MOTION_BLOCKING_NO_LEAVES du chunk ;
+  setBlock flags 3 ; log compteurs + repartition + ms). Appelee
+  dans decorateFinish (release, apres raccord T240, AVANT releases)
+  + decorateChain historique (avant SettleGate.wait).
+  PROCEDURE LIVRAISON CONSOLIDEE (depuis T262) : staging overlay
+  zip T(n-1) + cp sources git + synchro kit FIXES_MCREATOR + verif
+  0 mismatch main&kit + zips SRC-COMPLET/SRC-SEUL + note + release
+  + raw checks + memo. Vigilances : sed banner = version PRECEDENTE
+  (T262 cette fois, pas T261) ; pas de backticks dans --notes
+  (--notes-file OK).
+  CHANTIERS OUVERTS : perf (90 s -> cible 5000 ms ; nouveau sweep
+  ajoute qques ms ; le vrai goulot = async stall 33 s + verify 12 s
+  + decorate 52 s) ; allee Broken Path (flag si il veut la neiger) ;
+  damier flancs style congeres (param resserrable).
