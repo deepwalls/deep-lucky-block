@@ -580,3 +580,22 @@ T263 (livre 15/10 ~05h50) — code d67b257, livraison ff634be, CI
   ajoute qques ms ; le vrai goulot = async stall 33 s + verify 12 s
   + decorate 52 s) ; allee Broken Path (flag si il veut la neiger) ;
   damier flancs style congeres (param resserrable).
+
+T264 (livre 15/10 ~07h25) — code b144e2b, livraison f0828c8, CI
+  38675388636 SUCCESS, release T264. 3e reset sandbox (b215420)
+  detecte au debut de ce tour -> restaure via origin (7f4a485).
+  RUN T263 CLIENT (banner OK, dragon @3,97,-607) : boite regle
+  (T246 remblai moy 0.2-0.7), duree 37 s, stall 33 s parti, keep-up
+  residuel = paste 16,4 s. SWEEP T263 BUG : « 537 snowy -> 0 posees
+  0 relevees » car fenetre ring+4 TROP JUSTE — passes herbe/snowy
+  (naturalise/replant/raccord/track/mesure finale) travaillent a
+  ring + NATURALIZE_EXTRA_RING (16) => bande 12 bl non couverte
+  (mesures client N4 O5 S0 E13 ; arbres replantes nord = sol nu,
+  meme marge). FIX : sweep r = terrainRing()+NATURALIZE_EXTRA_RING+2
+  + garde level.getChunkSource().hasChunk(cx,cz) (skippedChunks) +
+  log T264 avec skippes. POINT OUVERT (note client) : rectangles
+  gris-plat INTERNES = roche exposee par coupe (derive 21 bl), pas
+  du grass snowy ; reverdissage/naturalize a creuser au prochain
+  ticket sur confirmation client.
+  PROCEDURE CONFIRM-RESET : toujours git rev-parse HEAD en debut de
+  tour (3 resets deja) -> fetch + reset --hard origin/arena si ecart.
