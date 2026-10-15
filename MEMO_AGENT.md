@@ -510,3 +510,34 @@ T261 (livre 14/10 ~03h45) — code 8748797, livraison 0bec1a5, CI
   rejet de zone sur span > 12 — non fait pour eviter les boucles de
   repli de selection) ; (3) perf : chantier blitz toujours ouvert
   (stall 8,4 s capDrops=0, pre-chargement ~7 s, dressAndPlant 2,4 s).
+
+T262 (livre 15/10 ~01h55) — code 3df8f2f, livraison 3b0d193, CI
+  38666314697 SUCCESS, release T262 (note raw 200 integral).
+  ANALYSE 5 IMAGES client run T260 : falaise/crevasse/damier
+  (03.07.18) => regle T261 (tablier bidirectionnel + fillCrevasses
+  R=3+7) ; ILOT VERT emprise (03.07.47) => NOUVEAU fix T262 :
+  verifyGrassColumn sautait TOUTE colonne isProtected (emprise+marge
+  1) pre ET post-pose -> herbe a Y0 jamais couchee. Fix : protection
+  limitee a la structure (surface haute ou bloc non naturel) ; sol
+  interieur naturel <= Y0+3 recoit herbe+couche (innerGround via
+  CLEARANCE_PLAN.contains + groundY+3). Dirt au pied (03.06.54) :
+  partie reglee T262, chemins = template NBT nus par design. Bord
+  sapins nets (03.06.31) => regle T261. Ruban nu/potirons vers le
+  lac (03.06.19) = allee « The Broken Path » DU TEMPLATE (advancement
+  du meme nom debloque par le client 03:04:56, preuve) : NE PAS
+  repeindre sans ordre explicite (flag possible si il veut la neige
+  dessus). Damier flancs = style congeres T243/T256 voulu.
+  AUDIT ZIP (plainte client « parties de code non a jour ») : FONDEE.
+  src/main/java du zip etait 100 % a jour MAIS le zip contient un
+  DOUBLE de chaque .java sous resources/deepluckyblock_patch/
+  FIXES_MCREATOR/src/main/java (mecanisme applyMcreatorPatch du
+  client) : 162 fichiers, 8 OBSOLETES = exactement nos 8 fichiers
+  modifies depuis T232 (DlbTestCommands inclu). T262 : double
+  synchronise (cp git -> staging -> zip) + livraison DUO :
+  SRC-COMPLET (20 898 693 o) + SRC-SEUL (src/ uniquement, 9 252 981 o,
+  324 .java). PREUVE checksum SHA-256 : 0 mismatch / 9 fichiers git
+  dans main/java ET FIXES_MCREATOR. PROCEDURE DESORMAIS A CHAQUE
+  LIVRAISON : overlay git -> staging, synchro des doubles
+  FIXES_MCREATOR (boucle find $FIX -name '*.java' + cp si diff),
+  rezip, verif checksums. Liaison grille de verification note dans
+  T262-NOTE.
