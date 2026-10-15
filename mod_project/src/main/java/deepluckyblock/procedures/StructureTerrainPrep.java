@@ -1309,7 +1309,7 @@ public class StructureTerrainPrep {
         int zMin = structMin.getZ() - r, zMax = structMax.getZ() + r;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         long scanned = 0, snowySeen = 0, placed = 0, raised = 0, k1 = 0, k2 = 0, k3 = 0;
-        long chunkCount = 0, skippedChunks = 0;
+        long chunkCount = 0, skippedChunks = 0, probed = 0, debugShown = 0;
         for (int cx = xMin >> 4; cx <= xMax >> 4; cx++) {
             for (int cz = zMin >> 4; cz <= zMax >> 4; cz++) {
                 if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
@@ -1324,14 +1324,45 @@ public class StructureTerrainPrep {
                         scanned++;
                         int sky = chunk.getHeight(
                                 net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
-                        pos.set(x, sky - 1, z);
-                        BlockState surf = chunk.getBlockState(pos);
-                        if (!surf.is(Blocks.GRASS_BLOCK)
-                                || !surf.getValue(net.minecraft.world.level.block.SnowyDirtBlock.SNOWY)) continue;
+                        // T265 (run T264 05:33-05:38 : « bordure de dirt version
+                        // neige sans la slab, TOUT autour » + « neige oubliee
+                        // sur les arbres une fois pousses » ; le sweep T264
+                        // trouvait 45..486 snowy et ne posait RIEN) : le sol
+                        // replante sous les gros sapins devient PODZOL (le
+                        // sapin geant vanilla convertit son sol en podzol, qui
+                        // a le meme skin blanc que le grass snowy) -> T263/T264
+                        // ne comptaient que Blocks.GRASS_BLOCK, donc jamais
+                        // ces colonnes. Desormais : toute la famille
+                        // SnowyDirtBlock snowy=true (grass + podzol + mycelium),
+                        // et on probe jusqu'a 12 blocs sous la heightmap pour
+                        // trouver le snowy le plus haut (tolerance heightmap
+                        // en retard apres une pose directe en section). Les
+                        // premiers skips sont logues (debug, 12 max).
+                        int surfY = -1;
+                        for (int y = sky + 2; y >= sky - 12; y--) {
+                            pos.set(x, y, z);
+                            BlockState s = chunk.getBlockState(pos);
+                            if (s.getBlock() instanceof net.minecraft.world.level.block.SnowyDirtBlock
+                                    && s.getValue(net.minecraft.world.level.block.SnowyDirtBlock.SNOWY)) {
+                                surfY = y;
+                                break;
+                            }
+                        }
+                        if (surfY < 0) {
+                            if (debugShown < 12) {
+                                pos.set(x, sky - 1, z);
+                                debugShown++;
+                                deepluckyblock.util.DebugLog.structure(
+                                        "T265 sweep debug-skip col {},{} : aucun SnowyDirtBlock snowy entre {} et {} (block(sky-1)={})",
+                                        x, z, sky - 12, sky + 2, chunk.getBlockState(pos));
+                            }
+                            continue;
+                        }
+                        if (surfY != sky - 1) probed++;
                         snowySeen++;
                         long mix = x * 341873128712L + z * 132897987541L + 104729L;
                         int k = T263_SNOW_PATTERN[(int) Math.floorMod(mix, T263_SNOW_PATTERN.length)];
-                        pos.set(x, sky, z);
+                        pos.set(x, surfY + 1, z);
                         BlockState above = chunk.getBlockState(pos);
                         if (above.isAir()) {
                             level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
@@ -1349,10 +1380,10 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T264 sweep-neige final : {} chunks (skippes hors keeper : {}), "
-                        + "{} colonnes scannees, {} grass snowy trouves -> {} couches posees + {} relevees "
-                        + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
-                chunkCount, skippedChunks, scanned, snowySeen, placed, raised, k1, k2, k3,
+        LOGGER.info("[DLB-STRUCTURE] T265 sweep-neige final : {} chunks (skippes hors keeper : {}), "
+                        + "{} colonnes scannees, {} snowy trouves (dont {} via probe) -> {} couches posees "
+                        + "+ {} relevees (taux 1/2/3 poses = {}/{}/{}), en {} ms",
+                chunkCount, skippedChunks, scanned, snowySeen, probed, placed, raised, k1, k2, k3,
                 System.currentTimeMillis() - tic);
     }
 
