@@ -678,3 +678,32 @@ T267 (livre 15/10 ~13h20) — code 7359c42, livraison 80b6491, CI
   interne / B fenetre ring+48..64 / C falaise habillee) — NE PAS coder
   sans ordre. MEMO : raw.githubusercontent.com n'est PAS accessible en
   curl sandbox (HTTP 000) → verif note via fetch_page.
+
+T268 (livre 15/10 ~22h30) — code 57bf1bf, livraison fe5cb27, CI
+  38812456984 SUCCESS, release T268. SRC-SEUL 9 179 435 o, COMPLET
+  20 811 419 o, checksums 8/8, parite 1881/1617, kit 241. 5e RESET
+  sandbox -> fetch+reset origin OK.
+  RUN T267 CLIENT (banner OK 23:14:08, dragon @1218,-55, Y 242->64) :
+  sweep 20 800 col, 14 703 snowy (14 110 via probe OK), 13 967+736
+  poses, 0 skip, taux 60,9/31,1/8,0 — MAIS 6 097 « sans snowy » = 29 %
+  = le GRIS des 7 screens chronologiques client. VERDICT CLIENT JUSTE
+  (« layer pas mise ») — le gris a 2 racines, meme cause « pas de
+  couche » : (1) grass_block meme snowy=true rend son DESSUS teinte
+  biome (le blanc vanilla = LA COUCHE au-dessus, pas le top du bloc) et
+  verifyGrassColumn repeint GRASS_BLOCK snowy=false nu ; (2) le sweep
+  ne visait que SnowyDirtBlock snowy=true -> pierre/gravier/podzol/
+  chemins des coupes exclus (bancs tailles, grand patch SE). FIX T268
+  « neige universelle » : scan = 1er CORPS PLEIN depuis sky+2 (air/
+  canBeReplaced/POWDER_SNOW montent ; SNOW layer -> surfY=y-1 support ;
+  fluid -> wetCol ; ICE/PACKED/BLUE/FROSTED -> wetCol) puis pipeline
+  identique (pose/raise/walk-up+ice guard) sur TOUT solide : herbe,
+  terre, pierre, gravier, podzol, sable, chemin, snow block, feuilles,
+  troncs, toits, vitres. Garde-fou T259 renforce : base surfY glace
+  (neige pre-existante sur lac gele) -> wetCol, jamais epaissie.
+  Compteurs : waterIce (eau+glace intouchees), skippedNoSurf = colonnes
+  vides. Log renomme « T268 sweep-neige universel ». LIMITE signalee au
+  client : faces VERTICALES du carre ne peuvent porter de couche ;
+  corniches snow_block possibles en T269 si demande. TOUJOURS OUVERT :
+  trou enorme A/B/C (A glacis recommande), perf replantTrees (LAGPROBE
+  2082 ms), chevauchement inter-spawns ring+18, rectangles roche
+  internes (estompes par T268 mais forme = fenetre de coupe).
