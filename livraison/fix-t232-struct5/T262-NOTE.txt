@@ -1,0 +1,133 @@
+DEEP LUCKY BLOCK — CORRECTIF T262 (15/10/2026, ~01h50)
+======================================================
+
+ANALYSE DE TES 5 IMAGES (run T260 03:00-03:07, banner [build T260]
+confirmé dans ton log — le jar était bien à jour, les défauts venaient
+donc du code, pas d'un mauvais fichier)
+====================================================================
+
+IMAGE A — structure au-dessus d'une haute falaise de terre enneigée
+        en escalier, crevasse en V en dessous (03.07.18)
+  PROBLÈME 1 : la paroi/falaise de ~13 blocs longeant la structure
+    (= « toujours la montagne », mesurée dans ton propre log :
+    T246 post-pose « p13 … d1 »). Cause : raccord de contact cappé
+    à NATUREL+4 → impossible de remonter d'un creux vers la base 69.
+    → RÉGLÉ DANS T261 (plancher du ruban de contact à Y0+3,
+    « tablier bidirectionnel » — le raccord remonte au niveau de
+    base, jamais au-dessus ; log : « T261 tablier bidirectionnel »).
+  PROBLÈME 2 : la crevasse profonde au pied (« Wtf il y a des
+    trous ») — rayon d'analyse 3 historique, berges de ta crevasse
+    (~12-16 bl.) hors fenêtre → jamais comblée.
+    → RÉGLÉ DANS T261 (fillCrevasses double passe R=3 + R=7).
+  PROBLÈME 3 : damier marron/blanc sur les flancs = couches de neige
+    en hauteur variable 1-3 sur terrain en pente. C'est le STYLE
+    « congères dégradées » demandé en T243/T256 + comportement
+    vanilla (un flanc vertical n'est jamais recouvert). PAS un bug —
+    mais si tu préfères du blanc plus uniforme, je peux resserrer
+    les congères (un paramètre) : dis-le-moi.
+
+IMAGE B — vue plongée : tour sur un ILOT VERT rectangulaire en plein
+        champ de neige + long ruban rectiligne descendant (03.07.47)
+  PROBLÈME 1 (le plus vilain) : l'îlot VERT = l'emprise d'herbe
+    rebuildée à Y0 autour de la tour, JAMAIS couverte de neige.
+    Cause trouvée : verifyGrassColumn sautait TOUTE colonne protégée
+    (emprise + 1 bloc de marge), pré ET post-pose → l'emprise restait
+    verte alors que tout le ruban blanchissait. DERNIER faiseur de
+    « délimitation ».
+    → RÉGLÉ DANS T262 (ce build) : la protection ne saute plus que
+    la STRUCTURE (toits, murs, blocs non naturels, surface haute) ;
+    le sol intérieur naturel ≤ Y0+3 (jardins, pelouses) reçoit herbe
+    + couche SNOW exactement comme le ruban. Ta règle « grass snowy
+    => TOUJOURS une layer » s'applique désormais AUSSI au jardin.
+  PROBLÈME 2 : le long ruban nu rectiligne = l'ALLÉE DE TON PROPRE
+    TEMPLATE (« The Broken Path » — le nom de l'advancement que tu
+    as débloqué à 03:04:56) : gravier, dirt, potirons posés par le
+    NBT APRÈS ma couverture pré-pose. Je ne la repeins pas sans ton
+    ordre (ça casserait le design de l'allée). Si tu la veux
+    enneigée aussi : c'est un flag simple, dis-le.
+
+IMAGE C — gros plan au sol, pied de la structure : marches stone,
+        chemins bruns, pots, boule de feuilles (03.06.54)
+  PROBLÈME 1 : plaques de dirt/gravel brunes nues dans l'emprise.
+    Mélange de (a) chemins PRÉVUS par ton template (nus par design)
+    et (b) sol naturel de l'emprise jamais couvert = même cause que
+    l'image B.
+    → (b) RÉGLÉ PAR T262 ; (a) reste nu sauf si tu demandes la
+    couverture du template.
+  POINT OK : la fleur bleue replantée (repose des sauvegardées ✓)
+    et le joint des marches au sol (raccord T240) sont propres.
+
+IMAGE D — grande plage blanche descendante, bord de sapins rectiligne
+        à gauche, petite structure violette au centre (03.06.31)
+  PROBLÈME 1 : le bord NET de sapins à gauche = arbres de bordure
+    sautés (halo vanilla ±16 hors zone chargée → skip pur T157) +
+    troncs refusés (couche SNOW posée avant replant = case non
+    libre).
+    → RÉGLÉ DANS T261 (fallback petit type halo 8 + purge du
+    cylindre de tronc avant pose ; log replantTrees détaillé :
+    refused et unloaded doivent être ≈ 0).
+  PROBLÈME 2 : transitions grises/dirt en haut à droite avec neige
+    éparses = patches congères (style T243) + bord extérieur du
+    ruban. La PLAGE CENTRALE BLANCHE UNIFORME confirme que la
+    couverture T259/T260 fonctionne — c'est le comportement voulu,
+    pas un bug.
+  (le marqueur violet = waypoint de ton jeu, pas à nous.)
+
+IMAGE E — vue aérienne : longue bande grise/verte avec touches orange
+        descendant vers le lac gelé (03.06.19)
+  PROBLÈME 1 : la bande = encore l'allée « The Broken Path » du
+    template (gravier + herbe + potirons) — même réponse que l'image
+    B : design du NBT, pas un oubli de ma part. Flag possible sur
+    demande.
+  PROBLÈME 2 : herbe verte par plaques dans le ruban = refus de
+    patches congères (T243/T256). Style voulu ; resserrable sur
+    demande.
+  POINT OK : le lac gelé est resté INTACT — la preuve que le fix
+    T254 « smooth -ice » tient (jamais de glace repeinte/brisée).
+
+TA PLAINTE « FICHIERS AVEC PARTIES DE CODE NON À JOUR / MANQUANTS »
+===================================================================
+Tu avais RAISON de tiquer — j'ai audité le zip T261 fichier par
+fichier :
+1. src/main/java = 100 % À JOUR dans T261 (prouvé : les fichiers que
+   j'ai modifiés y sont exacts ; les 153 autres sont inchangés depuis
+   ton propre projet d'origine — git ne stocke que nos 9 fichiers
+   modifiés, le reste vient de ton zip d'origine, c'est le principe
+   de l'overlay).
+2. MAIS le zip contient AUSSI une copie technique sous
+   src/main/resources/deepluckyblock_patch/FIXES_MCREATOR/src/main/java
+   (le mécanisme que ton build appelle au lancement : « [DLB-PATCH]
+   61 fichiers restaures »). Cette copie datait du 05/10 → 8 fichiers
+   OBSOLÈTES, et c'étaient EXACTEMENT nos 8 fichiers modifiés depuis
+   T232 — dont DlbTestCommands avec le banner. Si applyMcreatorPatch
+   avait restauré l'un d'eux un jour, il aurait réinstallé le T231
+   silencieusement. C'est ça, ta « partie non à jour ».
+   → RÉPARÉ DANS T262 : les 8 copies sont synchronisées octet pour
+   octet ; vérification par checksum SHA-256 : 0 mismatch / 9
+   fichiers (sous git) dans src/main/java ET dans FIXES_MCREATOR.
+
+CE QUE TU TÉLÉCHARGES CETTE FOIS
+================================
+- DEEP-LUCKY-BLOCK-T262-SRC-SEUL.zip : SRC UNIQUEMENT (src/ entier :
+  324 .java = 162 sources + leurs doubles FIXES_MCREATOR synchronisés
+  + resources/NBT/textures), ~9,3 Mo. Vérifié checksum : 0 mismatch,
+  banner « build T262 » présent dedans. C'est le lien « SRC uniquement
+  et à jour » que tu m'as demandé.
+- DEEP-LUCKY-BLOCK-T262-SRC-COMPLET.zip : le projet MCreator complet
+  comme d'habitude ~20,9 Mo (même contenu src + cadre gradle),
+  au cas où.
+- Les liens raw complets des 2 + cette note sont dans la release T262.
+
+CE QUE TU DOIS VOIR EN JEU (banner [build T262] au lancement)
+=============================================================
+1. L'îlot autour de la tour : BLANC (herbe snowy + couche) au lieu
+   du rectangle vert.
+2. Toits et murs : AUCUNE couche posée dessus (la protection haute
+   reste) — la neige ne doit apparaître que sur le sol à ~Y0.
+3. Au pied des murs (T261) : tablier plat ≤ Y0+3, zéro paroi.
+4. Plus de crevasse béante ; forêt restaurée (replantTrees :
+   refused ≈ 0, unloaded ≈ 0).
+
+BUILD / TECHNIQUE
+-----------------
+CI GitHub run 38666314697 : SUCCESS (Java 21). Commit code : 3df8f2f.
