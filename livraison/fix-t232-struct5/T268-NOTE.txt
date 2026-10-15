@@ -1,0 +1,80 @@
+DEEP LUCKY BLOCK — CORRECTIF T268 (15/10/2026, ~22h)
+====================================================
+
+TON RUN T267 (banner [build T267] confirme 23:14:08) — ANALYSE
+==============================================================
+Dragon demande a 1151,242,108 -> zone 1218,-55 (Y corrige 242->64,
+sol exhaustif 62-67). Sweep T267 : 20 800 colonnes, 14 703 snowy
+trouves (dont 14 110 via probe sky-48 — la sonde marche), 13 967
+posees + 736 sur-obstacle, 0 skip, taux 60,9/31,1/8,0 % OK.
+MAIS : **6 097 colonnes « sans snowy meme a -48 » = 29 % du balayage**
+— et c'est exactement ton gris.
+
+TON VERDICT ETAIT LE BON : « tu n'as pas mis la layer dessus »
+==============================================================
+Le gris a DEUX sources, meme racine (pas de couche) :
+1. Un grass_block — meme en etat snowy=true — rend son DESSUS en
+   herbe teintee biome (gris-sauge). En vanilla, le blanc qu'on voit,
+   c'est LA COUCHE de neige au-dessus, pas le dessus du bloc ! Et
+   verifyGrassColumn repeint le sol en GRASS_BLOCK snowy=false nu.
+2. Le sweep T267 ne visait QUE les blocs SnowyDirtBlock en etat
+   snowy=true. La pierre/gravier/podzol/chemins exposes par les
+   coupes du lissage (tes grandes plaques grises : bancs tailles,
+   grand patch sud-est) ne sont PAS des SnowyDirtBlock -> sondees
+   « sans snowy », jamais couchees.
+
+LE FIX — NEIGE UNIVERSELLE (toute surface, meme physique qu'avant)
+==================================================================
+Le scan de colonne s'arrete desormais au PREMIER CORPS PLEIN en
+descendant depuis le ciel (plus seulement snowy=true) : herbe, terre,
+pierre, gravier, sable, podzol, chemin, bloc de neige, canopee
+(feuilles), troncs, toits, vitres… et pose ses 1-3 couches dessus,
+TOUJOURS aux memes taux (hash splitmix64, 24/12/3 sur 39) et dans la
+meme fenetre (ring+18, keeper charge, 0 chargement ajoute).
+- Couche de neige deja presente -> elevee jusqu'a la hauteur k (comme
+  avant) ; recoltes/fleurs du village voisin : le bloc cible occupe =
+  on ne pose pas, rien n'est ecrase.
+- EAU (et lave) : intouchable, comptee.
+- GLACE (ICE/packed/blue/frosted) : intouchable, comptee — y compris
+  la neige deja posee sur un lac gele, qui n'est JAMAIS epaissie
+  (garde-fou ajoute pour ce cas : support de la couche = glace ->
+  colonne classee eau/glace sans rien toucher). Le spread sur glace
+  T259 reste interdit, partout.
+
+CE QUE TU DOIS VOIR (banner [build T268])
+==========================================
+1. Log console : « T268 sweep-neige universel : X chunks, 20800
+   colonnes, Z corps de surface trouves (dont P via probe) -> N
+   posees + M relevees + C sur-obstacle, D deja-epais, S
+   skips-obstacle (trop haut/glace), W colonnes eau/glace intouchees,
+   V colonnes vides, (taux...), en T ms ». Z doit approcher
+   20800 - W - V ; le vieux « 6097 sans snowy » disparait au profit
+   de W/V clairement etiquetes eau+glace / vide.
+2. En jeu : PLUS AUCUNE plaque grise — bancs tailles, grand patch
+   sud-est, terres nues, podzol, chemins : tout est couche 1-3 aux
+   memes proportions. Herbe repeinte sans couche : disparue aussi.
+3. Lacs et glaces strictement identiques (intouchables).
+4. LIMITE CONNUE (physique, pas un bug) : une couche de neige ne peut
+   pas tenir sur une face VERTICALE — les parements verticaux du
+   carre lissee resteront terre/pierre vus de profil. Si tu veux des
+   corniches blanches (bloc de neige en tete de paroi), dis-le : je
+   l'ajoute en T269.
+
+LIVRAISON (rituel)
+==================
+- SRC-SEUL : 9 179 435 o (1617 fichiers, = T267). COMPLET :
+  20 811 419 o (1881 fichiers, = T267). Kit FIXES_MCREATOR
+  synchronise, rien supprime (241 fichiers preserves).
+- Controle SHA-256 : 8/8 OK (2 sources x 2 emplacements x 2 zips,
+  relus DEPUIS les zips finaux vs git) — fait AVANT les liens.
+- CI GitHub run 38812456984 : SUCCESS. Commit code 57bf1bf.
+- 5e reset sandbox pendant ce tour : detecte (HEAD b215420), restaure
+  via origin avant tout edit — aucun impact livraison ; run client
+  T267 analyse depuis tes 7 screens chronologiques + console collee.
+
+PETIT RAPPEL (toujours en attente de TON choix, rien code sans ordre)
+=====================================================================
+- Le « trou enorme » (de multiples runs) : A = glacis interne ring+16
+  (recommande), B = fenetre de coupe elargie, C = falaise habillee.
+- Perf replantTrees (LAGPROBE 2082 ms) et chevauchement inter-spawns :
+  notes, pas urgents tant que tu ne les signales pas.
