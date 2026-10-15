@@ -1,0 +1,76 @@
+DEEP LUCKY BLOCK — CORRECTIF T265 (15/10/2026, ~07h55)
+======================================================
+
+TON RUN T264 (banner [build T264] confirme a 05:30:13) — ANALYSE
+=================================================================
+Tes 3 dragons (New World) : @-62,98,166 (22 s), @-216,95,269 (16 s),
+@-304,90,296 (13 s). Le sweep tournait bien partout : 99 chunks,
+20 800 colonnes scannees, 0 chunk hors garde, fenetre ring+18 OK.
+MAIS la ligne disait : « 45 / 486 / 262 grass snowy trouves ->
+0 posees, 0 relevees ». Zero pose partout : c'etait donc la
+DETECTION qui etait aveugle, pas la fenetre.
+
+REPONSES A TES 5 PLAINTES (05:33-05:38)
+========================================
+(a) « bordure de dirt version neige sans slab de neige dessus,
+    TOUT autour » — CAUSE TROUVEE : les gros sapins replantes
+    convertissent leur sol en PODZOL (comportement vanilla : sous un
+    mega-sapin, l'herbe devient du podzol, y compris sa variante
+    « enneigee » a la texture blanche dessus / terre sur les cotes).
+    Le filtre du sweep ne visait que grass_block : tout ce podzol
+    snowy etait purement ignore -> bordure terreuse enneigee sans
+    couche, exactement celle que tu vois TOUT autour.
+(b) « pas de neige sur les arbres ni sur la structure » — meme cause :
+    le sol sous et entre les sapins replantes est du podzol, jamais
+    compte, jamais couvert. (Les FEUILLES restent vertes : rendu
+    vanilla, acte depuis T264 — la neige des sapins se joue au sol.)
+(c) « pleins de blocs de neige grass SANS la couche, colles a la
+    structure + tout autour de la big zone » — double cause : (1)
+    podzol/mycelium exclus du filtre (ci-dessus), (2) quand le sweep
+    trouvait bien de l'herbe snowy (45/486/262 colonnes !), la pose
+    restait a 0 car le point calcule par la heightmap ne tombait plus
+    sur le vrai sommet (heightmap caduque apres pose directe en
+    section) : le garde-fou « bloc au-dessus = air/neige » bloquait
+    tout.
+(d) « lors de la repose tu oublies un rayon extérieur » — le
+    raz/repose couvre bien toute la bande ring+16 au bloc pres (log :
+    20 800 colonnes, 0 chunk skippé) ; ce qui donnait l'illusion d'un
+    rayon oublie, c'est que ce rayon etait devenu podzol et n'etait
+    jamais neige par le sweep (ci-dessus).
+(e) « pareil quand tu mets la neige » — traite par le meme correctif.
+
+CE QUE T265 CHANGE (concretement)
+==================================
+1. DETECTION ELARGIE : le sweep reconnait desormais TOUTE la famille
+   SnowyDirtBlock (grass_block + podzol + mycelium) avec la propriete
+   SNOWY=true — plus aucun sol « version neige » n'est invisible.
+2. SONDE VERTICALE : pour chaque colonne, on sonde de sky+2 jusqu'a
+   sky-12 pour trouver le VRAI sommet snowy, meme si la heightmap
+   ment ; la couche est posee a surfY+1, au niveau reel.
+3. DEBUG ECHANTILLON : si une colonne reste sans snowy detecte, les
+   12 premieres sont loguees (« T265 sweep debug-skip col X,Z :
+   aucun SnowyDirtBlock snowy entre sky+2 et sky-12
+   (block(sky-1)=...) ») — la prochaine run nous dira EXACTEMENT
+   quel bloc bloque, s'il en reste.
+
+CE QUE TU DOIS VOIR (banner [build T265])
+==========================================
+1. Log console : « T265 sweep-neige final : X chunks (skippes hors
+   keeper : 0 ou quasi), Y colonnes scannees, Z snowy trouves (dont P
+   via probe) -> N posees + M relevees (taux 1/2/3 = a/b/c), en T ms ».
+   Attends-toi a Z NETTEMENT plus grand qu'en T264 (le podzol compte
+   enfin) et surtout N en centaines/milliers au lieu de 0.
+2. En jeu : la bordure « dirt enneigee sans couche » TOUT autour
+   porte sa couche 1-3 ; le sol jusqu'aux sapins replantes inclus est
+   blanc ; plus de grassy-snowy nu colle a la structure.
+3. Boite : inchangee (aucune montagne ajoutee). Durees : ~13-22 s,
+   comme T264.
+
+LIVRAISON (rituel)
+===================
+- SRC-SEUL : 9 173 747 o (1617 fichiers, = T264). COMPLET : 20 805 731 o
+  (1881 fichiers, = T264). Kit FIXES_MCREATOR : synchronise, rien
+  supprime (241 fichiers preserves).
+- Controle SHA-256 : 8/8 OK (les 2 sources x 2 emplacements x 2 zips,
+  relus DEPUIS les zips finaux et compares a git) — fait AVANT les liens.
+- CI GitHub run 38678511054 : SUCCESS. Commit code 6cd8087.
