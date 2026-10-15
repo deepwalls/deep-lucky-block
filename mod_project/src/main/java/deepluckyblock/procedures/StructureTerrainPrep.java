@@ -1292,14 +1292,27 @@ public class StructureTerrainPrep {
 
     private static void forceSnowLayerSweep(ServerLevel level, BlockPos structMin, BlockPos structMax) {
         long tic = System.currentTimeMillis();
-        int r = terrainRing() + 4;   // zone terrain + coussin du raccord T240
+        // T264 (run T263 du 15/10 05:01-05:29 : « pleins de chunks proche
+        // structure avec des blocs de grass enneigee sans snow dessus ;
+        // bande de ~4 blocs au nord, ~5 a l'ouest, ~13 a l'est, sud parfait »
+        // + « tu as oublie la neige finale sur les arbres une fois pousses ») :
+        // la bbox T263 (ring+4) etait TROP JUSTE — les passes herbee/snowy
+        // (naturalise, replant, raccord) couvrent ring+NATURALIZE_EXTRA_RING
+        // (= ring+16, cf. track/mesure finale) : la bande decouverte
+        // (12 blocs en trop, d'ou le « 13 a l'est ») restait grise. Le sweep
+        // balaie maintenant EXACTEMENT la fenetre traitee (+ 2 blocs de
+        // coussin), donc la bordure ET le sol entre les arbres replantes.
+        // Hors keeper (coussin) : chunk absent = ignore et compte (jamais de
+        // chargement synchrone ajoute).
+        int r = terrainRing() + NATURALIZE_EXTRA_RING + 2;
         int xMin = structMin.getX() - r, xMax = structMax.getX() + r;
         int zMin = structMin.getZ() - r, zMax = structMax.getZ() + r;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         long scanned = 0, snowySeen = 0, placed = 0, raised = 0, k1 = 0, k2 = 0, k3 = 0;
-        long chunkCount = 0;
+        long chunkCount = 0, skippedChunks = 0;
         for (int cx = xMin >> 4; cx <= xMax >> 4; cx++) {
             for (int cz = zMin >> 4; cz <= zMax >> 4; cz++) {
+                if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
                 ChunkAccess chunk = level.getChunk(cx, cz);
                 chunkCount++;
                 for (int lx = 0; lx < 16; lx++) {
@@ -1336,10 +1349,10 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T263 sweep-neige final : {} chunks, {} colonnes scannees, "
-                        + "{} grass snowy trouves -> {} couches posees + {} relevees "
+        LOGGER.info("[DLB-STRUCTURE] T264 sweep-neige final : {} chunks (skippes hors keeper : {}), "
+                        + "{} colonnes scannees, {} grass snowy trouves -> {} couches posees + {} relevees "
                         + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
-                chunkCount, scanned, snowySeen, placed, raised, k1, k2, k3,
+                chunkCount, skippedChunks, scanned, snowySeen, placed, raised, k1, k2, k3,
                 System.currentTimeMillis() - tic);
     }
 
