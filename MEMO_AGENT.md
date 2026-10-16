@@ -731,3 +731,10 @@ T268 (livre 15/10 ~22h30) — code 57bf1bf, livraison fe5cb27, CI
 - Livraison packaging-only : code identique fb1f7e9 (banner T270 conserve en jeu), SEUL-NONBT 5 793 821 o (1442 f.), COMPLET-NONBT 17 424 405 o (1706 f.), 0 .nbt restant (verifie relecture zip), kit 241 intact (n'en contenait pas), checksums sources 12/12 avant liens. Livraison 4737c3b + push direct (pas de CI : 0 octet de code change). Release 414526229 note-only (uploads bloques) PATCHe liens raw ; fetch_page note 200 conforme ; raw zips = 302 redirect normal.
 - CONTRAINTE DESORMAIS : toute livraison exclut *.nbt (structures de reference, si un jour necessaires, dans un zip separe « -STRUCTURES.zip »).
 - Ouvert : validation T270 en jeu (3 cas neige), trou geant A/B/C, perf replant, chevauchement.
+
+## T272 (16/10/2026 ~08h50) — de-neige pleine profondeur (bordures grises fondu)
+- Run T270 in-game : CAS 1 (hors biome neige, 3002,-419) PARFAIT (20 800 fondues/0 posee/104 ms) ; CAS 2 mixte (149,-89) : spray OK (7 822+556+842, taux 4622/2342/572) MAIS client 06:34:55 « bordures grises terrain neige de retour ».
+- Cause : anti-gris T270 s'arretait au 1er corps plein => snowy nus sous toit/canopee/tronc/surplomb gardaient le gris (3 470 corriges en plein air seulement).
+- Fix (code 701da03, CI 38851668348 SUCCESS) : branche fondu du sweep = descente ENTIERE de la colonne (style passe B T269) ; couche SNOW protege son support ; tout SnowyDirtBlock snowy repasse vert a tous niveaux. Banner build T272.
+- Livraison 121039c : zips NONBT (SEUL 5 794 801 o/1442 f, COMPLET 17 425 385 o/1706 f), 0 .nbt, kit 241, checksums 12/12 avant liens ; release 414544494 note-only PATCHe liens raw (uploads toujours bloques) ; fetch_page note 200 conforme ; memo commit.
+- Ouvert : re-test mixte client (lisières propres attendues, M repeints > 3470), trou geant A/B/C, perf dressage/paste (Can't keep up 15-20 s), chevauchement spawns.
