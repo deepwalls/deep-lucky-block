@@ -537,9 +537,21 @@ public class Structures5Procedure {
         int cleared = 0;
         // (A) colonnes de structure : entre loY et hiY, tout terrain naturel
         // non pose par le template doit partir.
+        // T269 (run T268 client 16/10 05:07:31-47 : « il y a du sol DANS ma
+        // structure, wtf » + « tu as bien supprime la zone exacte structure en
+        // sol +1 ? ») : le bas de la purge etait loY. Pour une colonne dont le
+        // 1er bloc de template est HAUT (piece sur pilotis, balcon, pont entre
+        // deux tours : loY = sol+N), le terrain debaseLevel..loY-1 survivait =
+        // bosses d'un bloc dans les salles et sous les passages. Le plancher
+        // de purge est desormais baseLevel (niveau median du sol NBT, garde du
+        // CarveJob) au maximum : on descend toujours a loY quand il est plus
+        // bas (caves), et on ne touche JAMAIS sous baseLevel-1 = la peau de
+        // terrain interieure peinte (cour en herbe voulue, couchee par le
+        // sweep T269 de StructureTerrainPrep).
         for (int[] col : pj.columns) {
             int x = col[0], z = col[1], lo = col[2], hi = col[3];
-            for (int y = lo; y <= hi; y++) {
+            int start = Math.min(lo, pj.baseLevel);
+            for (int y = start; y <= hi; y++) {
                 if (pj.occupied.contains(BlockPos.asLong(x, y, z))) continue;
                 BlockState s = level.getBlockState(mut.set(x, y, z));
                 if (isNaturalTerrain(s)) { level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG); cleared++; }
@@ -549,12 +561,53 @@ public class Structures5Procedure {
         if (pj.baseCols != null) {
             int minX = pj.min.getX(), maxX = pj.max.getX(), minZ = pj.min.getZ(), maxZ = pj.max.getZ();
             int top = pj.max.getY();
+            // T269 : l'ancien test « les 4 voisins directs sont des colonnes
+            // de template » ne declenchait que dans les fentes d'air d'UN
+            // bloc de large — toutes les grandes cours/pieces en air libre du
+            // template gardaient leur terrain (plainte client run T268 : cour
+            // interieure terreuse, « sol dans ma structure »). L'EXTERIEUR est
+            // desormais calcule par inondation depuis le bord de la bbox a
+            // travers les colonnes sans bloc de template ; une colonne sans
+            // template et JAMAIS inondee = interieur vrai (ceinture de
+            // colonnes template tout autour) et est purgee baseLevel..top, en
+            // respectant le masque occupied (jardins/sols NBT preserves). Les
+            // coins hors structure, relies au bord, restent exterieurs : leur
+            // terrain n'est pas touche.
+            int w = maxX - minX + 1;
+            boolean[] outside = new boolean[w * (maxZ - minZ + 1)];
+            java.util.ArrayDeque<int[]> q = new java.util.ArrayDeque<>();
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z += (maxZ - minZ)) {
+                    if (!pj.baseCols.contains(colKey(x, z))) {
+                        outside[(z - minZ) * w + (x - minX)] = true;
+                        q.add(new int[]{x, z});
+                    }
+                }
+            }
+            for (int z = minZ; z <= maxZ; z++) {
+                for (int x = minX; x <= maxX; x += (maxX - minX)) {
+                    if (!pj.baseCols.contains(colKey(x, z)) && !outside[(z - minZ) * w + (x - minX)]) {
+                        outside[(z - minZ) * w + (x - minX)] = true;
+                        q.add(new int[]{x, z});
+                    }
+                }
+            }
+            final int[][] DIRS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+            while (!q.isEmpty()) {
+                int[] c = q.poll();
+                for (int[] dv : DIRS) {
+                    int nx = c[0] + dv[0], nz = c[1] + dv[1];
+                    if (nx < minX || nx > maxX || nz < minZ || nz > maxZ) continue;
+                    int ii = (nz - minZ) * w + (nx - minX);
+                    if (outside[ii] || pj.baseCols.contains(colKey(nx, nz))) continue;
+                    outside[ii] = true;
+                    q.add(new int[]{nx, nz});
+                }
+            }
             for (int x = minX; x <= maxX; x++) {
                 for (int z = minZ; z <= maxZ; z++) {
-                    if (pj.baseCols.contains(colKey(x, z))) continue;
-                    if (!pj.baseCols.contains(colKey(x + 1, z)) || !pj.baseCols.contains(colKey(x - 1, z))
-                            || !pj.baseCols.contains(colKey(x, z + 1)) || !pj.baseCols.contains(colKey(x, z - 1)))
-                        continue;
+                    if (pj.baseCols.contains(colKey(x, z))
+                            || outside[(z - minZ) * w + (x - minX)]) continue;
                     for (int y = pj.baseLevel; y <= top; y++) {
                         if (pj.occupied.contains(BlockPos.asLong(x, y, z))) continue;
                         BlockState s = level.getBlockState(mut.set(x, y, z));
@@ -565,7 +618,7 @@ public class Structures5Procedure {
         }
         if (cleared > 0)
             deepluckyblock.util.DebugLog.info(LOGGER,
-                    "[STRUCT5] T260 sweep interieur de {} : {} blocs de terrain naturel retires de l'enveloppe (regle « terre dans la maison »)",
+                    "[STRUCT5] T269 sweep interieur de {} : {} blocs de terrain naturel retires de l'enveloppe (regle « terre dans la maison »)",
                     pj.name, cleared);
     }
 

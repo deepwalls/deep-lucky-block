@@ -1311,7 +1311,7 @@ public class StructureTerrainPrep {
         long scanned = 0, snowySeen = 0, placed = 0, raised = 0, k1 = 0, k2 = 0, k3 = 0;
         long chunkCount = 0, skippedChunks = 0, probed = 0, debugShown = 0;
         long capped = 0, skipObstacle = 0, alreadyDeep = 0, skippedNoSurf = 0;
-        long waterIce = 0;
+        long waterIce = 0, inner = 0;
         for (int cx = xMin >> 4; cx <= xMax >> 4; cx++) {
             for (int cz = zMin >> 4; cz <= zMax >> 4; cz++) {
                 if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
@@ -1417,6 +1417,13 @@ public class StructureTerrainPrep {
                         }
                         if (surfY != sky - 1) probed++;
                         snowySeen++;
+                        // T269 : le 1er corps etait-il lui-meme le sol en
+                        // herbe ? Si oui, la passe A l'a deja couche et la
+                        // passe B (sol interieur, en fin de colonne) est
+                        // inutile ; sinon (toit, surplomb, canopee), B
+                        // redescendra chercher la peau herbe en dessous.
+                        boolean firstWasSnowy = chunk.getBlockState(pos.set(x, surfY, z)).getBlock()
+                                instanceof net.minecraft.world.level.block.SnowyDirtBlock;
                         // T267 (run T266, client 12:48 : « tu repetes trop
                         // parfaitement ton pattern de snow » + « je t'ai donne
                         // des TAUX, pas un pattern exact a repeter betement, ca
@@ -1499,17 +1506,63 @@ public class StructureTerrainPrep {
                                 skipObstacle++;
                             }
                         }
+                        // T269 — PASSE B, sol interieur (run T268 client 16/10
+                        // 05:06:36 : « TU ES PRESQUE BON ! » puis « il manque
+                        // plus que les chunks ou tu as paste la structure, le
+                        // sol est toujours en grass block snow mais sans la
+                        // layer de snow ! ») : la passe A s'arrete au 1er corps
+                        // depuis le ciel (toit, surplomb de structure, canopee)
+                        // et y pose — le sol peint en herbe EN DESSOUS
+                        // (emprise de la structure, ring sous les avant-toits,
+                        // sol sous la canopee) restait nu : REGRESSION vs la
+                        // sonde T267 qui, elle, perçait jusqu'au snowy. Quand
+                        // le 1er corps n'est PAS le sol herbe, on continue a
+                        // descendre : le 1er bloc herbe/mycelium
+                        // (SnowyDirtBlock, etat snowy indifferent — la
+                        // structure n'en contient pas, c'est forcement la peau
+                        // de terrain) recoit SA couche si la case au-dessus est
+                        // libre (air / herbe remplacable / couche plus fine).
+                        // PAS de walk-up ici : une case occupee (dalle,
+                        // mobilier, culture, eau) = on ne touche rien. Empile
+                        // avec A : sous les arbres la canopee ET le sol sont
+                        // couches, comme la neige reelle.
+                        if (!firstWasSnowy) {
+                            for (int y = surfY - 1; y >= sky - 48; y--) {
+                                pos.set(x, y, z);
+                                BlockState s2 = chunk.getBlockState(pos);
+                                if (s2.isAir() || s2.canBeReplaced()
+                                        || s2.is(Blocks.POWDER_SNOW) || s2.is(Blocks.SNOW)) {
+                                    continue;   // poches d'air / neige fine : on continue
+                                }
+                                if (s2.getBlock() instanceof net.minecraft.world.level.block.SnowyDirtBlock) {
+                                    pos.set(x, y + 1, z);
+                                    BlockState a2 = chunk.getBlockState(pos);
+                                    if (a2.isAir() || a2.canBeReplaced()) {
+                                        level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
+                                                net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
+                                        placed++; inner++;
+                                    } else if (a2.is(Blocks.SNOW)
+                                            && a2.getValue(net.minecraft.world.level.block.SnowLayerBlock.LAYERS) < k) {
+                                        level.setBlock(pos, a2.setValue(
+                                                net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
+                                        raised++; inner++;
+                                    }
+                                }
+                                break;   // 1er corps sous le 1er corps : traite ou non, on s'arrete
+                            }
+                        }
                     }
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T268 sweep-neige universel : {} chunks (skippes hors keeper : {}), "
+        LOGGER.info("[DLB-STRUCTURE] T269 sweep-neige universel : {} chunks (skippes hors keeper : {}), "
                         + "{} colonnes scannees, {} corps de surface trouves (dont {} via probe) -> {} posees "
-                        + "+ {} relevees + {} sur-obstacle (arbres/structure), {} deja-epais, "
+                        + "+ {} relevees + {} sur-obstacle (arbres/structure) + {} sol-interieur (T269), "
+                        + "{} deja-epais, "
                         + "{} skips-obstacle (trop haut/glace), {} colonnes eau/glace intouchees, "
                         + "{} colonnes vides (rien de plein jusqu'a -48), "
                         + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
-                chunkCount, skippedChunks, scanned, snowySeen, probed, placed, raised, capped,
+                chunkCount, skippedChunks, scanned, snowySeen, probed, placed, raised, capped, inner,
                 alreadyDeep, skipObstacle, waterIce, skippedNoSurf, k1, k2, k3,
                 System.currentTimeMillis() - tic);
     }
