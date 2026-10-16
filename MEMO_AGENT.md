@@ -717,3 +717,11 @@ T268 (livre 15/10 ~22h30) — code 57bf1bf, livraison fe5cb27, CI
 - Livraison : 2 zips staged (SEUL 9 183 459 o/1617 f, COMPLET 20 815 443 o/1881 f, kit 241), checksums relus 12/12 fois depuis les zips finaux, cp livraison, NOTE, commit livraison 941e6e2 + push.
 - Release T269 : uploads.github.com INJOIGNABLE sandbox (SSL reset, 403 identifie, 15 retries) -> release creee --notes-file SANS assets, body PATCHe avec liens raw @941e6e2 (3 fichiers). fetch_page NOTE raw = 200 contenu conforme. Pas d'assets gh cette fois (raw = meca historique).
 - Ouvert : trou geant A/B/C (choix), faces verticales, perf replant (LAGPROBE 5-10 s), chevauchement spawns, villager suffocation @1678,80,-16 observee run T268.
+
+## T270 (16/10/2026 ~07h30) — neige native mesuree + spray, fin de l'universalite
+- Plainte client ~07h : spawn hors biome neige => TOUT enneige (terrain + structure), pas normal ; couches seulement sur chunks a neige detectee de base + spread spray decroissant dans chunks non-neige voisins.
+- Cause : sweep T268/T269 universaliste (consignes anterieures « partout ») sans regard de la neige d'origine.
+- Code (commit fb1f7e9, CI 38847293629 SUCCESS) : gate par colonne dans forceSnowLayerSweep via snowCoverHere (T254-T259 : taux VIERGE mesure prime au stream, couverture integrale en chunk natif, fondu bilineaire 4 voisins + retombee perimetre + congeres bruit lisse). Auncun chunk neige => ZERO couche (terrain/structure/arbres). Anti-gris : snowy nu refuse => SNOWY=false (herbe verte) sauf si couche SNOW presente (native, jamais retiree). Compteurs melted/unsnowed + log « T270 sweep-neige natif+spray ». Banner build T270.
+- Livraison a2c7981 : SEUL 9 185 235 o (1617 f.), COMPLET 20 817 219 o (1881 f.), kit 241, checksums 8/8 avant liens.
+- Release 414517236 : uploads toujours bloques (3 retries) => note-only PATCHe liens raw @a2c7981 ; fetch_page note raw = 200 conforme.
+- Ouvert : trou geant A/B/C, perf replant, chevauchement spawns ; nouveau : retro-neutralisation des spawns deja enneiges hors biome (non demande, note client).
