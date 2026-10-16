@@ -1354,9 +1354,26 @@ public class StructureTerrainPrep {
                         // on n'y touche pas.
                         if (!snowCoverHere(level, level.getSeed(), x, z)) {
                             melted++;
+                            // T272 (run T270 in-game 16/10 06:34, client
+                            // 06:34:55 : « OH NOOON, gros retour en arriere,
+                            // on a de nouveau les bordures grises sur terrain
+                            // neige ! ») : la de-neige T270 s'arretait au
+                            // PREMIER corps plein — 3470 snowy nus corriges,
+                            // mais tout snowy cache SOUS un obstacle (toit de
+                            // la structure, canopee, tronc replante, cloture,
+                            // surplomb coupe) gardait son flag => la bordure
+                            // grise revenue. Descente ENTIERE de la colonne,
+                            // meme regle que la passe B T269 : air/herbes/
+                            // poudreuse traverses, chaque corps inspecte puis
+                            // on continue. Une couche SNOW legit PROTEGE son
+                            // support (rendu blanc, a garder) ; tout autre
+                            // SnowyDirtBlock snowy=true repasse en herbe
+                            // normale — eau, glace, roche, bois : traverses
+                            // sans rien toucher.
                             int hy = chunk.getHeight(
                                     net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                                     lx, lz);
+                            long protectY = Long.MIN_VALUE;
                             for (int y = hy + 1; y >= hy - 48; y--) {
                                 pos.set(x, y, z);
                                 BlockState s = chunk.getBlockState(pos);
@@ -1365,7 +1382,11 @@ public class StructureTerrainPrep {
                                     continue;
                                 }
                                 if (s.is(Blocks.SNOW)) {
-                                    break;   // couche native (ou deja posee) : on laisse
+                                    protectY = y - 1;   // support de la couche = neige legit, on le garde
+                                    continue;
+                                }
+                                if (y == protectY) {
+                                    continue;
                                 }
                                 if (s.getBlock() instanceof net.minecraft.world.level.block.SnowyDirtBlock
                                         && s.getValue(BlockStateProperties.SNOWY)) {
@@ -1373,7 +1394,6 @@ public class StructureTerrainPrep {
                                             s.setValue(BlockStateProperties.SNOWY, false), 3);
                                     unsnowed++;
                                 }
-                                break;
                             }
                             continue;
                         }
