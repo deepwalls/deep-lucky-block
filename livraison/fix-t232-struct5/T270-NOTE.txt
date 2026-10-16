@@ -1,0 +1,70 @@
+DEEP LUCKY BLOCK — CORRECTIF T270 (16/10/2026, ~07h20)
+======================================================
+
+TA PLAINTE (16/10 ~07h, verbatim) : « si on spawn la structure hors
+biome neige, le terrain se fait completement enneiger et la structure
+aussi (comportement des biomes neiges), ce qui n'est pas normal ! les
+layer de snow doivent seulement apparaitre sur les biomes neiges [...]
+seulement en mettre dans les chunks ou de base on a detecte de la
+neige, et la faire spread dans les chunks autour non neige si jamais
+il y en a dans la zone [...] comme en spray : grosse quantite collee
+direct aux chunks neige deja, et de moins en moins de neige lorsqu'on
+rentre dans des zones chunk non neige. »
+
+CAUSE
+=====
+Le sweep T268/T269 posait des couches sur CHAQUE colonne de la zone
+(demandes anterieures « neige partout y compris anneau/arbres/
+structure ») sans regarder si le biome/terrain avait de la neige a
+l'origine : en plaine ou savane, TOUT devenait blanc.
+
+FIX T270 — NEIGE NATIVE + SPREAD EN SPRAY
+=========================================
+Chaque colonne n'est traitee QUE si la mecanique de mesure REELLE
+(T254-T259, deja validee par tes runs) le decide :
+- Au stream de chaque chunk (avant la moindre ecriture), on
+  PHOTOGRAPHIE son contenu vierge : taux de neige mesure par temoins
+  (bloc neige / couche de neige en surface). C'est « les chunks ou de
+  base on a detecte de la neige ». (Repli biome seulement si le chunk
+  est illisible, ile-a-champignons exclue comme toujours.)
+- Chunk de neige natif -> couverture INTEGRALE, inchangée (sol,
+  structure, arbres, passe B interieure T269, taux 1/2/3 client).
+- Chunk non-neige a cote -> fondu : interpolation bilineaire des taux
+  reels des 4 chunks voisins + retombee de perimetre vers le terrain
+  vierge dehors + congeres en plaques (bruit lisse, deterministe) =
+  le « spray » : grosse quantite collee aux chunks neige, de moins en
+  moins en s'enfoncant dans le non-neige, jamais de marche de 16 bl.
+- Aucun chunk neige dans toute la zone (spawn hors biome neige) ->
+  ZERO couche : terrain, structure, arbres, rien. Comportement
+  « biome neige » supprime.
+ANTI-GRIS : une colonne refusee qui portait un « grass snowy » nu
+(peinture/residu) repasse en herbe verte normale — sinon le gris
+T267-bis reapparaissait exactement la ou l'on refuse. Une COUCHE de
+neige native deja la n'est jamais retiree. Eau/glace : toujours
+intouchables.
+
+POUR TESTER (banner [build T270])
+=================================
+1. SPWAN UN DRAGON HORS BIOME NEIGE (plaine/savane) : aucune couche,
+   sol vert, structure clean. Log « T270 sweep-neige natif+spray » :
+   N fondues hors neige native ~ toutes, 0 posees.
+2. SPAWN EN BIOME NEIGE : rendu T269 identique (couverture totale).
+3. SPAWN A CHEVAL : spray decroissant cote non-neige.
+Note : les structures deja posees dans ton monde de test restent
+comme elles sont (autre version — pas de retouche retroactive).
+
+LIVRAISON (rituel)
+==================
+- SRC-SEUL : 9 185 235 o (1617 f.) | COMPLET : 20 817 219 o (1881 f.)
+- Kit FIXES_MCREATOR synchronise, rien supprime (241 f. preserves).
+- Checksums SHA-256 : 8/8 OK (2 sources x 2 emplacements x 2 zips,
+  relus depuis les zips finaux) — fait AVANT les liens.
+- CI GitHub run 38847293629 : SUCCESS. Commit code fb1f7e9.
+- uploads.github.com toujours bloque sandbox -> release note seule +
+  liens raw @SHA (comme T268 ; le raw est ton mecanisme de download).
+
+TOUJOURS OUVERT (ton choix, rien code sans ordre)
+=================================================
+- Trou enorme : A glacis interne ring+16 / B fenetre elargie /
+  C falaise habillee.
+- Perf replantTrees (LAGPROBE 2-10 s), chevauchement inter-spawns.
