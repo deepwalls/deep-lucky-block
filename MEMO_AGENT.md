@@ -725,3 +725,9 @@ T268 (livre 15/10 ~22h30) — code 57bf1bf, livraison fe5cb27, CI
 - Livraison a2c7981 : SEUL 9 185 235 o (1617 f.), COMPLET 20 817 219 o (1881 f.), kit 241, checksums 8/8 avant liens.
 - Release 414517236 : uploads toujours bloques (3 retries) => note-only PATCHe liens raw @a2c7981 ; fetch_page note raw = 200 conforme.
 - Ouvert : trou geant A/B/C, perf replant, chevauchement spawns ; nouveau : retro-neutralisation des spawns deja enneiges hors biome (non demande, note client).
+
+## T271 (16/10/2026 ~08h10) — zips desormais SANS .nbt (contrainte permanente)
+- Client ~08h : les 175 .nbt de data/deep_lucky_block/structure/ dans mes zips ecrasent SES modifs de structures (MCreator) pendant qu'il teste.
+- Livraison packaging-only : code identique fb1f7e9 (banner T270 conserve en jeu), SEUL-NONBT 5 793 821 o (1442 f.), COMPLET-NONBT 17 424 405 o (1706 f.), 0 .nbt restant (verifie relecture zip), kit 241 intact (n'en contenait pas), checksums sources 12/12 avant liens. Livraison 4737c3b + push direct (pas de CI : 0 octet de code change). Release 414526229 note-only (uploads bloques) PATCHe liens raw ; fetch_page note 200 conforme ; raw zips = 302 redirect normal.
+- CONTRAINTE DESORMAIS : toute livraison exclut *.nbt (structures de reference, si un jour necessaires, dans un zip separe « -STRUCTURES.zip »).
+- Ouvert : validation T270 en jeu (3 cas neige), trou geant A/B/C, perf replant, chevauchement.
