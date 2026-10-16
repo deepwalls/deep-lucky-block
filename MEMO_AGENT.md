@@ -707,3 +707,13 @@ T268 (livre 15/10 ~22h30) — code 57bf1bf, livraison fe5cb27, CI
   trou enorme A/B/C (A glacis recommande), perf replantTrees (LAGPROBE
   2082 ms), chevauchement inter-spawns ring+18, rectangles roche
   internes (estompes par T268 mais forme = fenetre de coupe).
+
+## T269 (16/10/2026 ~05h56) — passe B sol interieur + purge structure baseLevel/BFS
+- Run T268 valide "presque bon", 2 restes : (1) sol sous toit/canopee peint herbe mais SANS couche (T268 posait au 1er corps plein ; T267 sondait le snowy en dessous = regression) ; (2) terrain residuel EN structure (sweep T260 : purge loY..hiY ratait baseLevel..loY-1 des pieces hautes ; interieur vrai = test 4-voisins qui ne marche qu'en fente 1 bloc, cours gardees).
+- Code (commit 6b7cb54, CI 38845771275 SUCCESS) :
+  * StructureTerrainPrep.forceSnowLayerSweep : passe B par colonne quand le 1er corps n'est pas le sol herbe -> descente jusqu'au 1er SnowyDirtBlock, couche dessus si air/remplacable/ou couche < k ; pas de walk-up ; compteur `inner`, log "T269 sweep-neige universel ... + {inner} sol-interieur (T269)".
+  * Structures5Procedure.sweepInteriorTerrain : (A) start = min(lo, baseLevel) purge baseLevel..hi (jamais sous baseLevel-1 = peau interieure peinte conservee) ; (B) inondation BFS depuis bord bbox sur colonnes hors baseCols -> non-inondees = interieur vrai -> purge baseLevel..top, masque `occupied` conserve (jardins NBT). Log "T269 sweep interieur de".
+  * Banner build T269 (DlbTestCommands).
+- Livraison : 2 zips staged (SEUL 9 183 459 o/1617 f, COMPLET 20 815 443 o/1881 f, kit 241), checksums relus 12/12 fois depuis les zips finaux, cp livraison, NOTE, commit livraison 941e6e2 + push.
+- Release T269 : uploads.github.com INJOIGNABLE sandbox (SSL reset, 403 identifie, 15 retries) -> release creee --notes-file SANS assets, body PATCHe avec liens raw @941e6e2 (3 fichiers). fetch_page NOTE raw = 200 contenu conforme. Pas d'assets gh cette fois (raw = meca historique).
+- Ouvert : trou geant A/B/C (choix), faces verticales, perf replant (LAGPROBE 5-10 s), chevauchement spawns, villager suffocation @1678,80,-16 observee run T268.
