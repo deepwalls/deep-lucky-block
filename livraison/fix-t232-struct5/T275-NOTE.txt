@@ -1,0 +1,60 @@
+T275 — FIN DU CADRE GRIS LATERAL (raies OUEST/EST + 4 coins)
+=============================================================
+Build : banner « build T275 » a l'ouverture du monde (chat).
+Log attendu : « T275 sweep-neige natif+spray ».
+
+CE QUE TU AS VU (screen 16/10 08:31:56)
+---------------------------------------
+Apres T274 il restait le cadre gris « en lignes exterieures
+encadrant la zone » : une raie N-S parfaitement droite et le coin
+sud-ouest (plateau gris terrasse avec rebord blanc). Analyse
+pixel : raie N-S, rebord du coin et plateau ont EXACTEMENT la
+meme couleur (138,138,138) = meme artefact, pas un chemin de
+village.
+
+LA CAUSE (bug formel, ligne unique)
+-----------------------------------
+Le coussin +8 (T273/T274) n'etait balaye que sur les bandes NORD
+et SUD :
+  filtre Z : zMin2..zMax2  (coussin)  -> OK
+  filtre X : xMin..xMax    (INTERIEUR) -> bandes OUEST et EST du
+     coussin + les 4 COINS JAMAIS traites
+D'ou les deux raies verticales grises et le gris du coin SO. Les
+1948 poses « cadre » du run T274 ne couvraient que nord/sud.
+
+LE FIX
+------
+Les deux filtres bornent desormais au coussin (xMin2/xMax2 ET
+zMin2/zMax2). Traitement COMPLET du coussin, toutes directions :
+pose de neige quand snowCoverHere le decide (meme regle
+qu'a l'interieur, retombee de perimetre T259 = pas de rectangle
+blanc), de-neige pleine profondeur quand il refuse. Eau/glace
+toujours intouchable.
+
+A VERIFIER EN JEU
+-----------------
+1. /dlbtest dragon sur le MEME spot (123,257, biome neige) ou un
+   spot vallonne equivalent avec un lac gele contre la zone.
+2. Les deux raies verticales est/ouest : disparues (neige posee
+   ou terrain natif, plus de ligne grise droite).
+3. Le coin sud-ouest : le plateau terrasse doit etre enneige
+   (couche SNOW) partout ou le biome le dicte — plus de L gris.
+4. Le rebord blanc devenait la limite de zone traitee : la
+   transition doit maintenant etre diffuse (spray), pas nette.
+5. Log « cadre+8 : ... » : les compteurs cadre augmentent (ils
+   comptent desormais les 4 cotes + coins).
+6. Lac gele et eau : intacts (696 colonnes intouchees au run T274,
+   meme comportement attendu).
+
+LIVRAISON
+---------
+- DEEP-LUCKY-BLOCK-T275-SRC-SEUL-NONBT.zip    (5 816 558 o, 1442 f.)
+- DEEP-LUCKY-BLOCK-T275-SRC-COMPLET-NONBT.zip (17 460 870 o, 1706 f.)
+- 0 fichier .nbt (tes structures MCreator preservees, regle T271)
+- kit FIXES_MCREATOR 241 f. preserves
+- checksums 12/12 relus depuis les zips finaux avant publication
+- CI Java 21 build : run 38864323283 SUCCESS (commit code 82e5250)
+
+Si un liseret gris subsiste quelque part : F3 sur le bloc gris et
+dis-moi son nom exact (targeted block) — la cause serait alors
+dans le relief (glaçon/roche native) et non dans le cadre.
