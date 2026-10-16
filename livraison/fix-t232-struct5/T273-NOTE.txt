@@ -1,0 +1,58 @@
+DEEP LUCKY BLOCK — CORRECTIF T273 (16/10/2026, ~09h05)
+======================================================
+
+TA PRECISION (16/10 ~09h, verbatim) : « le gris etait le grand cadre
+qui encadre toute la grande zone, comme tout a l'heure ; les 3/4 du
+gris etaient sans rien au dessus a part de l'air ».
+
+DIAGNOSTIC
+==========
+Tout est dit : un snowy NU a l'air libre dans le cadre EXTERIEUR de
+la zone traitee. La faute historique T264 (bandes peintes un cran
+plus loin que la fenetre balayee) reapparait avec T270 : les passes
+de peinture (lissage multi-rayons T263/T240, naturalize, replant)
+peignent du snowy=true un peu AU-DELA de la fenetre du sweep (r+2) ;
+le mode universel T268 masquait ca (il posait dessus), mais en
+mode natif+spray ces colonnes sont « fondues »... sauf que le
+balayage ne les atteignait pas du tout — ni pose, ni de-neige => le
+grand cadre gris.
+
+FIX T273 — COUSSIN DE DE-NEIGE +8 BLOCS
+========================================
+Le balayage s'etend de 8 blocs autour de la fenetre traitee :
+- colonne du cadre REFUSEE par les taux mesures -> de-neige pleine
+  profondeur T272 (support de couche legit protege, herbe verte).
+- colonne du cadre COUVERTE (biome 100 % neige a l'exterieur) ->
+  monde vierge intouchable : on ne pose RIEN au-dela de la fenetre.
+- l'interieur (fenetre normale) : comportement T272 inchange
+  (spray + de-neige pleine profondeur).
+Le log gagne deux compteurs « cadre+8 : N fondues, M repeintes » —
+tu pourras me lire N et M : si N ~ 3/4 du perimetre, c'etait bien
+le coupable (et ca sera propre).
+
+A VERIFIER (banner [build T273])
+================================
+1. Spawn mixte (ou le meme retour @149,-89 si tu re-creees le monde
+   avec la meme graine) : le grand cadre est VERT/naturel, plus une
+   trace grise, meme a l'air libre.
+2. Log « T273 sweep-neige natif+spray » : « cadre+8 anti-gris :
+   N fondues, M repeintes » present.
+3. Biome neige pur : rien n'a bouge (zero touche dans le coussin) ;
+   hors biome neige : toujours 0 posee.
+
+LIVRAISON (rituel)
+==================
+- SRC-SEUL-NONBT : 5 796 379 o (1442 f.) | COMPLET-NONBT :
+  17 426 963 o (1706 f.) — 0 .nbt (regle permanente), kit 241 f.
+- Checksums SHA-256 : 12/12 OK relus depuis les zips finaux vs git
+  — AVANT les liens.
+- CI GitHub : la premiere passe (c4614cc) a ete annulee par une
+  accolade orpheline de la fusion ; corrigee immediatement,
+  CI c3366bb run 38853082951 : SUCCESS sur le code livre.
+- uploads.github.com bloque sandbox -> release note + liens raw @SHA.
+
+TOUJOURS OUVERT (ton choix uniquement)
+======================================
+- Trou enorme : A glacis interne ring+16 / B fenetre elargie / C
+  falaise habillee.
+- Perf : paste 8-14,6 s, dressage 15-20 s ; chevauchement spawns.
