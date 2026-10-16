@@ -1418,10 +1418,18 @@ public class StructureTerrainPrep {
                             }
                             continue;
                         }
-                        // T273 : couverte mais dans le COUSSIN cadre +8 (hors
-                        // fenetre traitee) = monde vierge sous neige natif :
-                        // on n'y POSE rien non plus, on passe.
-                        if (!innerCol) continue;
+                        // T274 (screen client run T273 07:29, toujours le
+                        // grand cadre gris) : le skip « couverte mais hors
+                        // fenetre => on ne touche pas » du T273 laissait
+                        // JUSTEMENT les snowy nus de nos passes dans le
+                        // coussin, la ou la congere dit neige = la ligne
+                        // visible restante. Le coussin recoit le traitement
+                        // COMPLET : pose comme a l'interieur quand
+                        // snowCoverHere le decide (la retombee de perimetre
+                        // T259 fond deja vers le taux reel du vrai dehors =
+                        // pas de rectangle blanc), et de-neige quand il
+                        // refuse. « Vierge intouchable » est deja garanti par
+                        // les taux mesures, pas par un skip.
                         int sky = chunk.getHeight(
                                 net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
                         // T267 (run T266 12:51-12:56 : « TOUTE la zone structure
