@@ -738,3 +738,9 @@ T268 (livre 15/10 ~22h30) — code 57bf1bf, livraison fe5cb27, CI
 - Fix (code 701da03, CI 38851668348 SUCCESS) : branche fondu du sweep = descente ENTIERE de la colonne (style passe B T269) ; couche SNOW protege son support ; tout SnowyDirtBlock snowy repasse vert a tous niveaux. Banner build T272.
 - Livraison 121039c : zips NONBT (SEUL 5 794 801 o/1442 f, COMPLET 17 425 385 o/1706 f), 0 .nbt, kit 241, checksums 12/12 avant liens ; release 414544494 note-only PATCHe liens raw (uploads toujours bloques) ; fetch_page note 200 conforme ; memo commit.
 - Ouvert : re-test mixte client (lisières propres attendues, M repeints > 3470), trou geant A/B/C, perf dressage/paste (Can't keep up 15-20 s), chevauchement spawns.
+
+## T273 (16/10/2026 ~09h10) — coussin de-neige +8 anti grand cadre gris
+- Client ~09h : le gris du run mixte T270 = GRAND CADRE autour de toute la zone, 3/4 a l'air libre = snowy nus peints un cran au-dela de la fenetre sweep (faute T264 reverberee par le mode natif+spray : ni pose ni de-neige n'y passaient).
+- Fix (c3366bb, CI 38853082951 SUCCESS apres annulation c4614cc d'une accolade orpheline de fusion, corrigee immediatement) : sweep etendu d'un coussin +8 blocs ; colonne cadre refusee => de-neige pleine profondeur ; colonne cadre couverte (biome neige pur) => vierge intouchable, RIEN pose hors fenetre. Compteurs frameMelted/frameUnsnowed + log T273. Banner build T273.
+- Livraison b921ce6 : SEUL-NONBT 5 796 379 o (1442 f.), COMPLET-NONBT 17 426 963 o (1706 f.), 0 nbt, kit 241, checksums 12/12 avant liens ; release 414554071 body PATCHe liens raw ; fetch_page note 200 conforme ; memo commit.
+- Ouvert : re-test mixte client (cadre vert attendu), trou geant A/B/C, perf, chevauchement spawns.
