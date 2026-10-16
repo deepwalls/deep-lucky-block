@@ -1,0 +1,63 @@
+DEEP LUCKY BLOCK — CORRECTIF T272 (16/10/2026, ~08h45)
+======================================================
+
+TON RUN T270 IN-GAME (banner [build T270] confirme 06:13:28) — BILAN
+====================================================================
+CAS 1 — DRAGON HORS BIOME NEIGE (3002,-419, 06:29) : PARFAIT.
+Log sweep : 20 800 colonnes scannees, 20 800 fondues hors neige
+native, 0 posee, 0 snowy nu, en 104 ms. Zone viaire nette, zero
+couche : exactement le comportement demande. ✅
+
+CAS 2 — SPAWN MIXTE (149,-89, 06:34) : le spray tourne (7 822 posees
++ 556 sur-obstacle + 842 sol-interieur, 12 350 fondues, 914 eau/glace
+intouchees, 3 470 snowy nus repeints, taux 4 622/2 342/572, 524 ms),
+MAIS 06:34:55 : « OH NOOON, gros retour en arriere, on a de nouveau
+les bordures grises sur terrain neige ! »
+
+CAUSE DU GRIS RESIDUEL
+======================
+L'anti-gris T270 descendait la colonne mais S'ARRETAIT au PREMIER
+corps plein rencontre : les 3 470 snowy nus en plein decouvert ont
+bien ete repeints en vert, mais tout snowy nu CACHE sous un obstacle
+— toit de ta structure, canopee d'arbre replante, tronc, cloture,
+surplomb de coupe — gardait son flag snowy=true SANS couche au-dessus
+=> la bordure grise, exactement sur les lisières du fondu.
+
+FIX T272 — DE-NEIGE EN PLEINE PROFONDEUR
+========================================
+La colonne « fondue » est desormais descendue ENTIEREMENT (meme regle
+de traversee que la passe B interieure T269) : air/herbes/poudreuse
+ne comptent pas, CHAQUE corps est inspecte puis la descente continue
+(toit, tronc, feuilles, roche : jamais touches) ; toute couche SNOW
+legit PROTEGE son support (rendu blanc conserve) ; tout autre bloc
+herbe/mycelium snowy=true repasse en herbe verte normale, a tous les
+niveaux de la colonne. Zones 100 % non-neige : comportement CAS 1
+deja valide, inchange.
+
+A VERIFIER (banner [build T272])
+================================
+1. MONDE MIXTE NEIGE/-/ : les lisières du fondu propres, plus AUCUNE
+   bordure grise, y compris sous les arbres, contre les murs et sous
+   la structure. Log sweep : « T270 sweep-neige natif+spray [...]
+   N fondues [...] dont M snowy nus repeints vert » avec M > 3 470.
+2. Re-run hors biome neige : toujours 0 posee (faire confiance au
+   log colonnes fondues = colonnes scannees).
+3. Les couches posees (spray) restent blanches partout, supports
+   compris.
+
+LIVRAISON (rituel)
+==================
+- SRC-SEUL-NONBT : 5 794 801 o (1442 f.) | COMPLET-NONBT :
+  17 425 385 o (1706 f.) — SANS aucun .nbt (regle T271 permanente) ;
+  kit FIXES_MCREATOR 241 f. preserve.
+- Checksums SHA-256 : 12/12 OK (3 sources x 2 emplacements x 2 zips,
+  relus depuis les zips finaux vs git) — AVANT les liens.
+- CI GitHub run 38851668348 : SUCCESS. Commit code 701da03.
+- uploads.github.com bloque sandbox -> release note + liens raw @SHA.
+
+TOUJOURS OUVERT (ton choix uniquement)
+======================================
+- Trou enorme : A glacis interne ring+16 / B fenetre elargie / C
+  falaise habillee.
+- Perf : LAGPROBE « Can't keep up » 15-20 s pendant le dressage
+  (replant/verifyGrass) et paste 8-14,6 s ; chevauchement inter-spawns.
