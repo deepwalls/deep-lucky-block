@@ -1374,7 +1374,6 @@ public class StructureTerrainPrep {
                         // normale : sinon le « gris » T267-bis reapparaitrait
                         // exactement la ou l'on refuse. Couche native SNOW :
                         // on n'y touche pas.
-                        {
                             // T272 (run T270 in-game 16/10 06:34, client
                             // 06:34:55 : « OH NOOON, gros retour en arriere,
                             // on a de nouveau les bordures grises sur terrain
