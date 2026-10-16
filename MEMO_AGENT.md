@@ -752,3 +752,13 @@ T268 (livre 15/10 ~22h30) — code 57bf1bf, livraison fe5cb27, CI
 - Code e4e3f3f (CI 38856662727 SUCCESS) : coussin = arbitrage complet (pose si snowCoverHere, avec retombee perimetre T259 ; de-neige pleine profondeur sinon) ; framePlaced=7 marqueurs (placed/raised/capped passes A+B) ; log T274. Banner build T274. Note de mefiance : bien RETESTER zip après tout fail d'edit silencieux.
 - Livraison 213f995 : SEUL-NONBT 5 796 853 o (1442 f.), COMPLET-NONBT 17 427 437 o (1706 f.), 0 nbt, kit 241, checksums 12/12 avant liens ; release 414591607 PATCHe liens raw ; fetch_page note 200 conforme ; memo commit.
 - Ouvert : re-test screen (cadre parti attendu), veiller pas de rectangle blanc artificiel ni bandeau tondue T259 ; trou geant A/B/C ; perf ; chevauchement.
+
+## T275 (16/10/2026 ~09h30) — cadre gris lateral : filtre X hors coussin
+- Reset sandbox au boot (HEAD revenu a b215420) : restore via fetch + reset --hard origin/arena (remote tip 05fa0de). Le .git local etait un re-clone ; RIEN de perdu (remote fait foi). Regle renforcee : ls-remote des le doute.
+- Screen client 08:31:56 : cadre gris « en lignes exterieures encadrant » = raie N-S + plateau coin SO, TOUS (138,138,138) au pixel (idem rebord) = meme artefact, pas chemin village.
+- CAUSE FORMELLE (StructureTerrainPrep boucle sweep) : filtre Z borne au coussin (zMin2/zMax2) mais filtre X a la fenetre INTERIEURE (xMin/xMax) => bandes OUEST/EST du coussin +8 et les 4 COINS jamais balayes. Les « framePlaced 1948 » du run T274 ne comptaient que nord+sud.
+- Fix 1 ligne : x borne a xMin2/xMax2. Code 82e5250, CI 38864323283 SUCCESS (2m21s). Banner+log « T275 ». Braces 1497/1497, grep verifie avant commit.
+- Zips reconstruits depuis mod.zip (20,8 Mo, racine projet) : cp overlay 9 java + delete 175 nbt ; SEUL-NONBT 5 816 558 o (1442 f.), COMPLET-NONBT 17 460 870 o (1706 f.), kit 241, checksums 12/12 (9 java zip=workspace + 3 txt/gradle zip=staging).
+- Livraison d3779e5 ; release T275 id 414649494 (create note-only apres echec upload asset = rollback ; PATCH body via id REST de releases/tags/T275, PAS le node_id GraphQL) ; fetch note 200 conforme ; memo commit.
+- Pieges vus : --target SHA42 refuse par l'API (utiliser la branche) ; gh release view --json id = node_id (inutilisable en REST) ; uploads.github.com toujours KO.
+- EN ATTENTE : verdict client (raies E/O + coin SO doivent etre blancs ; si liseret residuel -> F3 nom du bloc).
