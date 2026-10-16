@@ -1,0 +1,40 @@
+DEEP LUCKY BLOCK — LIVRAISON T271 (16/10/2026, ~08h05) : SANS .nbt
+=================================================================
+
+DEMANDE (16/10 ~08h) : « retire les fichiers nbt des fichiers que tu
+me fais telecharger, ca ecrase mes modifications de structures
+pendant que tu reflechis ».
+
+CONTENU DE T271
+===============
+- Code : STRICTEMENT identique au T270 livre (fb1f7e9, banner toujours
+  [build T270] en jeu, aucune recompilation a lancer de ton cote si
+  tu as deja pris T270 — sinon prends celui-ci directement).
+- Packaging : les 175 fichiers .nbt (data/deep_lucky_block/structure/* :
+  citadel, crimsonlake, circus, dragons, deco_*, etc.) ont ete retires
+  des DEUX zips. Tes structures modifiees dans MCreator ne sont plus
+  ecrasees quand tu extrais mes livraisons.
+- Desormais appliqué a TOUTES les prochaines livraisons : exclusion
+  *.nbt systematique. (Si un jour le plateau technique exige un .nbt
+  de reference, il partira dans un zip separe « -STRUCTURES.zip ».)
+
+CHIFFRES
+========
+- SRC-SEUL-NONBT : 5 793 821 o, 1442 fichiers (etait 1617 avec nbt).
+- SRC-COMPLET-NONBT : 17 424 405 o, 1706 fichiers (etait 1881).
+- Controle : 0 .nbt restant dans les 2 zips (verifie a la relecture) ;
+  kit FIXES_MCREATOR complet preserve (241 fichiers, y compris aucun
+  nbt touche car il n'en contient pas — verifie).
+- Checksums SHA-256 des sources Java : 12/12 OK (3 sources x 2
+  emplacements x 2 zips, relus depuis les zips finaux vs git) —
+  fait AVANT les liens.
+- Code = commit fb1f7e9 (CI T270 38847293629 SUCCESS ; pas de nouvelle
+  CI, aucun octet de code change).
+
+TOUJOURS EN ATTENTE (rien code sans ordre)
+==========================================
+- Comportement neige T270 a valider en jeu (3 cas : hors biome neige =
+  zero neige ; biome neige = T269 ; a cheval = spray decroissant).
+- Trou enorme : A glacis interne ring+16 / B fenetre elargie /
+  C falaise habillee.
+- Perf replantTrees, chevauchement inter-spawns.
