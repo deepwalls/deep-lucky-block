@@ -1,0 +1,75 @@
+DEEP LUCKY BLOCK — CORRECTIF T269 (16/10/2026, ~05h40)
+======================================================
+
+TON RUN T268 (banner [build T268] confirme 05:03:09) — ANALYSE
+==============================================================
+Dragon demande a 1428,242,74 -> zone 1600,63 (Y corrige 242->74, sol
+71..78). Sweep universel : 20 646 corps trouves / 20 800, 20 208 + 438
+couches, 154 eau/glace intouchees, 0 vide, taux 61,5/30,9/7,6 % OK.
+Verdict 05:06:02 : « TU ES PRESQUE BON ! » — et 2 restes precis,
+traites ici un a un.
+
+1) « il manque plus que les chunks ou tu as paste la structure, le sol
+   est toujours en grass block snow mais sans la layer de snow ! »
+   CAUSE : la neige universelle T268 pose sur le PREMIER corps plein
+   depuis le ciel (toit, surplomb, canopee) — T267, lui, percait
+   jusqu'au sol herbe en dessous. Regression ma faute : sous un toit,
+   un avant-toit ou la canopee, la peau d'herbe restait seche.
+   FIX (passe B, meme sweep) : apres la pose sur le premier corps, le
+   scan CONTINUE a descendre la colonne ; le premier bloc herbe/
+   mycelium (la structure n'en contient pas = c'est forcement la peau
+   de terrain) recoit SA couche si la case au-dessus est libre
+   (air / herbe remplacable / couche plus fine). Pas de remontee ici :
+   une case occupee (dalle, mobilier, culture, eau) = on ne touche
+   rien. Bonus sous les arbres : canopee ET sol couches, comme la
+   vraie neige. Le log T269 gagne un champ « sol-interieur ».
+
+2) « il y a du sol DANS ma structure, wtf » + « tu as bien supprime la
+   zone exacte structure en sol +1 ? »
+   CAUSE (deux trous du filet T260, deja vu a ton run) :
+   a. Par colonne, la purge post-paste ne couvrait que loY..hiY (du
+      premier au dernier bloc de template). Pour une piece HAUTE
+      (pilotis, balcon, pont : 1er bloc pose bien au-dessus du sol),
+      le terrain entre le niveau du sol NBT et loY n'etait JAMAIS
+      purge = bosses d'un bloc dans les salles et sous les passages.
+      FIX : la purge demarre au niveau baseLevel (sol median NBT) au
+      plus tard — caves toujours traitees (on descend a loY quand il
+      est plus bas), et JAMAIS sous baseLevel-1 = la peau interieure
+      peinte en herbe reste (c'est elle qui prend la couche 1/2/3).
+   b. Les colonnes SANS bloc de template n'etaient purgees que si
+      leurs 4 voisins directs contenaient du template — ca ne marche
+      que dans les fentes d'air d'un bloc ; une vraie cour interieure
+      gardait TOUT son terrain. FIX : inondation (BFS) depuis le bord
+      de la bbox a travers les colonnes sans template ; une colonne
+      jamais inondee = interieur VRAI -> purgee baseLevel..top, masque
+      « pose par le template » respecte (jardins/sols NBT intacts).
+      Les coins hors structure, relies au bord, ne sont pas touches.
+
+CE QUE TU DOIS VOIR (banner [build T269])
+==========================================
+1. Log « T269 sweep-neige universel : … + I sol-interieur (T269) … »
+   (I grimpe dans les emprises toitees) ; log « T269 sweep interieur
+   de DRAGON : N blocs de terrain naturel retires de l'enveloppe ».
+2. En jeu : TOUTE la zone structure — interieur, sous les surplombs,
+   le grand anneau autour — sol herbe + couche 1/2/3 partout ; plus
+   aucune bosse de terre dans les salles ; la cour en herbe reste
+   (voulue) avec sa couche; lacs/glaces toujours intacts.
+3. Si une poche de terre subsistait dans un angle bizarre : coords +
+   screen, je resserre la regle.
+
+LIVRAISON (rituel)
+==================
+- SRC-SEUL : 9 183 459 o (1617 fichiers, = T268). COMPLET :
+  20 815 443 o (1881 fichiers, = T268). Kit FIXES_MCREATOR
+  synchronise, rien supprime (241 fichiers preserves).
+- Controle SHA-256 : 12/12 OK (3 sources x 2 emplacements x 2 zips,
+  relus DEPUIS les zips finaux vs git) — fait AVANT les liens.
+- CI GitHub run 38845771275 : SUCCESS. Commit code 6b7cb54.
+- 6e reset sandbox pendant ce tour : detecte, restaure via origin
+  avant tout edit — aucun impact livraison.
+
+TOUJOURS OUVERT (ton choix, rien code sans ordre)
+=================================================
+- Trou enorme : A glacis interne ring+16 (recommande) / B fenetre de
+  coupe elargie / C falaise habillee.
+- Perf replantTrees (LAGPROBE 2-10 s), chevauchement inter-spawns.
