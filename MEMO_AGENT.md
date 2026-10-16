@@ -762,3 +762,12 @@ T268 (livre 15/10 ~22h30) — code 57bf1bf, livraison fe5cb27, CI
 - Livraison d3779e5 ; release T275 id 414649494 (create note-only apres echec upload asset = rollback ; PATCH body via id REST de releases/tags/T275, PAS le node_id GraphQL) ; fetch note 200 conforme ; memo commit.
 - Pieges vus : --target SHA42 refuse par l'API (utiliser la branche) ; gh release view --json id = node_id (inutilisable en REST) ; uploads.github.com toujours KO.
 - EN ATTENTE : verdict client (raies E/O + coin SO doivent etre blancs ; si liseret residuel -> F3 nom du bloc).
+
+## T276 (16/10/2026 ~13h) — couverture integrale en pleine neige : fin patchs verts + cadre grass 1 bloc
+- 3e reset sandbox au boot (HEAD revenu b215420) -> restore fetch+reset --hard origin (attendu desormais : verifier ls-remote A CHAQUE tour car resets recurrents). PIL/pip aussi efface a chaque reset (reinstaller --break-system-packages).
+- Verdict client run T275 (2 dragons 81,204 et 781,-404, map 01:12) : « toujours les bordures », « cadre en grass bloc 1 bloc tout autour », « zones en grass non neige dans une zone QUE neige ». Log T275 : 9888 fondues / 3088 snowy nus repeints VERT sur 25696 colonnes = le dither T254 fondait 35-40 % en terrain neigeux boise (taux natifs 0,6-0,75) ; la retombee T259 (outRate 8 blocs dehors) creusait un ANNEAU vert (pct plonge -> dither) = le cadre 1 bloc.
+- snowCoverHere : pct>=0,5 => return true (couverture integrale, comme la neige meteo vanilla) ; dither congeres conserve SEULEMENT en vraie transition (0,004<pct<0,5) ; retombee plafonnee (outRate >= 0,5 si pct >= 0,5) ; plaine pct~0 inchangee (T270). Eau/glace intouchees.
+- Code 09c7922, CI 38981540753 SUCCESS. Banner+log T276. Braces 1497/1497, grep verifie.
+- Zips : SEUL-NONBT 5 817 083 o (1442 f.), COMPLET-NONBT 17 461 395 o (1706 f.), kit 241, 0 nbt, checksums 12/12. Livraison f86340e. Release 415460957 note-only PATCHe liens raw (RID via releases/tags/T276, PAS node_id) ; fetch note 200 conforme ; memo commit.
+- Lecon : un gate de couverture par TAUX echantillonne (WITNESS) tombe a 0,6-0,8 en terrain neigeux normal (troncs/rochers/glace) — seuiller « reproduction exacte » cree des patchs ; vanilla blanchit integralement un biome neige, calquer ca au-dessus de 0,5.
+- EN ATTENTE : verdict client (fondues doivent s'effondrer a quelques centaines ; blanc integral ; transition douce seulement aux vraies bordures de biome). Toujours ouvert : trou A/B/C, corniche snow_block, perf (paste 5,0-8,2 s, total 12-27 s, « Can't keep up » 15 s), chevauchement inter-spawns, Nitwit suffocated.
