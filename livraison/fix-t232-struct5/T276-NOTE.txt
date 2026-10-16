@@ -1,0 +1,67 @@
+T276 — FIN DES PATCHS D'HERBE VERTE EN PLEINE NEIGE (et du cadre grass 1 bloc)
+================================================================================
+Build : banner « build T276 » a l'ouverture du monde (chat).
+Log attendu : « T276 sweep-neige natif+spray ».
+
+CE QUE TU AS VU (double run T275, 16/10 01:10-01:14, map 01:12)
+---------------------------------------------------------------
+1) « Toujours les bordures visibles » ; 2) « cadre en grass bloc
+1 bloc de large tout autour » ; 3) « zones en grass non neige
+alors qu'on est clairement dans une zone avec QUE de la neige ».
+Le log T275 le disait deja : « 9 888 colonnes fondues ... dont
+3 088 snowy nus repeints VERT » — dans un paysage 100 % neige !
+
+LA CAUSE
+--------
+La regle de couverture (snowCoverHere, nee T254) dosait la neige
+au taux mesure des chunks voisins, avec dithering en congeres des
+que la moyenne bilineaire descendait sous ~1. Or en terrain neigeux
+BOISE ou rocailleux, les taux vierges mesures tombent a 0,6-0,75
+(troncs, rochers, glace echantillonnes) : le dither fondait donc
+35-40 % des colonnes et les REPEIGNAIT EN VERT = patchs d'herbe
+verte en pleine neige. Et la retombee de perimetre T259, qui sonde
+le taux reel 8 blocs dehors, pouvait lire un point bas (tronc,
+caillou) : pct plongeait EN ANNEAU tout autour de la zone =>
+la couronne verte de 1 bloc = ton « cadre grass ».
+
+LE FIX
+------
+Comportement identique a la neige METEO vanilla : dans un biome
+neige, tout blanchit.
+- Entourage NETTEMENT enneige (pct >= 0,5) => couverture INTEGRALE
+  de la colonne : plus AUCUNE fondue, plus AUCUN repeint vert, plus
+  d'anneau. L'epaisseur (1/2/3 couches) reste modulee comme avant.
+- La retombee de perimetre ne peut plus tirer pct sous 0,5 quand
+  l'interieur est deja en couverture pleine (cadre vert impossible).
+- Vraie transition biome neige <-> non-neige (0,4 % < pct < 50 %) :
+  le dither en congeres T257 est conserve = fondu doux, pas de
+  rectangle blanc (T254/T259 preserves).
+- Plaine / savane / zero neige alentour (pct ~ 0) : RIEN ne change —
+  zero couche, ni terrain ni structure (T270 preserve).
+- Eau et glace : toujours intouchables.
+
+A VERIFIER EN JEU
+-----------------
+1. /dlbtest dragon sur un spot montagneux-neige comme 81,204 ou
+   781,-404 : aucune zone d'herbe verte nue, aucun cadre vert/gris
+   autour de la zone — blanc integral jusqu'a la retombee naturelle.
+2. Le log « colonnes fondues » doit S'EFFONDRER (9888 -> quelques
+   centaines tout au plus, reservees aux vraies bordures de biome).
+3. Les compteurs « posees » montent (couverture integrale), et
+   « cadre+8 » reste coherent (4 cotes + coins depuis T275).
+4. Un spot a cheval neige/plaine : fondu doux cote plaine, pas de
+   rectangle blanc (comportement inchange).
+5. Lac gele et eau : intacts.
+
+LIVRAISON
+---------
+- DEEP-LUCKY-BLOCK-T276-SRC-SEUL-NONBT.zip    (5 817 083 o, 1442 f.)
+- DEEP-LUCKY-BLOCK-T276-SRC-COMPLET-NONBT.zip (17 461 395 o, 1706 f.)
+- 0 fichier .nbt (tes structures MCreator preservees, regle T271)
+- kit FIXES_MCREATOR 241 f. preserves
+- checksums 12/12 relus depuis les zips finaux avant publication
+- CI Java 21 build : SUCCESS (commit code 09c7922)
+
+Si une colline nue ou une falaise de roche/vraie glace doit rester
+sans neige par gout esthetique, dis-le : ce serait une regle de RELIEF
+(roche exposee native), separate, a regler ensemble.
