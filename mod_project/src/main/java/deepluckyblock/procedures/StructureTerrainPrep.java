@@ -1307,13 +1307,30 @@ public class StructureTerrainPrep {
         int r = terrainRing() + NATURALIZE_EXTRA_RING + 2;
         int xMin = structMin.getX() - r, xMax = structMax.getX() + r;
         int zMin = structMin.getZ() - r, zMax = structMax.getZ() + r;
+        // T273 (precision client 16/10 ~09h, run mixte T270 du 06:34 : « le
+        // gris etait le GRAND CADRE qui encadre toute la grande zone, comme
+        // tout a l'heure ; les 3/4 du gris etaient sans rien au dessus a part
+        // de l'air ») : le cadre = des snowy nus PEINTS PAR NOS PASSES
+        // (lissage multi-rayons T263/T240, naturalize/replant) un cran
+        // AU-DELA de la fenetre balayee par le sweep — la faute historique du
+        // bandeau T264, a nouveau le cas puisque la pose n'est plus universelle
+        // mais la peinture snowy, elle, continue. Remede : le balayage gagne
+        // un COUSSIN DE DE-NEIGE de +8 blocs autour de la fenetre. Dans ce
+        // cadre exterieur on ne POSE JAMAIS rien (monde vierge intouchable) :
+        // colonne couverte par snowCoverHere = on laisse (biome neige pur :
+        // zero touche) ; colonne refusee = de-neige pleine profondeur T272,
+        // comme a l'interieur. C'est ce cadre qui portait le gris.
+        int r2 = r + 8;
+        int xMin2 = structMin.getX() - r2, xMax2 = structMax.getX() + r2;
+        int zMin2 = structMin.getZ() - r2, zMax2 = structMax.getZ() + r2;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         long scanned = 0, snowySeen = 0, placed = 0, raised = 0, k1 = 0, k2 = 0, k3 = 0;
         long chunkCount = 0, skippedChunks = 0, probed = 0, debugShown = 0;
         long capped = 0, skipObstacle = 0, alreadyDeep = 0, skippedNoSurf = 0;
         long waterIce = 0, inner = 0, melted = 0, unsnowed = 0;
-        for (int cx = xMin >> 4; cx <= xMax >> 4; cx++) {
-            for (int cz = zMin >> 4; cz <= zMax >> 4; cz++) {
+        long frameMelted = 0, frameUnsnowed = 0;
+        for (int cx = xMin2 >> 4; cx <= xMax2 >> 4; cx++) {
+            for (int cz = zMin2 >> 4; cz <= zMax2 >> 4; cz++) {
                 if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
                 ChunkAccess chunk = level.getChunk(cx, cz);
                 chunkCount++;
@@ -1322,8 +1339,13 @@ public class StructureTerrainPrep {
                     if (x < xMin || x > xMax) continue;
                     for (int lz = 0; lz < 16; lz++) {
                         int z = (cz << 4) + lz;
-                        if (z < zMin || z > zMax) continue;
+                        if (z < zMin2 || z > zMax2) continue;
                         scanned++;
+                        boolean innerCol = x >= xMin && x <= xMax && z >= zMin && z <= zMax;
+                        boolean coveredHere = snowCoverHere(level, level.getSeed(), x, z);
+                        if (!coveredHere) {
+                            melted++;
+                            if (!innerCol) frameMelted++;
                         // T270 (plainte client 16/10 ~07h, verbatim : « si on
                         // spawn la structure hors biome neige, le terrain se
                         // fait completement enneiger et la structure aussi
@@ -1352,8 +1374,7 @@ public class StructureTerrainPrep {
                         // normale : sinon le « gris » T267-bis reapparaitrait
                         // exactement la ou l'on refuse. Couche native SNOW :
                         // on n'y touche pas.
-                        if (!snowCoverHere(level, level.getSeed(), x, z)) {
-                            melted++;
+                        {
                             // T272 (run T270 in-game 16/10 06:34, client
                             // 06:34:55 : « OH NOOON, gros retour en arriere,
                             // on a de nouveau les bordures grises sur terrain
@@ -1393,10 +1414,15 @@ public class StructureTerrainPrep {
                                     level.setBlock(pos,
                                             s.setValue(BlockStateProperties.SNOWY, false), 3);
                                     unsnowed++;
+                                    if (!innerCol) frameUnsnowed++;
                                 }
                             }
                             continue;
                         }
+                        // T273 : couverte mais dans le COUSSIN cadre +8 (hors
+                        // fenetre traitee) = monde vierge sous neige natif :
+                        // on n'y POSE rien non plus, on passe.
+                        if (!innerCol) continue;
                         int sky = chunk.getHeight(
                                 net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
                         // T267 (run T266 12:51-12:56 : « TOUTE la zone structure
@@ -1628,16 +1654,18 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T270 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
+        LOGGER.info("[DLB-STRUCTURE] T273 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
                         + "{} colonnes scannees, {} corps de surface trouves (dont {} via probe), "
-                        + "{} colonnes fondues hors neige native (spray T254) dont {} snowy nus repeints vert, "
+                        + "{} colonnes fondues hors neige native (spray T254) dont {} snowy nus repeints vert "
+                        + "(cadre+8 anti-gris : {} fondues, {} repeintes), "
                         + "-> {} posees "
                         + "+ {} relevees + {} sur-obstacle (arbres/structure) + {} sol-interieur (T269), "
                         + "{} deja-epais, "
                         + "{} skips-obstacle (trop haut/glace), {} colonnes eau/glace intouchees, "
                         + "{} colonnes vides (rien de plein jusqu'a -48), "
                         + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
-                chunkCount, skippedChunks, scanned, snowySeen, probed, melted, unsnowed, placed, raised, capped, inner,
+                chunkCount, skippedChunks, scanned, snowySeen, probed, melted, unsnowed, frameMelted, frameUnsnowed,
+                placed, raised, capped, inner,
                 alreadyDeep, skipObstacle, waterIce, skippedNoSurf, k1, k2, k3,
                 System.currentTimeMillis() - tic);
     }
