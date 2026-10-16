@@ -1328,7 +1328,7 @@ public class StructureTerrainPrep {
         long chunkCount = 0, skippedChunks = 0, probed = 0, debugShown = 0;
         long capped = 0, skipObstacle = 0, alreadyDeep = 0, skippedNoSurf = 0;
         long waterIce = 0, inner = 0, melted = 0, unsnowed = 0;
-        long frameMelted = 0, frameUnsnowed = 0;
+        long frameMelted = 0, frameUnsnowed = 0, framePlaced = 0;
         for (int cx = xMin2 >> 4; cx <= xMax2 >> 4; cx++) {
             for (int cz = zMin2 >> 4; cz <= zMax2 >> 4; cz++) {
                 if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
@@ -1546,13 +1546,13 @@ public class StructureTerrainPrep {
                             // la neige tombe et remplace, comme la neige meteo.
                             level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
                                     net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
-                            placed++;
+                            placed++;                            if (!innerCol) framePlaced++;
                             if (k == 1) k1++; else if (k == 2) k2++; else k3++;
                         } else if (above.is(Blocks.SNOW)
                                 && above.getValue(net.minecraft.world.level.block.SnowLayerBlock.LAYERS) < k) {
                             level.setBlock(pos, above.setValue(
                                     net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
-                            raised++;
+                            raised++;                            if (!innerCol) framePlaced++;
                             if (k == 1) k1++; else if (k == 2) k2++; else k3++;
                         } else if (above.is(Blocks.SNOW)) {
                             alreadyDeep++;
@@ -1597,7 +1597,7 @@ public class StructureTerrainPrep {
                                     pos.set(x, capY, z);
                                     level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
                                             net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
-                                    capped++;
+                                    capped++;                                    if (!innerCol) framePlaced++;
                                     if (k == 1) k1++; else if (k == 2) k2++; else k3++;
                                 }
                             } else {
@@ -1638,12 +1638,12 @@ public class StructureTerrainPrep {
                                     if (a2.isAir() || a2.canBeReplaced()) {
                                         level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
                                                 net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
-                                        placed++; inner++;
+                                        placed++; inner++;                                        if (!innerCol) framePlaced++;
                                     } else if (a2.is(Blocks.SNOW)
                                             && a2.getValue(net.minecraft.world.level.block.SnowLayerBlock.LAYERS) < k) {
                                         level.setBlock(pos, a2.setValue(
                                                 net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
-                                        raised++; inner++;
+                                        raised++; inner++;                                        if (!innerCol) framePlaced++;
                                     }
                                 }
                                 break;   // 1er corps sous le 1er corps : traite ou non, on s'arrete
@@ -1653,17 +1653,18 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T273 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
+        LOGGER.info("[DLB-STRUCTURE] T274 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
                         + "{} colonnes scannees, {} corps de surface trouves (dont {} via probe), "
                         + "{} colonnes fondues hors neige native (spray T254) dont {} snowy nus repeints vert "
-                        + "(cadre+8 anti-gris : {} fondues, {} repeintes), "
+                        + "(cadre+8 : {} fondues, {} repeintes, {} posees), "
                         + "-> {} posees "
                         + "+ {} relevees + {} sur-obstacle (arbres/structure) + {} sol-interieur (T269), "
                         + "{} deja-epais, "
                         + "{} skips-obstacle (trop haut/glace), {} colonnes eau/glace intouchees, "
                         + "{} colonnes vides (rien de plein jusqu'a -48), "
                         + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
-                chunkCount, skippedChunks, scanned, snowySeen, probed, melted, unsnowed, frameMelted, frameUnsnowed,
+                chunkCount, skippedChunks, scanned, snowySeen, probed, melted, unsnowed,
+                frameMelted, frameUnsnowed, framePlaced,
                 placed, raised, capped, inner,
                 alreadyDeep, skipObstacle, waterIce, skippedNoSurf, k1, k2, k3,
                 System.currentTimeMillis() - tic);
