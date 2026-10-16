@@ -1336,7 +1336,19 @@ public class StructureTerrainPrep {
                 chunkCount++;
                 for (int lx = 0; lx < 16; lx++) {
                     int x = (cx << 4) + lx;
-                    if (x < xMin || x > xMax) continue;
+                    // T275 (screen client 16/10 08:31 : « il y a clairement
+                    // encore le cadre gris, visible sous forme de lignes
+                    // exterieures encadrant ») : le filtre X utilisait la
+                    // fenetre INTERIEURE (xMin/xMax) alors que le filtre Z
+                    // utilisait le coussin (zMin2/zMax2) => les bandes
+                    // OUEST et EST du coussin +8 et les 4 COINS n'etaient
+                    // JAMAIS balayes : deux raies N-S grises + le plateau
+                    // terrasse gris du coin sud-ouest restaient tels quels
+                    // (les 1948 poses « cadre » du run T274 ne couvraient
+                    // que les bandes nord/sud). Les DEUX filtres bornent
+                    // desormais au coussin ; xMin/xMax ne servent plus qu'a
+                    // distinguer innerCol pour les compteurs.
+                    if (x < xMin2 || x > xMax2) continue;
                     for (int lz = 0; lz < 16; lz++) {
                         int z = (cz << 4) + lz;
                         if (z < zMin2 || z > zMax2) continue;
@@ -1661,7 +1673,7 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T274 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
+        LOGGER.info("[DLB-STRUCTURE] T275 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
                         + "{} colonnes scannees, {} corps de surface trouves (dont {} via probe), "
                         + "{} colonnes fondues hors neige native (spray T254) dont {} snowy nus repeints vert "
                         + "(cadre+8 : {} fondues, {} repeintes, {} posees), "
