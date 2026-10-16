@@ -1311,7 +1311,7 @@ public class StructureTerrainPrep {
         long scanned = 0, snowySeen = 0, placed = 0, raised = 0, k1 = 0, k2 = 0, k3 = 0;
         long chunkCount = 0, skippedChunks = 0, probed = 0, debugShown = 0;
         long capped = 0, skipObstacle = 0, alreadyDeep = 0, skippedNoSurf = 0;
-        long waterIce = 0, inner = 0;
+        long waterIce = 0, inner = 0, melted = 0, unsnowed = 0;
         for (int cx = xMin >> 4; cx <= xMax >> 4; cx++) {
             for (int cz = zMin >> 4; cz <= zMax >> 4; cz++) {
                 if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
@@ -1324,6 +1324,59 @@ public class StructureTerrainPrep {
                         int z = (cz << 4) + lz;
                         if (z < zMin || z > zMax) continue;
                         scanned++;
+                        // T270 (plainte client 16/10 ~07h, verbatim : « si on
+                        // spawn la structure hors biome neige, le terrain se
+                        // fait completement enneiger et la structure aussi
+                        // (comportement des biomes neiges), ce qui n'est pas
+                        // normal ! les layer de snow doivent seulement
+                        // apparaitre sur les biomes neiges [...] seulement en
+                        // mettre dans les chunks ou de base on a detecte de la
+                        // neige, et la faire spread dans les chunks autour non
+                        // neige si jamais il y en a dans la zone [...] comme en
+                        // spray : grosse quantite collee direct aux chunks
+                        // neige deja, et de moins en moins de neige lorsqu'on
+                        // rentre dans des zones chunk non neige ») : le sweep
+                        // T268 universalisait la pose (quel que soit le biome)
+                        // -> en plaine/savane, TOUT devenait blanc, y compris
+                        // la structure. La colonne n'est desormais traitee QUE
+                        // si snowCoverHere le decide : taux de neige MESURE
+                        // VIERGE par chunk (primeSnowRates au stream, avant
+                        // toute ecriture ; repli biome seulement si chunk
+                        // illisible), couverture integrale en chunk natif,
+                        // fondu bilineaire + retombee de perimetre + congeres
+                        // en plaques dans les chunks non-neige voisins
+                        // (mecanique T254-T259 deja validee en jeu). Auncun
+                        // chunk neige dans la zone = ZERO couche, ni sur le
+                        // terrain, ni sur la structure, ni sur les arbres.
+                        // Et un snowy nu refuse de couche repasse en herbe
+                        // normale : sinon le « gris » T267-bis reapparaitrait
+                        // exactement la ou l'on refuse. Couche native SNOW :
+                        // on n'y touche pas.
+                        if (!snowCoverHere(level, level.getSeed(), x, z)) {
+                            melted++;
+                            int hy = chunk.getHeight(
+                                    net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                                    lx, lz);
+                            for (int y = hy + 1; y >= hy - 48; y--) {
+                                pos.set(x, y, z);
+                                BlockState s = chunk.getBlockState(pos);
+                                if (s.isAir() || s.canBeReplaced()
+                                        || s.is(Blocks.POWDER_SNOW)) {
+                                    continue;
+                                }
+                                if (s.is(Blocks.SNOW)) {
+                                    break;   // couche native (ou deja posee) : on laisse
+                                }
+                                if (s.getBlock() instanceof net.minecraft.world.level.block.SnowyDirtBlock
+                                        && s.getValue(BlockStateProperties.SNOWY)) {
+                                    level.setBlock(pos,
+                                            s.setValue(BlockStateProperties.SNOWY, false), 3);
+                                    unsnowed++;
+                                }
+                                break;
+                            }
+                            continue;
+                        }
                         int sky = chunk.getHeight(
                                 net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
                         // T267 (run T266 12:51-12:56 : « TOUTE la zone structure
@@ -1555,14 +1608,16 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T269 sweep-neige universel : {} chunks (skippes hors keeper : {}), "
-                        + "{} colonnes scannees, {} corps de surface trouves (dont {} via probe) -> {} posees "
+        LOGGER.info("[DLB-STRUCTURE] T270 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
+                        + "{} colonnes scannees, {} corps de surface trouves (dont {} via probe), "
+                        + "{} colonnes fondues hors neige native (spray T254) dont {} snowy nus repeints vert, "
+                        + "-> {} posees "
                         + "+ {} relevees + {} sur-obstacle (arbres/structure) + {} sol-interieur (T269), "
                         + "{} deja-epais, "
                         + "{} skips-obstacle (trop haut/glace), {} colonnes eau/glace intouchees, "
                         + "{} colonnes vides (rien de plein jusqu'a -48), "
                         + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
-                chunkCount, skippedChunks, scanned, snowySeen, probed, placed, raised, capped, inner,
+                chunkCount, skippedChunks, scanned, snowySeen, probed, melted, unsnowed, placed, raised, capped, inner,
                 alreadyDeep, skipObstacle, waterIce, skippedNoSurf, k1, k2, k3,
                 System.currentTimeMillis() - tic);
     }
