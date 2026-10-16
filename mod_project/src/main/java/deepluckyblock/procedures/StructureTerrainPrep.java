@@ -1673,7 +1673,7 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T275 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
+        LOGGER.info("[DLB-STRUCTURE] T276 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
                         + "{} colonnes scannees, {} corps de surface trouves (dont {} via probe), "
                         + "{} colonnes fondues hors neige native (spray T254) dont {} snowy nus repeints vert "
                         + "(cadre+8 : {} fondues, {} repeintes, {} posees), "
@@ -3754,10 +3754,29 @@ public class StructureTerrainPrep {
                 int oz = dzE > 0 ? (z < SNOW_ZONE_MIN.getZ() ? SNOW_ZONE_MIN.getZ() - 8
                                  : SNOW_ZONE_MAX.getZ() + 8) : z;
                 float outRate = snowRateCell(level, ox >> 4, oz >> 4);
+                // T276 (run double client 16/10 01:14, screenshot map 01:12 :
+                // « toujours les bordures visibles », « cadre en grass bloc 1
+                // bloc tout autour », « zones en grass non neige alors qu'on
+                // est dans une zone avec QUE de la neige ») : quand
+                // l'interieur est NETTEMENT enneige, un point dehors lu bas
+                // (tronc, rocher, bout de glace echantillonne) creusait un
+                // ANNEAU vert ditherie tout autour de la zone. La retombee
+                // ne peut plus tirer pct sous le seuil de couverture pleine.
+                if (pct >= 0.5f) outRate = Math.max(outRate, 0.5f);
                 float t = dE / 8f;
                 pct = outRate * (1f - t) + pct * t;
             }
         }
+        // T276 (meme retour) : le dither T254 fondait 35-40 % des colonnes
+        // (9888 fondues au run 1) des que les taux natifs mesuraient 0,6-0,8
+        // — valeur normale en terrain neigeux boise (troncs/rochers
+        // echantillonnes) — et les REPEIGNAIT EN VERT : patchs d'herbe verte
+        // en pleine neige. La neige meteo vanilla blanchit INTEGRALEMENT un
+        // biome neige : entourage nettement enneige (pct >= 0,5) => couverture
+        // integrale ; le dither en congeres ne sert plus QUE dans la vraie
+        // transition (0,4 % < pct < 50 %) ; hors neige (pct ~ 0, plaine T270),
+        // rien ne change : zero couche.
+        if (pct >= 0.5f) return true;
         if (pct <= 0.004f) return false;
         // T257b : CONGERES COHERENTES au lieu de « poussiere » : bruit de
         // valeur 2D (cellules ~8 blocs, interpolation lisse) seuille par le
