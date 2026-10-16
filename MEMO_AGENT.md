@@ -744,3 +744,11 @@ T268 (livre 15/10 ~22h30) — code 57bf1bf, livraison fe5cb27, CI
 - Fix (c3366bb, CI 38853082951 SUCCESS apres annulation c4614cc d'une accolade orpheline de fusion, corrigee immediatement) : sweep etendu d'un coussin +8 blocs ; colonne cadre refusee => de-neige pleine profondeur ; colonne cadre couverte (biome neige pur) => vierge intouchable, RIEN pose hors fenetre. Compteurs frameMelted/frameUnsnowed + log T273. Banner build T273.
 - Livraison b921ce6 : SEUL-NONBT 5 796 379 o (1442 f.), COMPLET-NONBT 17 426 963 o (1706 f.), 0 nbt, kit 241, checksums 12/12 avant liens ; release 414554071 body PATCHe liens raw ; fetch_page note 200 conforme ; memo commit.
 - Ouvert : re-test mixte client (cadre vert attendu), trou geant A/B/C, perf, chevauchement spawns.
+
+## T274 (16/10/2026 ~09h50) — coussin cadre+8 traite COMPLET (cadre gris mort)
+- Screen run T273 (07:29, spawn mixte) : grand cadre gris TOUJOURS visible ; sweep T273 log « cadre+8 : 1359 fondues, 235 repeintes » coherent avec skip.
+- Cause : garde « couverte mais hors fenetre => on ne touche pas » du T273 laissait les snowy nus nôtres dans le coussin là où la congere dit neige = la ligne visible restante.
+- Piege : mon edit de retrait du skip n'etait PAS atterri (mort silencieux dans le fuzzy) ; verifie, corrigé, skip=0 reel.
+- Code e4e3f3f (CI 38856662727 SUCCESS) : coussin = arbitrage complet (pose si snowCoverHere, avec retombee perimetre T259 ; de-neige pleine profondeur sinon) ; framePlaced=7 marqueurs (placed/raised/capped passes A+B) ; log T274. Banner build T274. Note de mefiance : bien RETESTER zip après tout fail d'edit silencieux.
+- Livraison 213f995 : SEUL-NONBT 5 796 853 o (1442 f.), COMPLET-NONBT 17 427 437 o (1706 f.), 0 nbt, kit 241, checksums 12/12 avant liens ; release 414591607 PATCHe liens raw ; fetch_page note 200 conforme ; memo commit.
+- Ouvert : re-test screen (cadre parti attendu), veiller pas de rectangle blanc artificiel ni bandeau tondue T259 ; trou geant A/B/C ; perf ; chevauchement.
