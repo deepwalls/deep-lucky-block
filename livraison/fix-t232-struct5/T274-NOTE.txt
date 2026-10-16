@@ -1,0 +1,52 @@
+DEEP LUCKY BLOCK — CORRECTIF T274 (16/10/2026, ~09h45)
+======================================================
+
+TON SCREEN RUN T273 (banner [build T273] confirme 07:26:55, spawn
+mixte @218,-146...) : le grand cadre gris ENCORE visible vue de
+dessus, alors que le sweep T273 annoncait « cadre+8 : 1 359 fondues,
+235 repeintes ». Analyse : log 100 % coherent avec un skip — mon
+garde-fou « colonne couverte mais hors fenetre => monde vierge, on ne
+touche pas » du T273 laissait a PAS TOUCHES exactement les snowy nus
+de nos propres passes situes dans le coussin, la ou la congere dit
+neige. La ligne restante du cadre = pile cette bande.
+
+FIX T274 — LE COUSSIN RECOIT LE TRAITEMENT COMPLET
+==================================================
+Dans le coussin +8 blocs, plus AUCUN skip : chaque colonne fait
+l'objet du meme arbitrage que l'interieur de la fenetre —
+- snowCoverHere => POSE (couche 1/2/3, passe A + passe B interieure,
+  garde-fous glace/eau/obstacle inchanges) ;
+- fondu => de-neige pleine profondeur T272.
+« Vierge intouchable » est garanti par LES TAUX MESURES eux-memes
+(lisieres: interpolation + retombee de perimetre T259 vers le taux
+REEL du dehors => pas de rectangle blanc artificiel au-dela) : zone
+100 % neige = couverture totale homogene ; non-neige = rien, comme
+deja valide au CAS 1.
+
+A VERIFIER (banner [build T274])
+================================
+1. Meme monde/route : le GRAND CADRE est parti. En lisiere mixte, le
+   tapis continue/fond naturellement sans ligne dure.
+2. Log « T274 sweep-neige natif+spray » : champ « cadre+8 :
+   N fondues, M repeintes, P posees » (P > 0 quand le congere dit
+   neige dans le coussin — la ligne T273 reste exposée comme posee).
+3. Deux regressions guettees ne doivent PAS revenir : rectangle
+   exterieur blanc artificiel visible ; bandeau vert tondue T259.
+
+LIVRAISON (rituel)
+==================
+- SRC-SEUL-NONBT : 5 796 853 o (1442 f.) | COMPLET-NONBT :
+  17 427 437 o (1706 f.) — 0 .nbt, kit 241 f. preserves.
+- Checksums SHA-256 : 12/12 OK relus depuis les zips finaux vs git
+  — fait AVANT les liens. framePlaced=7 marqueurs, skip=0 (verifie).
+- CI GitHub : run 38856662727 (e4e3f3f) : SUCCESS. (Note : la CI
+  38856464642/18a73d4 est aussi SUCCESS mais contenait encore le
+  skip — prendre UNIQUEMENT ce build T274.)
+- uploads.github.com bloque sandbox -> release note + liens raw @SHA.
+
+TOUJOURS OUVERT (ton choix uniquement)
+======================================
+- Trou enorme : A glacis interne ring+16 / B fenetre elargie / C
+  falaise habillee.
+- Perf : « Can't keep up » 15-20 s (dressage), paste 8-14,6 s ;
+  chevauchement inter-spawns.
