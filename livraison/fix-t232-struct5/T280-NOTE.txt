@@ -1,0 +1,71 @@
+T280 — FIN DES « LIMITES DE CHUNKS » (glace fraiche au perimetre de zone)
+================================================================================
+Build : banner « build T280 » a l'ouverture du monde (chat).
+Log attendu : « T280 degel : N blocs de glace fraiche refondus en eau »,
+juste avant les compteurs sweep T277.
+
+TON RETOUR (17/10 ~05h32, screen 05.32.13)
+-------------------------------------------
+« on voit enormement de lignes dans le terrain, qui forment des limites de
+chunks wtf » — la bordure bleu-pale QUADRILLEE qui epouse le rectangle
+traite = de la GLACE (texture vanille), et elle suit exactement la fenetre
+de traitement = tes « frontieres de chunks ». Bonne nouvelle du meme run :
+le T279 a tenu — sweep « 0 colonnes fondues hors neige native, 0 snowy nus
+repeints vert », coussin +8 : 0 fondues / 4 244 posees, fusion 487, glacis
+continu 523+134, message de fin avec « zone [136 36 -119] ».
+
+CAUSE
+-----
+Pendant les 30-50 s de chantier, les ecritures massives de blocs se font en
+mode FAST (sans recalcul de lumiere au coup par coup, sinon le client
+gelerait) : la fenetre garde donc des valeurs de lumiere PERIMEES (sombr...)
+jusqu'au sweep final qui les corrige. Or en biome froid, l'eau exposee au
+ciel DES QU'ELLE SE CROIT DANS LE NOIR gele vanilla — c'est une regle du
+jeu, pas une pose du mod. Resultat : la glace nait uniquement LA ou des
+blocs ont ete touches (la fenetre, cadree sur les chunks tenus), elle survit
+a la fin des travaux, et dessine le rectangle / les limites de chunks que tu
+as photographies. Le meme phenomene gelait deja les mares interieures
+(screen : grandes taches bleu-pale au nord-ouest de la zone).
+
+FIX
+---
+Passe de DEGEL SELECTIF, branchée entre le glacis T279 et le sweep-neige :
+- fond uniquement la glace EN CROUTE FRAICHE : un bloc ICE/FROSTED_ICE n'est
+  refondu en eau QUE si une de ses 4 faces horizontales touche de l'eau
+  LIQUIDE au meme niveau ET que le dessus est a l'air (ou sous une simple
+  couche de neige = gel expose au ciel) ;
+- jamais PACKED_ICE / BLUE_ICE (impossible au gel vanilla) ;
+- les nappes INTEGRALEMENT gelees au worldgen restent intactes : leurs
+  blocs interieurs sont entoures de glace (pas d'eau libre adjacente) et
+  leur rivage touche la terre, pas l'eau libre — aucun des 2 signes requis ;
+- 2 passages max : une frange legale ne peut rien perdre au-dela de 1-2
+  blocs, que le gel refera naturellement si le biome le permet ;
+- refonte en flag 3 = lumiere vraie recalculee localement : la CAUSE du gel
+  disparait avec la croute, le gel ne revient pas ;
+- fenetre = le meme coussin +8 que le sweep, chunks tenus uniquement
+  (+0 chargement supplementaire).
+
+A VERIFIER EN JEU
+-----------------
+1. Banner « build T280 ».
+2. /dlbtest dragon sur un spot proche riviere/lac (ton secteur 158,-82
+  ideal) : plus AUCUNE bordure bleue perimeterique, plus de mare gelee en
+  tache rectangulaire ; l'eau reste liquide partout, y compris a la
+  frontiere exacte de la zone ; encore visible 30 s plus tard (pas de
+  regel differé, la lumiere est corrigee).
+3. Log : « T280 degel : N blocs de glace fraiche refondus » (N > 0 sur un
+  spot humide), puis les compteurs sweep T277 qui doivent rester a
+  « 0 fondues / 0 verts » (T279), fusion+glacis presents (T278/T279).
+4. Les lacs naturellement et totalement geles du biome : inchanges.
+5. Toujours : zero neige dedans (T277), toits enneiges (T266), plaine
+  zero couche (T270), pas de retour de la montagne (T259).
+
+LIVRAISON
+---------
+- DEEP-LUCKY-BLOCK-T280-SRC-SEUL-NONBT.zip    (5 814 481 o, 1442 f.)
+- DEEP-LUCKY-BLOCK-T280-SRC-COMPLET-NONBT.zip (17 445 065 o, 1706 f.)
+- 0 fichier .nbt (structures MCreator preservees, regle T271)
+- kit FIXES_MCREATOR preserves (9 java resynchronises : main + miroir)
+- checksums 36/36 relus depuis les zips finaux (9 fichiers x main+kit
+  x SEUL+COMPLET) avant publication
+- CI Java 21 build : SUCCESS (commit code 9f94a6b, run 38999953265)
