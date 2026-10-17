@@ -951,7 +951,7 @@ public class Structures5Procedure {
                 // alors que dressAndPlant/replantTrees travaillaient encore 4 s :
                 // le second Dragon recherchait pendant les déchargements du premier.
                 // La libération réelle de ChunkKeeper marque désormais la vraie fin.
-                finishWhenTerrainReleased(pj.level, pj.name);
+                finishWhenTerrainReleased(pj.level, pj.name, pj.min);
             }
         }
     }
@@ -1681,11 +1681,11 @@ public class Structures5Procedure {
                 || deepluckyblock.util.StructureTemplateCache.hasFailed(nbtName);
     }
 
-    private static void finishWhenTerrainReleased(ServerLevel level, String name) {
+    private static void finishWhenTerrainReleased(ServerLevel level, String name, BlockPos placeMin) {
         if (deepluckyblock.util.ChunkKeeper.held(level)) {
             deepluckyblock.procedures.TestProcedure.schedule(level,
                     deepluckyblock.procedures.TestProcedure.currentTick(level) + 2,
-                    () -> finishWhenTerrainReleased(level, name));
+                    () -> finishWhenTerrainReleased(level, name, placeMin));
             return;
         }
         long totalMs = GENERATION_START_MS == 0L ? -1L
@@ -1699,10 +1699,15 @@ public class Structures5Procedure {
         // n'arrivait. Annonce de cloture ici, quand la TOUTE la chaine est
         // reellement terminee (FIFO liberee).
         if (level != null && level.getServer() != null) {
+            // T279 (retour client 17/10 ~04h15 : le message de fini n'avait pas de coordonnees) :
+            // l'annonce de cloture embarque desormais la position de la zone (coin min de pose) --
+            // retrouvaille immediate en jeu et dans les logs.
+            String placeCoords = placeMin != null
+                    ? ", zone [" + placeMin.getX() + " " + placeMin.getY() + " " + placeMin.getZ() + "]" : "";
             Component done = Component.literal(
                     "\u00a7a\u2713 \u00a7l" + structureDisplayName(name) + "\u00a7r\u00a7a est enti\u00e8rement termin\u00e9e"
                             + " \u00a77(terrain, v\u00e9g\u00e9tation et arbres compris"
-                            + (totalMs > 0 ? ", dur\u00e9e totale " + (totalMs / 1000) + " s" : "") + ")");
+                            + (totalMs > 0 ? ", dur\u00e9e totale " + (totalMs / 1000) + " s" : "") + placeCoords + ")");
             for (Player pl : level.getServer().getPlayerList().getPlayers()) {
                 if (pl != null) pl.sendSystemMessage(done);
             }

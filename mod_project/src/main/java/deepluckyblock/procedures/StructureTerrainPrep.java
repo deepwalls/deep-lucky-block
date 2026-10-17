@@ -1252,6 +1252,13 @@ public class StructureTerrainPrep {
                     // la structure ! ») : FUSION sol/structure AVANT le sweep
                     // — le glacis sera enneige par le sweep comme le reste.
                     fuseGroundToStructure(level, min, max);
+                    // T279 (retour client 17/10 ~04h13 : « pourquoi parfois
+                    // tu créé des fines lignes de dirt de 1 blocs de large,
+                    // qui delimite les zones ? ») : apres le remblai, la
+                    // pente du glacis est GARANTIE anneau par anneau (<= 2
+                    // vers l'exterieur, plancher = terrain naturel) — plus
+                    // aucun front vertical d'1 bloc, d'ou qu'il vienne.
+                    enforceGlacisGradient(level, min, max);
                     // T263 : tout est pose (raccord T240 compris) -- dernier
                     // geste : le sweep qui garantit UNE couche de neige sur
                     // chaque grass snowy de la zone, taux client 1/2/3,
@@ -1289,8 +1296,7 @@ public class StructureTerrainPrep {
      *  nouveau sommet (le sweep T263 la recouvrira ensuite si besoin). */
     private static void fuseGroundToStructure(ServerLevel level, BlockPos structMin, BlockPos structMax) {
         if (CLEARANCE_PLAN == null || !CLEARANCE_PLAN.matches(level, structMin, structMax)) {
-            deepluckyblock.util.DebugLog.structure(
-                    "T278 fusion : aucun plan de sol zero valide pour cette emprise -- etape passee");
+            LOGGER.info("[DLB-STRUCTURE] T279 fusion : aucun plan de sol zero valide pour cette emprise -- etape passee");
             return;
         }
         long tic = System.currentTimeMillis();
@@ -1338,10 +1344,152 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        deepluckyblock.util.DebugLog.structure(
-                "T278 fusion sol/structure : {} colonnes de la couronne remontees au glacis "
+        LOGGER.info("[DLB-STRUCTURE] T278/T279 fusion sol/structure : {} colonnes de la couronne remontees au glacis "
                         + "(max +16, jamais au-dela de Y0+3 ; decors/structure sautes : {} ; eau sautee : {}), en {} ms",
                 raised, skipDecor, waterCols, System.currentTimeMillis() - tic);
+    }
+
+    /** T279 (retour client 17/10 ~04h13, log 04:12:33 : diagnostic T246
+     *  = marches verticales p4/p12 aux anneaux d1-d2, ex. « p12 53>65 @(1005,
+     *  375) d1 » — UNE colonne qui monte de 12 d'un coup ; screenshot : « fines
+     *  lignes de dirt de 1 blocs de large, qui delimite les zones ») :
+     *  GARANTIE FINALE DE PENTE DU GLACIS. Quel que soit l'etage qui a laisse
+     *  le front (fenetre de remblai du smoothing, tablier, fusion +16), la
+     *  difference de sommet entre un anneau et l'anneau interieur deja
+     *  finalise est ramenee a MAX_SLOPE_STEP (2), anneau par anneau en partant
+     *  de l'emprise : le front vertical devient une rampe. Deux bornes dures :
+     *  plancher = hauteur NATURELLE de la colonne (jamais re-creusee : une
+     *  falaise naturelle n'est pas rasee, seule la matiere AJOUTEE par le
+     *  pipeline est reprise) et plafond = naturel +16. Colonnes d'eau,
+     *  decors, arbres et blocs de structure : sautes (ils servent d'ancre de
+     *  hauteur mais ne sont jamais modifies). Seuls les chunks deja tenus par
+     *  le keeper sont touches : +0 chargement. */
+    private static void enforceGlacisGradient(ServerLevel level, BlockPos structMin, BlockPos structMax) {
+        if (CLEARANCE_PLAN == null || !CLEARANCE_PLAN.matches(level, structMin, structMax)
+                || NATURAL_REF == null) {
+            LOGGER.info("[DLB-STRUCTURE] T279 glacis continu : pas de plan/reference naturelle pour cette emprise -- etape passee");
+            return;
+        }
+        long tic = System.currentTimeMillis();
+        final int R = 12;
+        final int G = MAX_SLOPE_STEP;   // 2
+        int y0 = CLEARANCE_PLAN.groundY();
+        int x0 = structMin.getX() - R, x1 = structMax.getX() + R;
+        int z0 = structMin.getZ() - R, z1 = structMax.getZ() + R;
+        int w = x1 - x0 + 1, h = z1 - z0 + 1;
+        int[][] top = new int[w][h];
+        int[][] dd = new int[w][h];
+        int[][] ref = new int[w][h];
+        int scanTop = Math.max(structMax.getY(), y0 + 8);
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        for (int i = 0; i < w; i++) {
+            for (int j = 0; j < h; j++) {
+                int x = x0 + i, z = z0 + j;
+                int ddx = x < structMin.getX() ? structMin.getX() - x : (x > structMax.getX() ? x - structMax.getX() : 0);
+                int ddz = z < structMin.getZ() ? structMin.getZ() - z : (z > structMax.getZ() ? z - structMax.getZ() : 0);
+                dd[i][j] = Math.max(ddx, ddz);
+                int ri = x - NR_X0, rj = z - NR_Z0;
+                ref[i][j] = (ri >= 0 && ri < NR_W && rj >= 0 && rj < NR_H)
+                        ? NATURAL_REF[ri][rj] : Integer.MIN_VALUE;
+                // Emprise : l'ancre est le SOL ZERO (Y0), jamais les blocs de
+                // la structure — sans cela la relaxation tirerait le glacis
+                // vers les toits.
+                int t;
+                if (dd[i][j] == 0) {
+                    t = y0;
+                } else {
+                    t = -1;
+                    for (int y = scanTop; y >= y0 - 12; y--) {
+                        BlockState s = level.getBlockState(mut.set(x, y, z));
+                        if (!s.getFluidState().isEmpty()) { t = Integer.MIN_VALUE; break; }
+                        if (s.isAir() || s.is(Blocks.SNOW) || !s.blocksMotion()) continue;
+                        t = y;
+                        break;
+                    }
+                }
+                top[i][j] = t;
+            }
+        }
+        long lowered = 0, raised = 0, skipped = 0;
+        for (int ring = 1; ring <= R; ring++) {
+            for (int i = 0; i < w; i++) {
+                for (int j = 0; j < h; j++) {
+                    if (dd[i][j] != ring) continue;
+                    int t = top[i][j];
+                    if (t == Integer.MIN_VALUE || t < 0) continue;         // eau / hors scan
+                    if (ref[i][j] == Integer.MIN_VALUE) { skipped++; continue; }   // pas de naturel connu : jamais toucher
+                    int x = x0 + i, z = z0 + j;
+                    mut.set(x, 64, z);
+                    if (!level.hasChunkAt(mut)) { skipped++; continue; }   // rester dans la fenetre tenue
+                    if (!isNaturalTerrain(level.getBlockState(mut.set(x, t, z)))) continue; // decor/arbre/structure : ancre seulement
+                    // Anneau precedent (deja finalise a cette etape) : ses
+                    // sommets bornent la colonne courante.
+                    int lo = Integer.MIN_VALUE, hi = Integer.MIN_VALUE;
+                    for (int dx = -1; dx <= 1; dx++) {
+                        for (int dz = -1; dz <= 1; dz++) {
+                            int ni = i + dx, nj = j + dz;
+                            if (ni < 0 || ni >= w || nj < 0 || nj >= h) continue;
+                            if (dd[ni][nj] != ring - 1) continue;
+                            int nt = top[ni][nj];
+                            if (nt < 0 || nt == Integer.MIN_VALUE) continue;
+                            lo = lo == Integer.MIN_VALUE ? nt : Math.min(lo, nt);
+                            hi = hi == Integer.MIN_VALUE ? nt : Math.max(hi, nt);
+                        }
+                    }
+                    if (hi == Integer.MIN_VALUE) lo = hi = y0;              // ancre de repli : sol zero de la structure
+                    int nat = ref[i][j];
+                    int want = t;
+                    if (t > hi + G) want = Math.max(hi + G, nat);           // jamais creuser sous le naturel
+                    else if (t < lo - G) want = Math.min(lo - G, nat + 16); // jamais monter de plus de 16
+                    if (want == t) continue;
+                    boolean hadSnow = level.getBlockState(mut.set(x, t + 1, z)).is(Blocks.SNOW);
+                    if (want > t) {
+                        int newTop = t;
+                        for (int y = t + 1; y <= want; y++) {
+                            BlockState cur = level.getBlockState(mut.set(x, y, z));
+                            if (!(cur.isAir() || cur.is(Blocks.SNOW) || cur.is(Blocks.POWDER_SNOW))) break;
+                            BlockState fill = (y == want) ? Blocks.GRASS_BLOCK.defaultBlockState()
+                                    : (y >= want - 3 ? Blocks.DIRT.defaultBlockState() : Blocks.STONE.defaultBlockState());
+                            level.setBlock(mut.set(x, y, z), fill, FAST_FLAG);
+                            newTop = y;
+                        }
+                        if (newTop > t) {
+                            top[i][j] = newTop;
+                            raised++;
+                            if (hadSnow && level.getBlockState(mut.set(x, newTop + 1, z)).isAir())
+                                level.setBlock(mut.set(x, newTop + 1, z), Blocks.SNOW.defaultBlockState(), FAST_FLAG);
+                        }
+                    } else {
+                        // Coupe : la tranche retiree doit etre 100 % matiere
+                        // naturelle — un seul bloc etranger (decor, tronc) et
+                        // la colonne est laissee telle quelle.
+                        boolean clean = true;
+                        for (int y = t; y > nat && y > want; y--) {
+                            BlockState s = level.getBlockState(mut.set(x, y, z));
+                            if (s.isAir() || s.is(Blocks.SNOW) || s.is(Blocks.POWDER_SNOW)) continue;
+                            if (!isNaturalTerrain(s)) { clean = false; break; }
+                        }
+                        if (!clean) { skipped++; continue; }
+                        for (int y = t; y > want; y--) {
+                            BlockState s = level.getBlockState(mut.set(x, y, z));
+                            if (s.isAir() || s.is(Blocks.SNOW) || s.is(Blocks.POWDER_SNOW)) continue;
+                            level.setBlock(mut.set(x, y, z), Blocks.AIR.defaultBlockState(), FAST_FLAG);
+                        }
+                        BlockState topNow = level.getBlockState(mut.set(x, want, z));
+                        if (topNow.is(Blocks.DIRT) || topNow.is(Blocks.STONE))
+                            level.setBlock(mut.set(x, want, z), Blocks.GRASS_BLOCK.defaultBlockState(), FAST_FLAG);
+                        if (hadSnow && level.getBlockState(mut.set(x, want + 1, z)).isAir())
+                            level.setBlock(mut.set(x, want + 1, z), Blocks.SNOW.defaultBlockState(), FAST_FLAG);
+                        top[i][j] = want;
+                        lowered++;
+                    }
+                }
+            }
+        }
+        LOGGER.info("[DLB-STRUCTURE] T279 glacis continu : {} colonnes abaissees, {} remontees "
+                        + "(pente <= {} d'anneau en anneau sur {} blocs autour de l'emprise ; plancher = terrain naturel ; "
+                        + "colonnes protegees : {}), en {} ms",
+                lowered, raised, G, R, skipped, System.currentTimeMillis() - tic);
     }
 
     // ------------------------------------------------------------------
@@ -3807,10 +3955,41 @@ public class StructureTerrainPrep {
                     int y = deepluckyblock.util.SafeSurface.height(
                             level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
                     if (y < 1) continue;
-                    valid++;
                     BlockState top = readBlock(level, chunk, probe, x, y, z);
-                    BlockState above = readBlock(level, chunk, probe, x, y + 1, z);
-                    if (top.is(Blocks.SNOW_BLOCK) || above.is(Blocks.SNOW)) snow++;
+                    // T279 (meme retour client : 8 145 fondues / 2 682 verts
+                    // en foret d'epiceas bordee de mer gelee) : EAU et GLACE
+                    // sortent du DENOMINATEUR — la neige n'existe pas dessus
+                    // en surface naturelle mesuree, les compter abaissait le
+                    // taux de tout chunk cotier ou lac gele et faisait
+                    // basculer le spread/fondu en « hors neige » (la cote
+                    // ouest de la zone devenait un rectangle vert). Un chunk
+                    // toute-glace retombe proprement sur le repli biome
+                    // (mer gelee = froide -> taux 1, couverture pleine).
+                    if (!top.getFluidState().isEmpty() || top.is(Blocks.ICE)
+                            || top.is(Blocks.PACKED_ICE) || top.is(Blocks.BLUE_ICE)
+                            || top.is(Blocks.FROSTED_ICE)) continue;
+                    // T279 : descente SOUS LA CANOPEE — NO_LEAVES bute sur le
+                    // HAUT DES TRONCS : en foret dense, la moitie des 16
+                    // sondes lisaient un bloc de bois au sommet et comptaient
+                    // « nu » le sol blanc cache en dessous. On traverse bois,
+                    // feuilles, neige et air jusqu'au premier corps plein et
+                    // on retient TOUTE neige rencontree en chemin (couche au
+                    // sol sous les arbres comprise).
+                    boolean snowCol = top.is(Blocks.SNOW) || top.is(Blocks.SNOW_BLOCK);
+                    for (int guard = 0; guard < 48; guard++) {
+                        boolean passThrough = top.isAir() || top.is(Blocks.SNOW)
+                                || top.is(Blocks.POWDER_SNOW)
+                                || top.is(net.minecraft.tags.BlockTags.LOGS)
+                                || top.is(net.minecraft.tags.BlockTags.LEAVES);
+                        if (!passThrough || y <= 1) break;
+                        y--;
+                        top = readBlock(level, chunk, probe, x, y, z);
+                        if (top.is(Blocks.SNOW) || top.is(Blocks.SNOW_BLOCK)) snowCol = true;
+                    }
+                    if (!snowCol && readBlock(level, chunk, probe, x, y + 1, z).is(Blocks.SNOW))
+                        snowCol = true;
+                    valid++;
+                    if (snowCol) snow++;
                 }
             }
         }
@@ -3855,6 +4034,22 @@ public class StructureTerrainPrep {
      * </ul>
      */
     private static boolean snowCoverHere(ServerLevel level, long seed, int x, int z) {
+        // T279 (retour client 17/10 ~04h13, run T278 : « ENORME RETOUR EN
+        // ARRIERE, rien ne va plus, les smooths etc » + « on clean une grande
+        // zone incluant des chunks externes a notre zone, puis quand on
+        // comble avec les layer de snow, tu oublies completement » : jusqu'a
+        // 8 145 colonnes fondues / 2 682 repeintes en vert sur UNE zone en
+        // foret d'epiceas au bord de la mer gelee) : dans un biome a neige,
+        // la meteo vanilla blanchit INTEGRALEMENT chaque chunk. La mesure
+        // témoin (troncs, feuillage, glace, eau) diluait le fondu bilineaire
+        // SOUS le seuil T276 (pct >= 0.5) -> des milliers de colonnes
+        // nettoyees puis JAMAIS re-sautees en neige = patchs verts geants en
+        // pleine zone tout-neige. Le biome decide desormais partout, comme
+        // en vanilla ; la mesure T254-T276 (taux ressample T279 : eau/glace
+        // exclues, sol sonde sous la canopee) reste la mecanique exclusive du
+        // SPREAD vers les chunks de biome NON neige (T270 inchange : hors
+        // biome neige, rien blanchir sans neige reelle voisine mesuree).
+        if (isSnowyCell(level, new BlockPos(x, 64, z))) return true;
         int cx = x >> 4, cz = z >> 4;
         float[] nb = snowyRates(level, cx, cz);
         if (nb[0] >= 0.85f && nb[1] >= 0.85f && nb[2] >= 0.85f && nb[3] >= 0.85f) return true;
