@@ -1,0 +1,83 @@
+T279 — RETOUR EN ARRIERE T278 REPARE (fondues/verts massifs + lignes de dirt)
+================================================================================
+Build : banner « build T279 » a l'ouverture du monde (chat).
+Logs attendus : « T278/T279 fusion sol/structure : N colonnes ... » (desormais
+VISIBLE dans ta console — avant elle passait par le canal DebugLog filtre,
+c'est pour ca que tu ne la voyais jamais), « T279 glacis continu : ... »,
+banner, puis les compteurs sweep T277.
+
+TON RETOUR (17/10 ~04h13-04h15) — VERDICT
+------------------------------------------
+« ENORME RETOUR EN ARRIERE, rien ne va plus, les smooths etc » — compare a
+ton log : les runs 04:06 a 04:10 etaient corrects (149 a 2 096 fondues),
+mais les deux runs 04:12:11 et 04:13:05 (zones -62,356 et -136,226, en
+foret d'epiceas DENSE bordee de mer gelee a l'ouest) ont explose : 8 145
+colonnes fondues / 2 682 repeintes en VERT, puis 6 914 / 1 477 — donc une
+grande zone nettoyee au debut puis JAMAIS re-sautee de neige : exactement
+ton « quand on comble avec les layer de snow, tu oublies completement ».
+Sur tes screenshots du dessus (04:12:11/04:12:14) meme phenomenes lisibles :
+patchs sombres dans le rectangle de traitement cote foret+cote.
+
+Cause racine (2 mecanismes, corriges tous les deux) :
+
+1) LA MESURE-TOIN ETAIT DILUEE AU MAUVAIS ENDROIT. Le systeme decide
+   « neige ici ? » en mesurant 16 colonnes temoins par chunk VIERGE. En
+   foret d'epiceas, la moitie des sondes lisaient le HAUT DES TRONCS (bois)
+   et voyaient le sol enneige « nu » ; au bord de la mer gelee, la glace et
+   l'eau comptaient comme « pas de neige » dans le denombreur. Resultat :
+   taux mesure trop bas -> le fondu retombait SOUS le seuil de couverture
+   pleine -> des milliers de colonnes considerees « hors neige » alors que
+   la zone entiere est biologiquement tout-neige — et le sweep les
+   FONDAIT et les REPEIGNAIT EN VERT. C'est le « ENORME » de ton retour.
+   FIX : comme la meteo vanilla, un chunk de BIOME A NEIGE se couvre
+   INTEGRALEMENT, point final — le taux mesure ne sert plus qu'au SPREAD
+   vers les chunks de biome NON-neige (ta regle T270 reste intacte : hors
+   biome neige, rien ne blanchit sans neige reelle voisine). Et la mesure
+   elle-meme est reparee : eau ET glace exclues du denombreur (la cote
+   gelee ne penalisait plus les chunks voisins), et la sonde descend DESORMAIS
+   SOUS LA CANOPEE (bois/feuilles traverses) jusqu'au vrai sol.
+
+2) LES « FINES LIGNES DE DIRT D'1 BLOC DE LARGE QUI DELIMITENT LES ZONES ».
+   Ton diagnostic T246 le dit : marches verticales p4/p12 aux anneaux
+   d1-d2 (pire mesure : 53 > 65 en UNE seule colonne). Le glacis T278
+   (+16 autorises pres du mur) et la fusion post-pose (+16 max) pouvaient
+   monter en FRONT VERTICAL d'un bloc — une paroi de terre dont la face est
+   de la dirt = ta ligne. FIX : nouvelle passe finale « glacis continu »,
+   juste avant la neige : anneau par anneau en partant du mur (1..12), la
+   difference de hauteur entre une colonne et l'anneau interieur deja
+   finalise est ramenee a 2 blocs max. Deux bornes dures : on ne creuse
+   JAMAIS sous le terrain naturel (une vraie falaise naturelle n'est pas
+   rasee — seule la matiere ajoutee par moi est reprise) et on ne monte
+   jamais au-dela de naturel +16. Decors, arbres, structure et eau :
+   sautes (ils servent d'ancre, jamais modifies). Le mur devient une rampe.
+
+3) LE MESSAGE DE FIN. « normal que je n'ai jamais le message de fini avec
+   les coordonnees ? » — l'annonce « ✓ Dragon Sanctuary est entierement
+   terminee (terrain, vegetation et arbres compris, duree totale N s) »
+   embarque maintenant la zone : « ..., zone [x y z]) ».
+
+A VERIFIER EN JEU
+-----------------
+1. /dlbtest dragon : spawnee en foret d'epiceas AU BORD de la mer gelee
+   (ton secteur des deux runs de 04:12) : PLUS AUCUNE colonne fondue/
+   verte — le sweep doit afficher « fondues : 0, verts : 0 » (ou quasi)
+   la ou le biome est a neige, et zero patch vert dans le rectangle.
+2. Les bords de zone : aucune ligne de dirt d'un bloc ; le contact
+   mur/sol reste fusionne (T278 conserve : pas de retour du fosse), pas
+   de retour de la « montagne » T259 (borne Y0+3 toujours en vigueur).
+3. La neige recouvre bien TOUTE la zone incluse les CHUNKS EXTERNES
+   cleans au debut (coussin +8) : fini l'anneau oublie.
+4. Le message de fin affiche les coordonnees de la zone.
+5. Neige vanilla-like sur la glace gelee seulement si le biome l'exige —
+   et interieur de la structure : toujours zero neige pleine colonne (T277),
+   toits enneiges (T266), plaine zero couche (T270).
+
+LIVRAISON
+---------
+- DEEP-LUCKY-BLOCK-T279-SRC-SEUL-NONBT.zip    (5 811 573 o, 1442 f.)
+- DEEP-LUCKY-BLOCK-T279-SRC-COMPLET-NONBT.zip (17 442 157 o, 1706 f.)
+- 0 fichier .nbt (structures MCreator preservees, regle T271)
+- kit FIXES_MCREATOR preserves (9 java resynchronises : main + miroir)
+- checksums 36/36 relus depuis les zips finaux (9 fichiers x main+kit
+  x SEUL+COMPLET) avant publication
+- CI Java 21 build : SUCCESS (commit code de979a1, run 38995872298)
