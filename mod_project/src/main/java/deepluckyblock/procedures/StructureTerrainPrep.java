@@ -1246,6 +1246,12 @@ public class StructureTerrainPrep {
                 // liberation : +0 chargement supplementaire, et la FIFO ne se
                 // libere qu'apres la fin reelle du raccord.
                 Runnable release = () -> {
+                    // T278 (consigne client 17/10 ~01h40 : « pourquoi y a il
+                    // un grand trou qui suit la structure ? elle devait
+                    // s'inserer dans le sol, la le sol est meme plus colle a
+                    // la structure ! ») : FUSION sol/structure AVANT le sweep
+                    // — le glacis sera enneige par le sweep comme le reste.
+                    fuseGroundToStructure(level, min, max);
                     // T263 : tout est pose (raccord T240 compris) -- dernier
                     // geste : le sweep qui garantit UNE couche de neige sur
                     // chaque grass snowy de la zone, taux client 1/2/3,
@@ -1266,6 +1272,76 @@ public class StructureTerrainPrep {
                 else release.run();
             });
         });
+    }
+
+    // ------------------------------------------------------------------
+    // T278 : FUSION SOL/STRUCTURE (post-pose, regle « trou qui suit la
+    // structure » du client 17/10 ~01h40)
+    // ------------------------------------------------------------------
+    /** La structure doit FUSIONNER avec le sol, comme avant. Passe de
+     *  verification finale, APRES le raccord T240 et AVANT le sweep-neige :
+     *  dans la couronne externe 1..6 de l'emprise, aucune colonne de terrain
+     *  naturel ne reste sous le profil de glacis (Y0+3 au mur, -2 par bloc en
+     *  s'eloignant ; plafond strict Y0+3 = tablier T260 ; remblai borne a
+     *  +16 par colonne = jamais de contrefort). REMBLAI UNIQUEMENT : aucune
+     *  coupe, aucun bloc de structure/decor touche, aucune colonne d'eau
+     *  touchee. Une couche de neige posee sous le remblai est remontee au
+     *  nouveau sommet (le sweep T263 la recouvrira ensuite si besoin). */
+    private static void fuseGroundToStructure(ServerLevel level, BlockPos structMin, BlockPos structMax) {
+        if (CLEARANCE_PLAN == null || !CLEARANCE_PLAN.matches(level, structMin, structMax)) {
+            deepluckyblock.util.DebugLog.structure(
+                    "T278 fusion : aucun plan de sol zero valide pour cette emprise -- etape passee");
+            return;
+        }
+        long tic = System.currentTimeMillis();
+        int y0 = CLEARANCE_PLAN.groundY();
+        int raised = 0, skipDecor = 0, waterCols = 0;
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        int x0 = structMin.getX() - 6, x1 = structMax.getX() + 6;
+        int z0 = structMin.getZ() - 6, z1 = structMax.getZ() + 6;
+        int top = Math.max(structMax.getY(), y0 + 8);
+        for (int x = x0; x <= x1; x++) {
+            for (int z = z0; z <= z1; z++) {
+                int ddx = x < structMin.getX() ? structMin.getX() - x : (x > structMax.getX() ? x - structMax.getX() : 0);
+                int ddz = z < structMin.getZ() ? structMin.getZ() - z : (z > structMax.getZ() ? z - structMax.getZ() : 0);
+                int dd = Math.max(ddx, ddz);
+                if (dd < 1) continue;                 // emprise : sol zero deja garanti par la preparation
+                int want = Math.min(y0 + 3, y0 + 3 - MAX_SLOPE_STEP * (dd - 1));
+                int topSolid = -1;
+                for (int y = top; y >= y0 - 12; y--) {
+                    BlockState s = level.getBlockState(mut.set(x, y, z));
+                    if (!s.getFluidState().isEmpty()) { topSolid = Integer.MIN_VALUE; break; }
+                    if (s.isAir() || s.is(Blocks.SNOW) || !s.blocksMotion()) continue;
+                    topSolid = y;
+                    break;
+                }
+                if (topSolid == Integer.MIN_VALUE) { waterCols++; continue; }
+                if (topSolid < 0) continue;
+                BlockState surfState = level.getBlockState(mut.set(x, topSolid, z));
+                if (!isNaturalTerrain(surfState)) { skipDecor++; continue; }
+                want = Math.min(want, topSolid + 16);
+                if (want <= topSolid) continue;
+                boolean hadSnow = level.getBlockState(mut.set(x, topSolid + 1, z)).is(Blocks.SNOW);
+                int newTop = topSolid;
+                for (int y = topSolid + 1; y <= want; y++) {
+                    BlockState cur = level.getBlockState(mut.set(x, y, z));
+                    if (!(cur.isAir() || cur.is(Blocks.SNOW) || cur.is(Blocks.POWDER_SNOW))) break;
+                    BlockState fill = (y == want) ? Blocks.GRASS_BLOCK.defaultBlockState()
+                            : (y >= want - 3 ? Blocks.DIRT.defaultBlockState() : Blocks.STONE.defaultBlockState());
+                    level.setBlock(mut.set(x, y, z), fill, FAST_FLAG);
+                    newTop = y;
+                }
+                if (newTop > topSolid) {
+                    raised++;
+                    if (hadSnow && level.getBlockState(mut.set(x, newTop + 1, z)).isAir())
+                        level.setBlock(mut.set(x, newTop + 1, z), Blocks.SNOW.defaultBlockState(), FAST_FLAG);
+                }
+            }
+        }
+        deepluckyblock.util.DebugLog.structure(
+                "T278 fusion sol/structure : {} colonnes de la couronne remontees au glacis "
+                        + "(max +16, jamais au-dela de Y0+3 ; decors/structure sautes : {} ; eau sautee : {}), en {} ms",
+                raised, skipDecor, waterCols, System.currentTimeMillis() - tic);
     }
 
     // ------------------------------------------------------------------
@@ -5763,6 +5839,20 @@ public class StructureTerrainPrep {
         // le clamp venait de borner (seconde plainte « montagne » du 14/10).
         int[][] riseLimit = null;
         int[][] refGrid = naturalReference(orig, x0, z0, w, h);
+        // T278 (retour client 17/10 ~01h40 : « pourquoi y a il un grand trou
+        // qui suit la structure ? elle devait s'inserer dans le sol, la le
+        // sol est meme plus colle a la structure ! ») : GLACIS INTERNE. Le
+        // cap de remblai T263 (+2 contact / +1 a 4 bl / 0 au-dela) interdisait
+        // toute remontee reelle : sur un site en pente (sol structure Y0
+        // au-dessus du naturel en contrebas), la couronne de contact restait
+        // calee a naturel+2 = le FOSSE qui epouse le mur. Dans le ruban de
+        // contact (1..10), le remblai est desormais autorise JUSQU'AU PROFIL
+        // du tablier T260 : Y0+3 au mur, descente <= MAX_SLOPE_STEP/bloc en
+        // s'eloignant — jamais au-dessus de Y0+3 (regle dure T260 conservee,
+        // pas de retour de la « montagne » T259), jamais moins que l'ancien
+        // cap (mini trous T263 preserves), et borne a +16 blocs au total
+        // (au-dela, ce serait un contrefort colle au mur, pas un glacis).
+        // Le terrain REJOINT la base de la structure : fusion avec le sol.
         if (refGrid != null) {
             riseLimit = new int[w][h];
             for (int i = 0; i < w; i++) {
@@ -5772,8 +5862,15 @@ public class StructureTerrainPrep {
                     int edgeDist = Math.min(Math.min(i, w - 1 - i), Math.min(j, h - 1 - j));
                     float edgeT = Math.max(0f, Math.min(1f, edgeDist / 16f));
                     float feather = edgeT * edgeT * (3f - 2f * edgeT);
-                    riseLimit[i][j] = refGrid[i][j]
-                            + Math.round(riseCapNearEmprise(Math.max(ddx, ddz)) * feather);
+                    int dd = Math.max(ddx, ddz);
+                    int capDelta = riseCapNearEmprise(dd);
+                    if (dd >= 1 && dd <= 10 && CLEARANCE_PLAN != null
+                            && CLEARANCE_PLAN.matches(level, structMin, structMax)) {
+                        int glacis = Math.min(16, CLEARANCE_PLAN.groundY() + 3
+                                - MAX_SLOPE_STEP * (dd - 1) - refGrid[i][j]);
+                        if (glacis > capDelta) capDelta = glacis;
+                    }
+                    riseLimit[i][j] = refGrid[i][j] + Math.round(capDelta * feather);
                 }
             }
         }
@@ -6921,13 +7018,55 @@ public class StructureTerrainPrep {
                         : (y >= targetY - 3 ? Blocks.DIRT.defaultBlockState() : Blocks.STONE.defaultBlockState());
                 level.setBlock(mut.set(cx, y, cz), fill, FAST_FLAG);
             }
+            // T278 (croute flottante du screen 01.19.29 : terre enneigee en
+            // surplomb au-dessus du vide : son analyse 17/10 ~01h40 etait
+            // juste — le mecanisme « pas de terrain sous la surface » cree
+            // l'espace vide qui suit la structure) : si la base du remblai ne
+            // repose sur RIEN (capture au-dessus du sol reel), on etaye en
+            // dessous jusqu'au premier solide — la colonne est SOLIDE de bout
+            // en bout, fini la croute sur vide.
+            if (probeAir(level, mut, cx, currentY, cz))
+                underpinColumn(level, mut, cx, currentY, cz);
         } else if (currentY > targetY) {
             for (int y = targetY + 1; y <= currentY; y++) {
                 BlockState s = level.getBlockState(mut.set(cx, y, cz));
                 if (!s.isAir() && !s.is(Blocks.BEDROCK)) level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG);
             }
-            BlockState surf = level.getBlockState(mut.set(cx, targetY, cz));
-            if (surf.isAir() || !surf.blocksMotion()) level.setBlock(mut, Blocks.GRASS_BLOCK.defaultBlockState(), FAST_FLAG);
+            // T278 (meme cause) : la coupe s'est arretee DANS une cavite
+            // (grotte/anfractuosite naturelle) : l'ancien code coiffait le
+            // vide d'UN SEUL grass_block = la fameuse croute en surplomb.
+            // On etaye jusqu'au premier solide puis on remonte la colonne.
+            if (probeAir(level, mut, cx, targetY, cz))
+                underpinColumn(level, mut, cx, targetY + 1, cz);
+        }
+    }
+
+    /** Case libre ou sans collision (air, plante, couche de neige). */
+    private static boolean probeAir(ServerLevel level, BlockPos.MutableBlockPos mut, int x, int y, int z) {
+        BlockState s = level.getBlockState(mut.set(x, y, z));
+        return s.isAir() || !s.blocksMotion();
+    }
+
+    /** T278 : etaye une colonne sous {@code fromBelowOfY} jusqu'au premier
+     *  bloc solide (max 24 blocs ; la bedrock arrete la descente). Les cases
+     *  occupees par de la roche/de la terre/de l'eau NE SONT PAS reecrites :
+     *  seuls l'air et la neige fine recoivent le comblement (terre en peau,
+     *  stone en profondeur), comme {@code rebuildColumn}. */
+    private static void underpinColumn(ServerLevel level, BlockPos.MutableBlockPos mut,
+                                       int x, int fromBelowOfY, int z) {
+        int y = fromBelowOfY - 1;
+        int floor = fromBelowOfY - 24;
+        for (; y >= floor; y--) {
+            BlockState s = level.getBlockState(mut.set(x, y, z));
+            if (!probeAir(level, mut, x, y, z)) break;
+        }
+        for (int yy = y + 1; yy < fromBelowOfY; yy++) {
+            BlockState cur = level.getBlockState(mut.set(x, yy, z));
+            if (!(cur.isAir() || cur.is(Blocks.SNOW) || cur.is(Blocks.POWDER_SNOW)))
+                break;   // eau ou obstacle en chemin : on s'arrete juste dessous (jamais de remblai au-dessus d'une poche d'eau)
+            level.setBlock(mut.set(x, yy, z),
+                    yy >= fromBelowOfY - 4 ? Blocks.DIRT.defaultBlockState() : Blocks.STONE.defaultBlockState(),
+                    FAST_FLAG);
         }
     }
 
