@@ -1259,6 +1259,22 @@ public class StructureTerrainPrep {
                     // vers l'exterieur, plancher = terrain naturel) — plus
                     // aucun front vertical d'1 bloc, d'ou qu'il vienne.
                     enforceGlacisGradient(level, min, max);
+                    // T280 (retour client 17/10 ~05h32, screen 05.32.13 :
+                    // « on voit enormement de lignes dans le terrain, qui
+                    // forment des limites de chunks wtf » — une bordure
+                    // bleu-pale QUADRILLEE = glace, cadree a un rectangle de
+                    // chunks) : pendant les 30-50 s de chantier, les ecritures
+                    // massives en FAST_FLAG laissent des valeurs de LUMIERE
+                    // perimees (0) dans la fenetre ; en biome froid, l'eau
+                    // exposee au ciel ET sombre gele vanilla — la glace ne
+                    // nait donc que DANS le rectangle traite = frontieres de
+                    // chunks visibles, et elle survit a la fin des travaux.
+                    // Degel sélectif AVANT le sweep (lui-meme relume les
+                    // colonnes en flag 3, le gel ne revient pas) : seule la
+                    // glace EN CROUTE (eau liquide adjacente, ciel degage) —
+                    // les lacs deja integralement geles au worldgen et la
+                    // glace packed/blue ne sont JAMAIS touches.
+                    thawFreshIce(level, min, max);
                     // T263 : tout est pose (raccord T240 compris) -- dernier
                     // geste : le sweep qui garantit UNE couche de neige sur
                     // chaque grass snowy de la zone, taux client 1/2/3,
@@ -1490,6 +1506,71 @@ public class StructureTerrainPrep {
                         + "(pente <= {} d'anneau en anneau sur {} blocs autour de l'emprise ; plancher = terrain naturel ; "
                         + "colonnes protegees : {}), en {} ms",
                 lowered, raised, G, R, skipped, System.currentTimeMillis() - tic);
+    }
+
+    /** T280 : degel selectif de la glace FRAICHE formee pendant les travaux
+     *  (gelerie vanilla sur lumiere perimee des ecritures FAST_FLAG, biome
+     *  froid + ciel visible). Un bloc ICE/FROSTED_ICE n'est fondu QUE si les
+     *  trois signes d'une croute fraiche sont presents : (1) au moins une de
+     *  ses QUATRE faces horizontales touche de l'eau LIQUIDE au meme niveau
+     *  (une nappe integralement gelee au worldgen n'en montre aucune : ses
+     *  blocs interieurs sont entoures de glace, son rivage touche de la terre,
+     *  pas de l'eau libre), (2) le dessus est a l'air ou sous une couche de
+     *  neige (gel expose au ciel — une caverne gelee naturelle est protegee),
+     *  (3) jamais PACKED_ICE / BLUE_ICE (qui ne viennent jamais du gel
+     *  vanilla). Deux passages max : chaque fonte expose au plus un bloc
+     *  voisin supplementaire, un rivage de nappe legale ne peut donc rien
+     *  perdre au-dela d'une frange de 1-2 blocs que le gel vanilla refera
+     *  naturellement s'il en a les conditions. Fenetre = la meme que le
+     *  coussin du sweep (+8), uniquement dans les chunks tenus par le keeper
+     *  (+0 chargement). Posee en flag 3 = voisins + lumiere mis a jour (la
+     *  cause du gel est corrigee localement). */
+    private static void thawFreshIce(ServerLevel level, BlockPos structMin, BlockPos structMax) {
+        long tic = System.currentTimeMillis();
+        int x0 = structMin.getX() - 8, x1 = structMax.getX() + 8;
+        int z0 = structMin.getZ() - 8, z1 = structMax.getZ() + 8;
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos n = new BlockPos.MutableBlockPos();
+        long melted = 0, scanned = 0, keptCrustless = 0, skippedChunks = 0;
+        for (int pass = 0; pass < 2; pass++) {
+            for (int x = x0; x <= x1; x++) {
+                for (int z = z0; z <= z1; z++) {
+                    mut.set(x, 64, z);
+                    if (!level.hasChunkAt(mut)) { skippedChunks++; continue; }
+                    // descendre du haut vers y>=30 : on cherche la croute de
+                    // surface, on s'arrete au premier corps plein non glace
+                    // (sauf neige qu'on traverse : c'est le signe (2)).
+                    mut.set(x, Math.min(level.getMaxBuildHeight() - 1,
+                            Math.max(structMax.getY() + 4, 120)), z);
+                    while (mut.getY() > 30 && !level.getBlockState(mut).blocksMotion()
+                            && level.getBlockState(mut).getFluidState().isEmpty()
+                            && !level.getBlockState(mut).is(Blocks.SNOW))
+                        mut.move(0, -1, 0);
+                    if (mut.getY() <= 30) continue;
+                    BlockState s = level.getBlockState(mut);
+                    if (s.is(Blocks.SNOW)) {
+                        // couche de neige : la croute, si elle existe, est juste dessous
+                        mut.move(0, -1, 0);
+                        s = level.getBlockState(mut);
+                    }
+                    if (!s.is(Blocks.ICE) && !s.is(Blocks.FROSTED_ICE)) continue;
+                    scanned++;
+                    // signe (1) : de l'eau liquide en face au meme y
+                    boolean liquidNeighbor
+                            = !level.getFluidState(n.set(mut.getX() + 1, mut.getY(), mut.getZ())).isEmpty()
+                            || !level.getFluidState(n.set(mut.getX() - 1, mut.getY(), mut.getZ())).isEmpty()
+                            || !level.getFluidState(n.set(mut.getX(), mut.getY(), mut.getZ() + 1)).isEmpty()
+                            || !level.getFluidState(n.set(mut.getX(), mut.getY(), mut.getZ() - 1)).isEmpty();
+                    if (!liquidNeighbor) { keptCrustless++; continue; }
+                    level.setBlock(mut, Blocks.WATER.defaultBlockState(), 3);
+                    melted++;
+                }
+            }
+        }
+        LOGGER.info("[DLB-STRUCTURE] T280 degel : {} blocs de glace fraiche refondus en eau "
+                        + "(croutes examinees : {} ; glace sans eau adjacente conservee : {} ; "
+                        + "colonnes hors keeper sautees : {} ; 2 passages), en {} ms",
+                melted, scanned, keptCrustless, skippedChunks, System.currentTimeMillis() - tic);
     }
 
     // ------------------------------------------------------------------
