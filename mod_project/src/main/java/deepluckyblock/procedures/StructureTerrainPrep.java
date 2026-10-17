@@ -1329,6 +1329,7 @@ public class StructureTerrainPrep {
         long capped = 0, skipObstacle = 0, alreadyDeep = 0, skippedNoSurf = 0;
         long waterIce = 0, inner = 0, melted = 0, unsnowed = 0;
         long frameMelted = 0, frameUnsnowed = 0, framePlaced = 0;
+        long strippedInner = 0, unflaggedInner = 0;   // T277 : neige dedans, pleine colonne
         for (int cx = xMin2 >> 4; cx <= xMax2 >> 4; cx++) {
             for (int cz = zMin2 >> 4; cz <= zMax2 >> 4; cz++) {
                 if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
@@ -1535,6 +1536,20 @@ public class StructureTerrainPrep {
                         }
                         if (surfY != sky - 1) probed++;
                         snowySeen++;
+                        // T277 (run T275 client 17/10 ~01h14-01h20 : « encore
+                        // de la neige dans ma structure » + « tu n'as fait qu'en
+                        // un seul Y, pas jusqu'en haut », « une layer basse ») :
+                        // motionY = la TOITURE de la colonne (premier bloc qui
+                        // bloque le mouvement depuis le ciel, feuilles exclues
+                        // = la canopee laisse encore passer la neige, conforme
+                        // T269 « sol sous la canopee couvert »). Un toit de la
+                        // structure (pierre/bois/verre) compte : tout ce qui
+                        // est SOUS motionY est « dedans » et ne doit JAMAIS
+                        // recevoir ni garder de neige, sur TOUTE la colonne,
+                        // pas seulement la layer basse.
+                        int motionY = chunk.getHeight(
+                                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                                lx, lz);
                         // T269 : le 1er corps etait-il lui-meme le sol en
                         // herbe ? Si oui, la passe A l'a deja couche et la
                         // passe B (sol interieur, en fin de colonne) est
@@ -1561,7 +1576,13 @@ public class StructureTerrainPrep {
                         int k = (u < 24.0 / 39.0) ? 1 : (u < 36.0 / 39.0) ? 2 : 3;
                         pos.set(x, surfY + 1, z);
                         BlockState above = chunk.getBlockState(pos);
-                        if (above.isAir() || above.canBeReplaced()) {
+                        // T277 : JAMAIS remplacer une recolte (CropBlock) — la
+                        // neige passait au travers des choux client (screen
+                        // 01.18.47-01.18.34, couches posees au milieu des
+                        // cultures). Seules les plantes sauvages restent
+                        // remplacables comme la neige meteo.
+                        if (above.isAir() || (above.canBeReplaced()
+                                && !(above.getBlock() instanceof net.minecraft.world.level.block.CropBlock))) {
                             // T266 : canBeReplaced (herbe haute, petite plante) =
                             // la neige tombe et remplace, comme la neige meteo.
                             level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
@@ -1597,7 +1618,8 @@ public class StructureTerrainPrep {
                             for (int y = surfY + 2; y <= sky + 40; y++) {
                                 pos.set(x, y, z);
                                 BlockState up = chunk.getBlockState(pos);
-                                if (up.isAir() || up.canBeReplaced()) { capY = y; break; }
+                                if (up.isAir() || (up.canBeReplaced()
+                                        && !(up.getBlock() instanceof net.minecraft.world.level.block.CropBlock))) { capY = y; break; }
                             }
                             if (capY >= 0) {
                                 // T267 (consigne client run T266, 12:50-12:50:55,
@@ -1646,6 +1668,7 @@ public class StructureTerrainPrep {
                         // couches, comme la neige reelle.
                         if (!firstWasSnowy) {
                             for (int y = surfY - 1; y >= sky - 48; y--) {
+                                if (y < motionY) break;   // T277 : sous la toiture = dedans, stop
                                 pos.set(x, y, z);
                                 BlockState s2 = chunk.getBlockState(pos);
                                 if (s2.isAir() || s2.canBeReplaced()
@@ -1655,7 +1678,8 @@ public class StructureTerrainPrep {
                                 if (s2.getBlock() instanceof net.minecraft.world.level.block.SnowyDirtBlock) {
                                     pos.set(x, y + 1, z);
                                     BlockState a2 = chunk.getBlockState(pos);
-                                    if (a2.isAir() || a2.canBeReplaced()) {
+                                    if (a2.isAir() || (a2.canBeReplaced()
+                                            && !(a2.getBlock() instanceof net.minecraft.world.level.block.CropBlock))) {
                                         level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
                                                 net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
                                         placed++; inner++;                                        if (!innerCol) framePlaced++;
@@ -1669,23 +1693,55 @@ public class StructureTerrainPrep {
                                 break;   // 1er corps sous le 1er corps : traite ou non, on s'arrete
                             }
                         }
+                        // T277 — PASSE C, de-neige « dedans » PLEINE COLONNE
+                        // (run T275 client 17/10 ~01h14-01h20, verbatim :
+                        // « encore de la neige dans ma structure », « il
+                        // semblerait que tu ait tente de supprimer la neige
+                        // dans les bons chunks, mais tu ne l'a fait qu'en un
+                        // seul y, pas jusqu'en haut », « tu n'a donc retire
+                        // qu'une layer basse ») : sous la toiture de la
+                        // colonne (motionY), TOUTE couche SNOW est retiree —
+                        // de motionY-1 jusqu'a -48, pas une seule — et tout
+                        // snowy=true rencontre dedans repasse en herbe
+                        // normale (le flag peint plus bas par naturalize
+                        // faisait des faces grises sous les toits). Toit et
+                        // exterieurs au-dessus de motionY : intouches (T266
+                        // « neige sur les structures » conservee). Sous les
+                        // arbres la canopee ne bloque pas (NO_LEAVES) : le
+                        // sol sous les sapins reste neige comme avant.
+                        for (int y = motionY - 1; y >= motionY - 49; y--) {
+                            pos.set(x, y, z);
+                            BlockState s3 = chunk.getBlockState(pos);
+                            if (s3.is(Blocks.SNOW)) {
+                                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                                strippedInner++;
+                                continue;
+                            }
+                            if (s3.getBlock() instanceof net.minecraft.world.level.block.SnowyDirtBlock
+                                    && s3.getValue(BlockStateProperties.SNOWY)) {
+                                level.setBlock(pos,
+                                        s3.setValue(BlockStateProperties.SNOWY, false), 3);
+                                unflaggedInner++;
+                            }
+                        }
                     }
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T276 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
+        LOGGER.info("[DLB-STRUCTURE] T277 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
                         + "{} colonnes scannees, {} corps de surface trouves (dont {} via probe), "
                         + "{} colonnes fondues hors neige native (spray T254) dont {} snowy nus repeints vert "
                         + "(cadre+8 : {} fondues, {} repeintes, {} posees), "
                         + "-> {} posees "
                         + "+ {} relevees + {} sur-obstacle (arbres/structure) + {} sol-interieur (T269), "
+                        + "{} couches dedans retirees pleine colonne (T277) + {} snowy dedans effaces, "
                         + "{} deja-epais, "
                         + "{} skips-obstacle (trop haut/glace), {} colonnes eau/glace intouchees, "
                         + "{} colonnes vides (rien de plein jusqu'a -48), "
                         + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
                 chunkCount, skippedChunks, scanned, snowySeen, probed, melted, unsnowed,
                 frameMelted, frameUnsnowed, framePlaced,
-                placed, raised, capped, inner,
+                placed, raised, capped, inner, strippedInner, unflaggedInner,
                 alreadyDeep, skipObstacle, waterIce, skippedNoSurf, k1, k2, k3,
                 System.currentTimeMillis() - tic);
     }
