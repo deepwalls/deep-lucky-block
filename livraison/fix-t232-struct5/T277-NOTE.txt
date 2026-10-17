@@ -1,0 +1,86 @@
+T277 — PLUS AUNE NEIGE DANS LA STRUCTURE (de-neige pleine colonne,
+        pas une seule layer) + recoltes preservees
+================================================================================
+Build : banner « build T277 » a l'ouverture du monde (chat).
+Log attendu : « T277 sweep-neige natif+spray » avec deux nouveaux
+compteurs : « couches dedans retirees pleine colonne (T277) » et
+« snowy dedans effaces ».
+
+IMPORTANT : ton run de cette nuit tournait encore en T275
+(banner « build T275 » dans le log 01:09). Le fix T276 (patchs d'herbe
+verte + cadre grass 1 bloc) n'etait donc PAS dans ton test : re-verifie
+ces deux points avec CE build, ils etaient deja corriges au T276.
+
+CE QUE TU AS VU (17/10 ~01h14-01h20, 12 screens + log)
+------------------------------------------------------
+1) « Encore de la neige dans ma structure » : couches posees a
+   l'INTERIEUR (planchers bois, hall, plateforme gravier, rangees de
+   choux), drapeaux « snowy » gris sous les toits.
+2) « Tu as tente de supprimer la neige dans les bons chunks, mais tu ne
+   l'as fait qu'en un seul Y, pas jusqu'en haut / qu'une layer basse »
+   — VERDICT JUSTE : la passe sol-interieur (nee T269) ne traitait que
+   le PREMIER bloc d'herbe rencontre sous le corps de surface : une
+   seule hauteur par colonne. Tout le reste de la colonne (etages,
+   poutres, rebords interieurs) gardait sa neige.
+3) Neige posee AU MILIEU des rangees de choux : la regle « la neige
+   remplace les plantes » (T266) traversait les cultures comme les
+   herbes sauvages.
+
+LE FIX
+------
+Nouvelle regle verticale = la TOITURE de la colonne (heightmap vanilla
+MOTION_BLOCKING_NO_LEAVES) :
+- Tout ce qui est SOUS la toiture (toit de la structure, verriere,
+  plafond bois) est « dedans » : nouvelle PASSE C qui balaye la colonne
+  ENTIERE de toit-1 jusqu'a -48 (pas une layer, toute la hauteur) et
+  retire CHAQUE couche de neige + repasse en herbe normale tout bloc
+  snowy peint dedans. Compteurs dedies dans le log.
+- La passe B (sol interieur T269, nee pour justement enneiger le sol
+  sous les avant-toits EXTERIEURS) s'ARRETE desormais a la toiture :
+  elle ne peint plus jamais rien en dessous.
+- Recoltes JAMAIS remplacees (CropBlock exclus) : plus de couche posee
+  sur les choux. Les plantes sauvages (herbes, fougeres, fleurs)
+  restent remplacees comme la neige meteo vanilla (T266 inchange).
+- Ce qui est AU-DESSUS de la toiture : INCHANGE — toits, corniches,
+  gargouilles et pointes de la structure restent enneiges (« neige sur
+  les structures » T266 conserve), le sol sous les sapins aussi (la
+  canopee ne bloque pas la heightmap NO_LEAVES).
+
+A VERIFIER EN JEU
+-----------------
+1. /dlbtest dragon sur tes deux spots (81,204 et 781,-404) :
+   - INTERIEUR de la grande structure : zero couche de neige, zero
+     face grise, de la cave au grenier (plus seulement la layer basse).
+   - Choux et cultures intacts, aucune couche posee dessus.
+2. Toits et silhouettes de la structure : TOUJOURS enneiges.
+3. Log : « couches dedans retirees pleine colonne (T277) » > 0 en
+   pratique sur ces spots ; « fondues » effondrees (fix T276 enfin
+   actif dans ce build) ; bandeau « build T277 » dans le chat.
+4. Lac gele et eau : toujours intacts.
+
+POINT TOUJOURS EN ATTENTE DE TA DECISION — LE GRAND TROU
+--------------------------------------------------------
+« pourquoi un grand trou qui suit la structure ? elle devait s'inserer
+dans le sol » : c'est le trou catalogne depuis T266 = lissage qui creuse
+le ring vers le pied de la structure + fill bride en derriere, ce qui
+laisse une tranchee/corniche au lieu d'un glacis. J'ai trois remedes
+possibles (rien n'est code tant que tu n'as pas choisi) :
+  A) GLACIS INTERNE (ma recommandation) : sous le contour de la
+     structure + 3-4 blocs, on REMONTE la terre jusqu'au seuil au lieu
+     de creuser : la structure s'assoit dans le sol, zero tranchee, la
+     transition reste ensuite lisse plus loin. Naturel, discret.
+  B) FENETRE ELARGIE (ring +48..64) : desseche plus de terrain autour,
+     attenu le contraste mais la tranchee reste, plus etalee.
+  C) FALAISE HABILLEE : on assume le denivele et on le raccorde en
+     micro-falaise naturelle (texture sol naturelle) puis lissage.
+Dis A, B ou C (ou decrire un autre rendu souhaite) et je code T278.
+
+LIVRAISON
+---------
+- DEEP-LUCKY-BLOCK-T277-SRC-SEUL-NONBT.zip    (5 875 353 o, 1336 f.)
+- DEEP-LUCKY-BLOCK-T277-SRC-COMPLET-NONBT.zip (17 519 665 o, 1552 f.)
+- 0 fichier .nbt (tes structures MCreator preservees, regle T271)
+- kit FIXES_MCREATOR 241 f. preserves (8 java resynchronises)
+- checksums 36/36 relus depuis les zips finaux (9 fichiers x main+kit
+  x SEUL+COMPLET) avant publication
+- CI Java 21 build : SUCCESS (commit code da9dfc7, run 38984782269)
