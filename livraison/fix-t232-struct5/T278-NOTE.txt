@@ -1,0 +1,67 @@
+T278 — FUSION SOL/STRUCTURE (fin du trou qui suit la structure)
+================================================================================
+Build : banner « build T278 » a l'ouverture du monde (chat).
+Logs attendus : « T278 fusion sol/structure : N colonnes de la couronne
+remontees au glacis » juste avant « T278 sweep-neige », puis le banner.
+
+TON ANALYSE (17/10 ~01h40) — VERDICT
+------------------------------------
+« tu as fait en sorte qu'autour de chaque bloc de ma structure il y
+ait de l'air obligatoire, pour obliger a ce que le terrain ne reste
+pas — HORS c'est CE PROBLEME qui cree l'espace vide qui suit la
+structure et l'empeche de fusionner avec le sol comme avant ».
+Pas un « air obligatoire » lettre pour lettre, mais l'effet EXACT :
+deux mecanismes produisaient le vide que tu as photographie —
+
+1) LE FOSSE : le plafond de remblai (regle T263 anti-« montagne »)
+   interdisait au terrain de REMONTER rejoindre la base du batiment :
+   +2 blocs au contact, +1 jusqu'a 4, ZERO au-dela. Sur un site en
+   pente (sol structure au-dessus du naturel), la couronne de contact
+   restait calee bas = la tranchee qui epouse le mur.
+2) LA CROUTE FLOTTANTE (screen 01.19.29 : terre enneigee en surplomb
+   au-dessus du vide) : quand le lissage COUPAIT une colonne et que la
+   coupe tombait DANS une cavite (grotte naturelle), l'ancien code
+   coiffait le vide d'UN SEUL bloc d'herbe — une croute en l'air.
+
+LE FIX (option A glacis interne, actee par ta consigne)
+-------------------------------------------------------
+- GLACIS INTERNE : dans le ruban de contact (1..10 blocs du mur), le
+  remblai est autorise jusqu'au PROFIL DU TABLIER : Y0+3 au mur,
+  descente douce <= 2 blocs par bloc en s'eloignant. Jamais au-dessus
+  de Y0+3 (la regle dure T260 « pas de montagne collee au mur » reste
+  en vigueur de l'autre cote), borne +16 blocs par colonne (au-dela ce
+  serait un contrefort, pas un glacis). Le terrain REJOINT la base.
+- ETAIEMENT DES COUPES : plus JAMAIS un bloc flottant : quand une
+  reconstruction (coupe ou remblai) decouvre du vide, on descend
+  jusqu'au premier solide (max 24) et on remonte en terre/pierre.
+  Fini la croute neigeuse en surplomb.
+- PASSE DE FUSION POST-POSE (filet de securite, apres tout le
+  pipeline, juste avant la neige) : la couronne 1..6 re-verifiee
+  colonne par colonne contre le profil du glacis ; REMBLAI UNIQUEMENT,
+  aucune coupe, aucun bloc de structure/decor touche, eau intouchee,
+  ne fait que du terrain naturel. Log dedie avec compteurs.
+
+A VERIFIER EN JEU
+-----------------
+1. /dlbtest dragon (tes deux spots 81,204 / 781,-404) : le sol TOUCHE
+   les murs tout autour — plus de tranchee, plus de surplomb, plus de
+   vide visible sous aucune croute ; la structure « s'assoit » dans le
+   terrain avec un petit glacis naturel, comme avant.
+2. Pas de retour de la « montagne » T259/T263 : rien au-dessus de
+   Y0+3 a moins de 10 blocs des murs.
+3. Log : « T278 fusion sol/structure : N colonnes ... », puis les
+   compteurs T277 (« couches dedans retirees pleine colonne »), taux
+   1/2/3, et le banner « build T278 ».
+4. Falaises/parois naturelles cote amont : toujours coupees proprement
+   (le glacis ne coupe rien, il ne fait que rejoindre).
+5. Lac gele, eau : intacts. Interieur : toujours zero neige (T277).
+
+LIVRAISON
+---------
+- DEEP-LUCKY-BLOCK-T278-SRC-SEUL-NONBT.zip    (5 880 039 o, 1336 f.)
+- DEEP-LUCKY-BLOCK-T278-SRC-COMPLET-NONBT.zip (17 524 351 o, 1552 f.)
+- 0 fichier .nbt (tes structures MCreator preservees, regle T271)
+- kit FIXES_MCREATOR 241 f. preserves (8 java resynchronises)
+- checksums 36/36 relus depuis les zips finaux (9 fichiers x main+kit
+  x SEUL+COMPLET) avant publication
+- CI Java 21 build : SUCCESS (commit code 9206468, run 38989728829)
