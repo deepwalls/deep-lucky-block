@@ -787,3 +787,15 @@ T268 (livre 15/10 ~22h30) — code 57bf1bf, livraison fe5cb27, CI
 - Code 9206468, CI 38989728829 SUCCESS. Banner build T278, braces 1523/1523, grep verifie (T278 x8). Attention typo evitee : un helper "cz(...)" absurde ecrit puis corrige dans la meme session (relire les edits AVANT commit).
 - Zips : SEUL-NONBT 5 880 039 o (1336 f.), COMPLET-NONBT 17 524 351 o (1552 f.), kit 241 (8 java syncs), 0 nbt, checksums 36/36. Livraison ed9e3f5. Release 415507858 note-only PATCH -F body=@file, fetch note raw 200. /tmp efface par le reset sandbox entre deux bash (list9.txt perdu -> regenerer depuis find).
 - EN ATTENTE : verdict client (tous cotes colles au mur, pas de croute/vide, pas de montagne > Y0+3 a <10 blocs, log fusion > 0 sur spots en pente). Ouverts : corniche snow_block faces verticales, perf (paste 5-8 s, Can't keep up 4-15 s), chevauchement inter-spawns, Nitwit suffocated. Reset sandbox au boot de ce tour : restaure via fetch full-ref + reset --hard (HEAD etait revenu a b215420).
+
+
+## T279 (17/10 ~04h30-05h) — retour arriere T278 REPARe
+- **Client** : « ENORME RETOUR EN ARRIERE, rien ne va plus, les smooths etc » + zone cleanee externe puis layers de snow oubliees (fondues/verts massifs 04:12-04:13 : 8 145/2 682 puis 6 914/1 477 en foret d'epiceas bord mer gelee) + fines lignes de dirt 1 bloc = frag frontieres + msg de fin sans coords.
+- **Code de979a1** (CI 38995872298 SUCCESS) :
+  1. `snowCoverHere` : `isSnowyCell` (biome a neige) => return true AVANT tout (couverture integrale type meteo vanilla) ; le fondu bilineaire/congeres ne sert plus qu'au spread hors-biome-neige (T270 intact) ;
+  2. `snowRateCell` : eau + glace (ICE/PACKED/BLUE/FROSTED) exclues du denominateur (fallback biome si <6 valides), sonde descend SOUS canopee (traverse LOGS/LEAVES/snow/air max 48) jusqu'au premier corps plein ; neige rencontree en chemin compte ;
+  3. nouvelle passe `enforceGlacisGradient` apres `fuseGroundToStructure` (decorateFinish) : anneaux dd 1..12 en ordre croissant, |sommet - ancre anneau precedent| <= MAX_SLOPE_STEP(2) ; plancher = NATURAL_REF (jamais re-creuser), plafond nat+16 ; ancre emprise = Y0 (jamais les blocs de structure) ; eau/decor/arbre/structure sautes ; `hasChunkAt` garde ; logs LOGGER.info ;
+  4. fusion T278 logs passes en LOGGER.info (DebugLog.structure invisible client) ;
+  5. `finishWhenTerrainReleased(level,name,BlockPos)` : message chat de fin += « , zone [x y z] » ; banner T279 (DlbTestCommands l.297).
+- **Livraison 419b0a88f22fb467ba43f1707f2798f639aa2f07** : SEUL 5 811 573 o/1442 f., COMPLET 17 442 157 o/1706 f., 0 nbt (175 purges du kit), kit main+miroir FIXES_MCREATOR sync 9 java, checksums 36/36 (les « 9 fichiers » = TOUT mod_project/src, 9 java exactement), release T279 id **415544221** (PATCH body 1234 c), fetch note raw @419b0a8 = 200.
+- **Procedure roulee** : /tmp/t279/mod = mod.zip extrait (mw src stale pre-T278 : sync obligatoire les 9 dans src/main/java ET src/main/resources/deepluckyblock_patch/FIXES_MCREATOR/src/main/java) ; SEUL = zip de mod/src/main ; COMPLET = zip de tout mod (sans exclusions, sans nbt).
