@@ -504,7 +504,122 @@ public class Structures5Procedure {
 
     private static class PostJob {
         final ServerLevel level; final BlockPos min, max; final String name; int y;
-        PostJob(ServerLevel l, BlockPos mn, BlockPos mx, String n) { level = l; min = mn; max = mx; name = n; y = mn.getY(); }
+        // T260 : donnees du carve conservees pour le sweep interieur post-pose
+        // (null pour le repli « NBT vide » qui ne touche pas au terrain).
+        final List<int[]> columns; final Set<Long> baseCols; final Set<Long> occupied; final int baseLevel;
+        PostJob(ServerLevel l, BlockPos mn, BlockPos mx, String n) { this(l, mn, mx, n, null, null, null, 0); }
+        PostJob(ServerLevel l, BlockPos mn, BlockPos mx, String n,
+                List<int[]> cols, Set<Long> base, Set<Long> occ, int bl) {
+            level = l; min = mn; max = mx; name = n; y = mn.getY();
+            columns = cols; baseCols = base; occupied = occ; baseLevel = bl;
+        }
+    }
+
+    /** T260 (retour client 14/10 01:49 : « ENORME PROBLEME : il y a de la terre
+     *  dans la maison » — l'interieur est cense etre IMPOSSIBLE a salir, clear
+     *  du sol au plafond) : balayage deterministe post-pose de l'enveloppe
+     *  interieure. Deux regles :
+     *  (A) chaque colonne de structure est nettoyee entre son bloc le plus bas
+     *      et son bloc le plus haut (plancher -> plafond/linteau = air garanti
+     *      par le template ; la terre au-dessus de la porte du client etait une
+     *      poche prise entre linteau et seuil) ;
+     *  (B) les colonnes d'air ENTIEREMENT enfermees dans l'empreinte (4 voisins
+     *      cardinaux occupes — porches, coins de porte sans aucun bloc template
+     *      vertical, que le carve n'a jamais touchées car sans entree template)
+     *      sont nettoyees du niveau de sol median jusqu'au toit.
+     *  Jamais en dessous du niveau de sol median : la motte des fondations est
+     *  preservee. Seul du terrain NATUREL non pose par le template est retire.
+     *  Compteurs journalises. */
+    private static void sweepInteriorTerrain(PostJob pj) {
+        if (pj.columns == null || pj.occupied == null) return;
+        ServerLevel level = pj.level;
+        BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+        int cleared = 0;
+        // (A) colonnes de structure : entre loY et hiY, tout terrain naturel
+        // non pose par le template doit partir.
+        // T269 (run T268 client 16/10 05:07:31-47 : « il y a du sol DANS ma
+        // structure, wtf » + « tu as bien supprime la zone exacte structure en
+        // sol +1 ? ») : le bas de la purge etait loY. Pour une colonne dont le
+        // 1er bloc de template est HAUT (piece sur pilotis, balcon, pont entre
+        // deux tours : loY = sol+N), le terrain debaseLevel..loY-1 survivait =
+        // bosses d'un bloc dans les salles et sous les passages. Le plancher
+        // de purge est desormais baseLevel (niveau median du sol NBT, garde du
+        // CarveJob) au maximum : on descend toujours a loY quand il est plus
+        // bas (caves), et on ne touche JAMAIS sous baseLevel-1 = la peau de
+        // terrain interieure peinte (cour en herbe voulue, couchee par le
+        // sweep T269 de StructureTerrainPrep).
+        for (int[] col : pj.columns) {
+            int x = col[0], z = col[1], lo = col[2], hi = col[3];
+            int start = Math.min(lo, pj.baseLevel);
+            for (int y = start; y <= hi; y++) {
+                if (pj.occupied.contains(BlockPos.asLong(x, y, z))) continue;
+                BlockState s = level.getBlockState(mut.set(x, y, z));
+                if (isNaturalTerrain(s)) { level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG); cleared++; }
+            }
+        }
+        // (B) colonnes d'air totalement enfermees dans l'empreinte.
+        if (pj.baseCols != null) {
+            int minX = pj.min.getX(), maxX = pj.max.getX(), minZ = pj.min.getZ(), maxZ = pj.max.getZ();
+            int top = pj.max.getY();
+            // T269 : l'ancien test « les 4 voisins directs sont des colonnes
+            // de template » ne declenchait que dans les fentes d'air d'UN
+            // bloc de large — toutes les grandes cours/pieces en air libre du
+            // template gardaient leur terrain (plainte client run T268 : cour
+            // interieure terreuse, « sol dans ma structure »). L'EXTERIEUR est
+            // desormais calcule par inondation depuis le bord de la bbox a
+            // travers les colonnes sans bloc de template ; une colonne sans
+            // template et JAMAIS inondee = interieur vrai (ceinture de
+            // colonnes template tout autour) et est purgee baseLevel..top, en
+            // respectant le masque occupied (jardins/sols NBT preserves). Les
+            // coins hors structure, relies au bord, restent exterieurs : leur
+            // terrain n'est pas touche.
+            int w = maxX - minX + 1;
+            boolean[] outside = new boolean[w * (maxZ - minZ + 1)];
+            java.util.ArrayDeque<int[]> q = new java.util.ArrayDeque<>();
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z += (maxZ - minZ)) {
+                    if (!pj.baseCols.contains(colKey(x, z))) {
+                        outside[(z - minZ) * w + (x - minX)] = true;
+                        q.add(new int[]{x, z});
+                    }
+                }
+            }
+            for (int z = minZ; z <= maxZ; z++) {
+                for (int x = minX; x <= maxX; x += (maxX - minX)) {
+                    if (!pj.baseCols.contains(colKey(x, z)) && !outside[(z - minZ) * w + (x - minX)]) {
+                        outside[(z - minZ) * w + (x - minX)] = true;
+                        q.add(new int[]{x, z});
+                    }
+                }
+            }
+            final int[][] DIRS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+            while (!q.isEmpty()) {
+                int[] c = q.poll();
+                for (int[] dv : DIRS) {
+                    int nx = c[0] + dv[0], nz = c[1] + dv[1];
+                    if (nx < minX || nx > maxX || nz < minZ || nz > maxZ) continue;
+                    int ii = (nz - minZ) * w + (nx - minX);
+                    if (outside[ii] || pj.baseCols.contains(colKey(nx, nz))) continue;
+                    outside[ii] = true;
+                    q.add(new int[]{nx, nz});
+                }
+            }
+            for (int x = minX; x <= maxX; x++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    if (pj.baseCols.contains(colKey(x, z))
+                            || outside[(z - minZ) * w + (x - minX)]) continue;
+                    for (int y = pj.baseLevel; y <= top; y++) {
+                        if (pj.occupied.contains(BlockPos.asLong(x, y, z))) continue;
+                        BlockState s = level.getBlockState(mut.set(x, y, z));
+                        if (isNaturalTerrain(s)) { level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG); cleared++; }
+                    }
+                }
+            }
+        }
+        if (cleared > 0)
+            deepluckyblock.util.DebugLog.info(LOGGER,
+                    "[STRUCT5] T269 sweep interieur de {} : {} blocs de terrain naturel retires de l'enveloppe (regle « terre dans la maison »)",
+                    pj.name, cleared);
     }
 
     /**
@@ -654,6 +769,9 @@ public class Structures5Procedure {
                     j.name, rq, j.defer.size(), j.waitTicks);
     }
 
+    /** T255 : dernier rappel de progression envoye aux joueurs (anti-silence). */
+    private static long PROGRESS_MSG_LAST_MS = 0L;
+
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post e) {
         // FIX T7 : relance la file d'attente des qu'elle peut repartir. Sans ca,
@@ -662,6 +780,29 @@ public class Structures5Procedure {
         // n'appelait startNextPending qu'a la FIN d'une generation).
         if (DEFER_WAIT_TICKS > 0 && !GENERATION_BUSY && !PENDING_STRUCTURES.isEmpty()) {
             startNextPending(null);
+        }
+        // T255 (retour client 13/10, pose de 2 min 23 : « wtf, c'est si long ») :
+        // pendant les tranches actives (paste / carve / post) on rappelle toutes
+        // les 25 s que les travaux continuent, avec la phase en cours — le
+        // joueur ne croit plus a un plantage pendant les longues finitions.
+        if (!PASTE_Q.isEmpty() || !CARVE_Q.isEmpty() || !POST_Q.isEmpty()) {
+            long nowMs = System.currentTimeMillis();
+            if (nowMs - PROGRESS_MSG_LAST_MS >= 25000L) {
+                PROGRESS_MSG_LAST_MS = nowMs;
+                String n; ServerLevel lv; String phase;
+                if (!PASTE_Q.isEmpty())      { PasteJob pj = PASTE_Q.peek(); n = pj.name; lv = pj.level; phase = "pose des blocs"; }
+                else if (!CARVE_Q.isEmpty()) { CarveJob cj = CARVE_Q.peek(); n = cj.name; lv = cj.level; phase = "ajustement du terrain"; }
+                else                         { PostJob pj = POST_Q.peek();   n = pj.name; lv = pj.level; phase = "finitions"; }
+                long el = GENERATION_START_MS == 0L ? -1L : nowMs - GENERATION_START_MS;
+                if (lv != null && lv.getServer() != null) {
+                    Component msg = Component.literal("\u00a7e\u23f3 \u00a7l" + structureDisplayName(n)
+                            + "\u00a7r\u00a7e : " + phase + " en cours\u2026"
+                            + (el > 0 ? " \u00a77(travaux d\u00e9marr\u00e9s il y a " + (el / 1000) + " s, encore un instant)" : ""));
+                    for (Player pl : lv.getServer().getPlayerList().getPlayers()) {
+                        if (pl != null) pl.sendSystemMessage(msg);
+                    }
+                }
+            }
         }
         if (!PASTE_Q.isEmpty()) {
             PasteJob j = PASTE_Q.peek();
@@ -713,35 +854,28 @@ public class Structures5Procedure {
             CarveJob cj = CARVE_Q.peek();
             BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
             int minBuild = cj.level.getMinBuildHeight();
-            if (cj.idx < cj.columns.size()) {
-                int end = Math.min(cj.idx + CARVE_COLS_PER_TICK, cj.columns.size());
-                for (int i = cj.idx; i < end; i++) {
-                    int[] c = cj.columns.get(i);
-                    int x = c[0], z = c[1], lo = c[2], hi = c[3];
-                    for (int y = lo + 1; y <= hi; y++) {
-                        if (cj.occupied.contains(BlockPos.asLong(x, y, z))) continue;
-                        BlockState s = cj.level.getBlockState(mut.set(x, y, z));
-                        if (!s.isAir() && isNaturalTerrain(s)) { cj.level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG); cj.carved++; }
-                    }
-                    for (int y = hi + 1; y <= hi + CARVE_CANOPY; y++) {
-                        if (cj.occupied.contains(BlockPos.asLong(x, y, z))) continue;
-                        BlockState s = cj.level.getBlockState(mut.set(x, y, z));
-                        if (!s.isAir() && isTreePart(s)) { cj.level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG); cj.carved++; }
-                    }
-                }
-                cj.idx = end;
-            } else if (cj.ringIdx < cj.occList.size()) {
-                int end = Math.min(cj.ringIdx + RING_PER_TICK, cj.occList.size());
-                for (int i = cj.ringIdx; i < end; i++) {
-                    long pos = cj.occList.get(i);
-                    int px = BlockPos.getX(pos), py = BlockPos.getY(pos), pz = BlockPos.getZ(pos);
-                    clearRing(cj, mut, px + 1, py, pz);
-                    clearRing(cj, mut, px - 1, py, pz);
-                    clearRing(cj, mut, px, py, pz + 1);
-                    clearRing(cj, mut, px, py, pz - 1);
-                }
-                cj.ringIdx = end;
-            } else if (!cj.groundDone) {
+            // T281 (ordre client 17/10, verbatim : « tu te souviens a la
+            // t275, quand tu as créé un systeme pour guarantir de l'air
+            // autour de la structure afin d'eviter que des blocs soient
+            // dans la structure ? supprime le, il merde trop ») : le bloc
+            // « AIR OBLIGATOIRE » est SUPPRIME — les deux phases de
+            // suppression du terrain naturel (colonnes interieures entre lo
+            // et hi de chaque colonne de structure, canopee au-dessus, et
+            // l'anneau clearRing colle a CHAQUE bloc occupe) sont
+            // neutralisees. C'est precisement ce mecanisme qui creusait le
+            // fosse epousant les murs (denonce a T278), amputait les
+            // collines au contact et vidait la couronne avant meme que la
+            // fusion puisse travailler. La structure est desormais posee
+            // DANS le terrain tel quel ; la jonction exterieure reste du
+            // ressort de la fusion T278 + glacis continu T279 sur terrain
+            // non ampute ; l'eventuel residu INTERIEUR (colline passant
+            // dans les pieces) reste balaye par sweepInteriorTerrain
+            // post-pose (T260, inchange). Il ne subsiste que la MOTTE de
+            // calage sous le plancher (blocs caches), pour que la structure
+            // repose sur le sol.
+            if (cj.idx < cj.columns.size()) cj.idx = cj.columns.size();
+            if (cj.ringIdx < cj.occList.size()) cj.ringIdx = cj.occList.size();
+            if (!cj.groundDone) {
                 // Par colonne : on rebouche UNIQUEMENT les colonnes de sol (lo pres
                 // de baseLevel) ET uniquement les positions CACHEES. Une position
                 // dont un voisin horizontal est exposed (air/non-solide) est sautee :
@@ -771,7 +905,7 @@ public class Structures5Procedure {
             }
             if (cj.idx >= cj.columns.size() && cj.ringIdx >= cj.occList.size() && cj.groundDone) {
                 CARVE_Q.poll();
-                deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] {} termine : {} blocs supprimes, {} blocs de motte (bottomY={})", cj.name, cj.carved, cj.grounded, cj.bottomY);
+                deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] {} termine : {} blocs supprimes (air-obligatoire supprime T281 : toujours 0 attendu), {} blocs de motte (bottomY={})", cj.name, cj.carved, cj.grounded, cj.bottomY);
                 // Le decor thematique est desormais pose PAR decorate(), juste
                 // AVANT le replant des arbres (demande utilisateur : les arbres
                 // doivent pousser AUTOUR des decors, jamais dedans ni dessus).
@@ -784,7 +918,8 @@ public class Structures5Procedure {
                 // T240 parallele relachait la zone sous ses pieds (hang client
                 // 6+ min sur machine lente : chargements synchrones de chunks).
                 StructureTerrainPrep.decorateFinish(cj.level, cj.min, cj.max, true);   // T39 : finitions post-pose
-                POST_Q.offer(new PostJob(cj.level, cj.min, cj.max, cj.name));
+                POST_Q.offer(new PostJob(cj.level, cj.min, cj.max, cj.name,
+                        cj.columns, cj.baseCols, cj.occupied, cj.baseLevel));   // T260 : sweep interieur en fin de post
                 deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] decorate + post de {} termine", cj.name);
             }
         }
@@ -798,11 +933,18 @@ public class Structures5Procedure {
                 }
                 POST_Q.poll();
                 deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] Post-process de {} termine", pj.name);
+                // T260 : le filet anti-gris planifie +40 est SUPPRIME d'ici —
+                // il tournait AVANT la fin du raccord T240 (ordre non garanti,
+                // cause exacte de l'anneau gris residuel du run T259) ; il est
+                // desormais la derniere etape de smoothAround, inconditionnelle.
+                // A la place : le sweep interieur deterministe post-pose
+                // (« terre dans la maison », consigne client 14/10 01:49).
+                sweepInteriorTerrain(pj);
                 // T184 : decorateFinish est asynchrone. T183 libérait ici la FIFO
                 // alors que dressAndPlant/replantTrees travaillaient encore 4 s :
                 // le second Dragon recherchait pendant les déchargements du premier.
                 // La libération réelle de ChunkKeeper marque désormais la vraie fin.
-                finishWhenTerrainReleased(pj.level, pj.name);
+                finishWhenTerrainReleased(pj.level, pj.name, pj.min);
             }
         }
     }
@@ -1051,6 +1193,31 @@ public class Structures5Procedure {
     // reprend alors le relais, exactement comme T233 sans T233b).
     private static final boolean SEARCH_DRY_PICK =
             !"0".equals(System.getProperty("dlb.search.dryPick", "1"));
+    // === T245 : RECHERCHE 0,5 s — TIER « CHUNKS DEJA CHARGES » ===============
+    //
+    // Consignes client 12/10 : « la phase de recherche ne doit pas depasser
+    // les 0.5 s ! », « doubles recherches au lieu de une par une », « j'ai
+    // une tonne de chunks charges expres ! » (view distance 20-23), et
+    // enchainer direct la phase suivante.
+    //
+    // Ce tier s'execute AVANT le choix sec T233c : il n'evalue QUE des
+    // centres dont l'emprise est ENTIEREMENT dans les chunks deja en memoire
+    // (rien n'est demande au generateur) ; le filtre bruit tourne sur DEUX
+    // DEMI-CERVEAUX qui ne se marchent pas dessus (indices disjoints,
+    // meilleur score partage, arret commun au premier candidat strictement
+    // bon) ; le verdict REEL (qualityOnReady) passe alors a l'arrivee au
+    // tick suivant dans doPaste — plus de 2 x 50 ticks de re-sondage, plus
+    // de chargement asynchrone : « zone choisie » puis pose directe.
+    // Si aucun candidat charge n'emerge dans la fenetre budget DURE de
+    // SEARCH_LOADED_BUDGET_MS (sous le plafond 0,5 s), on retombe sur le
+    // choix sec T233c inchange.
+    // Desactivable : -Ddlb.search.loadedFirst=0.
+    private static final boolean SEARCH_LOADED_FIRST =
+            !"0".equals(System.getProperty("dlb.search.loadedFirst", "1"));
+    /** Budget dur du tier charge, en ms (defaut 480 : strictement sous le
+     *  plafond client de 0,5 s, marge de tick comprise). */
+    private static final long SEARCH_LOADED_BUDGET_MS =
+            propInt("dlb.search.loadedBudgetMs", 480);
     /** Span sec juge assez plat nativement pour s'areter immediatement
      *  (pour rappel la porte reelle d'acceptation est 10 sur terrain genere). */
     private static final int DRY_PICK_GOOD_SPAN =
@@ -1060,7 +1227,7 @@ public class Structures5Procedure {
      *  plafond qui compte reste le budget temps, jamais le rayon.
      *  -Ddlb.search.dryPickMaxR=N */
     private static final int DRY_PICK_MAX_R =
-            propInt("dlb.search.dryPickMaxR", 1536);
+            propInt("dlb.search.dryPickMaxR", 1024);
     /** Span sec maximal accepte en mode souple (lacs fins toleres : la
      *  plateforme remontee T104 les gere cote pose ; le lissage couvre
      *  jusque ~26 de relief natif). Au-delà : emprise reelle gaspillee et
@@ -1072,6 +1239,18 @@ public class Structures5Procedure {
      *  main avec le MEILLEUR candidat deja trouve. -Ddlb.search.dryPickMs=N */
     private static final int DRY_PICK_BUDGET_MS =
             propInt("dlb.search.dryPickMs", 900);
+    /** T252 : plafond GLOBAL de la recherche par vague (tier charge T245 +
+     *  choix sec T233c cumules). Campagnes CI 1-5 (33 runs, runner 2 CPU) :
+     *  tier 39-227 ms, sec 184-459 ms => pire cas cumule 686 ms car les
+     *  budgets etaient SEPARES. Desormais le choix sec recoit le RELIQUAT
+     *  (plancher 200 ms : au moins une courte tentative, le fil historique
+     *  F2 reste le relais derriere). 0 = plafond desactive.
+     *  T253 : defaut resserre a 500 (campagne 6 : cumul 400->410 ms,
+     *  500->511 ms, 640->624-693 ms ; 500 borne la vague entiere sous le
+     *  SLA 0,5 s avec marge, et g07 a prouve le tier gagnant en 310 ms).
+     *  -Ddlb.search.totalBudgetMs=N (defaut 500). */
+    private static final long SEARCH_TOTAL_BUDGET_MS =
+            propInt("dlb.search.totalBudgetMs", 500);
     /** Centres deja PROPOSES par le choix sec pendant la recherche en cours
      *  (coord [x,z]). Ils NE SONT PAS forcement rejetes (les portes reelles
      *  arbitrent), mais on ne doit jamais proposer le meme quartier deux
@@ -1130,8 +1309,226 @@ public class Structures5Procedure {
      *  jamais de span > SOFT (gaspillage d'emprise vouee au rejet).
      *  Retourne null si tout est epuise sous budget (fil historique relais,
      *  borne F2 au-dessus) ou en cas d'erreur (jamais de choix aveugle). */
+    /**
+     * T245 : choix de centre < 0,5 s sur le TIER DEJA CHARGE. Toutes les
+     * coordonnees proviennent de chunks en memoire (jamais demandes au
+     * generateur) ; les portes bruit tournent sur 2 threads disjoints qui
+     * se coordonnent via un meilleur span partage ; le candidat retenu
+     * passe aussitot au VERDICT REEL (qualityOnReady, oblige known==total)
+     * avec les memes portes qu'en doPaste (relief 10, 0 eau). Un echec
+     * rend null SANS effet de bord et laisse le choix sec T233c operer.
+     */
+    // ==================================================================
+    // T255 (retour client 13/10 ~06:21 « wtf, c'est si long ») : une pose
+    // rejetee 6 fois par les portes reelles a REJOUE le tier a ~490 ms a
+    // chaque vague (budget dur presque toujours epuise, 0-2 sondes utiles
+    // sur machine lente) — ~3 s perdus avant meme le sec. Deux gardes :
+    //  (a) TIER-MISS MEMOIRE : si la vague precedente n'a RIEN trouve dans
+    //      les chunks charges et que le pivot n'a pas bouge (< 64 blocs),
+    //      on saute le tier pendant 8 s x serie (le chargement ne change
+    //      pas entre deux vagues d'une seconde) ;
+    //  (b) BUDGET ADAPTATIF : si apres 150 ms moins d'un quart des
+    //      candidats est traite, la machine ne finira JAMAIS la liste avant
+    //      le budget dur — on coupe tot au lieu d'attendre 480 ms.
+    private static BlockPos TIER_MISS_PIVOT = null;
+    private static long TIER_MISS_UNTIL_MS = 0L;
+    private static int TIER_MISS_STREAK = 0;
+
+    private static BlockPos loadedPickCenter(net.minecraft.server.level.ServerLevel lvl,
+            BlockPos origin, int checkR, int fullCheckR, int structMax, Player p, int minEdgeDist) {
+        final long t0 = System.currentTimeMillis();
+        final long budget = SEARCH_LOADED_BUDGET_MS;
+        net.minecraft.world.level.chunk.ChunkGenerator gen = lvl.getChunkSource().getGenerator();
+        net.minecraft.world.level.levelgen.RandomState rs = lvl.getChunkSource().randomState();
+        final int step = Math.max(32, structMax);
+        final int minCenterDist = minEdgeDist + checkR;
+        final int maxR = Math.max(512, 8 * step);
+        // T246 : sans joueur (RCON/CI, origine de commande), on pivote autour
+        // de l'ORIGINE de la recherche — le tier reste mesurable en CI et ne
+        // declenche de toute facon JAMAIS un chargement.
+        final BlockPos pivot = p != null ? p.blockPosition() : origin;
+        final int px = pivot.getX(), pz = pivot.getZ();
+
+        // T255(a) : tier-miss memoire — meme pivot, rien trouve la derniere
+        // fois, fenetre encore ouverte : le chunk-set charge n'a pas change,
+        // rejouer le tier couterait ~0,5 s pour le meme verdict.
+        // T258 : la memoire se cle sur l'ORIGINE de la recherche (le lucky
+        // block est immobile), PAS sur la position du joueur : un joueur en
+        // vol couvre 64+ blocs en quelques secondes, ce qui rendait le saut
+        // inerte -- le tier etait rejoue toutes les 6-8 s sans jamais rien
+        // trouver (constate en jeu le 14/10/2026). L'enumeration des
+        // candidats, elle, reste centree sur `pivot` (experience inchangee).
+        if (TIER_MISS_PIVOT != null && System.currentTimeMillis() < TIER_MISS_UNTIL_MS
+                && Math.abs(TIER_MISS_PIVOT.getX() - origin.getX()) + Math.abs(TIER_MISS_PIVOT.getZ() - origin.getZ()) <= 64) {
+            return null;
+        }
+
+        // 1) ENUMERATION (thread serveur, lookups O(1)) : centres dont la
+        //    boite d'emprise entiere (9 points) est deja chargee. Jamais de
+        //    generation ici : c'est tout le sens du tier.
+        final java.util.ArrayList<int[]> cands = new java.util.ArrayList<>();
+        outer:
+        for (int r = Math.max(64, minCenterDist); r <= maxR; r += step) {
+            final double angle0 = (r * 0.6180339887) % (2 * Math.PI);
+            final int n = Math.max(8, (int) Math.ceil((2 * Math.PI * r) / step));
+            for (int k = 0; k < n; k++) {
+                final double a = angle0 + (2 * Math.PI * k) / n;
+                int cx = px + (int) Math.round(Math.cos(a) * r);
+                int cz = pz + (int) Math.round(Math.sin(a) * r);
+                if (!empriseAlreadyLoaded(lvl, cx, cz, checkR)) continue;
+                boolean dejaPropose = false;
+                for (int[] q : DRY_PICK_SUGGESTED)
+                    if (Math.abs(cx - q[0]) + Math.abs(cz - q[1]) < step) { dejaPropose = true; break; }
+                if (dejaPropose) continue;
+                if (REJECTED_RUGGED_CENTERS.contains(BlockPos.asLong(cx, 0, cz))) continue;
+                if (deepluckyblock.util.StructureSites.conflict(lvl, cx, cz, checkR) != null) continue;
+                cands.add(new int[]{cx, cz});
+                if (cands.size() >= 96) break outer;   // 96 candidats, c'est largement assez pour 0,5 s
+            }
+        }
+        if (cands.isEmpty()) return null;
+
+        // 2) DOUBLE CERVEAU : deux workers a indices disjoints (pairs /
+        //    impairs — ils ne se marchent jamais dessus), filtres bruit
+        //    purs identiques au choix sec (getBaseHeight WG est une simple
+        //    fonction du sampler, utilisee en concurrence par vanilla),
+        //    drapeau commun « bon candidat trouve » pour s'arreter ensemble.
+        final java.util.concurrent.atomic.AtomicBoolean good = new java.util.concurrent.atomic.AtomicBoolean();
+        final int[][] scores = new int[cands.size()][2];   // [0]=span (-1=ecarte), [1]=wet
+        final Thread[] workers = new Thread[2];
+        final int[][] wpts;
+        {
+            int w = Math.max(12, checkR / 2);
+            wpts = new int[][]{{-w,0},{w,0},{0,-w},{0,w},{-w,-w},{-w,w},{w,-w},{w,w}};
+        }
+        for (int half = 0; half < 2; half++) {
+            final int h = half;
+            Thread w = new Thread(() -> {
+                for (int i = h; i < cands.size(); i += 2) {
+                    if (good.get() || System.currentTimeMillis() - t0 > budget) return;
+                    int cx = cands.get(i)[0], cz = cands.get(i)[1];
+                    try {
+                        int hy = gen.getBaseHeight(cx, cz,
+                                net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, lvl, rs);
+                        if (hy <= 61 || hy >= 190) { scores[i][0] = -1; continue; }
+                        if (gen.getBaseHeight(cx, cz,
+                                net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG, lvl, rs) <= 61) {
+                            scores[i][0] = -1; continue;
+                        }
+                        int wet = 0;
+                        for (int[] wp : wpts)
+                            if (gen.getBaseHeight(cx + wp[0], cz + wp[1],
+                                    net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG, lvl, rs) <= 61) wet++;
+                        int span = dryRuggedSpan(lvl, cx, cz, fullCheckR);
+                        scores[i][0] = span; scores[i][1] = wet;
+                        if (wet == 0 && span <= DRY_PICK_GOOD_SPAN) good.compareAndSet(false, true);
+                    } catch (Throwable any) { scores[i][0] = -1; }
+                }
+            }, "dlb-search-" + half);
+            w.setDaemon(true);
+            workers[half] = w;
+            w.start();
+        }
+
+        // 3) COORDINATION : le serveur attend la fin des deux cerveaux, la
+        //    decouverte d'un candidat strictement bon, ou l'epuisement du
+        //    budget DUR (0,5 s). Puis le verdict REEL decide, candidats
+        //    tries : secs d'abord, meilleur span en tete.
+        //    T255(b) : budget ADAPTATIF — si apres 150 ms moins d'un quart
+        //    des candidats a ete traite, cette machine ne verra jamais le
+        //    reste de la liste avant le budget dur : on coupe (une vague
+        //    "sans bon candidat" passe ainsi de ~490 ms a ~150 ms).
+        final long limit = t0 + budget;
+        while (System.currentTimeMillis() < limit) {
+            boolean alive = false;
+            for (Thread w : workers) if (w != null && w.isAlive()) { alive = true; break; }
+            if (!alive || good.get()) break;
+            long el = System.currentTimeMillis() - t0;
+            if (el > 175) {
+                // Un candidat a un "resultat" quand ses workers l'ont marque
+                // (-1 = ecarte eau/hauteur, span>0 ou wet>0 = traite/garde).
+                int scored = 0;
+                for (int i = 0; i < cands.size(); i++)
+                    if (scores[i][0] != 0 || scores[i][1] != 0) scored++;
+                if (scored < Math.max(1, cands.size() / 5)) break;
+            }
+            try { Thread.sleep(2); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+        }
+        good.set(true);   // geler les workers (ils verifient le drapeau a chaque iteration)
+        for (Thread w : workers) if (w != null) try { w.join(5); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+
+        final java.util.ArrayList<Integer> order = new java.util.ArrayList<>();
+        int probed = 0, water = 0;
+        for (int i = 0; i < cands.size(); i++) {
+            if (scores[i][0] > 0) { order.add(i); probed++; }
+            else water++;
+        }
+        order.sort((a, b) -> {
+            boolean da = scores[a][1] == 0, db = scores[b][1] == 0;
+            if (da != db) return da ? -1 : 1;
+            return Integer.compare(scores[a][0], scores[b][0]);
+        });
+
+        for (int idx : order) {
+            if (scores[idx][1] != 0) break;            // les humides ne passent plus le verdict reel
+            if (System.currentTimeMillis() - t0 > budget) break;
+            int cx = cands.get(idx)[0], cz = cands.get(idx)[1];
+            FlatQuality q = qualityOnReady(lvl, cx, cz, checkR);
+            if (q == null) continue;
+            if (q.wetRatio() > 0.0) continue;
+            if (q.slope() > 10) continue;              // porte reelle d'acceptation : relief <= 10
+            int realY = deepluckyblock.util.SafeSurface.height(lvl,
+                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx, cz) - 1;
+            if (realY < 1) continue;
+            DRY_PICK_SUGGESTED.add(new int[]{cx, cz});
+            LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (tier charge T245 : {} ms, {} sondes sechees, {} ecartees eau/haut, {} candidats charges, span sec={}, span reel={}, 0 chunk genere, phase suivante directe)",
+                    cx, cz, System.currentTimeMillis() - t0, probed, water, cands.size(), scores[idx][0], q.slope());
+            TIER_MISS_PIVOT = null; TIER_MISS_UNTIL_MS = 0L; TIER_MISS_STREAK = 0;   // T255 : succes -> raz
+            return new BlockPos(cx, Math.max(realY, 63), cz);
+        }
+        // T255 : echec -> memoire anti-repetition (saute ce tier jusqu'a
+        // 8 s x serie, borne 30 s, tant que le pivot ne bouge pas).
+        // T258 : cle = ORIGINE de la recherche (immobile), cf. garde ci-dessus.
+        if (TIER_MISS_STREAK < 4) TIER_MISS_STREAK++;
+        TIER_MISS_PIVOT = origin;
+        TIER_MISS_UNTIL_MS = System.currentTimeMillis()
+                + Math.min(30000L, 8000L * TIER_MISS_STREAK);
+        LOGGER.info("[STRUCT5-FLAT] tier charge T245 sans bon candidat ({} ms, {} candidats dans les chunks charges, {} sondes sechees) : repli choix sec T233c" + (TIER_MISS_STREAK > 1 ? " (saut du tier ~" + Math.min(30, 8 * TIER_MISS_STREAK) + " s, serie " + TIER_MISS_STREAK + ")" : ""),
+                System.currentTimeMillis() - t0, cands.size(), probed);
+        return null;
+    }
+
+    /** T245+T246 : l'emprise (boite checkR, 9 points de controle) est-elle
+     *  deja PRESQUE entierement en memoire ? Regle : centre obligatoire,
+     *  au moins 6 des 8 points peripheriques charges, dont au moins 2 coins
+     *  (mesure en jeu, view distance 20 : le carre charge du joueur coupe
+     *  souvent UN coin de la boite d'emprise ; exiger 9/9 disqualifiait tous
+     *  les bons sites et le tier ne servait jamais). Les 1-2 chunks manquants
+     *  seront combles par le plan-zone SAFETY en tache de fond — le tier ne
+     *  provoque quant a lui JAMAIS de chargement. */
+    private static boolean empriseAlreadyLoaded(net.minecraft.server.level.ServerLevel lvl, int cx, int cz, int checkR) {
+        int[][] pts = {{0,0},{-checkR,-checkR},{checkR,-checkR},{-checkR,checkR},{checkR,checkR},
+                       {-checkR,0},{checkR,0},{0,-checkR},{0,checkR}};
+        if (!deepluckyblock.util.SafeSurface.isLoadedAt(lvl, cx, cz)) return false;   // centre obligatoire
+        int periphery = 0, corners = 0;
+        for (int i = 1; i < pts.length; i++) {
+            if (!deepluckyblock.util.SafeSurface.isLoadedAt(lvl, cx + pts[i][0], cz + pts[i][1])) continue;
+            periphery++;
+            if (i <= 4) corners++;
+        }
+        return periphery >= 6 && corners >= 2;
+    }
+
     private static BlockPos dryPickCenter(net.minecraft.server.level.ServerLevel lvl,
             BlockPos origin, int checkR, int fullCheckR, int structMax, Player p, int minEdgeDist) {
+        return dryPickCenter(lvl, origin, checkR, fullCheckR, structMax, p, minEdgeDist, 0);
+    }
+
+    /** T252 : {@code budgetCapMs} > 0 plafonne la duree de CE choix sec
+     *  (reliquat du plafond global de recherche, voir findFlat). */
+    private static BlockPos dryPickCenter(net.minecraft.server.level.ServerLevel lvl,
+            BlockPos origin, int checkR, int fullCheckR, int structMax, Player p, int minEdgeDist,
+            long budgetCapMs) {
         final long t0 = System.currentTimeMillis();
         int probed = 0, water = 0, skipped = 0;
         try {
@@ -1141,7 +1538,7 @@ public class Structures5Procedure {
             final int baseZ = p != null ? p.blockPosition().getZ() : origin.getZ();
             final int minCenterDist = minEdgeDist + checkR;
             final int step = Math.max(32, structMax);
-            final long budget = DRY_PICK_BUDGET_MS;
+            final long budget = budgetCapMs > 0 ? budgetCapMs : DRY_PICK_BUDGET_MS;
             final int[][] bubbles = {{0,0},{1024,0},{-1024,0},{0,1024},{0,-1024},
                                      {1024,1024},{-1024,-1024},{1024,-1024},{-1024,1024}};
             BlockPos bestStrict = null; int bestStrictSpan = Integer.MAX_VALUE;
@@ -1277,17 +1674,38 @@ public class Structures5Procedure {
                 || deepluckyblock.util.StructureTemplateCache.hasFailed(nbtName);
     }
 
-    private static void finishWhenTerrainReleased(ServerLevel level, String name) {
+    private static void finishWhenTerrainReleased(ServerLevel level, String name, BlockPos placeMin) {
         if (deepluckyblock.util.ChunkKeeper.held(level)) {
             deepluckyblock.procedures.TestProcedure.schedule(level,
                     deepluckyblock.procedures.TestProcedure.currentTick(level) + 2,
-                    () -> finishWhenTerrainReleased(level, name));
+                    () -> finishWhenTerrainReleased(level, name, placeMin));
             return;
         }
         long totalMs = GENERATION_START_MS == 0L ? -1L
                 : System.currentTimeMillis() - GENERATION_START_MS;
         deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] {} entièrement terminé (recherche, pose, terrain, végétation et arbres) en {} ms : FIFO libérée",
                 name, totalMs);
+        // T255 (retour client 13/10 « j'ai pas eu le message de fini ? ») :
+        // « STRUCTURE DISCOVERED » part juste APRES le paste brut, or les
+        // finitions (carve, dressing, replant, smooth) peuvent durer des
+        // dizaines de secondes ensuite — aucune confirmation finale
+        // n'arrivait. Annonce de cloture ici, quand la TOUTE la chaine est
+        // reellement terminee (FIFO liberee).
+        if (level != null && level.getServer() != null) {
+            // T279 (retour client 17/10 ~04h15 : le message de fini n'avait pas de coordonnees) :
+            // l'annonce de cloture embarque desormais la position de la zone (coin min de pose) --
+            // retrouvaille immediate en jeu et dans les logs.
+            String placeCoords = placeMin != null
+                    ? ", zone [" + placeMin.getX() + " " + placeMin.getY() + " " + placeMin.getZ() + "]" : "";
+            Component done = Component.literal(
+                    "\u00a7a\u2713 \u00a7l" + structureDisplayName(name) + "\u00a7r\u00a7a est enti\u00e8rement termin\u00e9e"
+                            + " \u00a77(terrain, v\u00e9g\u00e9tation et arbres compris"
+                            + (totalMs > 0 ? ", dur\u00e9e totale " + (totalMs / 1000) + " s" : "") + placeCoords + ")");
+            for (Player pl : level.getServer().getPlayerList().getPlayers()) {
+                if (pl != null) pl.sendSystemMessage(done);
+            }
+        }
+        PROGRESS_MSG_LAST_MS = 0L;
         notifyGenerationFinished(level);
     }
 
@@ -1306,6 +1724,10 @@ public class Structures5Procedure {
         PENDING_ACHIEVEMENT_PLAYER = null;
         MANUAL_TEST_SPAWN = false;
         CURRENT_MANUAL_TEST = false;
+        TIER_MISS_PIVOT = null;   // T255 : la memoire anti-repetition ne survit pas a la generation
+        TIER_MISS_UNTIL_MS = 0L;
+        TIER_MISS_STREAK = 0;
+        PROGRESS_MSG_LAST_MS = 0L;
         GenerateLuckyItemProcedure.releaseStructureReservation(CURRENT_STRUCTURE_ID);
         CURRENT_STRUCTURE_ID = -1;
         GENERATION_BUSY = false;
@@ -1694,6 +2116,9 @@ public class Structures5Procedure {
     }
 
     private static BlockPos findFlat(ServerLevel lvl, BlockPos origin, int structW, int structD, int minEdgeDist) {
+        // T252 : chrono de la vague de recherche (tier charge + choix sec)
+        // pour le plafond global SEARCH_TOTAL_BUDGET_MS.
+        final long searchT0 = System.currentTimeMillis();
         Player p = lvl.getNearestPlayer(origin.getX() + .5, origin.getY() + .5, origin.getZ() + .5, 128, false);
         double lx = 0, lz = 0; BlockPos pp = origin;
         if (p != null) { float yaw = p.getYRot(); lx = -Math.sin(Math.toRadians(yaw)); lz = Math.cos(Math.toRadians(yaw)); pp = p.blockPosition(); }
@@ -1720,20 +2145,36 @@ public class Structures5Procedure {
             if (choisi != null) return choisi;
         }
 
+        if (SEARCH_LOADED_FIRST) {
+            // T245 : d'abord le tier « chunks deja charges » — le joueur
+            // pre-charge massivement (view distance 20+), 0 chunk demande,
+            // budget dur 0,5 s, verdict reel immediat en doPaste.
+            BlockPos fast = loadedPickCenter(lvl, searchOrigin, checkR, fullCheckR,
+                    Math.max(structW, structD), p, minEdgeDist);
+            if (fast != null) return fast;
+        }
+
         // T233b : SELECTION SECHE (< 1 s, zero chunk charge). Mesure en jeu
         // (log joueur 10/10, terrain montagneux) : le balayage par couronnes
         // chargeait le terrain pour trier les candidats -> 279 s de selection
         // (et des milliers de chunks generes). On inverse la strategie : le
         // centre est choisi ENTIEREMENT par sondes bruit (API generateur),
         // en quelques centaines de ms ; les portes de terrain REEL (relief,
-        // eau, emprise exhaustive) restent le juge final sur l'emprise
-        // generee ensuite. Si le choix sec y echoue, il est blackliste
-        // (mecanismes existants) et le choix sec suivant est propose ;
-        // l'abandon borne F2 demeure la garde-fou ultime.
+        // eau, emprise exhaustive) restent le juge final ensuite, sur
+        // l'emprise generee ensuite. Si le choix sec y echoue, il est
+        // blackliste (mecanismes existants) et le choix sec suivant est
+        // propose ; l'abandon borne F2 demeure la garde-fou ultime.
         // Desactivable : -Ddlb.search.dryPick=0.
         if (SEARCH_DRY_PICK) {
+            // T252 : le choix sec herite du RELIQUAT du plafond global
+            // (tier charge deja consomme dans la meme vague) — la duree de
+            // recherche totale est desormais bornee, pas chaque phase seule.
+            long dryCap = DRY_PICK_BUDGET_MS;
+            if (SEARCH_TOTAL_BUDGET_MS > 0)
+                dryCap = Math.max(200, Math.min(DRY_PICK_BUDGET_MS,
+                        SEARCH_TOTAL_BUDGET_MS - (System.currentTimeMillis() - searchT0)));
             BlockPos dry = dryPickCenter(lvl, searchOrigin, checkR, fullCheckR,
-                    Math.max(structW, structD), p, minEdgeDist);
+                    Math.max(structW, structD), p, minEdgeDist, dryCap);
             if (dry != null) return dry;
         }
 
@@ -3508,10 +3949,9 @@ public class Structures5Procedure {
                 Math.floorDiv(min.getX() + max.getX(), 2), Math.floorDiv(min.getZ() + max.getZ(), 2));
     }
 
-    private static void announceStructureSpawn(Player player, String rawName, BlockPos min, BlockPos max) {
-        if (player == null) return;
-
-        String structureName = switch (rawName.toLowerCase(Locale.ROOT)) {
+    /** T255 : nom d'affichage partage entre l'annonce de decouverte et l'annonce de fin. */
+    private static String structureDisplayName(String rawName) {
+        return switch (rawName.toLowerCase(Locale.ROOT)) {
             case "citadel" -> "Sylvan Citadel";
             case "observatory" -> "Fae Observatory";
             case "dragon" -> "Dragon Sanctuary";
@@ -3520,6 +3960,12 @@ public class Structures5Procedure {
             case "everest" -> "Inoxtag Everest";
             default -> rawName;
         };
+    }
+
+    private static void announceStructureSpawn(Player player, String rawName, BlockPos min, BlockPos max) {
+        if (player == null) return;
+
+        String structureName = structureDisplayName(rawName);
 
         int centerX = Math.floorDiv(min.getX() + max.getX(), 2);
         int centerY = Math.floorDiv(min.getY() + max.getY(), 2);

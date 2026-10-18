@@ -1,0 +1,130 @@
+==================================================================
+DEEP LUCKY BLOCK — FIX T282 (18/10/2026)
+Retour client apres test de T281 (log MCreator du 18/10 06:34-06:46,
+banner « build T281 » conforme, dragon pose a 745,127, fin 54 s) :
+
+  1) « quand tu replace la neige a la fin, tu utilises le spread, sauf
+     que je te rappelle : il est interdit de poser de la neige sur de
+     la glace — faut reparer ca »
+  2) « colle a la structure je vois une montagne qui l'encadre de
+     retour — tu as fait cette erreur au cours de tes 4 dernieres
+     versions, faut corriger »
+  3+4) chunks exterieurs ouverts temporairement pour les smooths :
+     grass_neige (snowy=true) SANS couche de neige → « faut direct
+     apres les smooths proceder a la neige avant de refermer les
+     chunks exterieurs (si ils sont neigeux bien sur) »
+==================================================================
+
+------------------------------------------------------------------
+1) NEIGE SUR GLACE — GARDE ABSOLU A TOUTE LA CHAINE
+------------------------------------------------------------------
+Nouveau garde unique : isIceFamily (ICE + PACKED_ICE + BLUE_ICE +
+FROSTED_ICE) et snowSupportIsIce(chunk, x, y, z) qui descend A
+TRAVERS les couches SNOW deja presentes jusqu'au support effectif
+(epaissir un tapis pose sur un lac gele = poser sur la glace).
+Applique desormais :
+
+  - sweep final, branche POSE (passe A) : refusee si support
+    effectif = glace ;
+  - sweep final, branche EPAISSISSEMENT (layer existante < k) :
+    refusee pareil (c'est cette branche qui « re-place » de la neige
+    a la fin en mode spread/drift) ;
+  - sweep final, remontee au-dessus d'obstacle (arbres/structure) :
+    le controle « capY - 1 = glace » est elargi au support effectif
+    (une case SNOW au-dessus d'un lac gele ne masque plus la glace) ;
+  - enforceGlacisGradient, repose de la couche deplacee apres une
+    coupe : JAMAIS reposee si la coupe s'arrete sur une croute de
+    glace ou un fluide (cas lac gele rencontre en sous-couche) ;
+  - verifyGrassColumn : le garde « jamais repeindre la glace » couvre
+    maintenant aussi FROSTED_ICE (seul trou restant de la famille).
+
+Compteur de verification dedie dans le log de fin : le sweep affiche
+« ... poses REFUSEES support glace (T282) » (attendu : 0 ou un petit
+nombre, jamais une pose effective). La regle reste « interdit de
+POSER » : la neige vanilla DEJA presente sur les lacs geles n'est
+pas retiree (biomes geles = comportement vanilla conserve).
+
+------------------------------------------------------------------
+2) FIN DE LA « MONTAGNE QUI ENCADRE » (presente depuis T278)
+------------------------------------------------------------------
+Coupable identifie (le collet, apparu EXACTEMENT avec T278):
+le tablier/glacis ajoute en T278 montait le terrain a **Y0+3 AU PIED
+DU MUR** avec un remblai borne a **+16 par colonne** (fusion post-pose
+« 529 remontees (max +16) » au run T281 + allowance « glacis interne »
+du smooth, meme profil +3/+16). Un collet de terre verticalement
+plaque a la base = la montagne revue sur T278, T279, T280 et T281.
+
+Nouvelle regle UNIQUE (utilisee par le smooth, son clamp, la fusion
+et le garde de pente — une seule pente, un seul plafond) :
+
+  - le glacier DESCEND DEPUIS Y0 (le sol arrive AU NIVEAU de la base,
+    JAMAIS au-dessus — regle dure) a raison de 2 blocs par anneau en
+    s'eloignant ;
+  - plus de limite de ruban 1..10 : l'allowance s'eteint d'elle-meme
+    quand le profil croise le terrain naturel → la rampe se fond dans
+    le paysage au lieu de s'arreter en contrefort ;
+  - borne +16 blocs au total par colonne, mini-trous T263 preserves
+    en dessous (patches +2 contact / +1 a 4 bl / 0 au-dela) ;
+  - fusion post-pose T278 : max +4 et cible Y0 (au lieu de +16 et
+    Y0+3) — elle redevient une simple securite anti-trou de contact ;
+  - garde de pente T279 (enforceGlacisGradient) : plafond de remontee
+    naturel +8 au lieu de +16 ; plancher « jamais creuser sous le
+    naturel » inchange, coupes inchangees ;
+  - le tablier T260 (ecretage au-dessus de Y0+3, ruban 1..10) reste
+    actif et ne peut plus etre atteint (le profil ne depasse pas Y0).
+
+Log attendu : « T278-T282 fusion sol/structure : N colonnes ...
+(anti-montagne T282 : max +4, jamais au-dessus de Y0 ; ...) » — N
+doit chuter fortement vs les 529 du run T281 (le gros raccord est
+desormais fait par la rampe longue du smooth, AVANT la pose).
+
+------------------------------------------------------------------
+3+4) NEIGE AVANT FERMETURE DES CHUNKS EXTERIEURS DES SMOOTHS
+------------------------------------------------------------------
+La fenetre balayee par le sweep final etait le coussin +8 autour de
+l'anneau terrain+16 ; votre analyse est la bonne : tout chunk ouvert
+pour un smooth doit passer par la passe neige tant qu'il est encore
+epingle (avant la fermeture). Desormais :
+
+  - smoothPassAfterPreload enregistre sa fenetre REELLE (union de
+    tous les lissages de la structure, variable SMOOTH_WIN resetee a
+    chaque nouvelle structure) ;
+  - le keeper expose le rectangle effectivement tenu
+    (ChunkKeeper.zoneBlockBounds) ;
+  - forceSnowLayerSweep balaie l'UNION { coussin habituel + fenetre
+    reelle des lissages + rectangle entier du keeper } (+8 de coussin
+    de chaque cote), donc EXACTEMENT tous les chunks ouverts pour les
+    smooths et leurs abords ;
+  - le balayage reste le DERNIER geste, immediatement AVANT la
+    liberation du keeper (ordre inchange : fusion → glacis → degel
+    selectif → sweep → release) : chaque chunk exterieur lisse recoit
+    sa neige (si snowCoverHere le decide — biomes neigeux et spread,
+    rien en plaine) AVANT d'etre referme ;
+  - hors keeper : chunk absent = ignore et compte, jamais de
+    chargement synchrone ajoute (regle T264 conservee).
+
+Log attendu : « T282 sweep-neige natif+spray (union lissages+keeper,
+garde glace) : ... » suivi du compteur « poses REFUSEES support glace
+(T282) ».
+
+------------------------------------------------------------------
+CONTROLE DE VERSION / CONTENU
+------------------------------------------------------------------
+- Banner console : « commande prete : /dlbtest ... [build T282] ».
+- Commit code : 6fddfc6 (branche arena/7cdbe3b3-deep-lucky-block),
+  CI Java 21 build run 39100369378 : SUCCESS.
+- Zips (memes arbres que T281, ni plus ni moins) :
+    DEEP-LUCKY-BLOCK-T282-SRC-SEUL-NONBT.zip    5 820 815 o / 1442 entrees
+    DEEP-LUCKY-BLOCK-T282-SRC-COMPLET-NONBT.zip 17 451 399 o / 1706 entrees
+- *.nbt : ZERO dans les deux zips (T271 inchange : les NBT ne partent
+  jamais dans une livraison).
+- Checksums MD5 : 9 fichiers modifies x 4 arbres (repo, kit livraison
+  src/main, SEUL main, COMPLET main) = 36/36 identiques ; miroirs
+  FIXES_MCREATOR des deux zips : 18/18 identiques.
+- Fichiers modifies (3) : StructureTerrainPrep.java (gardes glace,
+  glacis T282, fenetre sweep, logs), ChunkKeeper.java
+  (zoneBlockBounds), DlbTestCommands.java (banner T282).
+
+Rappel toujours ouvert (non touches ici) : lignes residuelles
+T246 p2 d21-23, perf « Can't keep up » (29 s pire), corniche
+snow_block en faces verticales, Nitwit suffocated, POI data mismatch.
