@@ -1,0 +1,61 @@
+T281 — SUPPRESSION DU SYSTEME « AIR OBLIGATOIRE » (ordre direct)
+================================================================================
+Build : banner « build T281 » a l'ouverture du monde (chat).
+Log attendu : « [STRUCT5] dragon termine : 0 blocs supprimes
+(air-obligatoire supprime T281 : toujours 0 attendu), N blocs de motte ».
+
+TON ORDRE (17/10)
+-----------------
+« tu te souviens a la t275, quand tu as créé un systeme pour guarantir de
+l'air autour de la structure afin d'eviter que des blocs soient dans la
+structure ? supprime le, il merde trop ».
+
+IDENTIFICATION PRECISE (pour memoire honnete)
+---------------------------------------------
+Ce n'etait pas la T275 (elle touchait seulement le sweep-neige), mais le
+systeme existe bien, et avec EXACTEMENT l'effet que tu decriais — c'est
+lui que tu avais deja identifie toi-meme a T278 : « tu as fait en sorte
+qu'autour de chaque bloc de ma structure il y ait de l'air obligatoire ».
+Dans le code : le CARVE, deux phases post-pose —
+1. suppression de tout terrain naturel entre le bas et le haut de chaque
+   colonne de la structure (y compris la canopee au-dessus) ;
+2. « clearRing » : un anneau d'air FORCE colle a CHAQUE bloc de la
+   structure (les 4 voisins horizontaux de chaque bloc pose dont
+   la nature est du terrain pur sont rases).
+C'est ce clearRing qui creusait le fosse epousant les murs, amputait les
+collines au contact et ouvrait le « grand trou qui suit la structure »
+avant meme que la fusion puisse travailler.
+
+CE QUI EST SUPPRIME / CE QUI RESTE
+----------------------------------
+- SUPPRIME : les deux phases de suppression (carve + anneau). La structure
+  est posee dans le terrain TEL QUEL — plus aucune cuve d'air forcee.
+- CONSERVE : la motte de calage sous le plancher (blocs de terre poses
+  uniquement la ou ils sont CACHES, jamais sur les facades) : la structure
+  repose sur le sol, elle ne flotte pas.
+- CONSERVE : le sweep interieur post-pose (T260) : si une colline passe a
+  travers la construction, le residu a l'INTERIEUR des pieces est toujours
+  balaye — ta consigne « terre dans la maison » reste garantie.
+- CONSERVE : la fusion T278 + le glacis continu T279, qui travaillent
+  maintenant sur un terrain NON ampute (leur plein effet, enfin).
+
+A VERIFIER EN JEU
+-----------------
+1. /dlbtest dragon : le terrain arrive JUSQU'AUX MURS, sans tranchee ni
+   vide peripherique ; la structure s'inscrit dans le sol (comportement
+   d'avant l'air-obligatoire, avec en plus le glacis adouci T279) ;
+   l'interieur reste propre (sweep T260).
+2. Log : « 0 blocs supprimes (air-obligatoire supprime T281) ».
+3. Neige : toujours « 0 fondues / 0 verts » (T279), pas de ligne de dirt
+   (T279), pas de bordure de glace perimetrique (T280 degel actif),
+   zero neige dedans (T277), plaine sans couche (T270).
+
+LIVRAISON
+---------
+- DEEP-LUCKY-BLOCK-T281-SRC-SEUL-NONBT.zip    (5 815 131 o, 1442 f.)
+- DEEP-LUCKY-BLOCK-T281-SRC-COMPLET-NONBT.zip (17 445 715 o, 1706 f.)
+- 0 fichier .nbt (structures MCreator preservees, regle T271)
+- kit FIXES_MCREATOR preserves (9 java resynchronises : main + miroir)
+- checksums 36/36 relus depuis les zips finaux (9 fichiers x main+kit
+  x SEUL+COMPLET) avant publication
+- CI Java 21 build : SUCCESS (commit code 79baf14, run 39094791895)
