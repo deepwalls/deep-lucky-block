@@ -1304,9 +1304,15 @@ public class StructureTerrainPrep {
     /** La structure doit FUSIONNER avec le sol, comme avant. Passe de
      *  verification finale, APRES le raccord T240 et AVANT le sweep-neige :
      *  dans la couronne externe 1..6 de l'emprise, aucune colonne de terrain
-     *  naturel ne reste sous le profil de glacis (Y0+3 au mur, -2 par bloc en
-     *  s'eloignant ; plafond strict Y0+3 = tablier T260 ; remblai borne a
-     *  +16 par colonne = jamais de contrefort). REMBLAI UNIQUEMENT : aucune
+     *  naturel ne reste sous le profil de glacis. T282 (retour client 18/10 :
+     *  « une montagne qui l'encadre de retour, collee a la structure [...]
+     *  faite au cours de tes 4 dernieres versions ») : le profil T278-T281
+     *  partait de Y0+3 AU MUR avec un remblai borne a +16 — c'etait lui, le
+     *  collet. Le glacier descend desormais DEPUIS Y0 (le sol arrive AU
+     *  NIVEAU de la base, jamais au-dessus) a -2 par bloc en s'eloignant, et
+     *  le remblai est borne a +4 par colonne (le gros raccord des creux est
+     *  fait par la rampe longue du smooth, meme plafond — une seule pente).
+     *  REMBLAI UNIQUEMENT : aucune
      *  coupe, aucun bloc de structure/decor touche, aucune colonne d'eau
      *  touchee. Une couche de neige posee sous le remblai est remontee au
      *  nouveau sommet (le sweep T263 la recouvrira ensuite si besoin). */
@@ -1328,7 +1334,15 @@ public class StructureTerrainPrep {
                 int ddz = z < structMin.getZ() ? structMin.getZ() - z : (z > structMax.getZ() ? z - structMax.getZ() : 0);
                 int dd = Math.max(ddx, ddz);
                 if (dd < 1) continue;                 // emprise : sol zero deja garanti par la preparation
-                int want = Math.min(y0 + 3, y0 + 3 - MAX_SLOPE_STEP * (dd - 1));
+                // T282 (retour client 18/10 : « une montagne qui l'encadre,
+                // collee a la structure », presente depuis T278) : le tablier
+                // montait a Y0+3 AU PIED DU MUR avec un remblai borne a +16 =
+                // le collet de terre plaque a la base que le client a revu 4
+                // versions de suite. Le glacier descend desormais DEPUIS Y0
+                // (jamais au-dessus de la base) et le remblai est borne a +4
+                // (le gros raccord est desormais fait par la rampe du smooth,
+                // meme regle T282 partout : une seule pente, un seul plafond).
+                int want = y0 - MAX_SLOPE_STEP * (dd - 1);
                 int topSolid = -1;
                 for (int y = top; y >= y0 - 12; y--) {
                     BlockState s = level.getBlockState(mut.set(x, y, z));
@@ -1341,7 +1355,7 @@ public class StructureTerrainPrep {
                 if (topSolid < 0) continue;
                 BlockState surfState = level.getBlockState(mut.set(x, topSolid, z));
                 if (!isNaturalTerrain(surfState)) { skipDecor++; continue; }
-                want = Math.min(want, topSolid + 16);
+                want = Math.min(want, topSolid + 4);   // T282 : mini-comblement seulement, plus de collet +16
                 if (want <= topSolid) continue;
                 boolean hadSnow = level.getBlockState(mut.set(x, topSolid + 1, z)).is(Blocks.SNOW);
                 int newTop = topSolid;
@@ -1360,8 +1374,8 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T278/T279 fusion sol/structure : {} colonnes de la couronne remontees au glacis "
-                        + "(max +16, jamais au-dela de Y0+3 ; decors/structure sautes : {} ; eau sautee : {}), en {} ms",
+        LOGGER.info("[DLB-STRUCTURE] T278-T282 fusion sol/structure : {} colonnes de la couronne remontees au glacis "
+                        + "(anti-montagne T282 : max +4, jamais au-dessus de Y0 ; decors/structure sautes : {} ; eau sautee : {}), en {} ms",
                 raised, skipDecor, waterCols, System.currentTimeMillis() - tic);
     }
 
@@ -1376,7 +1390,10 @@ public class StructureTerrainPrep {
      *  de l'emprise : le front vertical devient une rampe. Deux bornes dures :
      *  plancher = hauteur NATURELLE de la colonne (jamais re-creusee : une
      *  falaise naturelle n'est pas rasee, seule la matiere AJOUTEE par le
-     *  pipeline est reprise) et plafond = naturel +16. Colonnes d'eau,
+     *  pipeline est reprise) et plafond = naturel +8 (T282 : le plafond +16
+     *  du T279 participait du collet « montagne » revu par le client 18/10 ;
+     *  la rampe longue est desormais faite par le smooth, ici simple garde).
+     *  Colonnes d'eau,
      *  decors, arbres et blocs de structure : sautes (ils servent d'ancre de
      *  hauteur mais ne sont jamais modifies). Seuls les chunks deja tenus par
      *  le keeper sont touches : +0 chargement. */
@@ -1456,7 +1473,7 @@ public class StructureTerrainPrep {
                     int nat = ref[i][j];
                     int want = t;
                     if (t > hi + G) want = Math.max(hi + G, nat);           // jamais creuser sous le naturel
-                    else if (t < lo - G) want = Math.min(lo - G, nat + 16); // jamais monter de plus de 16
+                    else if (t < lo - G) want = Math.min(lo - G, nat + 8);  // T282 : jamais monter de plus de 8 (collet +16 supprime)
                     if (want == t) continue;
                     boolean hadSnow = level.getBlockState(mut.set(x, t + 1, z)).is(Blocks.SNOW);
                     if (want > t) {
@@ -1494,7 +1511,12 @@ public class StructureTerrainPrep {
                         BlockState topNow = level.getBlockState(mut.set(x, want, z));
                         if (topNow.is(Blocks.DIRT) || topNow.is(Blocks.STONE))
                             level.setBlock(mut.set(x, want, z), Blocks.GRASS_BLOCK.defaultBlockState(), FAST_FLAG);
-                        if (hadSnow && level.getBlockState(mut.set(x, want + 1, z)).isAir())
+                        // T282 (« interdit de poser de la neige sur de la
+                        // glace », client 18/10) : la coupe peut s'arreter SUR
+                        // une croute de glace (lac gele en sous-couche) —
+                        // dans ce cas la couche deplacee n'est JAMAIS reposee.
+                        if (hadSnow && !isIceFamily(topNow) && topNow.getFluidState().isEmpty()
+                                && level.getBlockState(mut.set(x, want + 1, z)).isAir())
                             level.setBlock(mut.set(x, want + 1, z), Blocks.SNOW.defaultBlockState(), FAST_FLAG);
                         top[i][j] = want;
                         lowered++;
@@ -1628,12 +1650,37 @@ public class StructureTerrainPrep {
         int r2 = r + 8;
         int xMin2 = structMin.getX() - r2, xMax2 = structMax.getX() + r2;
         int zMin2 = structMin.getZ() - r2, zMax2 = structMax.getZ() + r2;
+        // T282 (retour client 18/10, points 3-4 : « les chunks exterieurs
+        // ouverts temporairement pour les smooths gardent du grass_neige
+        // (snowy=true) SANS couche — faut direct apres les smooths proceder
+        // a la neige AVANT de refermer ces chunks (s'ils sont neigeux) ») :
+        // le balayage couvre l'UNION du coussin habituel, de la fenetre
+        // reelle des lissages (SMOOTH_WIN) et du rectangle ENTIER tenu par
+        // le keeper. Autrement dit chaque chunk ouvert pour un smooth passe
+        // par la passe neige (snowCoverHere decide, comme partout) tant
+        // qu'il est encore epingle — c.-a-d. AVANT la liberation qui suit
+        // immediatement ce sweep. Hors keeper : chunk absent = ignore,
+        // jamais de chargement synchrone ajoute (regle T264 conservee).
+        if (SMOOTH_WIN_SET) {
+            xMin2 = Math.min(xMin2, SMOOTH_WIN_X0 - 8);
+            zMin2 = Math.min(zMin2, SMOOTH_WIN_Z0 - 8);
+            xMax2 = Math.max(xMax2, SMOOTH_WIN_X1 + 8);
+            zMax2 = Math.max(zMax2, SMOOTH_WIN_Z1 + 8);
+        }
+        int[] held = deepluckyblock.util.ChunkKeeper.zoneBlockBounds(level);
+        if (held != null) {
+            xMin2 = Math.min(xMin2, held[0] - 8);
+            zMin2 = Math.min(zMin2, held[1] - 8);
+            xMax2 = Math.max(xMax2, held[2] + 8);
+            zMax2 = Math.max(zMax2, held[3] + 8);
+        }
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         long scanned = 0, snowySeen = 0, placed = 0, raised = 0, k1 = 0, k2 = 0, k3 = 0;
         long chunkCount = 0, skippedChunks = 0, probed = 0, debugShown = 0;
         long capped = 0, skipObstacle = 0, alreadyDeep = 0, skippedNoSurf = 0;
         long waterIce = 0, inner = 0, melted = 0, unsnowed = 0;
         long frameMelted = 0, frameUnsnowed = 0, framePlaced = 0;
+        long skipIceSupport = 0;   // T282 : poses/epaississements refuses (support effectif = glace)
         long strippedInner = 0, unflaggedInner = 0;   // T277 : neige dedans, pleine colonne
         for (int cx = xMin2 >> 4; cx <= xMax2 >> 4; cx++) {
             for (int cz = zMin2 >> 4; cz <= zMax2 >> 4; cz++) {
@@ -1890,16 +1937,32 @@ public class StructureTerrainPrep {
                                 && !(above.getBlock() instanceof net.minecraft.world.level.block.CropBlock))) {
                             // T266 : canBeReplaced (herbe haute, petite plante) =
                             // la neige tombe et remplace, comme la neige meteo.
+                            // T282 (« interdit de poser de la neige sur de la
+                            // glace », client 18/10) : garde ABSOLU a la pose —
+                            // support effectif glace (a travers les couches SNOW)
+                            // = jamais de couche, quelle que soit la branche.
+                            if (snowSupportIsIce(chunk, pos, x, surfY + 1, z)) {
+                                skipIceSupport++;
+                            } else {
+                            pos.set(x, surfY + 1, z);
                             level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
                                     net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
                             placed++;                            if (!innerCol) framePlaced++;
                             if (k == 1) k1++; else if (k == 2) k2++; else k3++;
+                            }
                         } else if (above.is(Blocks.SNOW)
                                 && above.getValue(net.minecraft.world.level.block.SnowLayerBlock.LAYERS) < k) {
+                            // T282 : epaissir un tapis dont le support effectif
+                            // est de la glace = poser sur la glace. Refuse.
+                            if (snowSupportIsIce(chunk, pos, x, surfY + 1, z)) {
+                                skipIceSupport++;
+                            } else {
+                            pos.set(x, surfY + 1, z);
                             level.setBlock(pos, above.setValue(
                                     net.minecraft.world.level.block.SnowLayerBlock.LAYERS, k), 3);
                             raised++;                            if (!innerCol) framePlaced++;
                             if (k == 1) k1++; else if (k == 2) k2++; else k3++;
+                            }
                         } else if (above.is(Blocks.SNOW)) {
                             alreadyDeep++;
                         } else {
@@ -1935,11 +1998,11 @@ public class StructureTerrainPrep {
                                 // couche dont le SUPPORT serait de la glace est
                                 // refusee — poser dessus serait exactement le
                                 // « spread sur glace » interdit depuis T259.
-                                pos.set(x, capY - 1, z);
-                                BlockState under = chunk.getBlockState(pos);
-                                if (under.is(Blocks.ICE) || under.is(Blocks.PACKED_ICE)
-                                        || under.is(Blocks.BLUE_ICE) || under.is(Blocks.FROSTED_ICE)) {
-                                    skipObstacle++;
+                                if (snowSupportIsIce(chunk, pos, x, capY, z)) {
+                                    // T282 : meme garde qu'ailleurs — support
+                                    // effectif glace (y compris sous une couche
+                                    // SNOW existante) = pose refusee.
+                                    skipObstacle++; skipIceSupport++;
                                 } else {
                                     pos.set(x, capY, z);
                                     level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
@@ -2033,7 +2096,8 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T277 sweep-neige natif+spray : {} chunks (skippes hors keeper : {}), "
+        LOGGER.info("[DLB-STRUCTURE] T282 sweep-neige natif+spray (union lissages+keeper, garde glace) : "
+                        + "{} chunks (skippes hors keeper : {}), "
                         + "{} colonnes scannees, {} corps de surface trouves (dont {} via probe), "
                         + "{} colonnes fondues hors neige native (spray T254) dont {} snowy nus repeints vert "
                         + "(cadre+8 : {} fondues, {} repeintes, {} posees), "
@@ -2041,13 +2105,14 @@ public class StructureTerrainPrep {
                         + "+ {} relevees + {} sur-obstacle (arbres/structure) + {} sol-interieur (T269), "
                         + "{} couches dedans retirees pleine colonne (T277) + {} snowy dedans effaces, "
                         + "{} deja-epais, "
-                        + "{} skips-obstacle (trop haut/glace), {} colonnes eau/glace intouchees, "
+                        + "{} skips-obstacle (trop haut), {} poses REFUSEES support glace (T282), "
+                        + "{} colonnes eau/glace intouchees, "
                         + "{} colonnes vides (rien de plein jusqu'a -48), "
                         + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
                 chunkCount, skippedChunks, scanned, snowySeen, probed, melted, unsnowed,
                 frameMelted, frameUnsnowed, framePlaced,
                 placed, raised, capped, inner, strippedInner, unflaggedInner,
-                alreadyDeep, skipObstacle, waterIce, skippedNoSurf, k1, k2, k3,
+                alreadyDeep, skipObstacle, skipIceSupport, waterIce, skippedNoSurf, k1, k2, k3,
                 System.currentTimeMillis() - tic);
     }
 
@@ -5659,6 +5724,45 @@ public class StructureTerrainPrep {
         return 0;
     }
 
+    /** T282 : famille « glace = eau » (consignes client T267 + retour 18/10) :
+     *  JAMAIS de couche de neige posee sur l'un de ces blocs. */
+    private static boolean isIceFamily(BlockState s) {
+        return s.is(Blocks.ICE) || s.is(Blocks.PACKED_ICE)
+                || s.is(Blocks.BLUE_ICE) || s.is(Blocks.FROSTED_ICE);
+    }
+
+    /** T282 (retour client 18/10, verbatim : « il est interdit de poser de la
+     *  neige sur de la glace ») : vrai si le support EFFECTIF d'une couche qui
+     *  serait posee en (x, y, z) est de la glace — on descend a travers les
+     *  couches SNOW deja presentes (epaissir un tapis pose sur un lac gele
+     *  revient exactement a poser sur la glace). Toute pose de la chaine
+     *  (sweep, spreads, remontees) passe ce garde. */
+    private static boolean snowSupportIsIce(net.minecraft.world.level.chunk.ChunkAccess chunk,
+                                            BlockPos.MutableBlockPos pos, int x, int y, int z) {
+        int yy = y - 1;
+        for (int depth = 0; depth < 24 && yy >= -64; depth++, yy--) {
+            BlockState s = chunk.getBlockState(pos.set(x, yy, z));
+            if (s.is(Blocks.SNOW)) continue;
+            return isIceFamily(s);
+        }
+        return false;
+    }
+
+    /** T282 (meme retour, point « montagne qui encadre, collee a la
+     *  structure » presente depuis T278) : allowance de remblai du GLACIS LONG
+     *  pres de l'emprise. Le tablier T278 montait a Y0+3 AU PIED du mur (+16
+     *  max) = le collet de terre verticalement plaque au batiment que le
+     *  client a revu sur T278-T281. Le glacier descends desormais DEPUIS Y0
+     *  (jamais au-dessus de la base de la structure, regle dure) a raison de
+     *  MAX_SLOPE_STEP par anneau, borne a +16 et au naturel : une rampe douce
+     *  qui rejoint le paysage, plus jamais un mur. Retourne le delta max
+     *  autorise au-dessus du naturel {@code nat} a la distance {@code dEm}. */
+    private static int glacisRiseAllowance(int dEm, int nat) {
+        if (dEm < 1 || CLEARANCE_PLAN == null) return 0;
+        int profiled = CLEARANCE_PLAN.groundY() - MAX_SLOPE_STEP * (dEm - 1) - nat;
+        return Math.max(0, Math.min(16, profiled));
+    }
+
     /** T21 : borne ABSOLUE de la variation du lissage par rapport au terrain naturel.
      *  T89 (B9) : la borne est ADAPTATIVE -- plus la colonne est proche de
      *  l'emprise ({@code sMinI..sMaxI} x {@code sMinJ..sMaxJ}), plus la marge
@@ -5715,8 +5819,15 @@ public class StructureTerrainPrep {
                 // T259 : le remblai est EN OUTRE borne au contact de
                 // l'emprise (anti-butte, cf. riseCapNearEmprise) — la coupe,
                 // elle, garde toute sa marge (paroi de montagne, T89).
+                // T282 (meme retour « montagne collee a la structure ») : le
+                // mini-trou T263 est etendu par l'allowance de GLACIS LONG
+                // (rampe qui descend de Y0 a -2/anneau, jamais au-dessus de la
+                // base). C'est ICI que le lissage construit l'insertion de la
+                // structure dans le sol — plus besoin du remblai post-pose
+                // T278 qui empilait le collet +16 au pied du mur.
                 int allowRise = Math.min(Math.max(MAX_SMOOTH_RISE, reachRise),
-                        riseCapNearEmprise(Math.max(dx, dz)));
+                        Math.max(riseCapNearEmprise(Math.max(dx, dz)),
+                                glacisRiseAllowance(Math.max(dx, dz), ref[i][j])));
                 int allowDrop = Math.max(MAX_SMOOTH_DROP, reach);
                 // T177 — feather radial vers la frontière de la zone. Un smooth
                 // rectangulaire sans ce masque pouvait encore modifier de 10
@@ -5753,6 +5864,13 @@ public class StructureTerrainPrep {
     // ------------------------------------------------------------------
     // T21 : reference du terrain NATUREL (une par zone de structure)
     // ------------------------------------------------------------------
+    /** T282 : union des fenetres REELLES des lissages de la structure en
+     *  cours (coordonnees blocs). Le sweep-neige final balaie cette union
+     *  (+ coussin) AVANT la liberation des chunks exterieurs, pour que tout
+     *  chunk ouvert pour un smooth ait recu sa neige (si biome neigeux) —
+     *  consigne client du 18/10. */
+    private static boolean SMOOTH_WIN_SET = false;
+    private static int SMOOTH_WIN_X0, SMOOTH_WIN_Z0, SMOOTH_WIN_X1, SMOOTH_WIN_Z1;
     private static int[][] NATURAL_REF = null;
     private static int NR_X0, NR_Z0, NR_W, NR_H;
 
@@ -5778,12 +5896,26 @@ public class StructureTerrainPrep {
     /** Nouvelle structure : la reference naturelle doit etre recapturee. */
     public static void resetNaturalReference() {
         NATURAL_REF = null;
+        SMOOTH_WIN_SET = false;   // T282 : nouvelle structure -> nouvelle union de lissages
         NATURAL_WATER = null; NATURAL_WATER_COUNT = 0;   // T103 : nouvelle structure -> nouvelle nappe vanilla de reference
     }
 
     private static void smoothPassAfterPreload(ServerLevel level, BlockPos structMin, BlockPos structMax,
                                                int kernelSize, int passes, int half, int smoothRing,
                                                int x0, int z0, int w, int h, int[] kernelSchedule, Runnable onDone) {
+        // T282 : memorise la fenetre REELLE de ce lissage (union de tous les
+        // smooths de la structure) — le sweep-neige final la couvrira en
+        // entier avant la fermeture des chunks exterieurs.
+        if (!SMOOTH_WIN_SET) {
+            SMOOTH_WIN_X0 = x0; SMOOTH_WIN_Z0 = z0;
+            SMOOTH_WIN_X1 = x0 + w - 1; SMOOTH_WIN_Z1 = z0 + h - 1;
+            SMOOTH_WIN_SET = true;
+        } else {
+            SMOOTH_WIN_X0 = Math.min(SMOOTH_WIN_X0, x0);
+            SMOOTH_WIN_Z0 = Math.min(SMOOTH_WIN_Z0, z0);
+            SMOOTH_WIN_X1 = Math.max(SMOOTH_WIN_X1, x0 + w - 1);
+            SMOOTH_WIN_Z1 = Math.max(SMOOTH_WIN_Z1, z0 + h - 1);
+        }
         // Heightmap d'origine (terrain naturel, servira pour le fade en bordure).
         //
         // FIX T7 (cause racine) : la capture passe par SafeSurface, qui
@@ -6121,14 +6253,20 @@ public class StructureTerrainPrep {
         // cap de remblai T263 (+2 contact / +1 a 4 bl / 0 au-dela) interdisait
         // toute remontee reelle : sur un site en pente (sol structure Y0
         // au-dessus du naturel en contrebas), la couronne de contact restait
-        // calee a naturel+2 = le FOSSE qui epouse le mur. Dans le ruban de
-        // contact (1..10), le remblai est desormais autorise JUSQU'AU PROFIL
-        // du tablier T260 : Y0+3 au mur, descente <= MAX_SLOPE_STEP/bloc en
-        // s'eloignant — jamais au-dessus de Y0+3 (regle dure T260 conservee,
-        // pas de retour de la « montagne » T259), jamais moins que l'ancien
-        // cap (mini trous T263 preserves), et borne a +16 blocs au total
-        // (au-dela, ce serait un contrefort colle au mur, pas un glacis).
-        // Le terrain REJOINT la base de la structure : fusion avec le sol.
+        // calee a naturel+2 = le FOSSE qui epouse le mur.
+        // T282 (retour client 18/10 : « colle a la structure je vois une
+        // montagne qui l'encadre de retour [...] tu as fait cette erreur au
+        // cours de tes 4 dernieres versions ») : le profil T278 partait de
+        // Y0+3 AU MUR et s'arretait au ruban 1..10 = le collet vertical
+        // plaque au batiment revu sur T278, T279, T280 ET T281. Le glacier
+        // descend desormais DEPUIS Y0 (le sol arrive AU NIVEAU de la base,
+        // jamais au-dessus — regle dure), a raison de MAX_SLOPE_STEP par
+        // anneau, SANS limite de ruban : l'allowance s'eteint d'elle-meme
+        // quand le profil croise le naturel, donc la rampe se fond dans le
+        // paysage au lieu de s'arreter en contrefort. Borne +16 blocs au
+        // total et mini-trous T263 preserves en dessous (cf.
+        // glacisRiseAllowance ; le profil du smooth et clampSmoothDelta
+        // utilisent la meme regle : une seule pente, un seul plafond).
         if (refGrid != null) {
             riseLimit = new int[w][h];
             for (int i = 0; i < w; i++) {
@@ -6140,11 +6278,10 @@ public class StructureTerrainPrep {
                     float feather = edgeT * edgeT * (3f - 2f * edgeT);
                     int dd = Math.max(ddx, ddz);
                     int capDelta = riseCapNearEmprise(dd);
-                    if (dd >= 1 && dd <= 10 && CLEARANCE_PLAN != null
+                    if (dd >= 1 && CLEARANCE_PLAN != null
                             && CLEARANCE_PLAN.matches(level, structMin, structMax)) {
-                        int glacis = Math.min(16, CLEARANCE_PLAN.groundY() + 3
-                                - MAX_SLOPE_STEP * (dd - 1) - refGrid[i][j]);
-                        if (glacis > capDelta) capDelta = glacis;
+                        capDelta = Math.max(capDelta,
+                                glacisRiseAllowance(dd, refGrid[i][j]));
                     }
                     riseLimit[i][j] = refGrid[i][j] + Math.round(capDelta * feather);
                 }
@@ -7513,7 +7650,7 @@ public class StructureTerrainPrep {
         // (bloc "terrain naturel" non protege ici) etait converti en herbe :
         // dessus gris au milieu du lac, glace cassee au bord. On ne touche
         // a aucune forme de glace, dans aucune branche.
-        if (s.is(Blocks.ICE) || s.is(Blocks.PACKED_ICE) || s.is(Blocks.BLUE_ICE)) return;
+        if (isIceFamily(s)) return;   // T282 : meme garde partout (FROSTED_ICE compris)
         // T-HABILL.3 : neige une fois par chunk (cache) au lieu d'une comparaison
         // de chaine par colonne. Nuance assume vs l'ancienne chaine : grove/
         // snowy_slopes (biomes enneiges sans "snow/ice/frozen" dans le nom)

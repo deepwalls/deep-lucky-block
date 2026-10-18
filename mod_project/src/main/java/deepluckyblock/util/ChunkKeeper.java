@@ -291,6 +291,19 @@ public final class ChunkKeeper {
         return z != null && cx >= z.cx0 && cx <= z.cx1 && cz >= z.cz0 && cz <= z.cz1;
     }
 
+    /**
+     * T282 (consigne client 18/10 : « direct apres les smooths proceder a la
+     * neige avant de refermer les chunks exterieurs ») : bornes BLOCS du
+     * rectangle effectivement tenu ({x0, z0, x1, z1}, ou {@code null} si rien
+     * n'est epingle). Le sweep-neige final balaie AU MINIMUM ce rectangle —
+     * c'est la fenetre que les smooths ont ouverte — avant la liberation.
+     */
+    public static int[] zoneBlockBounds(ServerLevel level) {
+        Zone z = ZONES.get(level);
+        if (z == null) return null;
+        return new int[]{ z.cx0 << 4, z.cz0 << 4, (z.cx1 << 4) + 15, (z.cz1 << 4) + 15 };
+    }
+
     public static void keep(ServerLevel level) {
         Zone z = ZONES.get(level);
         if (z == null) return;
