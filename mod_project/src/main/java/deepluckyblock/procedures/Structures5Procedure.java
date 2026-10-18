@@ -854,35 +854,28 @@ public class Structures5Procedure {
             CarveJob cj = CARVE_Q.peek();
             BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
             int minBuild = cj.level.getMinBuildHeight();
-            if (cj.idx < cj.columns.size()) {
-                int end = Math.min(cj.idx + CARVE_COLS_PER_TICK, cj.columns.size());
-                for (int i = cj.idx; i < end; i++) {
-                    int[] c = cj.columns.get(i);
-                    int x = c[0], z = c[1], lo = c[2], hi = c[3];
-                    for (int y = lo + 1; y <= hi; y++) {
-                        if (cj.occupied.contains(BlockPos.asLong(x, y, z))) continue;
-                        BlockState s = cj.level.getBlockState(mut.set(x, y, z));
-                        if (!s.isAir() && isNaturalTerrain(s)) { cj.level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG); cj.carved++; }
-                    }
-                    for (int y = hi + 1; y <= hi + CARVE_CANOPY; y++) {
-                        if (cj.occupied.contains(BlockPos.asLong(x, y, z))) continue;
-                        BlockState s = cj.level.getBlockState(mut.set(x, y, z));
-                        if (!s.isAir() && isTreePart(s)) { cj.level.setBlock(mut, Blocks.AIR.defaultBlockState(), FAST_FLAG); cj.carved++; }
-                    }
-                }
-                cj.idx = end;
-            } else if (cj.ringIdx < cj.occList.size()) {
-                int end = Math.min(cj.ringIdx + RING_PER_TICK, cj.occList.size());
-                for (int i = cj.ringIdx; i < end; i++) {
-                    long pos = cj.occList.get(i);
-                    int px = BlockPos.getX(pos), py = BlockPos.getY(pos), pz = BlockPos.getZ(pos);
-                    clearRing(cj, mut, px + 1, py, pz);
-                    clearRing(cj, mut, px - 1, py, pz);
-                    clearRing(cj, mut, px, py, pz + 1);
-                    clearRing(cj, mut, px, py, pz - 1);
-                }
-                cj.ringIdx = end;
-            } else if (!cj.groundDone) {
+            // T281 (ordre client 17/10, verbatim : « tu te souviens a la
+            // t275, quand tu as créé un systeme pour guarantir de l'air
+            // autour de la structure afin d'eviter que des blocs soient
+            // dans la structure ? supprime le, il merde trop ») : le bloc
+            // « AIR OBLIGATOIRE » est SUPPRIME — les deux phases de
+            // suppression du terrain naturel (colonnes interieures entre lo
+            // et hi de chaque colonne de structure, canopee au-dessus, et
+            // l'anneau clearRing colle a CHAQUE bloc occupe) sont
+            // neutralisees. C'est precisement ce mecanisme qui creusait le
+            // fosse epousant les murs (denonce a T278), amputait les
+            // collines au contact et vidait la couronne avant meme que la
+            // fusion puisse travailler. La structure est desormais posee
+            // DANS le terrain tel quel ; la jonction exterieure reste du
+            // ressort de la fusion T278 + glacis continu T279 sur terrain
+            // non ampute ; l'eventuel residu INTERIEUR (colline passant
+            // dans les pieces) reste balaye par sweepInteriorTerrain
+            // post-pose (T260, inchange). Il ne subsiste que la MOTTE de
+            // calage sous le plancher (blocs caches), pour que la structure
+            // repose sur le sol.
+            if (cj.idx < cj.columns.size()) cj.idx = cj.columns.size();
+            if (cj.ringIdx < cj.occList.size()) cj.ringIdx = cj.occList.size();
+            if (!cj.groundDone) {
                 // Par colonne : on rebouche UNIQUEMENT les colonnes de sol (lo pres
                 // de baseLevel) ET uniquement les positions CACHEES. Une position
                 // dont un voisin horizontal est exposed (air/non-solide) est sautee :
@@ -912,7 +905,7 @@ public class Structures5Procedure {
             }
             if (cj.idx >= cj.columns.size() && cj.ringIdx >= cj.occList.size() && cj.groundDone) {
                 CARVE_Q.poll();
-                deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] {} termine : {} blocs supprimes, {} blocs de motte (bottomY={})", cj.name, cj.carved, cj.grounded, cj.bottomY);
+                deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] {} termine : {} blocs supprimes (air-obligatoire supprime T281 : toujours 0 attendu), {} blocs de motte (bottomY={})", cj.name, cj.carved, cj.grounded, cj.bottomY);
                 // Le decor thematique est desormais pose PAR decorate(), juste
                 // AVANT le replant des arbres (demande utilisateur : les arbres
                 // doivent pousser AUTOUR des decors, jamais dedans ni dessus).
