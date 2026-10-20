@@ -1,0 +1,77 @@
+T285 — retour client 21/10 (run T284, screens 2026-10-20 23.08.22 / 23.08.43 / 23.08.57)
+========================================================================================
+
+Verbatims du retour :
+ (1) « tu as fait les fondus entre chunks sur de la glace : si un chunk glace
+     est entoure de neige, tu as fait en sorte que les blocs de neige spread
+     un peu dans la glace pour la transition, sauf que c'est INTERDIT, tout
+     comme l'eau, la glace ne transitionne pas » — damier de couches de neige
+     PERSISTANT dans le lac gele (et l'eau libre), bien apres la fin des
+     travaux (screens 23.08.22 et 23.08.57).
+ (2) « je vois encore de la neige grass grise (sans sa couche de neige
+     dessus) » — bande d'herbe/dirt NUE grise collee a la structure en pleine
+     zone neige native (screen 23.08.43).
+
+Causes racines trouvees
+-----------------------
+(1) Le garde « jamais de neige sur glace » (T282, snowSupportIsIce) ne
+    refusait QUE la glace (ICE/PACKED/BLUE/FROSTED) : une couche posee sur
+    une colonne d'EAU plate passait, et une couche de neige DEJA presente
+    sur un lac gele (neige meteo vanilla, ou sprays d'avant T282) se
+    faisait EPAISSIR / CONSERVER — jamais purgee (le sweep classait la
+    colonne « eau/glace intouchee » et continuait sans toucher au tapis).
+    placeSnowOrUnsnow (fondu de bord) avait le meme aveugle : son test ne
+    voyait que la couche SNOW, pas la glace en dessous.
+(2) L'audit final T283 ne traitait que les grass_block snowy=true : un
+    grass/dirt PLAIN (snowy=false re-peint tard par verifyGrass APRES le
+    sweep, ou remonte par le glacis, ou dans un chunk saute) en pleine zone
+    a neige native n'etait vu par personne → dessus gris nu, exactement le
+    screen 23.08.43.
+
+Fix T285 (mod_project/src, procedures/StructureTerrainPrep.java)
+----------------------------------------------------------------
+A. GARDE UNIFIE EAU+GLACE a la pose (interdiction stricte du retour) :
+   nouveau diagnostic snowSupportBlockKind(chunk/level, x, y, z) — descente
+   a travers les couches SNOW deja posees (meme regle T282), retour
+   0 = pose autorisee / 1 = REFUS glace / 2 = REFUS fluide (eau comme lave).
+   Applique a TOUS les sites de pose de la chaine :
+     - sweep passe A (pose), epaississement, sur-obstacle (capY),
+     - audit final (branche snowy ET nouvelle branche terre-nue),
+     - placeSnowOrUnsnow (fondu de bord T245/T259).
+   Compteurs de logs SEPARES eau/glace a chaque passe, comme demande.
+B. PURGE du stock (le damier existant ne partait jamais tout seul) : dans
+   le sweep, toute colonne dont le corps de surface est de l'eau ou de la
+   glace voit ses couches SNOW de coffrage RETIREES (descente sky+2→-48,
+   air/herbes/poudreuse traversees, premier corps = stop). Ni l'eau ni la
+   glace elles-memes ne sont touchees (intouchables T267). Compteur log
+   « couches PURGEES dessus ».
+C. AUDIT FINAL ELARGI (zero « grass gris nu ») : le premier corps plein
+   ouvert au ciel qui est de la peau terreuse saine — GRASS_BLOCK, DIRT,
+   COARSE_DIRT, ROOTED_DIRT, PODZOL, MYCELIUM — recoit, si snowCoverHere
+   le decide (neige native/ spray mesure), UNE couche de neige, garde
+   eau/glace compris, jamais a travers les recoltes. Compteur log
+   « corps terreux nus zones-neige ».
+D. Banner client : [build T285] sur /dlbtest.
+
+Logs a verifier en jeu
+----------------------
+- banner « build T285 » au /dlbtest ;
+- sweep : « T285 sweep-neige ... (garde EAU+GLACE) » avec
+  « N poses REFUSEES support glace + M REFUSEES support eau » et
+  « K couches PURGEES dessus » (K > 0 attendu autour du lac gele du
+  screen 23.08.22 — c'est le stock qui part) ;
+- audit : « T285 audit final snowy nu + peau terreuse ...  + B corps
+  terreux nus zones-neige ...  -> P couches posees » (P > 0 attendu au
+  pied de la structure du screen 23.08.43).
+
+Reste connu / non touche (hors scope de ce retour) : T246 p2 d21-23,
+perfs (« Can't keep up » 81,7 s au paste dragon T284), corniches
+snow_block, mob suffocated, POI data mismatch.
+
+Contenu des zips (NONBT, zero .nbt, checksums sha256 36/36 vs
+mod_project/src) :
+  DEEP-LUCKY-BLOCK-T285-SRC-SEUL-NONBT.zip    — ./main/ (java + miroir
+    resources/deepluckyblock_patch/FIXES_MCREATOR, 9 sources compteurs/
+    terrain synchronises)
+  DEEP-LUCKY-BLOCK-T285-SRC-COMPLET-NONBT.zip — ./ (projet MCreator
+    complet, les memes 9 sources synchronises sous src/main/... x2)
