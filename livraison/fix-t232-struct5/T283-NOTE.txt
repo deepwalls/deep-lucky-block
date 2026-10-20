@@ -1,0 +1,127 @@
+==================================================================
+DEEP LUCKY BLOCK — FIX T283 (20/10/2026)
+Retour client apres test de T282 (log MCreator du 20/10 06:48-07:01,
+banner « build T282 » conforme, dragon pose a 617,91,-304, fin 39 s,
+zone [580 31 -326]) + capture d'ecran :
+
+  1) « quand tu pose le terrain, il y a un degrade dans la glace (la
+     ou il y avait un lac gele) — la glace doit rester intacte »
+  2) « tu as un passe-air : en dessous de y1 structure (y1 = sol + 1
+     bloc, calcule selon ou la structure est placee dans le sol ; y1
+     n'est pas forcement le point le plus haut), ne pas retirer les
+     blocs proches de mes blocs ; en dessous du sol y0, il est
+     INTERDIT de creer un trou autour des blocs »
+  3) « dans la zone structure, il reste des blocs de grass enneige
+     (snowy=true) SANS couche de neige dessus, generalement en y+3
+     structure — c'est vraiment moche » (rebords d'herbe ouverts au
+     ciel)
+==================================================================
+
+------------------------------------------------------------------
+1) GLACE INTACTE — CAUSE RACINE CORRIGEE A LA SOURCE
+------------------------------------------------------------------
+Diagnostic par lecture de code : le lissage excluait deja la glace
+de surface (T267) et toute pose de neige sur glace etait refusee
+(T282), MAIS les deux post-passes de finition — fusion sol/structure
+(T278) et garantie de pente du glacis (T279) — avaient chacune leur
+PROPRE scan de colonnes qui testait seulement « fluide non vide ».
+La glace n'est pas un fluide et ICE/PACKED_ICE figurent dans la liste
+des terrains naturels (isNaturalTerrain) : une colonne dont le sommet
+etait de la glace etait donc traitee comme du terrain => remblai
+SALE (dirt/stone/herbe) construit PAR-DESSUS la croute du lac gele
+ou coupe a travers = le « degrade dans la glace » de la capture.
+
+Correctif : dans ces DEUX scans, la famille glace (ICE / PACKED_ICE /
+BLUE_ICE / FROSTED_ICE) est desormais classee EXACTEMENT comme l'eau :
+colonne entiere sautee, jamais d'ancre de hauteur, jamais de remblai
+par-dessus, jamais de coupe dedans. Le degel selectif T280 (croutes
+fraiches formees par le chantier) est inchange — sa seule cible reste
+la glace fraiche signee (eau liquide adjacente, ciel degage), jamais
+la glace du worldgen.
+
+Log attendu inchange cote fusion (colonne glace comptee dans
+« eau sautee ») ; cote glacis les colonnes de glace rejoignent les
+colonnes protegees/sautees.
+
+------------------------------------------------------------------
+2) ZERO TROU SOUS y0 COLLE AUX FONDATIONS (passe-air)
+------------------------------------------------------------------
+Trois garde-fous independants, mem profil que la rampe T282 (Y0 au
+mur, -2 blocs par anneau en s'eloignant, borne naturel+16) :
+
+  - clamp du lissage : dans le ruban de contact dd 1..8, la cible du
+    smooth ne peut plus etre ramence SOUS le plancher
+    min(profil, naturel+16) — le clamp qui descendait une colonne
+    dans un creux proche du mur est desormais contre-balance par le
+    plancher. Log : « T283 plancher de coupe (ruban de contact
+    dd 1..8) : N colonnes relevees ... ».
+  - coupe du glacis (T279) : le plancher de coupe etait « terrain
+    naturel » ; un creux naturel COLLE au mur autorisait donc une
+    fosse sous y0. Nouveau plancher : max(naturel, min(profil,
+    naturel+16)) — la falaise naturelle eloignee reste respectee
+    (plancher naturel conserve), mais a portee du mur la coupe
+    s'arrete sur la rampe, jamais dessous.
+  - DERNIER GARDE-FOU numerique (apres la relaxation de pente de
+    contact, juste avant le restore Y0 de l'emprise) : nouvelle passe
+    contactFloorSweep qui re-applique le meme plancher sur le ruban
+    dd 1..8 — c'est elle qui annule exactement le « trou » que la
+    relaxation de pente creusait en descendant chaque colonne vers sa
+    voisine la plus basse. Log : « T283 plancher de coupe
+    (post-relaxation de contact) : N colonnes relevees ... ».
+
+Resultat : au mur le sol est a Y0, a 1 anneau Y0, a 2 anneaux Y0-2,
+etc. — aucun trou, aucun passe-air sous y0 ni sous la rampe pres de
+la structure. Les coupes AU-DESSUS de y1 (parois naturelles, T89)
+restent libres ; l'eau/glace reste exclue partout.
+
+------------------------------------------------------------------
+3) SNOWY SANS COUCHE — AUDIT FINAL CIEL-LIBRE
+------------------------------------------------------------------
+Nouvelle passe finalSnowyLayerAudit, executee APRES le sweep-neige
+T263-T282 (qui reste en place), sur EXACTEMENT la meme fenetre union
+(chunks des lissages + fenetre du keeper + coussin +8). Prudence et
+determinisme :
+
+  - SEULES les colonnes OUVERTES AU CIEL sont auditees : descente
+    depuis MOTION_BLOCKING_NO_LEAVES, on traverse air/herbes/neige
+    fine et on n'inspecte QUE le premier corps rencontre. Un toit de
+    structure, un tronc, un feuillage, un decor au-dessus = « pas
+    ciel libre » => on n'y touche pas (T277 « zero neige dedans »
+    reste inviolable) ;
+  - premier corps = SnowyDirtBlock snowy=true au dessus libre (air,
+    ou bloc remplacable non-SNOW — les cultures restent protegees) :
+    * neige native/spread decide par snowCoverHere => pose D'UNE
+      couche de neige ;
+    * snowCoverHere refuse => le flag snowy repasse en herbe normale
+      (plus jamais de gris nu dans la zone structure) ;
+  - garde T282 maintenu mot pour mot : support effectif = glace =>
+    pose refusee, bloc conserve tel quel, compte a part ;
+  - une case deja occupee par une couche SNOW = colonne consideree
+    couverte, rien n'est change (repasser le scan ne change plus
+    rien).
+
+Log attendu : « T283 audit final snowy nu (fenetre union identique
+au sweep, ciel libre seulement) : ... N snowy nus ouverts au ciel
+repares -> A couches posees, B repeints vert ... ».
+
+------------------------------------------------------------------
+CONTROLE DE VERSION / CONTENU
+------------------------------------------------------------------
+- Banner console : « commande prete : /dlbtest ... [build T283] ».
+- Commit code : 8e7cf6e (branche arena/7cdbe3b3-deep-lucky-block),
+  CI Java 21 build run 39374054539 : SUCCESS.
+- Zips (memes arbres que T282, ni plus ni moins) :
+    DEEP-LUCKY-BLOCK-T283-SRC-SEUL-NONBT.zip    5 827 507 o / 1442 entrees
+    DEEP-LUCKY-BLOCK-T283-SRC-COMPLET-NONBT.zip 17 458 091 o / 1706 entrees
+- *.nbt : ZERO dans les deux zips (T271 inchange : les NBT ne partent
+  jamais dans une livraison).
+- Checksums MD5 : 9 fichiers x 4 arbres (main + miroir FIXES_MCREATOR
+  des deux zips) = 36/36 identiques aux sources du commit.
+- Fichiers modifies (2) : StructureTerrainPrep.java (glace intacte
+  dans les scans fusion+glacis, planchers de coupe Y0-2*(dd-1) dans
+  clamp/glacis/contactFloorSweep, audit final snowy nu, logs),
+  DlbTestCommands.java (banner T283).
+
+Rappel toujours ouvert (non touches ici) : lignes residuelles
+T246 p2 d21-23, perf « Can't keep up » (15641 ms pire),
+corniches snow_block, Nitwit suffocated, POI data mismatch.

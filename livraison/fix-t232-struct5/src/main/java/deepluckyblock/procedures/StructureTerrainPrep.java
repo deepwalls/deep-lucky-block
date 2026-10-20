@@ -1280,6 +1280,12 @@ public class StructureTerrainPrep {
                     // chaque grass snowy de la zone, taux client 1/2/3,
                     // AVANT le relachement des chunks (fenetre encore tenue).
                     forceSnowLayerSweep(level, min, max);
+                    // T283 (retour client 20/10 : snowy nus ouverts au ciel
+                    // dans la zone structure, « generalement en y+3 ») :
+                    // audit final ciel-libre, juste apres le sweep, meme
+                    // fenetre union -- pose 1 couche si neige native, sinon
+                    // de-snowy. Gardes T277 (dedans) et T282 (glace) actives.
+                    finalSnowyLayerAudit(level, min, max);
                     deepluckyblock.util.TerrainChain.release(chainKey);
                     deepluckyblock.util.ChunkKeeper.release(level);
                     clearFootprintProtection();
@@ -1346,7 +1352,12 @@ public class StructureTerrainPrep {
                 int topSolid = -1;
                 for (int y = top; y >= y0 - 12; y--) {
                     BlockState s = level.getBlockState(mut.set(x, y, z));
-                    if (!s.getFluidState().isEmpty()) { topSolid = Integer.MIN_VALUE; break; }
+                    // T283 (retour client 20/10 : « interdit de faire des
+                    // degrades dans la glace, elle doit rester intacte ») :
+                    // la glace de surface (ICE/PACKED/BLUE/FROSTED) est
+                    // PASSEE COMME L'EAU — fusion = colonne entiere saute,
+                    // jamais de remblai par-dessus, jamais de coupe dedans.
+                    if (!s.getFluidState().isEmpty() || isIceFamily(s)) { topSolid = Integer.MIN_VALUE; break; }
                     if (s.isAir() || s.is(Blocks.SNOW) || !s.blocksMotion()) continue;
                     topSolid = y;
                     break;
@@ -1434,7 +1445,12 @@ public class StructureTerrainPrep {
                     t = -1;
                     for (int y = scanTop; y >= y0 - 12; y--) {
                         BlockState s = level.getBlockState(mut.set(x, y, z));
-                        if (!s.getFluidState().isEmpty()) { t = Integer.MIN_VALUE; break; }
+                        // T283 (meme consigne « glace intacte ») : une colonne
+                        // dont le sommet est de la glace n'est PAS un ancre
+                        // de terrain — elle est exclue du glacis exactement
+                        // comme l'eau (ni remblai par-dessus, ni coupe a
+                        // travers, ni hauteur tiree de son sommet).
+                        if (!s.getFluidState().isEmpty() || isIceFamily(s)) { t = Integer.MIN_VALUE; break; }
                         if (s.isAir() || s.is(Blocks.SNOW) || !s.blocksMotion()) continue;
                         t = y;
                         break;
@@ -1472,7 +1488,18 @@ public class StructureTerrainPrep {
                     if (hi == Integer.MIN_VALUE) lo = hi = y0;              // ancre de repli : sol zero de la structure
                     int nat = ref[i][j];
                     int want = t;
-                    if (t > hi + G) want = Math.max(hi + G, nat);           // jamais creuser sous le naturel
+                    // T283 (retour client 20/10 : « ne pas retirer les blocs
+                    // proches de mes blocs, en tout cas en dessous de y1
+                    // structure [...] en dessous du sol y0, il est INTERDIT
+                    // de creer un trou autour des blocs ») : la coupe du
+                    // glacis a un PLANCHER = profil de la rampe de contact
+                    // (Y0 au mur, -2 par anneau), borne a nat+16 ; au-dela le
+                    // plancher historique = naturel (une falaise naturelle
+                    // n'est jamais rasee). Plus AUCUN trou pris sous le
+                    // niveau de la rampe ne peut s'ouvrir < y0 colle aux
+                    // fondations.
+                    int cutFloor = Math.max(nat, Math.min(glacisContactFloor(ring), nat + 16));
+                    if (t > hi + G) want = Math.max(hi + G, cutFloor);      // jamais sous le plancher de coupe
                     else if (t < lo - G) want = Math.min(lo - G, nat + 8);  // T282 : jamais monter de plus de 8 (collet +16 supprime)
                     if (want == t) continue;
                     boolean hadSnow = level.getBlockState(mut.set(x, t + 1, z)).is(Blocks.SNOW);
@@ -2116,6 +2143,97 @@ public class StructureTerrainPrep {
                 System.currentTimeMillis() - tic);
     }
 
+    /** T283 (retour client 20/10, capture du run T282 : dans la zone
+     *  structure on trouve encore des grass_block snowy=true SANS couche de
+     *  neige, « generalement en y+3 structure » = rebords d'herbe ouverts au
+     *  ciel que le sweep n'a pas recouverts) : PASSE FINALE d'audit, tournee
+     *  APRES forceSnowLayerSweep, sur la MEME fenetre union (+ coussin). Pour
+     *  chaque colonne OUVERTE AU CIEL (descente depuis
+     *  MOTION_BLOCKING_NO_LEAVES : air, herbes et neige fine traverses, le
+     *  premier corps rencontre est le seul audite — un toit, un tronc, un
+     *  feuillage ou un decor au-dessus = « pas ciel libre », on n'y touche
+     *  PAS, la regle T277 « zero neige dedans » reste inviolable), si ce corps
+     *  est un SnowyDirtBlock snowy=true au dessus libre (air ou bloc
+     *  remplacable non-SNOW, cultures preservees) : snowCoverHere decide =
+     *  pose d'UNE couche de neige ; snowCoverHere refuse = le flag snowy
+     *  repasse en herbe normale (plus jamais de gris nu). Garde T282 intact :
+     *  support effectif = glace => pose refusee, bloc conserve tel quel.
+     *  Deterministe : repasser le scan ne change plus rien. */
+    private static void finalSnowyLayerAudit(ServerLevel level, BlockPos structMin, BlockPos structMax) {
+        long tic = System.currentTimeMillis();
+        int r2 = terrainRing() + NATURALIZE_EXTRA_RING + 2 + 8;
+        int xMin2 = structMin.getX() - r2, xMax2 = structMax.getX() + r2;
+        int zMin2 = structMin.getZ() - r2, zMax2 = structMax.getZ() + r2;
+        if (SMOOTH_WIN_SET) {
+            xMin2 = Math.min(xMin2, SMOOTH_WIN_X0 - 8);
+            zMin2 = Math.min(zMin2, SMOOTH_WIN_Z0 - 8);
+            xMax2 = Math.max(xMax2, SMOOTH_WIN_X1 + 8);
+            zMax2 = Math.max(zMax2, SMOOTH_WIN_Z1 + 8);
+        }
+        int[] held = deepluckyblock.util.ChunkKeeper.zoneBlockBounds(level);
+        if (held != null) {
+            xMin2 = Math.min(xMin2, held[0] - 8);
+            zMin2 = Math.min(zMin2, held[1] - 8);
+            xMax2 = Math.max(xMax2, held[2] + 8);
+            zMax2 = Math.max(zMax2, held[3] + 8);
+        }
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        long chunkCount = 0, skippedChunks = 0, seenSnowy = 0;
+        long fixedPlaced = 0, fixedUnsnow = 0, alreadyLayered = 0, refuseIce = 0, skipObstacle = 0;
+        for (int cx = xMin2 >> 4; cx <= xMax2 >> 4; cx++) {
+            for (int cz = zMin2 >> 4; cz <= zMax2 >> 4; cz++) {
+                if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
+                ChunkAccess chunk = level.getChunk(cx, cz);
+                chunkCount++;
+                for (int lx = 0; lx < 16; lx++) {
+                    int x = (cx << 4) + lx;
+                    if (x < xMin2 || x > xMax2) continue;
+                    for (int lz = 0; lz < 16; lz++) {
+                        int z = (cz << 4) + lz;
+                        if (z < zMin2 || z > zMax2) continue;
+                        int hy = chunk.getHeight(
+                                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
+                        int lo = Math.max(level.getMinBuildHeight(), hy - 64);
+                        for (int y = hy + 1; y >= lo; y--) {
+                            pos.set(x, y, z);
+                            BlockState s = chunk.getBlockState(pos);
+                            if (s.isAir() || s.canBeReplaced() || s.is(Blocks.POWDER_SNOW)) continue;
+                            if (s.is(Blocks.SNOW)) { alreadyLayered++; break; }      // couche plein-ciel deja presente
+                            if (!(s.getBlock() instanceof net.minecraft.world.level.block.SnowyDirtBlock)
+                                    || !s.getValue(BlockStateProperties.SNOWY)) break;  // couvert/dedans/decor : T277, stop
+                            seenSnowy++;
+                            BlockState above = chunk.getBlockState(pos.set(x, y + 1, z));
+                            if (above.is(Blocks.SNOW)) { alreadyLayered++; break; }
+                            if (!above.isAir() && !(above.canBeReplaced()
+                                    && !(above.getBlock() instanceof net.minecraft.world.level.block.CropBlock))) {
+                                skipObstacle++;   // dalle/mobilier/torche... : meme regle que le sweep, on laisse
+                                break;
+                            }
+                            if (!snowCoverHere(level, level.getSeed(), x, z)) {
+                                level.setBlock(pos.set(x, y, z),
+                                        s.setValue(BlockStateProperties.SNOWY, false), 3);
+                                fixedUnsnow++;
+                                break;
+                            }
+                            if (snowSupportIsIce(chunk, pos, x, y + 1, z)) { refuseIce++; break; }   // T282 : jamais sur glace
+                            level.setBlock(pos.set(x, y + 1, z),
+                                    Blocks.SNOW.defaultBlockState().setValue(
+                                            net.minecraft.world.level.block.SnowLayerBlock.LAYERS, 1), 3);
+                            fixedPlaced++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        LOGGER.info("[DLB-STRUCTURE] T283 audit final snowy nu (fenetre union identique au sweep, ciel libre seulement) : "
+                        + "{} chunks (skippes hors keeper : {}), {} snowy nus ouverts au ciel repares "
+                        + "-> {} couches posees, {} repeints vert (pas de neige native) ; "
+                        + "{} deja couverts, {} poses REFUSEES support glace (garde T282), {} sur-obstacle laisses, en {} ms",
+                chunkCount, skippedChunks, seenSnowy, fixedPlaced, fixedUnsnow,
+                alreadyLayered, refuseIce, skipObstacle, System.currentTimeMillis() - tic);
+    }
+
     /** Chaine historique complete (terrain PUIS finitions) : appelee par l'appelant
      *  historique (lac de crimson). Les deux pipelines principaux utilisent
      *  desormais {@link #decorateTerrainOnly} puis {@link #decorateFinish}. */
@@ -2348,6 +2466,11 @@ public class StructureTerrainPrep {
                                     // avant la porte de stabilisation (la
                                     // lumiere se stabilisera dedans).
                                     forceSnowLayerSweep(level, min, max);
+                                    // T283 : meme audit final ciel-libre
+                                    // apres le sweep (snowy nus ouverts au
+                                    // ciel dans la zone structure, retour
+                                    // client 20/10) -- gardes T277/T282.
+                                    finalSnowyLayerAudit(level, min, max);
                                     deepluckyblock.util.DebugLog.setPhase("stabilisation puis relachement des chunks");
                                     deepluckyblock.util.SettleGate.wait(level, min, max, () -> {
                                     // Fin de chaine : le terrain est definitif et la
@@ -5688,6 +5811,39 @@ public class StructureTerrainPrep {
         return hm;
     }
 
+    /** T283 (retour client 20/10 : « ne pas retirer les blocs proches de mes
+     *  blocs, en tout cas en dessous de y1 structure [...] en dessous du sol
+     *  y0, il est INTERDIT de creer un trou autour des blocs ») : PLANCHER DE
+     *  COUPE du ruban de contact (dd 1..8 de l'emprise), re-applique apres
+     *  les relaxations de pente (limitContactSlope/T260) qui, elles,
+     *  DESCENDENT chaque colonne vers sa voisine la plus basse et creusaient
+     *  le passe-air colle aux fondations. Une colonne du ruban ne peut plus
+     *  rester sous le profil de la rampe (Y0 au mur, -2 par anneau), borne
+     *  naturel+16 ; eau/glace (waterMask) et emprise : exclues. Retourne le
+     *  nombre de colonnes relevees. */
+    private static int contactFloorSweep(int[][] orig, int[][] hm, boolean[][] waterMask,
+                                         int x0, int z0, int w, int h,
+                                         int sMinI, int sMaxI, int sMinJ, int sMaxJ) {
+        if (CLEARANCE_PLAN == null) return 0;
+        int[][] ref = naturalReference(orig, x0, z0, w, h);
+        int n = 0;
+        for (int i = 0; i < w; i++) {
+            for (int j = 0; j < h; j++) {
+                if (waterMask != null && waterMask[i][j]) continue;
+                boolean inX = i >= sMinI && i <= sMaxI;
+                boolean inZ = j >= sMinJ && j <= sMaxJ;
+                if (inX && inZ) continue;                    // emprise : restore Y0 juste apres
+                int ddI = i < sMinI ? sMinI - i : (i > sMaxI ? i - sMaxI : 0);
+                int ddJ = j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0);
+                int dd = Math.max(ddI, ddJ);
+                if (dd < 1 || dd > 8) continue;              // ruban de tres proche contact
+                int floorLv = Math.min(glacisContactFloor(dd), ref[i][j] + 16);
+                if (floorLv != Integer.MIN_VALUE && hm[i][j] < floorLv) { hm[i][j] = floorLv; n++; }
+            }
+        }
+        return n;
+    }
+
     /** T23 : remblai maximal autorise du lissage (vers le haut), en blocs,
      *  LOIN de l'emprise (fenetre de fond T89). */
     private static final int MAX_SMOOTH_RISE = 10;
@@ -5763,6 +5919,23 @@ public class StructureTerrainPrep {
         return Math.max(0, Math.min(16, profiled));
     }
 
+    /** T283 (retour client 20/10, verbatim : « ne pas retirer les blocs
+     *  proches de mes blocs, en tout cas en dessous de y1 structure — y1 =
+     *  sol + 1 bloc, calcule selon ou la structure est placee dans le sol ;
+     *  en dessous du sol y0, il est INTERDIT de creer un trou autour des
+     *  blocs ») : PLANCHER DUR de la cible du lissage et de la coupe du
+     *  glacis dans le ruban de contact = le profil meme de la rampe (Y0 au
+     *  mur, -2 par anneau en s'eloignant). Aucune relaxation de pente,
+     *  aucun clamp, aucune coupe ne peut redescendre une colonne SOUS ce
+     *  profil a portee du mur : il ne peut donc jamais s'ouvrir de passe-air
+     *  ni de creux sous le niveau du sol contre les fondations. Au-dela du
+     *  ruban (ou sans plan de rasage valide) : aucun plancher, regles
+     *  historiques conservees. */
+    private static int glacisContactFloor(int dEm) {
+        if (dEm < 1 || CLEARANCE_PLAN == null) return Integer.MIN_VALUE;
+        return CLEARANCE_PLAN.groundY() - MAX_SLOPE_STEP * (dEm - 1);
+    }
+
     /** T21 : borne ABSOLUE de la variation du lissage par rapport au terrain naturel.
      *  T89 (B9) : la borne est ADAPTATIVE -- plus la colonne est proche de
      *  l'emprise ({@code sMinI..sMaxI} x {@code sMinJ..sMaxJ}), plus la marge
@@ -5777,6 +5950,7 @@ public class StructureTerrainPrep {
         // 5 a 8 lissages du pipeline finissaient par recreuser le paysage.
         int[][] ref = naturalReference(orig, x0, z0, w, h);
         int clamped = 0, worst = 0, worstX = 0, worstZ = 0;
+        int floored = 0;   // T283 : colonnes du ruban de contact relevees au plancher de coupe
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
                 if (waterMask != null && waterMask[i][j]) continue;         // colonne d'eau
@@ -5843,6 +6017,21 @@ public class StructureTerrainPrep {
                 allowDrop = Math.round(allowDrop * feather);
                 if (d > allowRise) { hm[i][j] = ref[i][j] + allowRise; clamped++; }
                 else if (d < -allowDrop) { hm[i][j] = ref[i][j] - allowDrop; clamped++; }
+                // T283 (retour client 20/10 : « en dessous du sol y0, il est
+                // INTERDIT de creer un trou autour des blocs ») : dans le
+                // ruban de contact (dd 1..8) le lissage ne peut plus
+                // redescendre une colonne SOUS le profil de la rampe
+                // (Y0 au mur, -2/anneau ; borne naturel+16). Ni le clamp de
+                // coupe ci-dessus ni aucune descente precedente ne peut la
+                // laisser sous ce plancher — zero passe-air colle aux murs.
+                int ddContact = Math.max(dx, dz);
+                if (ddContact >= 1 && ddContact <= 8) {
+                    int floorLv = Math.min(glacisContactFloor(ddContact), ref[i][j] + 16);
+                    if (floorLv != Integer.MIN_VALUE && hm[i][j] < floorLv) {
+                        hm[i][j] = floorLv;
+                        floored++;
+                    }
+                }
             }
         }
         if (clamped > 0) {
@@ -5858,6 +6047,11 @@ public class StructureTerrainPrep {
                             + "(fenetre adaptative T89+T263 : coupe -{} bord, remblai mini-trous seulement, max +2 contact), aucune colonne bridée",
                     worst, ADAPTIVE_SMOOTH_MAX);
         }
+        if (floored > 0)
+            LOGGER.info("[DLB-STRUCTURE] T283 plancher de coupe (ruban de contact dd 1..8) : {} colonnes relevees "
+                            + "au profil de la rampe (Y0 au mur, -2 par anneau, borne naturel+16) "
+                            + "-- plus aucun trou/passe-air sous y0 colle aux fondations",
+                    floored);
         return hm;
     }
 
@@ -6421,6 +6615,25 @@ public class StructureTerrainPrep {
             if (clamped > 0)
                 deepluckyblock.util.DebugLog.structure(
                         "T260 tablier : {} colonnes du ruban de contact ecretees a Y0+3 (regle dure client)", clamped);
+        }
+
+        // T283 (retour client 20/10 : « en dessous du sol y0, il est INTERDIT
+        // de creer un trou autour des blocs ; tu as un passe-air ») : la
+        // relaxation de pente de contact (ci-dessus) descend chaque colonne
+        // vers sa voisine la plus basse — colle au mur c'est exactement ce
+        // qui creusait le « trou » sous le niveau de la rampe. DERNIER
+        // GARDE-FOU avant le restore Y0 : dans le ruban dd 1..8, aucune
+        // colonne ne reste sous le profil de la rampe de contact
+        // (Y0 au mur, -2 par anneau, borne naturel+16). Eau/glace exclues
+        // (waterMask), emprise figee par le restore qui suit.
+        if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.matches(level, structMin, structMax)) {
+            int flooredLate = contactFloorSweep(orig, target, waterMask, x0, z0, w, h,
+                    sMinI, sMaxI, sMinJ, sMaxJ);
+            if (flooredLate > 0)
+                LOGGER.info("[DLB-STRUCTURE] T283 plancher de coupe (post-relaxation de contact) : {} colonnes "
+                                + "relevees au profil de la rampe (Y0 au mur, -2 par anneau, borne naturel+16) "
+                                + "-- zero trou sous y0 colle aux fondations",
+                        flooredLate);
         }
 
         // Garantie finale du noyau APRÈS tous les garde-fous numériques : aucune
