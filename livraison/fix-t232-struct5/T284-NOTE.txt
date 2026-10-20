@@ -1,0 +1,110 @@
+==================================================================
+DEEP LUCKY BLOCK — FIX T284 (20/10/2026, deuxieme livraison du jour)
+Retour client apres test de T283 (log MCreator 07:32-07:40, banner
+« build T283 » conforme a 07:33:53, dragon pose a 149,97,-82, fin
+54 s, zone [127 37 -119]) + screens avant/apres (07:36:04/07:36:08) :
+
+  1) << tu n'as en fait pas pose de couche de neige sur la glace
+     directement : tu as fait ton spread entre regions / types de
+     blocs, et tu as spread la terre grass enneigee DANS LA glace.
+     Trouve ce que tu as fait entre les deux screens qui pouvait
+     etre le coupable, et regle le pour ne JAMAIS poser de couche de
+     neige sur la glace >>
+  2) << il y a toujours un trou de 3 blocs de radius qui suit la
+     structure en profondeur ! >>
+==================================================================
+
+------------------------------------------------------------------
+1) GLACE INTACTE — LE COUPABLE ENTRE LES DEUX SCREENS, TROUVE
+------------------------------------------------------------------
+T283 avait bien interdit de POSER une couche de neige sur la glace
+et le run client le prouvait (sweep : << 0 poses REFUSEES support
+glace >>, audit : 0 pose refusee, 3536 colonnes eau/glace intouchees).
+Pourtant des taches de TERRE enneigee apparaissent dans la nappe de
+glace : ce n'est pas une couche de neige posee, c'est le terrain
+RECONSTRUIT par-dessus la glace qui recoit ensuite sa couche, comme
+tout terrain.
+
+Coupable identifie de facon certaine par lecture de code :
+waterColumns(), le masque qui exclut eau et glace du lissage
+(T267), ne regarde QUE le bloc tout en haut de la colonne (heightmap
+WORLD_SURFACE). Or en biome neige, un lac gele porte presque
+TOUJOURS UNE COUCHE DE NEIGE vanilla au-dessus de sa croute ICE :
+le sommet de colonne est alors SNOW — ni eau, ni glace — et la
+colonne etait classee TERRAIN => le smooth la lissait et le rebuild
+reconstruisait stone/dirt/grass PAR-DESSUS la croute de glace
+(enterree ou percee), puis la passe neige recouvrait cette terre de
+couches, exactement comme le montrent vos deux screens.
+
+Correctif T284 : waterColumns() descend desormais A TRAVERS la
+couche de neige (meme regle de descente que snowSupportIsIce, max
+24 blocs) jusqu'au vrai support avant de classer la colonne : si ce
+support est de l'eau (fluide) OU de la glace (ICE/PACKED_ICE/
+BLUE_ICE/FROSTED_ICE), la colonne entiere rejoint le masque eau/
+glace : jamais lissee, jamais reconstruite, jamais coupee, jamais
+comblee. La glace du lac reste intacte, qu'elle soit nue ou deja
+recouverte de neige. Le degel selectif T280 (croutes fraiches du
+chantier) et le garde anti-pose T282 sont inchanges.
+
+------------------------------------------------------------------
+2) TROU DE 3 BLOCS DE RADIUS COLLE A LA STRUCTURE, EN PROFONDEUR
+------------------------------------------------------------------
+T283 avait ajoute le plancher de coupe anti-trou, MAIS avec une
+borne << naturel+16 >> (heritage de la regle anti-remblai T282) :
+dans un creux naturel profond colle au mur, le plancher laissait le
+creux se remblayer de 16 blocs SEULEMENT — au-dela, le puits
+naturel restait ouvert contre les fondations. Sur votre run :
+cible de lissage Y0=97, creux proche tres en dessous => un trou
+profond, d'environ 3 blocs de rayon, longeait la structure =
+exactement le symptome decrit. Les logs T283 le montrent d'ailleurs
+(256 + 239 + 248 colonnes remontees << au profil >> — elles, elles
+etaient sauvees car a moins de 16 du profil).
+
+Correctif T284 : le plancher devient le PROFIL PUR de la rampe
+(Y0 au mur, -2 blocs par anneau), SANS la borne naturel+16, aux
+trois endroits qui le garent :
+  - clamp du lissage (ruban de contact dd 1..8) ;
+  - coupe du garde-glacis T279 : plancher = max(terrain naturel,
+    profil de la rampe) — la falaise naturelle eloignee reste
+    respectee, mais a portee du mur la coupe s'arrete AU NIVEAU de
+    la rampe ;
+  - garde-fou final numerique contactFloorSweep, re-applique apres
+    les relaxations de pente, juste avant le restore Y0.
+Consequence voulue : le sol arrive EXACTEMENT a la rampe contre la
+structure, ni fosse ni collet. La regle anti-montagne T282 est
+inchangee : la rampe ne depasse jamais Y0 au mur ; seule la
+profondeur residuelle que la borne +16 tolerait disparait.
+
+------------------------------------------------------------------
+LOGS A REGARDER SUR VOTRE PROCHAIN RUN
+------------------------------------------------------------------
+- Banniere : << commande prete : /dlbtest ... [build T284] >>.
+- Smooth : le compteur de colonnes << eau (dont gelees) >> doit
+  AUSSI englober les nappes gelees recouvertes de neige (il etait
+  trop bas avant -> c'est lui qui signalait le mal).
+- << T284 plancher de coupe ... >> (ruban de contact dd 1..8 ET
+  post-relaxation) : nombres possibles plus eleves qu'en T283 dans
+  les zones a creux profonds — c'est le remblai JUSQU'A LA RAMPE,
+  plus jamais un puits residuel.
+- Sweep + audit final : toujours << 0 pose sur glace >> ; nappe
+  gelees enneigees = touchees par rien du tout desormais.
+
+------------------------------------------------------------------
+CONTROLE DE VERSION / CONTENU
+------------------------------------------------------------------
+- Banner console : << commande prete : /dlbtest ... [build T284] >>.
+- Commit code : 4d5b9d4 (branche arena/7cdbe3b3-deep-lucky-block),
+  CI Java 21 build run 39377241065 : SUCCESS.
+- Zips (memes arbres que T283, ni plus ni moins) :
+    DEEP-LUCKY-BLOCK-T284-SRC-SEUL-NONBT.zip    5 828 997 o / 1442 entrees
+    DEEP-LUCKY-BLOCK-T284-SRC-COMPLET-NONBT.zip 17 459 581 o / 1706 entrees
+- *.nbt : ZERO dans les deux zips (T271 inchange).
+- Checksums MD5 : 9 fichiers x 4 arbres (main + miroir FIXES_MCREATOR
+  des deux zips) = 36/36 identiques aux sources du commit.
+- Fichiers modifies (2) : StructureTerrainPrep.java (waterColumns
+  descend a travers SNOW, planchers de coupe = profil pur, libelles
+  de logs), DlbTestCommands.java (banner T284).
+
+Rappel toujours ouvert (non touches ici) : lignes residuelles
+T246 p2 d21-23, perfs (<< Can't keep up >> jusqu'a ~14 s / tick),
+corniches snow_block, Nitwit suffocated, POI data mismatch.

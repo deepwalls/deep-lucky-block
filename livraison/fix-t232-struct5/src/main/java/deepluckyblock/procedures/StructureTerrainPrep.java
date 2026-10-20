@@ -1492,13 +1492,19 @@ public class StructureTerrainPrep {
                     // proches de mes blocs, en tout cas en dessous de y1
                     // structure [...] en dessous du sol y0, il est INTERDIT
                     // de creer un trou autour des blocs ») : la coupe du
-                    // glacis a un PLANCHER = profil de la rampe de contact
-                    // (Y0 au mur, -2 par anneau), borne a nat+16 ; au-dela le
-                    // plancher historique = naturel (une falaise naturelle
-                    // n'est jamais rasee). Plus AUCUN trou pris sous le
-                    // niveau de la rampe ne peut s'ouvrir < y0 colle aux
-                    // fondations.
-                    int cutFloor = Math.max(nat, Math.min(glacisContactFloor(ring), nat + 16));
+                    // glacis a un PLANCHER = max(naturel, profil de la rampe
+                    // de contact (Y0 au mur, -2 par anneau) ; T284 : borne
+                    // nat+16 supprimee) — une falaise naturelle n'est jamais
+                    // rasee, mais a portee du mur plus AUCUN trou sous la
+                    // rampe ne peut s'ouvrir contre les fondations.
+                    // T284 (meme retour client 20/10 : « trou de 3 blocs de
+                    // radius qui suit la structure en profondeur ») : la
+                    // borne nat+16 du T283 laissait la coupe plonger dans un
+                    // creux profond contre le mur ; plancher de coupe =
+                    // max(naturel, profil PUR de la rampe) : une falaise
+                    // naturelle eloignee reste respectee, mais a portee du
+                    // mur la coupe s'arrete AU NIVEAU de la rampe.
+                    int cutFloor = Math.max(nat, glacisContactFloor(ring));
                     if (t > hi + G) want = Math.max(hi + G, cutFloor);      // jamais sous le plancher de coupe
                     else if (t < lo - G) want = Math.min(lo - G, nat + 8);  // T282 : jamais monter de plus de 8 (collet +16 supprime)
                     if (want == t) continue;
@@ -1552,7 +1558,7 @@ public class StructureTerrainPrep {
             }
         }
         LOGGER.info("[DLB-STRUCTURE] T279 glacis continu : {} colonnes abaissees, {} remontees "
-                        + "(pente <= {} d'anneau en anneau sur {} blocs autour de l'emprise ; plancher = terrain naturel ; "
+                        + "(pente <= {} d'anneau en anneau sur {} blocs autour de l'emprise ; plancher = max(naturel, profil contact T284) ; "
                         + "colonnes protegees : {}), en {} ms",
                 lowered, raised, G, R, skipped, System.currentTimeMillis() - tic);
     }
@@ -2227,7 +2233,7 @@ public class StructureTerrainPrep {
             }
         }
         LOGGER.info("[DLB-STRUCTURE] T283 audit final snowy nu (fenetre union identique au sweep, ciel libre seulement) : "
-                        + "{} chunks (skippes hors keeper : {}), {} snowy nus ouverts au ciel repares "
+                        + "{} chunks (skippes hors keeper : {}), {} snowy herbeux ciel-libre inspectes "
                         + "-> {} couches posees, {} repeints vert (pas de neige native) ; "
                         + "{} deja couverts, {} poses REFUSEES support glace (garde T282), {} sur-obstacle laisses, en {} ms",
                 chunkCount, skippedChunks, seenSnowy, fixedPlaced, fixedUnsnow,
@@ -5468,6 +5474,22 @@ public class StructureTerrainPrep {
                 if (deepluckyblock.util.SafeSurface.isLoadedAt(level, x, z)) {
                     int y = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z) - 1;
                     BlockState surf = level.getBlockState(pos.set(x, y, z));
+                    // T284 (retour client 20/10, run T283 07:32 + screens
+                    // avant/apres : « tu n'as pas pose de couche SUR la glace,
+                    // tu as spread la terre grass enneigee DANS LA glace ») :
+                    // en biome neige, un lac gele porte presque toujours UNE
+                    // COUCHE DE NEIGE vanilla au-dessus de sa croute ICE — le
+                    // bloc WORLD_SURFACE est alors SNOW, ni fluide ni glace,
+                    // la colonne passait pour DU TERRAIN et le smooth/rebuild
+                    // reconstruisait grass/dirt PAR-DESSUS la glace (d'ou les
+                    // taches de terre enneigee dans la nappe). Descendre a
+                    // travers la neige (meme regle que snowSupportIsIce)
+                    // jusqu'au vrai support avant de decider.
+                    for (int depth = 0; depth < 24 && y > -64
+                            && (surf.is(Blocks.SNOW) || surf.is(Blocks.POWDER_SNOW)); depth++) {
+                        y--;
+                        surf = level.getBlockState(pos.set(x, y, z));
+                    }
                     wet = surf.getFluidState().is(net.minecraft.tags.FluidTags.WATER);
                     // T267 (consigne client run T266, 12:50, verbatim : « lors
                     // de modifs terrain, pose de sol, etc, si le sol est en
@@ -5819,13 +5841,13 @@ public class StructureTerrainPrep {
      *  DESCENDENT chaque colonne vers sa voisine la plus basse et creusaient
      *  le passe-air colle aux fondations. Une colonne du ruban ne peut plus
      *  rester sous le profil de la rampe (Y0 au mur, -2 par anneau), borne
-     *  naturel+16 ; eau/glace (waterMask) et emprise : exclues. Retourne le
+     *  (T284 : borne naturel+16 supprimee, plancher = profil pur) ; eau/glace
+     *  (waterMask) et emprise : exclues. Retourne le
      *  nombre de colonnes relevees. */
     private static int contactFloorSweep(int[][] orig, int[][] hm, boolean[][] waterMask,
                                          int x0, int z0, int w, int h,
                                          int sMinI, int sMaxI, int sMinJ, int sMaxJ) {
         if (CLEARANCE_PLAN == null) return 0;
-        int[][] ref = naturalReference(orig, x0, z0, w, h);
         int n = 0;
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
@@ -5837,7 +5859,14 @@ public class StructureTerrainPrep {
                 int ddJ = j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0);
                 int dd = Math.max(ddI, ddJ);
                 if (dd < 1 || dd > 8) continue;              // ruban de tres proche contact
-                int floorLv = Math.min(glacisContactFloor(dd), ref[i][j] + 16);
+                // T284 (« toujours un trou de 3 blocs de radius qui suit la
+                // structure en profondeur », run T283 client 20/10) : plancher
+                // = PROFIL PUR de la rampe, sans la borne naturel+16 du T283
+                // (un creux naturel profond colle au mur restait un puits
+                // residuel contre les fondations). Le rebuild du smooth pose
+                // la matiere ; cette garantie numerique ne peut jamais
+                // redescendre une colonne sous la rampe.
+                int floorLv = glacisContactFloor(dd);
                 if (floorLv != Integer.MIN_VALUE && hm[i][j] < floorLv) { hm[i][j] = floorLv; n++; }
             }
         }
@@ -6021,12 +6050,20 @@ public class StructureTerrainPrep {
                 // INTERDIT de creer un trou autour des blocs ») : dans le
                 // ruban de contact (dd 1..8) le lissage ne peut plus
                 // redescendre une colonne SOUS le profil de la rampe
-                // (Y0 au mur, -2/anneau ; borne naturel+16). Ni le clamp de
-                // coupe ci-dessus ni aucune descente precedente ne peut la
-                // laisser sous ce plancher — zero passe-air colle aux murs.
+                // (Y0 au mur, -2/anneau). Ni le clamp de coupe ci-dessus ni
+                // aucune descente precedente ne peut la laisser sous ce
+                // plancher — zero passe-air colle aux murs.
+                // T284 (meme retour : « toujours un trou de 3 blocs de radius
+                // qui suit la structure en profondeur ») : la borne
+                // « naturel+16 » du T283 laissait un creux naturel profond
+                // colle au mur se remblayer de 16 SEULEMENT = un puits
+                // residuel contre les fondations, exactement le « trou »
+                // revu. Plancher = PROFIL PUR de la rampe (jamais au-dessus
+                // de Y0, regle anti-montagne T282 inchangee) : le sol arrive
+                // exactement A LA RAMPE, ni fosse ni collet.
                 int ddContact = Math.max(dx, dz);
                 if (ddContact >= 1 && ddContact <= 8) {
-                    int floorLv = Math.min(glacisContactFloor(ddContact), ref[i][j] + 16);
+                    int floorLv = glacisContactFloor(ddContact);
                     if (floorLv != Integer.MIN_VALUE && hm[i][j] < floorLv) {
                         hm[i][j] = floorLv;
                         floored++;
@@ -6049,7 +6086,7 @@ public class StructureTerrainPrep {
         }
         if (floored > 0)
             LOGGER.info("[DLB-STRUCTURE] T283 plancher de coupe (ruban de contact dd 1..8) : {} colonnes relevees "
-                            + "au profil de la rampe (Y0 au mur, -2 par anneau, borne naturel+16) "
+                            + "au profil de la rampe (Y0 au mur, -2 par anneau, plancher PUR T284) "
                             + "-- plus aucun trou/passe-air sous y0 colle aux fondations",
                     floored);
         return hm;
@@ -6624,14 +6661,14 @@ public class StructureTerrainPrep {
         // qui creusait le « trou » sous le niveau de la rampe. DERNIER
         // GARDE-FOU avant le restore Y0 : dans le ruban dd 1..8, aucune
         // colonne ne reste sous le profil de la rampe de contact
-        // (Y0 au mur, -2 par anneau, borne naturel+16). Eau/glace exclues
+        // (Y0 au mur, -2 par anneau, plancher PUR T284 inchange). Eau/glace exclues
         // (waterMask), emprise figee par le restore qui suit.
         if (CLEARANCE_PLAN != null && CLEARANCE_PLAN.matches(level, structMin, structMax)) {
             int flooredLate = contactFloorSweep(orig, target, waterMask, x0, z0, w, h,
                     sMinI, sMaxI, sMinJ, sMaxJ);
             if (flooredLate > 0)
                 LOGGER.info("[DLB-STRUCTURE] T283 plancher de coupe (post-relaxation de contact) : {} colonnes "
-                                + "relevees au profil de la rampe (Y0 au mur, -2 par anneau, borne naturel+16) "
+                                + "relevees au profil de la rampe (Y0 au mur, -2 par anneau, plancher PUR T284) "
                                 + "-- zero trou sous y0 colle aux fondations",
                         flooredLate);
         }
