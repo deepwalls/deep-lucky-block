@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -1714,6 +1715,8 @@ public class StructureTerrainPrep {
         long waterIce = 0, inner = 0, melted = 0, unsnowed = 0;
         long frameMelted = 0, frameUnsnowed = 0, framePlaced = 0;
         long skipIceSupport = 0;   // T282 : poses/epaississements refuses (support effectif = glace)
+        long skipWaterSupport = 0; // T285 : idem, support effectif = eau (l'eau ne transitionne pas non plus)
+        long purgedWaterIce = 0;   // T285 : couches RETIREES d'un support eau/glace (stock herite + neige gelee vanilla)
         long strippedInner = 0, unflaggedInner = 0;   // T277 : neige dedans, pleine colonne
         for (int cx = xMin2 >> 4; cx <= xMax2 >> 4; cx++) {
             for (int cz = zMin2 >> 4; cz <= zMax2 >> 4; cz++) {
@@ -1907,7 +1910,31 @@ public class StructureTerrainPrep {
                                 wetCol = true;
                             }
                         }
-                        if (wetCol) { waterIce++; continue; }
+                        if (wetCol) {
+                            waterIce++;
+                            // T285 (retour client run T284 21/10, screens
+                            // 23.08.22/.57 : damier de couches de neige
+                            // PERSISTANT dans le lac gele / l'eau libre —
+                            // « la glace ne transitionne pas ») : garde a la
+                            // pose ETENDU eau+glace desormais, mais il faut
+                            // aussi PURGER le stock : couches posees par les
+                            // sprays d'avant T282, neige meteo vanilla gelee
+                            // sur la banquise, tapis herites d'anciens runs.
+                            // On retire les couches SNOW qui coiffent la
+                            // colonne eau/glace, SANS jamais toucher ni l'eau
+                            // ni la glace elles-memes (intouchables T267) ni
+                            // la poudreuse legit.
+                            for (int y = sky + 2; y >= sky - 48; y--) {
+                                pos.set(x, y, z);
+                                BlockState s4 = chunk.getBlockState(pos);
+                                if (s4.isAir() || s4.canBeReplaced()
+                                        || s4.is(Blocks.POWDER_SNOW)) continue;
+                                if (!s4.is(Blocks.SNOW)) break;   // corps eau/glace : stop
+                                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                                purgedWaterIce++;
+                            }
+                            continue;
+                        }
                         if (surfY < 0) {
                             skippedNoSurf++;
                             if (debugShown < 12) {
@@ -1971,11 +1998,14 @@ public class StructureTerrainPrep {
                             // T266 : canBeReplaced (herbe haute, petite plante) =
                             // la neige tombe et remplace, comme la neige meteo.
                             // T282 (« interdit de poser de la neige sur de la
-                            // glace », client 18/10) : garde ABSOLU a la pose —
-                            // support effectif glace (a travers les couches SNOW)
-                            // = jamais de couche, quelle que soit la branche.
-                            if (snowSupportIsIce(chunk, pos, x, surfY + 1, z)) {
-                                skipIceSupport++;
+                            // glace », client 18/10) + T285 (« tout comme l'eau,
+                            // la glace ne transitionne pas », client 21/10) :
+                            // garde ABSOLU a la pose — support effectif glace OU
+                            // eau (a travers les couches SNOW) = jamais de
+                            // couche, quelle que soit la branche.
+                            int skA = snowSupportBlockKind(chunk, pos, x, surfY + 1, z);
+                            if (skA != 0) {
+                                if (skA == 1) skipIceSupport++; else skipWaterSupport++;
                             } else {
                             pos.set(x, surfY + 1, z);
                             level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
@@ -1985,10 +2015,12 @@ public class StructureTerrainPrep {
                             }
                         } else if (above.is(Blocks.SNOW)
                                 && above.getValue(net.minecraft.world.level.block.SnowLayerBlock.LAYERS) < k) {
-                            // T282 : epaissir un tapis dont le support effectif
-                            // est de la glace = poser sur la glace. Refuse.
-                            if (snowSupportIsIce(chunk, pos, x, surfY + 1, z)) {
-                                skipIceSupport++;
+                            // T282/T285 : epaissir un tapis dont le support
+                            // effectif est de la glace OU de l'eau = poser
+                            // dessus. Refuse (compteurs separes glace/eau).
+                            int skR = snowSupportBlockKind(chunk, pos, x, surfY + 1, z);
+                            if (skR != 0) {
+                                if (skR == 1) skipIceSupport++; else skipWaterSupport++;
                             } else {
                             pos.set(x, surfY + 1, z);
                             level.setBlock(pos, above.setValue(
@@ -2031,11 +2063,13 @@ public class StructureTerrainPrep {
                                 // couche dont le SUPPORT serait de la glace est
                                 // refusee — poser dessus serait exactement le
                                 // « spread sur glace » interdit depuis T259.
-                                if (snowSupportIsIce(chunk, pos, x, capY, z)) {
-                                    // T282 : meme garde qu'ailleurs — support
-                                    // effectif glace (y compris sous une couche
-                                    // SNOW existante) = pose refusee.
-                                    skipObstacle++; skipIceSupport++;
+                                int skC = snowSupportBlockKind(chunk, pos, x, capY, z);
+                                if (skC != 0) {
+                                    // T282/T285 : meme garde qu'ailleurs —
+                                    // support effectif glace OU eau (y compris
+                                    // sous une couche SNOW existante) = refuse.
+                                    skipObstacle++;
+                                    if (skC == 1) skipIceSupport++; else skipWaterSupport++;
                                 } else {
                                     pos.set(x, capY, z);
                                     level.setBlock(pos, Blocks.SNOW.defaultBlockState().setValue(
@@ -2129,7 +2163,7 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T282 sweep-neige natif+spray (union lissages+keeper, garde glace) : "
+        LOGGER.info("[DLB-STRUCTURE] T285 sweep-neige natif+spray (union lissages+keeper, garde EAU+GLACE) : "
                         + "{} chunks (skippes hors keeper : {}), "
                         + "{} colonnes scannees, {} corps de surface trouves (dont {} via probe), "
                         + "{} colonnes fondues hors neige native (spray T254) dont {} snowy nus repeints vert "
@@ -2138,14 +2172,16 @@ public class StructureTerrainPrep {
                         + "+ {} relevees + {} sur-obstacle (arbres/structure) + {} sol-interieur (T269), "
                         + "{} couches dedans retirees pleine colonne (T277) + {} snowy dedans effaces, "
                         + "{} deja-epais, "
-                        + "{} skips-obstacle (trop haut), {} poses REFUSEES support glace (T282), "
-                        + "{} colonnes eau/glace intouchees, "
+                        + "{} skips-obstacle (trop haut), {} poses REFUSEES support glace + {} REFUSEES support eau "
+                        + "(garde T285 : l'eau comme la glace ne transitionnent JAMAIS), "
+                        + "{} colonnes eau/glace : {} couches PURGEES dessus (stock herite + neige gelee vanilla), "
                         + "{} colonnes vides (rien de plein jusqu'a -48), "
                         + "(taux 1/2/3 poses = {}/{}/{}), en {} ms",
                 chunkCount, skippedChunks, scanned, snowySeen, probed, melted, unsnowed,
                 frameMelted, frameUnsnowed, framePlaced,
                 placed, raised, capped, inner, strippedInner, unflaggedInner,
-                alreadyDeep, skipObstacle, skipIceSupport, waterIce, skippedNoSurf, k1, k2, k3,
+                alreadyDeep, skipObstacle, skipIceSupport, skipWaterSupport,
+                waterIce, purgedWaterIce, skippedNoSurf, k1, k2, k3,
                 System.currentTimeMillis() - tic);
     }
 
@@ -2186,6 +2222,7 @@ public class StructureTerrainPrep {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         long chunkCount = 0, skippedChunks = 0, seenSnowy = 0;
         long fixedPlaced = 0, fixedUnsnow = 0, alreadyLayered = 0, refuseIce = 0, skipObstacle = 0;
+        long refuseWater = 0, bareEarthSeen = 0;   // T285 : garde eau + peau terreuse nue
         for (int cx = xMin2 >> 4; cx <= xMax2 >> 4; cx++) {
             for (int cz = zMin2 >> 4; cz <= zMax2 >> 4; cz++) {
                 if (!level.getChunkSource().hasChunk(cx, cz)) { skippedChunks++; continue; }
@@ -2206,7 +2243,40 @@ public class StructureTerrainPrep {
                             if (s.isAir() || s.canBeReplaced() || s.is(Blocks.POWDER_SNOW)) continue;
                             if (s.is(Blocks.SNOW)) { alreadyLayered++; break; }      // couche plein-ciel deja presente
                             if (!(s.getBlock() instanceof net.minecraft.world.level.block.SnowyDirtBlock)
-                                    || !s.getValue(BlockStateProperties.SNOWY)) break;  // couvert/dedans/decor : T277, stop
+                                    || !s.getValue(BlockStateProperties.SNOWY)) {
+                                // T285 (retour client run T284 21/10, screen
+                                // 23.08.43 : bande d'herbe/dirt NUE grise
+                                // collee a la structure en pleine zone neige
+                                // native — « neige grass grise sans sa couche »
+                                // — jamais recouverte : remodelage glacis
+                                // tardif, grass repeint APRES le sweep par
+                                // verifyGrass, chunk saute... ce corps-la
+                                // n'etant pas snowy=true, l'audit T283 le
+                                // sautait silencieusement) : la couche decidee
+                                // par snowCoverHere se pose AUSSI sur la peau
+                                // terreuse saine (grass/dirt/podzol/mycelium)
+                                // ouverte au ciel, garde eau/glace compris —
+                                // exactement ce que le sweep aurait fait s'il
+                                // avait vu la colonne en l'etat final.
+                                if (isBareEarthSkin(s)
+                                        && snowCoverHere(level, level.getSeed(), x, z)) {
+                                    bareEarthSeen++;
+                                    BlockState above2 = chunk.getBlockState(pos.set(x, y + 1, z));
+                                    if (above2.isAir() || (above2.canBeReplaced()
+                                            && !(above2.getBlock() instanceof net.minecraft.world.level.block.CropBlock))) {
+                                        int skB = snowSupportBlockKind(chunk, pos, x, y + 1, z);
+                                        if (skB == 1) { refuseIce++; break; }
+                                        if (skB == 2) { refuseWater++; break; }
+                                        level.setBlock(pos.set(x, y + 1, z),
+                                                Blocks.SNOW.defaultBlockState().setValue(
+                                                        net.minecraft.world.level.block.SnowLayerBlock.LAYERS, 1), 3);
+                                        fixedPlaced++;
+                                    } else {
+                                        skipObstacle++;
+                                    }
+                                }
+                                break;  // couvert/dedans/decor : T277, stop
+                            }
                             seenSnowy++;
                             BlockState above = chunk.getBlockState(pos.set(x, y + 1, z));
                             if (above.is(Blocks.SNOW)) { alreadyLayered++; break; }
@@ -2221,7 +2291,9 @@ public class StructureTerrainPrep {
                                 fixedUnsnow++;
                                 break;
                             }
-                            if (snowSupportIsIce(chunk, pos, x, y + 1, z)) { refuseIce++; break; }   // T282 : jamais sur glace
+                            int skF = snowSupportBlockKind(chunk, pos, x, y + 1, z);
+                            if (skF == 1) { refuseIce++; break; }        // T282 : jamais sur glace
+                            if (skF == 2) { refuseWater++; break; }      // T285 : jamais dans l'eau non plus
                             level.setBlock(pos.set(x, y + 1, z),
                                     Blocks.SNOW.defaultBlockState().setValue(
                                             net.minecraft.world.level.block.SnowLayerBlock.LAYERS, 1), 3);
@@ -2232,12 +2304,14 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T283 audit final snowy nu (fenetre union identique au sweep, ciel libre seulement) : "
+        LOGGER.info("[DLB-STRUCTURE] T285 audit final snowy nu + peau terreuse (fenetre union identique au sweep, ciel libre seulement) : "
                         + "{} chunks (skippes hors keeper : {}), {} snowy herbeux ciel-libre inspectes "
+                        + "+ {} corps terreux nus zones-neige (T285 : herbe/dirt grise sans couche) "
                         + "-> {} couches posees, {} repeints vert (pas de neige native) ; "
-                        + "{} deja couverts, {} poses REFUSEES support glace (garde T282), {} sur-obstacle laisses, en {} ms",
-                chunkCount, skippedChunks, seenSnowy, fixedPlaced, fixedUnsnow,
-                alreadyLayered, refuseIce, skipObstacle, System.currentTimeMillis() - tic);
+                        + "{} deja couverts, {} poses REFUSEES support glace + {} REFUSEES support eau "
+                        + "(garde T285 EAU+GLACE), {} sur-obstacle laisses, en {} ms",
+                chunkCount, skippedChunks, seenSnowy, bareEarthSeen, fixedPlaced, fixedUnsnow,
+                alreadyLayered, refuseIce, refuseWater, skipObstacle, System.currentTimeMillis() - tic);
     }
 
     /** Chaine historique complete (terrain PUIS finitions) : appelee par l'appelant
@@ -4599,6 +4673,13 @@ public class StructureTerrainPrep {
         // sol ferme.
         if (s.is(Blocks.WATER) || s.is(Blocks.ICE) || s.is(Blocks.PACKED_ICE)
                 || s.is(Blocks.BLUE_ICE) || s.is(Blocks.FROSTED_ICE)) return 2;
+        // T285 (meme interdit, rappel client 21/10 « l'eau comme la glace ne
+        // transitionnent pas ») : garde sur le support EFFECTIF — sans lui,
+        // une couche deja posee sur un lac gele (neige meteo vanilla) se
+        // faisait EPAISSIR ici (le test ci-dessus ne voyait que la couche
+        // SNOW, pas la glace en dessous) : c'etait un des leaks du damier
+        // « fondu dans la glace » vu au run T284 (screens 23.08.22/.57).
+        if (snowSupportBlockKind(level, mut, x, surfY + 1, z) != 0) return 2;
         if (!level.getBlockState(mut.set(x, surfY + 1, z)).isAir()) return 0;
         if (snowCoverHere(level, seed, x, z)) {
             level.setBlock(mut, snowVaried(level, seed, x, z), 3);
@@ -5916,21 +5997,55 @@ public class StructureTerrainPrep {
                 || s.is(Blocks.BLUE_ICE) || s.is(Blocks.FROSTED_ICE);
     }
 
+    /** T285 : peau terreuse « dessus de terrain » saine pouvant porter une
+     *  couche de neige — le filet de l'audit final pour le « grass gris nu »
+     *  que le sweep a rate (glacis reconstruit tard, verifyGrass apres le
+     *  sweep, chunk saute) : uniquement la famille terre/herbe, PAS la roche
+     *  ni le sable des reliefs naturels (hors propos du retour client). */
+    private static boolean isBareEarthSkin(BlockState s) {
+        return s.is(Blocks.GRASS_BLOCK) || s.is(Blocks.DIRT) || s.is(Blocks.COARSE_DIRT)
+                || s.is(Blocks.ROOTED_DIRT) || s.is(Blocks.PODZOL) || s.is(Blocks.MYCELIUM);
+    }
+
     /** T282 (retour client 18/10, verbatim : « il est interdit de poser de la
      *  neige sur de la glace ») : vrai si le support EFFECTIF d'une couche qui
      *  serait posee en (x, y, z) est de la glace — on descend a travers les
      *  couches SNOW deja presentes (epaissir un tapis pose sur un lac gele
      *  revient exactement a poser sur la glace). Toute pose de la chaine
-     *  (sweep, spreads, remontees) passe ce garde. */
-    private static boolean snowSupportIsIce(net.minecraft.world.level.chunk.ChunkAccess chunk,
+     *  (sweep, spreads, remontees) passe ce garde.
+     *  T285 (retour client run T284 21/10, screens 23.08.22/.57, verbatim :
+     *  « tu as fait les fondus entre chunks sur de la glace : si un chunk
+     *  glace est entoure de neige, tu as fait en sorte que les blocs de
+     *  neige spread un peu dans la glace pour la transition, sauf que c'est
+     *  INTERDIT, tout comme l'eau, la glace ne transitionne pas ») : le
+     *  garde s'etend a EAU + GLACE — desormais expose sous forme de
+     *  diagnostic {@link #snowSupportBlockKind} ; ce booleen reste le
+     *  raccourci « refuse la pose ». */
+    private static boolean snowSupportIsIce(BlockGetter chunk,
+                                            BlockPos.MutableBlockPos pos, int x, int y, int z) {
+        return snowSupportBlockKind(chunk, pos, x, y, z) != 0;
+    }
+
+    /** T285 : diagnostic du support EFFECTIF d'une couche posee en
+     *  (x, y, z) en descendant a travers les couches deja presentes
+     *  (meme regle de descente que le garde T282). Retour : 0 = pose
+     *  autorisee (sol ferme, neige supportee par de la matiere), 1 =
+     *  REFUS support glace (ICE/PACKED/BLUE/FROSTED — la glace « ne
+     *  transitionne pas », interdit absolu), 2 = REFUS support fluide
+     *  (eau comme lave — valeurs historiques T259 « on ne spread JAMAIS
+     *  la glace ou l'eau », etendues a toute pose de la chaine). Compteurs
+     *  de logs separes glace/eau a chaque site, consigne du retour. */
+    private static int snowSupportBlockKind(BlockGetter chunk,
                                             BlockPos.MutableBlockPos pos, int x, int y, int z) {
         int yy = y - 1;
         for (int depth = 0; depth < 24 && yy >= -64; depth++, yy--) {
             BlockState s = chunk.getBlockState(pos.set(x, yy, z));
             if (s.is(Blocks.SNOW)) continue;
-            return isIceFamily(s);
+            if (isIceFamily(s)) return 1;
+            if (!s.getFluidState().isEmpty()) return 2;
+            return 0;
         }
-        return false;
+        return 0;
     }
 
     /** T282 (meme retour, point « montagne qui encadre, collee a la
