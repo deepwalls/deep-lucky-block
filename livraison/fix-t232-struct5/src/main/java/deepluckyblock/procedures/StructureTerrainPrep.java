@@ -1365,6 +1365,14 @@ public class StructureTerrainPrep {
                 }
                 if (topSolid == Integer.MIN_VALUE) { waterCols++; continue; }
                 if (topSolid < 0) continue;
+                // T286 (meme retour « piliers de dirt dans le lac ») : le
+                // fluide/glace n'est vu QUE si la colonne porte son eau en ce
+                // moment — or les poches sont videes pendant le chantier et
+                // le fond (dirt) passait alors pour du terrain remblayable,
+                // l'eau etait restauree APRES = piliers emergeant du lac.
+                // La nappe vanilla photographiee au repos (T103) est
+                // intouchable au remblai exactement comme l'eau vivante.
+                if (hasNaturalWaterRef() && naturalWaterAt(x, z)) { waterCols++; continue; }
                 BlockState surfState = level.getBlockState(mut.set(x, topSolid, z));
                 if (!isNaturalTerrain(surfState)) { skipDecor++; continue; }
                 want = Math.min(want, topSolid + 4);   // T282 : mini-comblement seulement, plus de collet +16
@@ -1386,8 +1394,9 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T278-T282 fusion sol/structure : {} colonnes de la couronne remontees au glacis "
-                        + "(anti-montagne T282 : max +4, jamais au-dessus de Y0 ; decors/structure sautes : {} ; eau sautee : {}), en {} ms",
+        LOGGER.info("[DLB-STRUCTURE] T286 fusion sol/structure : {} colonnes de la couronne remontees au glacis "
+                        + "(anti-montagne T282 : max +4, jamais au-dessus de Y0 ; decors/structure sautes : {} ; "
+                        + "eau sautee : {} (nappe vanilla memorisee comprise T286 -- plus jamais de pilier de dirt dans le lac)), en {} ms",
                 raised, skipDecor, waterCols, System.currentTimeMillis() - tic);
     }
 
@@ -1456,6 +1465,15 @@ public class StructureTerrainPrep {
                         t = y;
                         break;
                     }
+                }
+                // T286 (meme retour) : la nappe vanilla memorisee (lac/poche
+                // eventuellement assechee pendant le chantier) n'est PAS un
+                // ancre de terrain — ni remblai par-dessus (sinon pilier de
+                // dirt emergeant de l'eau restauree), ni coupe, ni hauteur
+                // tiree de son fond.
+                if (t != Integer.MIN_VALUE && t >= 0
+                        && hasNaturalWaterRef() && naturalWaterAt(x, z)) {
+                    t = Integer.MIN_VALUE;
                 }
                 top[i][j] = t;
             }
@@ -1558,9 +1576,9 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T279 glacis continu : {} colonnes abaissees, {} remontees "
+        LOGGER.info("[DLB-STRUCTURE] T286 glacis continu : {} colonnes abaissees, {} remontees "
                         + "(pente <= {} d'anneau en anneau sur {} blocs autour de l'emprise ; plancher = max(naturel, profil contact T284) ; "
-                        + "colonnes protegees : {}), en {} ms",
+                        + "nappe vanilla exclue T286 (jamais de talus/pilier dans le lac) ; colonnes protegees : {}), en {} ms",
                 lowered, raised, G, R, skipped, System.currentTimeMillis() - tic);
     }
 
@@ -5545,7 +5563,7 @@ public class StructureTerrainPrep {
 
     private static boolean[][] waterColumns(ServerLevel level, int x0, int z0, int w, int h) {
         boolean[][] mask = new boolean[w][h];
-        int n = 0, icy = 0;
+        int n = 0, icy = 0, nappy = 0;   // T286 : nappy = nappe vanilla memorisee (lac asseche au moment de la passe)
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
@@ -5591,14 +5609,30 @@ public class StructureTerrainPrep {
                 }
                 if (wet || deepluckyblock.util.WaterDam.frozenColumn(level, x, z)) {
                     mask[i][j] = true; n++;
+                } else if (hasNaturalWaterRef() && naturalWaterAt(x, z)) {
+                    // T286 (retour client 20/10 nuit, screens 23.15.25/.26
+                    // + 23.16.11 + 23.17.26/.44 : « il y a des pilliers de
+                    // dirt qui n'ont aucun sens proche structure », « le
+                    // pilier c'est genre un bloc de stone en ysol+1 + 4 blocs
+                    // de dirt dessus », « la montagne qui re entoure la
+                    // structure » — tous debout DANS le lac gele) : le
+                    // pipeline VIDE les poches d'eau juste apres la capture
+                    // T103 ; au moment du smooth la colonne est donc SECHE et
+                    // ni « wet » ni « frozen » ne la voient => le rebuild la
+                    // remblayait comme du terrain, puis restoreWater remettait
+                    // l'eau par-dessus = piliers de terre emergeant du lac.
+                    // La nappe vanilla photographiee AU REPOS est desormais
+                    // masquee EXACTEMENT comme l'eau reelle : ni coupe, ni
+                    // remblai, ni reconstruction — l'eau ne transitionne pas.
+                    mask[i][j] = true; n++; nappy++;
                 }
             }
         }
         if (n > 0) {
             deepluckyblock.util.DebugLog.structure(
-                    "smooth {}x{} : {} colonnes d'eau (dont {} gelees, intouchables T267) exclues du lissage "
+                    "smooth {}x{} : {} colonnes d'eau (dont {} gelees intouchables T267, {} nappe vanilla memorisee T286) exclues du lissage "
                             + "(hauteur d'eau conservee, ni flou ni reconstruction) -- l'eau ne deforme plus le rivage",
-                    w, h, n, icy);
+                    w, h, n, icy, nappy);
             // T103 : memorisation de la nappe vanilla (union des captures des
             // differentes passes de smooth). Zone deplacee (nouveau centre) :
             // on recommence la nappe ; sinon on fusionne par OU logique.

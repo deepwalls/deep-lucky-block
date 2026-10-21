@@ -1,0 +1,75 @@
+T286 — retour client 20/10 nuit (run T284, screens 23.14.30 / 23.15.06 /
+23.15.25 / 23.16.11 / 23.17.26 / 23.17.44, chat 23:14-23:18)
+=============================================================================
+
+Verbatims du retour :
+ (1) « secon probleme, je vois encore le retour depuis quelques version de la
+     montagne qui re entoure la structure » — collerette de remblai terre +
+     neige en strates autour de la base, debout DANS le lac gele.
+ (2) « AUSSI, wtf, il y a des pilliers de dirt qui n'ont aucun sens proche
+     structure », « le pilier c'est genre un bloc de stone en ysol+1 + 4 blocs
+     de dirt dessus ! », « parfois un peu moins, ou un peu plus dans le sol » —
+     piliers stone/dirt/grass coiffes de neige emergeant du lac.
+
+Cause racine (lecture du code + ordre du pipeline)
+--------------------------------------------------
+Le pipeline VIDE les poches d'eau juste apres la capture T103 de la nappe
+vanilla (« au repos ») — le commentaire historique le dit : « les captures
+tardives des smooths sont deja post-drainage, la marge de lac coupee y est
+seche ». Au moment du lissage/remblais (smooth, fusion sol/structure,
+glacis continu), le fond du lac est donc SEC : le garde « fluide/glace » des
+scans ne voit rien (colonne = dirt), la nappe photographiee n'etait pas
+consultee, et la colonne etait remblayee comme du terrain ordinaire (fill
+stone/dirt/grass — exactement la coupe « 1 stone + 4 dirt » du client).
+Puis restoreWater remettait l'eau par-dessus → piliers et talus DEBOUT dans
+le lac (et le gel vanilla T280 venait figer l'ensemble).
+
+Fix T286 (mod_project/src, procedures/StructureTerrainPrep.java)
+----------------------------------------------------------------
+La nappe vanilla memorisee au repos (NATURAL_WATER, T103) devient
+INTOUCHABLE au remblai — exactement comme l'eau vivante — sur tous les
+sites qui peuvent monter de la matiere :
+  1. waterColumns() (masque du smooth) : colonne de la nappe = masquee
+     (ni coupe, ni remblai, ni reconstruction). Compteur log separe :
+     « ... colonnes d'eau (dont G gelees, N nappe vanilla memorisee T286)
+     exclues du lissage ».
+  2. enforceGlacisGradient : la nappe n'est PLUS un ancre de terrain — ni
+     remblai par-dessus, ni coupe au fond, ni hauteur tiree d'elle.
+  3. fuseGroundToStructure : colonne de la nappe = classee « eau sautee »
+     comme l'eau vivante (le compteur « eau sautee : N » inclut desormais
+     la nappe, libelle de log explicite).
+Le plancher de coupe T283/T284 (zero trou/passe-air sous y0 au mur) reste
+INTACT sur le terrain SEC : au pied d'un mur qui plonge dans l'eau, c'est
+l'eau qui remplit le creux — plus jamais de remblai artificiel a travers.
+Le degel T280, la purge neige-sur-eau/glace T285 et le garde pose
+eau+glace T285 sont inchanges.
+Banner client : [build T286].
+
+Limites assumees
+----------------
+- Prevention pure : les piliers/talus deja poses dans le MONDE ACTUEL
+  (zones des anciens runs) ne sont pas retires retroactivement ; un run
+  T286 sur une structure neuve ressortira propre.
+- La nappe hors fenetre de capture (eau creee par le pipeline lui-meme
+  apres la photo au repos) reste couverte par le masque temps-reel comme
+  avant ; cas marginal, non observe sur les screens.
+
+Logs a verifier en jeu
+----------------------
+- banner « build T286 » au /dlbtest ;
+- smooth : « colonnes d'eau (dont ... gelees, N nappe vanilla memorisee
+  T286) exclues du lissage » (N > 0 la ou baigne un lac) ;
+- fusion : « T286 fusion sol/structure ... eau sautee : N (nappe vanilla
+  memorisee comprise T286 ...) » ;
+- glacis : « T286 glacis continu ... nappe vanilla exclue T286 ».
+
+Reste connu / non touche (hors scope de ce retour) : T246 p2 d21-23,
+perfs (« Can't keep up » jusqu'a 81,7 s au paste), corniches snow_block,
+mob suffocated (Villager 23:03:27 run T284), POI data mismatch.
+
+Contenu des zips (NONBT, zero .nbt, checksums sha256 36/36 vs
+mod_project/src) :
+  DEEP-LUCKY-BLOCK-T286-SRC-SEUL-NONBT.zip    — ./main/ (java + miroir
+    resources/deepluckyblock_patch/FIXES_MCREATOR)
+  DEEP-LUCKY-BLOCK-T286-SRC-COMPLET-NONBT.zip — ./ (projet MCreator
+    complet, memes 9 sources sous src/main/... x2)
