@@ -1,0 +1,81 @@
+DEEP LUCKY BLOCK — LIVRAISON T288
+=================================
+Date : 21/10/2026 (nb: horodatage interne du depot)
+Base : build T287 (+ veto glace choix de zone). Livraison SANS *.nbt (regle
+permanente T271).
+
+RETARD PRIS SUR LE RETOUR CLIENT DU RUN T287 (spawn DRAGON @359,93,31 en 33 s,
+screen 05.42.28) — 4 POINTS REPONDUS :
+
+P1 « TOUJOURS LE DEGRADE ENTRE BIOMES SUR LA GLACE »
+----------------------------------------------------
+Diagnostic : les poseurs de couches T284/T285 refusaient bien la glace/l'eau
+(log de votre run : « 0 pose refusee »), mais la verification/peinture du sol
+(verifyGrass, degrade vert<->snow) lisait la heightmap MOTION_BLOCKING —
+quand une COUCHE de neige coiffait la glace, le code regardait la couche
+comme « surface » et repeignait le bloc au-dessus EN OUBLIANT de verifier
+ce qu'il y avait DESSOUS → tache grass/dirt au-dessus d'une croute de glace
+= le degrade restant que vous voyiez.
+Correctif T288 : verifyGrass descend DESORMAIS a travers les couches SNOW
+(famille du helper T285 snowSupportBlockKind) : si le SUPPORT EFFECTIF est
+glace OU eau → colonne intouchable, aucune branche (degrade compris) ne la
+repeint. La garde T285 (pose+purge) reste active en complet.
+
+P2 + P4 « TRANCHEES QUI EPOUSENT LA STRUCTURE » + « INTERDIT DE CREUSER EN
+DESSOUS DE Y SOL STRUCTURE 0 » (regle permanente enregistree)
+---------------------------------------------------------------------------------
+Diagnostic : la fente de l'ecran (sombre, seche, longeant le mur au bloc
+pres) venait des gardes « eau/glace = colonne sautee » (T283/T286) qui
+s'executaient AUSSI au ruban de contact dd <= 8 : ni le plancher de coupe
+T283/T284 du smooth, ni le remblai de fusion T278/T282 ne reconstruisaient
+une crique gelee ou un creux colle aux fondations → la tranchee restait
+beante EXACTEMENT comme vous la decrivez.
+Correctifs T288 (ruban de contact UNIQUEMENT — au-dela, l'eau et la glace
+restent strictement intouchables) :
+ 1. clampSmoothDelta + contactFloorSweep : le PLANCHER PUR DE RAMPE (Y0 au
+    mur, -2 par anneau) s'applique desormais aussi aux colonnes d'eau/glace
+    du ruban (dd 1..8). Le forçage « nappe = hauteur d'origine » (garde-fou
+    T89) est leve la — sinon hm == orig privait la colonne de TOUT rebuild.
+ 2. Rebuild : ces colonnes recevant une cible ≠ orig sont maintenant
+    reconstruites physiquement (comblement plein jusqu'au profil).
+ 3. Fusion sol/structure (post-pose) : la colonne de nappe du ruban devient
+    une FONDATION — traversee de l'eau/glace jusqu'a l'ancre solide, puis
+    remontee au profil, PLAFONNEE par le plan d'eau (jamais d'emergence
+    = zero pilier T286) et par ancre+24 (anti-abime). La lave arrete net.
+ 4. Toujours en fusion : dans le coeur du ruban (dd <= 4), un CREUX SEC
+    profond (au-dela du mini-comblement +4 de T282) est maintenant remblaye
+    au profil (plafond +24) — la tranchee seche du screen est couverte par
+    ce cas. Profil = toujours SOUS Y0 (la rampe descend depuis Y0, jamais
+    au-dessus de la base).
+Votre regle permanente (« jamais creuser sous y0 structure ») est logee
+dans le code a chacun de ces 4 sites.
+
+P3 « BLOCS DE NEIGE PROCHE STRUCTURE EN GRASS BUGGES (PAS DE COUCHE) »
+----------------------------------------------------------------------
+Diagnostic : le rebuild de terrain posait le GRASS sommital mais ne reposait
+jamais la couche SNOW qui s'y trouvait avant. Les colonnes reconstruites
+tardivement (chunks manquants au lissage, reprises T82) passaient APRES le
+sweep-neige/audit final → surface nue au milieu de la neige.
+Correctif T288 : rebuildColumn photographie la couche SNOW au-dessus de la
+surface d'origine et la REPOSE au nouveau sommet (l'audit final T283/T285
+confirme ensuite). Garde integree : jamais de couche posee sur une glace.
+
+VERIFICATIONS TECHNIQUES
+------------------------
+- Banner en jeu : « [build T288] » (commande /dlbtest, chat de lancement).
+- Nouveaux logs a guetter dans le prochain run :
+  * « T288 fusion sol/structure : ... colonnes de nappe au ruban : N vues,
+    M remplissage-de-fondation poses » (M>0 = les tranchees ont ete bouchees)
+  * l'audit final T285 bare-earth doit passer en-dessous des verifications.
+- Checksums : 36/36 SHA-256 des 9 fichiers sources x 4 copies coherentes.
+- 0 fichier *.nbt dans les deux zip (regle permanente).
+
+CONTENU
+-------
+- DEEP-LUCKY-BLOCK-T288-SRC-SEUL-NONBT.zip    → main/ (java + resources patch)
+- DEEP-LUCKY-BLOCK-T288-SRC-COMPLET-NONBT.zip → src/ complet projet MCreator
+  (structure src/main/..., + DlbTestCommands.java a la racine pour diff rapide)
+
+Limites connues non touchees par T288 (hors demande) : T246 p2 tailles
+d21-23, perfs de chantier (« Can't keep up » ~19 s au pic), corniches
+snow_block, mob suffocated, POI mismatch (derniers runs).

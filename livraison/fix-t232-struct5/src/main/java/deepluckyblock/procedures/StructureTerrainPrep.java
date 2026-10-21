@@ -1330,7 +1330,7 @@ public class StructureTerrainPrep {
         }
         long tic = System.currentTimeMillis();
         int y0 = CLEARANCE_PLAN.groundY();
-        int raised = 0, skipDecor = 0, waterCols = 0;
+        int raised = 0, skipDecor = 0, waterCols = 0, wetFilled = 0;   // T288 : fondations de nappe au ruban
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         int x0 = structMin.getX() - 6, x1 = structMax.getX() + 6;
         int z0 = structMin.getZ() - 6, z1 = structMax.getZ() + 6;
@@ -1351,31 +1351,76 @@ public class StructureTerrainPrep {
                 // meme regle T282 partout : une seule pente, un seul plafond).
                 int want = y0 - MAX_SLOPE_STEP * (dd - 1);
                 int topSolid = -1;
-                for (int y = top; y >= y0 - 12; y--) {
+                int waterTop = Integer.MIN_VALUE;
+                boolean wet = false;
+                // T288 (retour client run T287 21/10 : P2 « tranchees dans le
+                // sol qui epousent la structure » + P4 PERMANENT « INTERDIT
+                // DE CREUSER EN DESSOUS DE LA COUCHE Y SOL STRUCTURE 0 »,
+                // screen 05.42.28 : fente seche sombre longeant le mur) : la
+                // garde stricte T283/T286 (eau+glace+nappe = colonne SAUTEE)
+                // s'executait AUSSI au ruban de contact -- la crique gelee ou
+                // le creux de nappe colle aux fondations n'etait reconstruit
+                // NULLE PART (smooth, planchers, fusion tous sautes) = la
+                // tranchee restait beante. Ici (fenetre = ruban dd 1..6
+                // strictement) la colonne de nappe devient une FONDATION :
+                // on TRAVERSE l'eau/glace jusqu'a l'ancre solide, puis on
+                // remonte la matiere jusqu'au profil de rampe PLAFONNE PAR LE
+                // PLAN D'EAU (jamais d'emergence = zero pilier T286) ET par
+                // ancre+24 (securite anti-abime). Hors cette fenetre, rien
+                // n'a change : fuse ne touche pas l'eau/la glace au large.
+                for (int y = top; y >= y0 - 40; y--) {
                     BlockState s = level.getBlockState(mut.set(x, y, z));
-                    // T283 (retour client 20/10 : « interdit de faire des
-                    // degrades dans la glace, elle doit rester intacte ») :
-                    // la glace de surface (ICE/PACKED/BLUE/FROSTED) est
-                    // PASSEE COMME L'EAU — fusion = colonne entiere saute,
-                    // jamais de remblai par-dessus, jamais de coupe dedans.
-                    if (!s.getFluidState().isEmpty() || isIceFamily(s)) { topSolid = Integer.MIN_VALUE; break; }
+                    if (!s.getFluidState().isEmpty() || isIceFamily(s)) {
+                        if (!wet) { waterTop = y; wet = true; }
+                        continue;
+                    }
                     if (s.isAir() || s.is(Blocks.SNOW) || !s.blocksMotion()) continue;
                     topSolid = y;
                     break;
                 }
-                if (topSolid == Integer.MIN_VALUE) { waterCols++; continue; }
-                if (topSolid < 0) continue;
-                // T286 (meme retour « piliers de dirt dans le lac ») : le
-                // fluide/glace n'est vu QUE si la colonne porte son eau en ce
-                // moment — or les poches sont videes pendant le chantier et
-                // le fond (dirt) passait alors pour du terrain remblayable,
-                // l'eau etait restauree APRES = piliers emergeant du lac.
-                // La nappe vanilla photographiee au repos (T103) est
-                // intouchable au remblai exactement comme l'eau vivante.
-                if (hasNaturalWaterRef() && naturalWaterAt(x, z)) { waterCols++; continue; }
+                if (topSolid < 0) { waterCols++; continue; }   // nappe sans ancre a portee : intacte
+                if (wet || (hasNaturalWaterRef() && naturalWaterAt(x, z))) {
+                    BlockState anchor = level.getBlockState(mut.set(x, topSolid, z));
+                    if (!isNaturalTerrain(anchor)) { skipDecor++; continue; }
+                    int wantN = want;                                  // profil rampe (Y0 au mur, -2/an)
+                    if (wet) wantN = Math.min(wantN, waterTop);        // a fleur d'eau, jamais au-dessus (T286)
+                    wantN = Math.min(wantN, topSolid + 24);            // anti-abime
+                    waterCols++;   // colonne de nappe du ruban (vue)
+                    if (wantN > topSolid) {
+                        int newTop = topSolid;
+                        for (int y = topSolid + 1; y <= wantN; y++) {
+                            BlockState cur = level.getBlockState(mut.set(x, y, z));
+                            boolean waterOrIce = isIceFamily(cur)
+                                    || (!cur.getFluidState().isEmpty()
+                                        && cur.getFluidState().is(net.minecraft.tags.FluidTags.WATER));
+                            if (!(cur.isAir() || cur.is(Blocks.SNOW) || cur.is(Blocks.POWDER_SNOW) || waterOrIce))
+                                break;   // lave ou obstacle etranger : on s'arrete dessous
+                            BlockState fill = (y == wantN) ? Blocks.GRASS_BLOCK.defaultBlockState()
+                                    : (y >= wantN - 3 ? Blocks.DIRT.defaultBlockState() : Blocks.STONE.defaultBlockState());
+                            level.setBlock(mut.set(x, y, z), fill, FAST_FLAG);
+                            newTop = y;
+                        }
+                        if (newTop > topSolid) wetFilled++;
+                    }
+                    continue;
+                }
                 BlockState surfState = level.getBlockState(mut.set(x, topSolid, z));
                 if (!isNaturalTerrain(surfState)) { skipDecor++; continue; }
                 want = Math.min(want, topSolid + 4);   // T282 : mini-comblement seulement, plus de collet +16
+                // T288 (P2 + P4 PERMANENT — screen client 05.42.28 : fente
+                // SECHE sombre collée au mur, 10-15 bl de profond, dd <= 3)
+                // : dans le COEUR du ruban (dd <= 4), un creux sec plus
+                // profond que le mini-comblement T282 restait un puits
+                // contre les fondations — il est FORMELLEMENT INTERDIT de
+                // laisser le sol descendre sous la rampe colle a la
+                // structure. Le remblai est donc porte au profil (plafond
+                // ancre+24, toujours sous Y0 puisque le profil descend des
+                // Y0 lui-meme) ; le cap T282 +4 continuant de regir les
+                // colonies ordinaires et tout dd >= 5.
+                if (want <= topSolid && dd <= 4) {
+                    int wantDeep = Math.min(y0 - MAX_SLOPE_STEP * (dd - 1), topSolid + 24);
+                    if (wantDeep > topSolid) want = wantDeep;
+                }
                 if (want <= topSolid) continue;
                 boolean hadSnow = level.getBlockState(mut.set(x, topSolid + 1, z)).is(Blocks.SNOW);
                 int newTop = topSolid;
@@ -1394,10 +1439,13 @@ public class StructureTerrainPrep {
                 }
             }
         }
-        LOGGER.info("[DLB-STRUCTURE] T286 fusion sol/structure : {} colonnes de la couronne remontees au glacis "
+        LOGGER.info("[DLB-STRUCTURE] T288 fusion sol/structure : {} colonnes de la couronne remontees au glacis "
                         + "(anti-montagne T282 : max +4, jamais au-dessus de Y0 ; decors/structure sautes : {} ; "
-                        + "eau sautee : {} (nappe vanilla memorisee comprise T286 -- plus jamais de pilier de dirt dans le lac)), en {} ms",
-                raised, skipDecor, waterCols, System.currentTimeMillis() - tic);
+                        + "colonnes de nappe au ruban : {} vues, {} remplissage-de-fondation poses "
+                        + "(T288 P2/P4 : fente/corps de crique au pied du mur comblee a fleur d'eau et au profil "
+                        + "-- plus aucune tranchee ne peut longee la structure ; pilier interdit : jamais au-dessus "
+                        + "du plan d'eau)), en {} ms",
+                raised, skipDecor, waterCols, wetFilled, System.currentTimeMillis() - tic);
     }
 
     /** T279 (retour client 17/10 ~04h13, log 04:12:33 : diagnostic T246
@@ -5966,7 +6014,6 @@ public class StructureTerrainPrep {
         int n = 0;
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
-                if (waterMask != null && waterMask[i][j]) continue;
                 boolean inX = i >= sMinI && i <= sMaxI;
                 boolean inZ = j >= sMinJ && j <= sMaxJ;
                 if (inX && inZ) continue;                    // emprise : restore Y0 juste apres
@@ -5974,6 +6021,17 @@ public class StructureTerrainPrep {
                 int ddJ = j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0);
                 int dd = Math.max(ddI, ddJ);
                 if (dd < 1 || dd > 8) continue;              // ruban de tres proche contact
+                // T288 (P2/P4, screen client run T287 : tranchee SECHE qui
+                // EPOUSE le mur en dd 1..3, fond 10-15 bl sous les sommets ;
+                // ordre client PERMANENT : « INTERDIT DE CREUSER EN DESSOUS
+                // DE Y SOL STRUCTURE 0 ») : le skip waterMask T286 annulait
+                // ici le plancher AU RUBAN MEME -- une crique gelee ou une
+                // poche au pied des fondations gardait son creux de nappe
+                // (aucune des passes ne la reconstruisait non plus). Le
+                // plancher de coupe PUR s'applique desormais AUSSI aux
+                // colonnes d'eau/glace du ruban de contact ; hors ruban,
+                // l'eau reste strictement intouchable (T282..T287 inchanges).
+                if (waterMask != null && waterMask[i][j] && dd > 8) continue;
                 // T284 (« toujours un trou de 3 blocs de radius qui suit la
                 // structure en profondeur », run T283 client 20/10) : plancher
                 // = PROFIL PUR de la rampe, sans la borne naturel+16 du T283
@@ -6131,8 +6189,17 @@ public class StructureTerrainPrep {
         int floored = 0;   // T283 : colonnes du ruban de contact relevees au plancher de coupe
         for (int i = 0; i < w; i++) {
             for (int j = 0; j < h; j++) {
-                if (waterMask != null && waterMask[i][j]) continue;         // colonne d'eau
                 if (isProtected(x0 + i, z0 + j)) continue;                  // emprise : aplanissement VOULU
+                int dx = i < sMinI ? sMinI - i : (i > sMaxI ? i - sMaxI : 0);
+                int dz = j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0);
+                // T288 (P2/P4 : tranchees epousant la structure, ordre
+                // PERMANENT « jamais creuser sous y0 ») : la colonne d'eau/
+                // glace reste intouchable PARTOUT SAUF au ruban de contact
+                // (dd 1..8) : la le plancher de coupe PUR (T284) et les
+                // bornes doivent s'appliquer, sinon la crique gelee au pied
+                // du mur gardait son passe-air (aucune autre passe ne la
+                // reconstruisait).
+                if (waterMask != null && waterMask[i][j] && Math.max(dx, dz) > 8) continue;
                 int d = hm[i][j] - ref[i][j];
                 int ad = Math.abs(d);
                 if (ad > worst) { worst = ad; worstX = i; worstZ = j; }
@@ -6153,8 +6220,7 @@ public class StructureTerrainPrep {
                 // l'emprise) ; pres du bord, la continuite de pente (<= 2,
                 // garantie par limitSlope a convergence) tient lieu de garde
                 // contre crateres et terrasses.
-                int dx = i < sMinI ? sMinI - i : (i > sMaxI ? i - sMaxI : 0);
-                int dz = j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0);
+                // (dx/dz calcules en tete de boucle -- T288, garde nappe au ruban.)
                 int reach = ADAPTIVE_SMOOTH_MAX - 2 * Math.max(dx, dz);
                 // T244 : la fenetre de REMBLAI se referme 2x moins vite
                 // (1 bloc par bloc d'eloignement). Un creux de berge cote aval
@@ -6710,8 +6776,17 @@ public class StructureTerrainPrep {
                 // T121 : seule l'eau reste gelee. L'ancienne seconde condition
                 // restaurait toute l'emprise a orig et annulait explicitement
                 // chaque smooth calcule dans les chunks de la structure.
+                // T288 (P2/P4) : au ruban de contact dd 1..8 la colonne
+                // nappe garde la cible PLANCHEE (profil de rampe T284) au
+                // lieu d'etre restauree a orig -- c'est ce forçage qui
+                // envoyait `hm == orig` et privait la crique gelee au pied
+                // du mur de toute reconstruction physique (tranchee beante
+                // epousant les fondations). Hors ruban : comportement
+                // historique strict (jamais toucher l'eau/la glace).
                 if (waterMask[i][j]) {
-                    target[i][j] = orig[i][j];
+                    int ddW = Math.max(i < sMinI ? sMinI - i : (i > sMaxI ? i - sMaxI : 0),
+                            j < sMinJ ? sMinJ - j : (j > sMaxJ ? j - sMaxJ : 0));
+                    if (ddW < 1 || ddW > 8) target[i][j] = orig[i][j];
                 } else if (i >= sMinI - 6 && i <= sMaxI + 6 && j >= sMinJ - 6 && j <= sMaxJ + 6) {
                     // T89 (B9) : garde-fou anti-tranchee REDEFINI.
                     //
@@ -7824,6 +7899,16 @@ public class StructureTerrainPrep {
     private static void rebuildColumn(ServerLevel level, BlockPos.MutableBlockPos mut, int cx, int cz, int targetY, int origY) {
         int currentY = origY;
         targetY = Math.max(targetY, collarGroundFloor(cx, cz));
+        // T288 (P3, screen client run T287 : herbes/dirt NUES « en grass
+        // bugge » proche structure apres rebuild) : le rebuild ecrivait le
+        // GRASS sommital sans JAMAIS reposer la couche de neige qui coiffait
+        // la colonne (couche SNOW au-dessus de origY au moment du rebuild) --
+        // pour les colonnes reconstruites tardivement (chunks T82 arrives
+        // apres le sweep T263/audit T283), la couche n'etait plus jamais
+        // remise : sol nu au milieu de la neige. On photographie et on
+        // repose la couche au nouveau sommet (l'audit final confirmera).
+        boolean hadSnowLayer = currentY < targetY
+                && level.getBlockState(mut.set(cx, currentY + 1, cz)).is(Blocks.SNOW);
         if (currentY < targetY) {
             for (int y = currentY + 1; y <= targetY; y++) {
                 BlockState fill = (y == targetY) ? Blocks.GRASS_BLOCK.defaultBlockState()
@@ -7839,6 +7924,12 @@ public class StructureTerrainPrep {
             // en bout, fini la croute sur vide.
             if (probeAir(level, mut, cx, currentY, cz))
                 underpinColumn(level, mut, cx, currentY, cz);
+            // T288 (P3) : couche de neige photographiee reposee au sommet.
+            if (hadSnowLayer && level.getBlockState(mut.set(cx, targetY + 1, cz)).isAir()
+                    && !isIceFamily(level.getBlockState(mut.set(cx, targetY, cz))))
+                level.setBlock(mut.set(cx, targetY + 1, cz),
+                        Blocks.SNOW.defaultBlockState().setValue(
+                                net.minecraft.world.level.block.SnowLayerBlock.LAYERS, 1), FAST_FLAG);
         } else if (currentY > targetY) {
             for (int y = targetY + 1; y <= currentY; y++) {
                 BlockState s = level.getBlockState(mut.set(cx, y, cz));
@@ -8050,6 +8141,24 @@ public class StructureTerrainPrep {
         // dessus gris au milieu du lac, glace cassee au bord. On ne touche
         // a aucune forme de glace, dans aucune branche.
         if (isIceFamily(s)) return;   // T282 : meme garde partout (FROSTED_ICE compris)
+        // T288 (retour client run T287 21/10 05:40 : « il y a toujours le
+        // degrade entre biomes sur la glace !!! ») : quand la surface est une
+        // COUCHE de neige (SNOW), la heightmap NO_LEAVES s'arrete sur la
+        // couche et masque le bloc SUPPORT — avec une croute ICE (ou de
+        // l'eau) sous la couche, la branche degrade ci-dessous repeignait
+        // grass/dirt PAR-DESSUS la glace (le degrade reapparaissait sur la
+        // glace). On descend donc a travers les couches SNOW : si le support
+        // effectif est glace ou eau, la colonne est intouchable (meme regle
+        // que les poseurs de couches T284/285 via snowSupportBlockKind).
+        if (s.is(Blocks.SNOW) || s.is(Blocks.POWDER_SNOW)) {
+            int yy = surfY - 1;
+            for (int d = 0; d < 24 && yy >= level.getMinBuildHeight(); d++, yy--) {
+                BlockState under = level.getBlockState(mut.set(x, yy, z));
+                if (under.is(Blocks.SNOW) || under.is(Blocks.POWDER_SNOW)) continue;
+                if (isIceFamily(under) || !under.getFluidState().isEmpty()) return;
+                break;
+            }
+        }
         // T-HABILL.3 : neige une fois par chunk (cache) au lieu d'une comparaison
         // de chaine par colonne. Nuance assume vs l'ancienne chaine : grove/
         // snowy_slopes (biomes enneiges sans "snow/ice/frozen" dans le nom)
