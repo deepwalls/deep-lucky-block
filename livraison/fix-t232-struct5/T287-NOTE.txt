@@ -1,0 +1,68 @@
+T287 — consignes client 21/10 (3 points)
+=========================================
+
+1) FONDU DE BORD DE CHUNK JAMAIS SUR LA GLACE.
+   Verbatim : « imaginons un chunk de grass neige a gauche et juste a droite
+   un chunk rempli de glace : tu as spread le chunk de gauche dans le chunk
+   de droite, ce qui en soit est bon, seulement tu as oublie la restriction
+   — si un chunk a cote est fait de glace, on ne spread PAS dessus, car ca
+   rend moins naturel ».
+   → DEJA EN PLACE depuis T285 (livre ce matin) : le garde support-effectif
+   snowSupportBlockKind (descente a travers les couches, retour glace/eau)
+   bloque TOUTE pose de couche dont le support reel est l'eau ou la glace —
+   fondu bilineaire de bord compris (la pose du spread passe par le sweep et
+   placeSnowOrUnsnow, tous deux gardes). Le damier dans le lac gele du run
+   T284 etait le cas exact ; rien de plus a modifier.
+
+2) COUCHE FINALE : SUR TOUT SAUF EAU ET ICE.
+   Verbatim : « a la fin quand tu recouvres tout de neige (d'une couche ou
+   plusieurs), tu dois poser sur tout SAUF eau et ice ! la, tu poses sur
+   tout, meme la glace, qui du coup disparait ».
+   → DEJA EN PLACE depuis T285 : sites de pose gardes (sweep passe A,
+   epaississement, sur-obstacle, audit final, peau terreuse, placeSnowOrUnsnow
+   du fondu) + PURGE du stock pre-existant (les couches posees sur eau/glace
+   avant T285 sont retirees au passage du sweep — la glace « disparue »
+   reapparait) + compteurs de logs separes glace/eau. Aucun nouveau cas
+   echappe detecte a la relecture (verifyGrass garde glace partout, anti-gris
+   T243/T256 = herbe seulement, unsnowExposedGrass idem).
+
+3) NOUVEAU — ZONE DE SPAWN : AUCUNE GLACE (en sus d'aucune eau).
+   Verbatim : « ajoute une nouvelle condition dans le choix de zone pour la
+   structure — a present notre seule condition etait que ce soit plat et ne
+   contienne pas d'eau — modifie pour faire en sorte qu'il ne contienne ni
+   eau ni ice dans la petite zone de spawn de ma structure ».
+   → IMPLEMENTE (ce correctif) : la glace de surface (ICE / PACKED_ICE /
+   BLUE_ICE / FROSTED_ICE) est comptee comme l'eau dans TOUS les filtres du
+   choix de centre :
+     - qualityOnReady (verdict 100 % chunks reels) : une colonne coiffee de
+       glace = colonne « mouillee » → le seuil historique 0 eau refuse
+       desormais aussi la croute gelee ;
+     - partialWetProbe (rejet anticipe) : idem, arret a la 1re croute vue ;
+     - analyzeZone (securite finale) : nouveau ratio « glace » propre,
+       porte hasTooMuchIce au meme seuil que l'eau, raison de rejet
+       lisible « glace=Y% » ;
+     - helper SafeSurface.columnIcy comun.
+   Le choix sec par bruit (T233c) et le tier charge (T245) passent TOUS par
+   ces portes : un lac gele, entier ou en bordure de zone, fait echouer le
+   centre exactement comme un lac liquide.
+
+Banner client : [build T287].
+
+Logs a verifier en jeu
+----------------------
+- banner « build T287 » au /dlbtest ;
+- en cas de zone refusee, raison « glace=Y% » possible dans le log
+  [STRUCT5-SAFETY] (a cote d'« eau= », « lave= », « falaise= ») ;
+- sweep T285 toujours : « REFUSEES support glace + support eau », purge du
+  stock ; la couche finale ne recouvre ni eau ni glace (elles restent
+  visibles).
+
+Reste connu / non touche : T246 p2 d21-23, perfs (« Can't keep up » jusqu'a
+81,7 s au paste), corniches snow_block, mob suffocated, POI data mismatch.
+
+Contenu des zips (NONBT, zero .nbt, checksums sha256 36/36 vs
+mod_project/src) :
+  DEEP-LUCKY-BLOCK-T287-SRC-SEUL-NONBT.zip    — ./main/ (java + miroir
+    resources/deepluckyblock_patch/FIXES_MCREATOR)
+  DEEP-LUCKY-BLOCK-T287-SRC-COMPLET-NONBT.zip — ./ (projet MCreator
+    complet, memes 9 sources sous src/main/... x2)

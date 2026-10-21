@@ -3,6 +3,7 @@ package deepluckyblock.util;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -593,6 +594,27 @@ public final class SafeSurface {
         boolean[] wetCell = new boolean[1];
         int y = surfaceScanEx(c, level, x, z, wetCell);
         return y != Integer.MIN_VALUE && wetCell[0];
+    }
+
+    /**
+     * T287 (consigne client 21/10 : choix de zone « ni eau NI ICE » dans la
+     * petite zone de spawn de la structure) : vrai si la SURFACE de la
+     * colonne x,z est de la glace (ICE/PACKED/BLUE/FROSTED). Meme lecture
+     * bloc par bloc que {@link #columnWet} (la heightmap verrait la croute
+     * comme du terrain solide ordinaire). Chunk absent = inconnu : la
+     * colonne n'ecarte pas le candidat (meme regle que l'inconnu liquide).
+     */
+    public static boolean columnIcy(ServerLevel level, int x, int z) {
+        ChunkAccess c = chunkFor(level, x >> 4, z >> 4);
+        if (c == null) return false;
+        int y = surfaceScanEx(c, level, x, z, null);
+        if (y == Integer.MIN_VALUE) return false;
+        try {
+            BlockState s = c.getBlockState(new BlockPos.MutableBlockPos().set(x, y, z));
+            return s.is(Blocks.ICE) || s.is(Blocks.PACKED_ICE)
+                    || s.is(Blocks.BLUE_ICE) || s.is(Blocks.FROSTED_ICE);
+        } catch (Throwable ignored) { }
+        return false;
     }
 
     /** T83 (Y0) : largeur de la bande hors-emprise inspectee autour de la boite. */

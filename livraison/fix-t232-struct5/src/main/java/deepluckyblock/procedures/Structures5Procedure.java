@@ -349,15 +349,22 @@ public class Structures5Procedure {
     }
 
     private static class ZoneAnalysis {
-        double waterRatio, lavaRatio; int heightDiff;
+        double waterRatio, lavaRatio, iceRatio; int heightDiff;
         boolean hasTooMuchWater() { return waterRatio > WATER_MAX_RATIO; }
         boolean hasTooMuchLava() { return lavaRatio > LAVA_MAX_RATIO; }
+        // T287 (consigne client 21/10 : « qu'il ne contienne ni eau ni ice
+        // dans la petite zone de spawn de ma structure ») : la glace de
+        // surface est comptee SEULE dans son propre ratio et refusee au
+        // MEME seuil que l'eau (WATER_MAX_RATIO) — un lac gele est aussi
+        // mauvais candidat qu'un lac liquide.
+        boolean hasTooMuchIce() { return iceRatio > WATER_MAX_RATIO; }
         boolean hasCliff() { return heightDiff > MAX_CLIFF_HEIGHT_DIFF; }
-        boolean isUnsafe() { return hasTooMuchWater() || hasTooMuchLava() || hasCliff(); }
+        boolean isUnsafe() { return hasTooMuchWater() || hasTooMuchLava() || hasTooMuchIce() || hasCliff(); }
         String getReason() {
             List<String> r = new ArrayList<>();
             if (hasTooMuchWater()) r.add("eau=" + (int)(waterRatio * 100) + "%");
             if (hasTooMuchLava()) r.add("lave=" + (int)(lavaRatio * 100) + "%");
+            if (hasTooMuchIce()) r.add("glace=" + (int)(iceRatio * 100) + "%");
             if (hasCliff()) r.add("falaise=" + heightDiff);
             return String.join(", ", r);
         }
@@ -366,7 +373,7 @@ public class Structures5Procedure {
     private static ZoneAnalysis analyzeZone(ServerLevel level, BlockPos center) {
         ZoneAnalysis result = new ZoneAnalysis();
         BlockPos.MutableBlockPos check = new BlockPos.MutableBlockPos();
-        int waterCount = 0, lavaCount = 0, totalFluid = 0, minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+        int waterCount = 0, lavaCount = 0, iceCount = 0, totalFluid = 0, minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
         for (int dx = -SAFETY_CHECK_RADIUS; dx <= SAFETY_CHECK_RADIUS; dx += 3) {
             for (int dz = -SAFETY_CHECK_RADIUS; dz <= SAFETY_CHECK_RADIUS; dz += 3) {
                 int px = center.getX() + dx, pz = center.getZ() + dz;
@@ -387,6 +394,11 @@ public class Structures5Procedure {
                     totalFluid++;
                     if (state.is(Blocks.WATER) || (!state.getFluidState().isEmpty() && state.getFluidState().is(FluidTags.WATER))) waterCount++;
                     else if (state.is(Blocks.LAVA) || (!state.getFluidState().isEmpty() && state.getFluidState().is(FluidTags.LAVA))) lavaCount++;
+                    // T287 : la croute de glace n'est pas un fluide — elle
+                    // se compte a part (ICE/PACKED/BLUE/FROSTED) et refuse
+                    // la zone au meme seuil que l'eau.
+                    else if (state.is(Blocks.ICE) || state.is(Blocks.PACKED_ICE)
+                            || state.is(Blocks.BLUE_ICE) || state.is(Blocks.FROSTED_ICE)) iceCount++;
                 }
             }
         }
@@ -395,6 +407,7 @@ public class Structures5Procedure {
         }
         result.waterRatio = (double) waterCount / totalFluid;
         result.lavaRatio = (double) lavaCount / totalFluid;
+        result.iceRatio = (double) iceCount / totalFluid;
         result.heightDiff = maxY - minY;
         return result;
     }
@@ -2918,8 +2931,17 @@ public class Structures5Procedure {
                 }
                 if (last == null) continue;
                 wetCell[0] = false;
-                deepluckyblock.util.SafeSurface.surfaceScanEx(last, l, px, pz, wetCell);
+                int py = deepluckyblock.util.SafeSurface.surfaceScanEx(last, l, px, pz, wetCell);
                 if (wetCell[0]) return 1;
+                // T287 : meme verdict anticipe pour la glace (consigne
+                // client 21/10 « ni eau ni ice » dans la zone de spawn) —
+                // arreter a la 1re croute gelee vue comme pour la 1re eau.
+                if (py != Integer.MIN_VALUE) {
+                    BlockState surfP = last.getBlockState(
+                            new BlockPos.MutableBlockPos().set(px, py, pz));
+                    if (surfP.is(Blocks.ICE) || surfP.is(Blocks.PACKED_ICE)
+                            || surfP.is(Blocks.BLUE_ICE) || surfP.is(Blocks.FROSTED_ICE)) return 1;
+                }
             }
         }
         return 0;
@@ -2949,6 +2971,21 @@ public class Structures5Procedure {
                 known++;
                 if (!centerSet) { centerY = y; centerSet = true; }
                 if (wetCell[0]) { wet++; continue; }   // T75 : colonne d'eau
+                // T287 (consigne client 21/10 : « au choix de zone... qu'il
+                // ne contienne ni eau ni ice dans la petite zone de spawn de
+                // ma structure ») : une croute de glace compte EXACTEMENT
+                // comme l'eau pour la validite du centre — le scan liquide
+                // la voyait « seche » (surface solide), un lac gele etait
+                // admis, la structure posee sur la banquise, puis chaque
+                // passe de dispersion/couche etait batie sur... rien. La
+                // colonne gele rejoint le meme decompte `wet` : le seuil
+                // FLAT_MAX_WET historique (0) refuse desormais eau ET glace.
+                BlockState surfCell = last.getBlockState(
+                        new BlockPos.MutableBlockPos().set(px, y, pz));
+                if (surfCell.is(Blocks.ICE) || surfCell.is(Blocks.PACKED_ICE)
+                        || surfCell.is(Blocks.BLUE_ICE) || surfCell.is(Blocks.FROSTED_ICE)) {
+                    wet++; continue;   // colonne de glace = mouillee (T287)
+                }
                 if (Math.abs(y - centerY) <= FLAT_TOLERANCE) flat++;
                 if (y < minY) minY = y;
                 if (y > maxY) maxY = y;
