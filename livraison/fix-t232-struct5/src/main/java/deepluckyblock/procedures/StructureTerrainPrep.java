@@ -405,6 +405,12 @@ public class StructureTerrainPrep {
         NW_X0 = px0; NW_Z0 = pz0; NW_W = px1 - px0 + 1; NW_H = pz1 - pz0 + 1;
         NATURAL_WATER = new boolean[NW_W][NW_H];
         NATURAL_WATER_COUNT = 0;
+        // T289 (ordre client 21/10) : la MERE de zone est installee juste
+        // AVANT le chargement — damier couvrant TOUTE la zone finale tenue.
+        // Chaque chunk qui arrive devient un enfant (streamLoadedChunk ->
+        // scoutChild) ; la mere les garde tous actifs et repond ensuite aux
+        // passes (veto A1 eclat, fondu de neige lisse, diagnostics).
+        deepluckyblock.util.TerrainMother.begin(px0 >> 4, pz0 >> 4, px1 >> 4, pz1 >> 4);
         preloadChunksBatched(level, px0, pz0, px1, pz1, px1 - px0 + 1, pz1 - pz0 + 1,
                 coreX0, coreZ0, coreX1, coreZ1, PRELOAD_TOTAL_BUDGET_MS,
                 cp -> streamLoadedChunk(level, cp.x, cp.z, topY), () -> {
@@ -881,7 +887,21 @@ public class StructureTerrainPrep {
     // Batche via schedule.
     /** T236 : rendu visible au paquet pour le re-ancrage post-terrain de
      * Structures5Procedure (remplissage du manque sous la structure decalee). */
+    /** T289 : A6 DESACTIVE sur ordre client (peut etre reactive plus tard). */
+    private static final boolean PREFILL_FOUNDATION_ENABLED = false;
+
     static void prefillFoundation(ServerLevel level, BlockPos min, BlockPos max, int foundationBaseY, Runnable onDone) {
+        // T289 (ordre client 21/10 : « pour l'instant desactive le a6, on le
+        // remettra peut etre plus tard ») : le pre-remplissage de fondation
+        // (grass_block sous l'emprise+3 dans les vides) est DESACTIVE — la
+        // structure s'insere sur le terrain prepare par clearFootprint +
+        // smooth ; tout le mecanisme reste en place ici pour reactivation.
+        if (!PREFILL_FOUNDATION_ENABLED) {
+            deepluckyblock.util.DebugLog.structure(
+                    "prefillFoundation DESACTIVE (T289, ordre client -- A6 coupe pour reevaluation)");
+            if (onDone != null) onDone.run();
+            return;
+        }
         BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
         int minBuild = level.getMinBuildHeight();
         int[] filled = {0};
@@ -1291,6 +1311,7 @@ public class StructureTerrainPrep {
                     deepluckyblock.util.ChunkKeeper.release(level);
                     clearFootprintProtection();
                     CLEARANCE_PLAN = null;
+                    deepluckyblock.util.TerrainMother.end();   // T289 : la mere est dissoute avec la zone
                     step("decorate TERMINE T180 (végétation + arbres restaurés) + sweep-neige T263");
                 };
                 if (raccordT240) smoothAround(level, min, max, () -> {
@@ -2625,6 +2646,7 @@ public class StructureTerrainPrep {
                                     deepluckyblock.util.ChunkKeeper.release(level);
                                     clearFootprintProtection();
                                     CLEARANCE_PLAN = null;
+                                    deepluckyblock.util.TerrainMother.end();   // T289
                                     step("decorate TERMINE (failles, smooths, fuites, decors, arbres, naturalisation)");
                                     });
                                     }   // T23 : fin du bloc "eau intacte" (ex-fin du degel)
@@ -2857,6 +2879,62 @@ public class StructureTerrainPrep {
      * intacte et les blocs moddés de terrain sont acceptés s'ils sont solides et
      * ne sont ni feuilles, ni logs, ni végétaux.
      */
+
+    /**
+     * T289 — SCOUT D'UN ENFANT (ordre client mere/enfants). Mesures FIGEES sur
+     * le chunk encore sain, juste apres la photographie palette/neige et avant
+     * le moindre retrait de decor :
+     * <ul>
+     *  <li>y de surface min/max/median par un echantillon 4x4 de la heightmap
+     *      locale (MOTION_BLOCKING_NO_LEAVES = le vrai sol, jamais les cimes) ;</li>
+     *  <li>mur/crevasse interne = etendue > 24 blocs (trop raide : pas une
+     *      montagne douce, une cassure — signalee pour la mere) ;</li>
+     *  <li>ratio neige VIERGE = snowRateCell (mesure T259 deja primee) ;</li>
+     *  <li>eau/glace : colonne marquee nappe (NATURAL_WATER, photo T103) et
+     *      croute de glace a la colonne centrale (SafeSurface.columnIcy).</li>
+     * </ul>
+     * Toutes les questions de la mere se repondent ensuite depuis ces champs,
+     * sans relire le monde.
+     */
+    private static void scoutChild(ServerLevel level, deepluckyblock.util.TerrainMother mother, int cx, int cz) {
+        deepluckyblock.util.TerrainMother.Child child = mother.child(cx, cz);
+        if (child == null) return;
+        ChunkAccess chunk = level.getChunk(cx, cz);
+        int[] ys = new int[16];
+        int n = 0;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int lx = 2; lx <= 14; lx += 4) {
+            for (int lz = 2; lz <= 14; lz += 4) {
+                int hy = chunk.getHeight(
+                        net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
+                if (hy > level.getMinBuildHeight()) ys[n++] = hy;
+            }
+        }
+        if (n > 0) {
+            java.util.Arrays.sort(ys, 0, n);
+            child.surfaceYMin = ys[0];
+            child.surfaceYMax = ys[n - 1];
+            child.surfaceYMedian = ys[n / 2];
+            child.steep = (child.surfaceYMax - child.surfaceYMin) > 24;
+        } else {
+            child.present = false;   // rien de mesurable : enfant muet
+            return;
+        }
+        // Neige vierge : taux déjà photographié au repos (T259) — la réponse
+        // « isSnowy » de l'enfant vient de la. (Lecture cache, zéro monde.)
+        child.snowyRatio = Math.max(0f, Math.min(1f, snowRateCell(level, cx, cz)));
+        // Eau : la colonne entière est-elle nappe photographiée T103 ?
+        {
+            int i = (cx << 4) + 8 - NW_X0, j = (cz << 4) + 8 - NW_Z0;
+            boolean wet = NATURAL_WATER != null && i >= 0 && j >= 0 && i < NW_W && j < NW_H
+                    && NATURAL_WATER[i][j];
+            child.waterRatio = wet ? 1f : 0f;
+        }
+        // Glace : croute a la colonne centrale (probe non bloquant).
+        child.iceRatio = deepluckyblock.util.SafeSurface.columnIcy(level,
+                (cx << 4) + 8, (cz << 4) + 8) ? 1f : 0f;
+    }
+
     private static void streamLoadedChunk(ServerLevel level, int cx, int cz, int topY) {
         long ck = ((long) cx << 32) ^ (cz & 0xffffffffL);
         if (STREAMED_CHUNKS.contains(ck)) return;
@@ -2876,6 +2954,22 @@ public class StructureTerrainPrep {
         // herbes snowy desenneigees en masse puis recoiffe d'un rectangle
         // sans neige lisible depuis le ciel.
         primeSnowRates(level, cx, cz);
+        // T289 (MERE/ENFANTS — ordre client 21/10 : « on analyse les chunks de
+        // maniere individuelle ET croisee ; les enfants repondent instantane,
+        // la mere regroupe ») : ce chunk devient un ENFANT — cerveau fige
+        // AVANT toute edition de ce chunk (mesures sur le monde encore sain :
+        // y surface median/min/max d'apres la heightmap locale, ratio neige
+        // vierge via snowRateCell deja prime, eau/glace sondes). La mere le
+        // conserve actif dans sa grille ; le veto A1 (eclat de zone) et le
+        // fondu de neige lisse liront CES reponses, plus jamais le monde.
+        deepluckyblock.util.TerrainMother mother289 = deepluckyblock.util.TerrainMother.current();
+        if (mother289 != null) {
+            try {
+                scoutChild(level, mother289, cx, cz);
+            } catch (Throwable t) {
+                LOGGER.warn("[DLB-STRUCTURE] T289 scout enfant {},{} en echec ({}) -- enfant ignore", cx, cz, t.toString());
+            }
+        }
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         int removed = 0, wet = 0;
         // Photographie T103 locale avant la moindre écriture de ce chunk.
@@ -4448,6 +4542,13 @@ public class StructureTerrainPrep {
      *   aucune ligne droite, effet dithering ordonne.
      * </ul>
      */
+    /** T289 : densite de neige lisse par la MERE (damier d'enfants, noyau
+     *  gaussien multi-chunks), -1 si la mere est absente ou muette. */
+    private static float motherSnowDensity(ServerLevel level, int x, int z) {
+        deepluckyblock.util.TerrainMother m289 = deepluckyblock.util.TerrainMother.current();
+        return m289 == null ? -1f : m289.snowDensity(x, z);
+    }
+
     private static boolean snowCoverHere(ServerLevel level, long seed, int x, int z) {
         // T279 (retour client 17/10 ~04h13, run T278 : « ENORME RETOUR EN
         // ARRIERE, rien ne va plus, les smooths etc » + « on clean une grande
@@ -4465,6 +4566,31 @@ public class StructureTerrainPrep {
         // SPREAD vers les chunks de biome NON neige (T270 inchange : hors
         // biome neige, rien blanchir sans neige reelle voisine mesuree).
         if (isSnowyCell(level, new BlockPos(x, 64, z))) return true;
+        // ---------------------------------------------------------------
+        // T289 (ordre client 21/10 : « tous les enfants repondent a la
+        // question isSnowy ; la mere voit le damier et calcule une aura
+        // smooth entre les chunks, parfois de 3 chunks dans un » +
+        // « oublie completement ton gradiant snow actuel » + bug : « giga
+        // ligne de snow a la derniere ligne du chunk, pile a cote du chunk
+        // sans neige » — cause exacte trouvee : l'ancienne moyenne de fondu
+        // EXCLUAIT le taux du chunk courant ; au dernier rang, la moyenne
+        // valait ~taux voisin/2 = pile le seuil de couverture pleine) :
+        // la mere lisse son damier d'enfants avec un noyau gaussien
+        // multi-chunks (GaussianKernel, reference WorldEdit) centre sur les
+        // frontieres — la frontiere tombe au MILIEU du joint, symetrique
+        // des deux cotes, aucune ligne dure possible.
+        float dens289 = motherSnowDensity(level, x, z);
+        if (dens289 >= 0f) {
+            // Enfant(s) renseigne(s) : MERE COMMANDE. Couverture integrale
+            // des que les enfants environnants sont quasi-blancs, zero des
+            // que l'aura retombe ; entre les deux, congeres coherentes
+            // seedees (T257b conserve — bruit lisse, jamais de stries).
+            if (dens289 >= 0.85f) return true;
+            if (dens289 <= 0.02f) return false;
+            return snowDriftNoise(level.getSeed() ^ 0xD217F00DL, x, z) < dens289;
+        }
+        // Mere absente ou damier muet (hors zone suivie) : mecanique
+        // historique par paires de chunks ci-dessous (ATELIER SEULEMENT).
         int cx = x >> 4, cz = z >> 4;
         float[] nb = snowyRates(level, cx, cz);
         if (nb[0] >= 0.85f && nb[1] >= 0.85f && nb[2] >= 0.85f && nb[3] >= 0.85f) return true;

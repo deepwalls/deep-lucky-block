@@ -350,6 +350,9 @@ public class Structures5Procedure {
 
     private static class ZoneAnalysis {
         double waterRatio, lavaRatio, iceRatio; int heightDiff;
+        /** T289 (mere/enfants, ordre client 21/10 A1) : pire ecart de hauteur
+         *  de surface moyenne entre CHUNKS ADJACENTS. Refus des zones a >2. */
+        int chunkGapMax = 0;
         boolean hasTooMuchWater() { return waterRatio > WATER_MAX_RATIO; }
         boolean hasTooMuchLava() { return lavaRatio > LAVA_MAX_RATIO; }
         // T287 (consigne client 21/10 : « qu'il ne contienne ni eau ni ice
@@ -359,13 +362,18 @@ public class Structures5Procedure {
         // mauvais candidat qu'un lac liquide.
         boolean hasTooMuchIce() { return iceRatio > WATER_MAX_RATIO; }
         boolean hasCliff() { return heightDiff > MAX_CLIFF_HEIGHT_DIFF; }
-        boolean isUnsafe() { return hasTooMuchWater() || hasTooMuchLava() || hasTooMuchIce() || hasCliff(); }
+        // T289 : « on n'accepte que les zones avec un ecart entre chaque
+        // chunk de max 2 blocs, pour eviter les terrains qui s'affaissent
+        // d'un coup ». Mesure par moyenne de surface chunk vs chunk adjacent.
+        boolean hasSteepChunkGap() { return chunkGapMax > 2; }
+        boolean isUnsafe() { return hasTooMuchWater() || hasTooMuchLava() || hasTooMuchIce() || hasCliff() || hasSteepChunkGap(); }
         String getReason() {
             List<String> r = new ArrayList<>();
             if (hasTooMuchWater()) r.add("eau=" + (int)(waterRatio * 100) + "%");
             if (hasTooMuchLava()) r.add("lave=" + (int)(lavaRatio * 100) + "%");
             if (hasTooMuchIce()) r.add("glace=" + (int)(iceRatio * 100) + "%");
             if (hasCliff()) r.add("falaise=" + heightDiff);
+            if (hasSteepChunkGap()) r.add("escarpe_chunks=" + chunkGapMax);
             return String.join(", ", r);
         }
     }
@@ -374,6 +382,8 @@ public class Structures5Procedure {
         ZoneAnalysis result = new ZoneAnalysis();
         BlockPos.MutableBlockPos check = new BlockPos.MutableBlockPos();
         int waterCount = 0, lavaCount = 0, iceCount = 0, totalFluid = 0, minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+        // T289 : surface moyenne PAR CHUNK (veto mere — ecart voisins <= 2).
+        java.util.Map<Long, long[]> chunkSurf = new java.util.HashMap<>();
         for (int dx = -SAFETY_CHECK_RADIUS; dx <= SAFETY_CHECK_RADIUS; dx += 3) {
             for (int dz = -SAFETY_CHECK_RADIUS; dz <= SAFETY_CHECK_RADIUS; dz += 3) {
                 int px = center.getX() + dx, pz = center.getZ() + dz;
@@ -385,6 +395,12 @@ public class Structures5Procedure {
                 if (surfY == Integer.MIN_VALUE) continue;   // chunk pas en memoire : echantillon ignore
                 if (surfY < minY) minY = surfY;
                 if (surfY > maxY) maxY = surfY;
+                // T289 : cumul par chunk pour la moyenne de surface.
+                {
+                    long ck = (((long) (px >> 4)) << 32) | ((pz >> 4) & 0xffffffffL);
+                    long[] acc = chunkSurf.computeIfAbsent(ck, k -> new long[2]);
+                    acc[0] += surfY; acc[1]++;
+                }
                 for (int dy = 0; dy >= -SAFETY_CHECK_DEPTH; dy--) {
                     check.set(px, surfY + dy, pz);
                     // T56 : lecture NON BLOQUANTE (un getBlockState sur chunk absent generait
@@ -409,6 +425,25 @@ public class Structures5Procedure {
         result.lavaRatio = (double) lavaCount / totalFluid;
         result.iceRatio = (double) iceCount / totalFluid;
         result.heightDiff = maxY - minY;
+        // T289 (veto A1 mere/enfants) : pire ecart de surface moyenne entre
+        // chunks EN BORDURE DIRECTE (4-voisinage, |Δmedian| strictement ; un
+        // enfant isole sans voisin mesure ne penalise pas — zone partielle
+        // = on ne juge pas). Refuse a >2 (client : « on n'accepte que les
+        // zones avec un ecart entre chaque chunk de max 2 blocs »).
+        {
+            int worst289 = 0;
+            java.util.Map<Long, Integer> mean = new java.util.HashMap<>();
+            for (java.util.Map.Entry<Long, long[]> e : chunkSurf.entrySet())
+                mean.put(e.getKey(), (int) Math.round(e.getValue()[0] / (double) e.getValue()[1]));
+            for (java.util.Map.Entry<Long, Integer> e : mean.entrySet()) {
+                int cx = (int) (e.getKey() >> 32), cz = e.getKey().intValue();
+                Integer ex = mean.get((((long) (cx + 1)) << 32) | (cz & 0xffffffffL));
+                Integer sz = mean.get((((long) cx) << 32) | ((cz + 1) & 0xffffffffL));
+                if (ex != null) worst289 = Math.max(worst289, Math.abs(e.getValue() - ex));
+                if (sz != null) worst289 = Math.max(worst289, Math.abs(e.getValue() - sz));
+            }
+            result.chunkGapMax = worst289;
+        }
         return result;
     }
 

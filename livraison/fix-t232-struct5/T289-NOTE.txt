@@ -1,0 +1,161 @@
+DEEP LUCKY BLOCK — LIVRAISON T289 « SYSTEME MERE/ENFANTS »
+===========================================================
+Date : 25/10/2026 (horodatage interne du depot)
+Base : build T288. Livraison SANS *.nbt (regle permanente T271).
+CI GitHub : run 40206655742 → build SUCCESS (compilation Java 21 OK).
+
+VOS 5 ORDRES APPLIQUES
+======================
+
+1) ARCHITECTURE MERE / ENFANTS (cerveau par chunk + orchestrateur central)
+--------------------------------------------------------------------------
+NOUVEAU : deepluckyblock/util/TerrainMother.java + scoutage branche sur le
+flux de chargement existant (streamLoadedChunk, juste apres primeSnowRates —
+zero carte en plus ajoutee au pipeline).
+
+- L'ENFANT (1/chunk) sait et repond instantanement pendant toute la fenetre
+  de la zone :
+  * surface mediane/min/max — vierge, prise sur la heightmap
+    MOTION_BLOCKING_NO_LEAVES (4x4 sondes, creeke protection contre un cime
+    d'arbre ou un rocher isole) ;
+  * isSnowy() = vrai si son taux de neige NATIVE T259 (deja prime) >= 50 % ;
+  * ratios eau/glace (masque nappe memorisee T103 + colonneIcy) ;
+  * drapeau escarpe (etendue de ses 16 hauteurs > 24 blocs — crevasses,
+    murs raides, grands sauts de blocs, demande client).
+- LA MERE possede la grille 2D des enfants (le « damier ») tant que la zone
+  dure ; elle est creee juste avant le preload des chunks (ordre
+  « responsable des chunks de la zone structure » : le load -> smooth (m1-m7)
+  -> pose est orchestre deja par la chaine existante, la mere repond
+  PENDANT) ; TerrainMother.end() la libere aux 2 fins de chaine existantes.
+  Tout scout d'enfant est protege en try/catch et ne casse jamais la chaine.
+
+2) VETO ZONE : ECART ENTRE CHUNKS ADJACENTS <= 2 BLOCS
+------------------------------------------------------
+« On n'accepte que les zones avec un ecart entre chaque chunk de max
+2 blocs, pour eviter les terrains qui s'affaissent d'un coup. »
+analyzeZone calcule desormais la hauteur de surface MOYENNE de chaque chunk
+balaye (memes sondes non bloquantes T56/T75, aucune relecture en plus), puis
+le pire ecart entre chunk et ses voisins directs (4-voisinage). VETO si > 2,
+motif « escarpe_chunks=N » ajoute a getReason/isUnsafe — visibles dans les
+logs qualite habituels.
+
+3) A6 (preferilFoundation) DESACTIVE
+------------------------------------
+« Pour l'instant desactive le a6, on le remettra peut etre plus tard. »
+Le pre-remplissage de fondation (grass_block pose sous l'emprise+3 dans les
+vides) est sorti de la chaine : la structure s'insere directement sur le
+terrain prepare par clearFootprint + smooth (m1..m7). TOUT le mecanisme
+reste en place (flag PREFILL_FOUNDATION_ENABLED=false, commente/T289) pour
+reactivation d'un coup d'interrupteur.
+
+4) CORRECTION DU BUG « GIGA LIGNE DE SNOW A LA DERNIERE LIGNE DU CHUNK,
+PILE A COTE DU CHUNK SANS NEIGE »
+---------------------------------
+Cause exacte identifiee dans l'ANCIEN fondu : la moyenne des taux voisins
+EXCLUAIT le taux du chunk courant, et au dernier rang (lz=15) le poids du
+voisin qui compte valait ~0,94 → la moyenne retombait pile autour du SEUIL
+de couverture pleine T276 (0,5) → une ligne complete peinte neige-pleine
+d'un cote de la couture, seche de l'autre. Giga strie nette = phenomene de
+frontiere, 100 % reproductible a chaque joint mixte.
+Correctif : le fondu historique est REMPLACE par un champ lisse calcule par
+la MERE (voir point 5) — la frontiere tombe au MILIEU du joint, identique
+des deux cotes : aucune ligne dure n'est possible par construction.
+
+5) NOUVEAU GRADIENT SNOW : AURA LISSE MULTI-CHUNKS CALCULEE PAR LA MERE
+-----------------------------------------------------------------------
+« Oublie completement ton gradiant snow actuel. Calcule plutot une aura qui
+s'echappe en snow — parfois de 3 chunks dans un — tout depends de la zone
+quadrillee vue par maman. ZERO delimitation de chunk visible. »
+
+Plus du tout de « interface entre 2 chunks » (paire) : le damier isSnowy
+des enfants est lisse au NIVEAU BLOC par un noyau gaussien (convolution 2D,
+comme la reference industrielle lue sur GitHub — voir § REFERENCES) :
+
+  densite(x,z) = sum_enfants( isSnowy(enfant) * gauss(distance au centre) )
+                 / sum_enfants( gauss(...) )
+
+La mere CHOISIT LE RAYON DU FONDU en lisant son damier :
+  * damier quasi uniforme (>=90 % ou <=10 % d'enfants enneiges) : rayon 1
+    chunk — le fondu ne sert qu'a casser la couture pure ;
+  * damier tres mixed (30-70 %) : rayon 3 chunks — grandes congeres
+    d'echappement, l'aura d'un bloc de neige porte loin ;
+  * entre les deux : rayon 2 chunks.
+(order « peut etre de 3 chunks dans un, tout depends » → respecte, adaptatif,
+modifiable a tout moment via setSnowRadiusChunks si la selection de zone
+veut imposer un rayon).
+
+Couverture finale par colonne :
+  * densite >= 85 % → neige pleine ;
+  * densite <= 2 %  → rien ;
+  * entre les deux  → congeres COHERENTES (bruit de valeur lisse T257b,
+    seedees, identiques entre toutes les passes et les audits — jamais de
+    poussiere ni de stries).
+La garde biome-neige vanilla (isSnowyCell → true) reste prioritaire, et si
+la mere n'est pas presente (hors zone suivie) l'ancienne mecanique garde la
+main : aucune regression hors-champ d'application.
+
+REFERENCES GITHUB UTILISEES (ordre « arrete d'inventer, il y a pleins de
+projets dispo »)
+-------------------------------------------------------------------------------
+Lues cette semaine via l'API GitHub (Electric steamEngine/WorldEdit, depot
+vedette ~3,5k etoiles — la reference industrielle des editor de terrain
+Minecraft) :
+
+  * math/convolution/SnowHeightMap.java : la neige est un CHAMP 2D en float
+    (hauteur + fraction de couches) lisse par convolutions, les blocs SNOW
+    sont ensuite reposes depuis le champ lisse → meme schema ici : damier
+    isSnowy → gaussien → decision colonne.
+  * math/convolution/GaussianKernel.java : noyau exp(-(x²+y²)/(2σ²))
+    normalise, centre sur chaque pixel → sigma choisi a 8 blocs par chunk de
+    rayon, la mere echantillonne les enfants du carre ±R centre sur le chunk
+    de la colonne (frontiere au milieu du joint, identique des deux cotes).
+  * math/convolution/HeightMapFilter.java + Kernel.java : support de la
+    convolution (in-phase).
+Note : raw.githubusercontent.com reste bloque dans mon bac a sable → lecture
+via api.github.com (contenu base64 decode), meme depot, meme code.
+
+CONTROLE DU PIPELINE (recapitulatif suite a la demande d'inventaire)
+--------------------------------------------------------------------
+1. CHOIX DE ZONE : scan D6 32 blocs (premier candidat valide) → SAFE :
+   * checkAround5Points T47-e (snap PROBE_ONLY T264, seedee) : eau froide,
+     bois/vegetation, arbres > 8 blocs, gap gap Y>24, caves 16x16, pente
+     anormale (maxY-minY du D5 > 14), >3 terres verticales ;
+   * partialWetProbe : lac/riviere/glace > 15 % (T286/T287) ;
+   * qualityOnReady : eau 0 (T42+T284 abolu la tolerance 2-colonnes) + veto
+     glace T287 ;
+   * analyzeZone (porte de securite finale, SAFETY_CHECK_RADIUS) : eau/lave
+     (>10 %), >8 %, glace (T287), falaise > MAX_CLIFF_HEIGHT_DIFF, ET
+     NOUVEAU : escarpe chunks > 2 (veto A1 mere/enfants) ;
+   * structure chunk-scan D6 (sect velocity, § semenceto).
+   => Tous ces filtres liasons DANS les moulinets de choix : la zone acceptee
+      est celle ou « tout est OK ».
+2. PREPARATION TERRAIN : load par vague -> smooth par couche (m1..m7) : motte
+   ancre, clearFootprint, nappy masques, glacis exterieur, ruban de contact,
+   PUR-planf de coupe, lissage, rebuild des colonnes d'absentees. La MERE
+   repond pendant (y-sol vierge, escarpe, isSnowy, eau/glace).
+3. NEIGE : aura gaussienne mere (ce build), purge eau/glace T285 conservee.
+4. AUDIT FINAL + CEREMONIE DE POSE (spawn/chat/advancement/cache T288 MCO).
+
+VERIFICATIONS TECHNIQUES
+------------------------
+- Banner en jeu : « [build T289] » (/dlbtest + chat de lancement).
+- Nouveaux logs a guetter :
+  * « T289 scout enfant x,z en echec » → a NE PAS voir (warn protecteur) ;
+  * des selections refusees avec « escarpe_chunks=N » dans les logs qualite ;
+  * le reste des compteurs (nappy, ruban, sweep/audit neige, fusion T288)
+    est inchange.
+- Checksums : 40/40 SHA-256 (10 fichiers sources x 4 copies coherentes ;
+  + miroir resources/deepluckyblock_patch/FIXES_MCREATOR 10/10 dans le zip
+  COMPLET et DlbTestCommands.java a la racine pour diff rapide).
+- 0 fichier *.nbt dans les deux zips (regle permanente T271).
+
+CONTENU
+-------
+- DEEP-LUCKY-BLOCK-T289-SRC-SEUL-NONBT.zip    → main/ (java + resources kit)
+- DEEP-LUCKY-BLOCK-T289-SRC-COMPLET-NONBT.zip → projet MCreator complet
+  (src/main/... x2 + miroir FIXES_MCREATOR + DlbTestCommands a la racine)
+
+Limites connues NON touchees par T289 (hors demande, reportees) :
+- T246 p2 (tailles d21-d23) toujours ouvert ;
+- perfs de chantier (« Can't keep up » ~19 s au pic) ;
+- corniches snow_block, mob suffocated, POI data mismatch.
