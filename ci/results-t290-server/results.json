@@ -1,0 +1,300 @@
+[
+ {
+  "name": "run-01",
+  "t_start": 1792949336.3767931,
+  "corners": true,
+  "t_cmd": 123.3,
+  "search_done_s": 123.3,
+  "total_timeout": "No marker ['Post-process de', 'decorate + post de'] in 900s",
+  "total_s": null,
+  "site": [
+   1511,
+   151
+  ],
+  "dist": 345.7,
+  "audit": "No marker [DLB-RINGAUDIT] in 60s",
+  "cku_count": 2,
+  "cku_max_ms": 68005,
+  "cku_sum_ms": 71867,
+  "phase_ms_top": [
+   141,
+   91,
+   46,
+   35,
+   20
+  ],
+  "tier_ms": null,
+  "sec_ms": 319,
+  "pose_ms": null,
+  "search_s": null,
+  "wall_s": 1130.9
+ },
+ {
+  "name": "run-02",
+  "t_start": 1792950473.666497,
+  "corners": true,
+  "t_cmd": 101.4,
+  "search_done_s": 101.4,
+  "total_timeout": "No marker ['Post-process de', 'decorate + post de'] in 900s",
+  "total_s": null,
+  "site": [
+   1511,
+   151
+  ],
+  "dist": 345.7,
+  "audit": "No marker [DLB-RINGAUDIT] in 60s",
+  "cku_count": 3,
+  "cku_max_ms": 46750,
+  "cku_sum_ms": 68309,
+  "phase_ms_top": [
+   140,
+   90,
+   45,
+   32,
+   26
+  ],
+  "tier_ms": null,
+  "sec_ms": 238,
+  "pose_ms": null,
+  "search_s": null,
+  "wall_s": 1105.4
+ },
+ {
+  "name": "run-03",
+  "t_start": 1792951585.4789565,
+  "corners": true,
+  "t_cmd": 111.8,
+  "search_done_s": 111.8,
+  "total_timeout": "No marker ['Post-process de', 'decorate + post de'] in 900s",
+  "total_s": null,
+  "site": [
+   1511,
+   151
+  ],
+  "dist": 345.7,
+  "audit": "No marker [DLB-RINGAUDIT] in 60s",
+  "cku_count": 2,
+  "cku_max_ms": 23296,
+  "cku_sum_ms": 27195,
+  "phase_ms_top": [
+   125,
+   89,
+   42,
+   26,
+   24
+  ],
+  "tier_ms": null,
+  "sec_ms": 374,
+  "pose_ms": null,
+  "search_s": null,
+  "wall_s": 1117.2
+ },
+ {
+  "name": "run-04",
+  "t_start": 1792952709.1049824,
+  "corners": true,
+  "t_cmd": 112.8,
+  "search_done_s": 112.9,
+  "total_timeout": "No marker ['Post-process de', 'decorate + post de'] in 900s",
+  "total_s": null,
+  "site": [
+   1511,
+   151
+  ],
+  "dist": 345.7,
+  "audit": "No marker [DLB-RINGAUDIT] in 60s",
+  "cku_count": 2,
+  "cku_max_ms": 61995,
+  "cku_sum_ms": 66071,
+  "phase_ms_top": [
+   130,
+   94,
+   45,
+   26,
+   23
+  ],
+  "tier_ms": null,
+  "sec_ms": 310,
+  "pose_ms": null,
+  "search_s": null,
+  "wall_s": 1116.9
+ },
+ {
+  "name": "run-05",
+  "t_start": 1792953832.4949787,
+  "corners": true,
+  "t_cmd": 112.3,
+  "search_done_s": 112.3,
+  "total_timeout": "No marker ['Post-process de', 'decorate + post de'] in 900s",
+  "total_s": null,
+  "site": [
+   1511,
+   151
+  ],
+  "dist": 345.7,
+  "audit": "No marker [DLB-RINGAUDIT] in 60s",
+  "cku_count": 3,
+  "cku_max_ms": 56581,
+  "cku_sum_ms": 79457,
+  "phase_ms_top": [
+   157,
+   89,
+   52,
+   38,
+   27
+  ],
+  "tier_ms": null,
+  "sec_ms": 252,
+  "pose_ms": null,
+  "search_s": null,
+  "wall_s": 1118.1
+ },
+ {
+  "name": "run-06",
+  "t_start": 1792954957.1133387,
+  "corners": true,
+  "t_cmd": 105.1,
+  "search_done_s": 105.1,
+  "total_timeout": "No marker ['Post-process de', 'decorate + post de'] in 900s",
+  "total_s": null,
+  "site": [
+   1511,
+   151
+  ],
+  "dist": 345.7,
+  "audit": "No marker [DLB-RINGAUDIT] in 60s",
+  "cku_count": 3,
+  "cku_max_ms": 49909,
+  "cku_sum_ms": 74381,
+  "phase_ms_top": [
+   142,
+   105,
+   70,
+   29,
+   26
+  ],
+  "tier_ms": null,
+  "sec_ms": 240,
+  "pose_ms": null,
+  "search_s": null,
+  "wall_s": 1108.4
+ },
+ {
+  "name": "run-07",
+  "t_start": 1792956072.0067744,
+  "corners": true,
+  "t_cmd": 111.0,
+  "search_done_s": 111.0,
+  "total_timeout": "No marker ['Post-process de', 'decorate + post de'] in 900s",
+  "total_s": null,
+  "site": [
+   1511,
+   151
+  ],
+  "dist": 345.7,
+  "audit": "No marker [DLB-RINGAUDIT] in 60s",
+  "cku_count": 3,
+  "cku_max_ms": 53980,
+  "cku_sum_ms": 76547,
+  "phase_ms_top": [
+   133,
+   82,
+   57,
+   37,
+   27
+  ],
+  "tier_ms": null,
+  "sec_ms": 278,
+  "pose_ms": null,
+  "search_s": null,
+  "wall_s": 1115.8
+ },
+ {
+  "name": "run-08",
+  "t_start": 1792957194.282138,
+  "corners": true,
+  "t_cmd": 111.9,
+  "search_done_s": 112.0,
+  "total_timeout": "No marker ['Post-process de', 'decorate + post de'] in 900s",
+  "total_s": null,
+  "site": [
+   1511,
+   151
+  ],
+  "dist": 345.7,
+  "audit": "No marker [DLB-RINGAUDIT] in 60s",
+  "cku_count": 3,
+  "cku_max_ms": 52413,
+  "cku_sum_ms": 72521,
+  "phase_ms_top": [
+   134,
+   91,
+   47,
+   24
+  ],
+  "tier_ms": null,
+  "sec_ms": 346,
+  "pose_ms": null,
+  "search_s": null,
+  "wall_s": 1116.6
+ },
+ {
+  "name": "run-09",
+  "t_start": 1792958317.409264,
+  "corners": true,
+  "t_cmd": 109.2,
+  "search_done_s": 109.2,
+  "total_timeout": "No marker ['Post-process de', 'decorate + post de'] in 900s",
+  "total_s": null,
+  "site": [
+   1511,
+   151
+  ],
+  "dist": 345.7,
+  "audit": "No marker [DLB-RINGAUDIT] in 60s",
+  "cku_count": 2,
+  "cku_max_ms": 62198,
+  "cku_sum_ms": 66413,
+  "phase_ms_top": [
+   132,
+   91,
+   37,
+   24,
+   22
+  ],
+  "tier_ms": null,
+  "sec_ms": 252,
+  "pose_ms": null,
+  "search_s": null,
+  "wall_s": 1113.6
+ },
+ {
+  "name": "run-10",
+  "t_start": 1792959438.5676422,
+  "corners": true,
+  "t_cmd": 105.7,
+  "search_done_s": 105.7,
+  "total_timeout": "No marker ['Post-process de', 'decorate + post de'] in 900s",
+  "total_s": null,
+  "site": [
+   1511,
+   151
+  ],
+  "dist": 345.7,
+  "audit": "No marker [DLB-RINGAUDIT] in 60s",
+  "cku_count": 3,
+  "cku_max_ms": 42362,
+  "cku_sum_ms": 70438,
+  "phase_ms_top": [
+   115,
+   90,
+   37,
+   23
+  ],
+  "tier_ms": null,
+  "sec_ms": 306,
+  "pose_ms": null,
+  "search_s": null,
+  "wall_s": 1109.2
+ }
+]

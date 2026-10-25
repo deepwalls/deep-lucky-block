@@ -1,0 +1,11 @@
+NOM | site | dist | recherche_s | tier_ms | sec_ms | pose_ms | total_s | cku_n | cku_max_ms | cku_sum_ms
+run-01 | (1511, 151) | 345.7 | None | None | 319 | None | None | 2 | 68005 | 71867
+run-02 | (1511, 151) | 345.7 | None | None | 238 | None | None | 3 | 46750 | 68309
+run-03 | (1511, 151) | 345.7 | None | None | 374 | None | None | 2 | 23296 | 27195
+run-04 | (1511, 151) | 345.7 | None | None | 310 | None | None | 2 | 61995 | 66071
+run-05 | (1511, 151) | 345.7 | None | None | 252 | None | None | 3 | 56581 | 79457
+run-06 | (1511, 151) | 345.7 | None | None | 240 | None | None | 3 | 49909 | 74381
+run-07 | (1511, 151) | 345.7 | None | None | 278 | None | None | 3 | 53980 | 76547
+run-08 | (1511, 151) | 345.7 | None | None | 346 | None | None | 3 | 52413 | 72521
+run-09 | (1511, 151) | 345.7 | None | None | 252 | None | None | 2 | 62198 | 66413
+run-10 | (1511, 151) | 345.7 | None | None | 306 | None | None | 3 | 42362 | 70438
