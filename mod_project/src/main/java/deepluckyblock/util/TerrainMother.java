@@ -84,7 +84,16 @@ public final class TerrainMother {
     }
 
     /** Dissout la mere (fin de chaine). */
-    public static void end() { CURRENT = null; }
+    /** Fin de fenetre : la mere est liberee (et toute IA en vol annulee). */
+    public static void end() {
+        TerrainMother m = CURRENT;
+        if (m != null) {
+            java.util.concurrent.CompletableFuture<MotherAISnowDirector.SnowPlan> f = m.aiFuture;
+            if (f != null && !f.isDone()) f.cancel(true);
+            m.aiPlan = null;
+        }
+        CURRENT = null;
+    }
 
     private final int gx0, gz0, gw, gh;
     private final Child[] grid;
@@ -152,6 +161,52 @@ public final class TerrainMother {
     private int snowRadiusChunks = 2;
     private boolean snowRadiusLocked = false;
 
+    // ------------------------------------------------------------------
+    // T290 (ordre client 25/10 : « new idee, add ia to mother ») : la mere
+    // peut CONSULTER un modele local (Ollama) — voir MotherAISnowDirector.
+    // L'avis de l'IA n'est qu'un NUDGE borne : rayon 1..3 et boosts d'aura
+    // par enfant (0.75..1.25). Le gaussien deterministe T289 reste le dos
+    // de la mecanique ; sans Ollama, rien ne change jamais.
+    // ------------------------------------------------------------------
+    private volatile java.util.concurrent.CompletableFuture<MotherAISnowDirector.SnowPlan> aiFuture = null;
+    private volatile MotherAISnowDirector.SnowPlan aiPlan = null;
+    private volatile boolean aiAwaited = false;
+
+    /** Lance la consultation IA (no-op si deja lancee pour cette zone). */
+    public void startAiConsultation() {
+        if (aiFuture != null) return;
+        aiFuture = MotherAISnowDirector.consultAsync(this);
+    }
+
+    /**
+     * Attend le plan IA UNE SEULE FOIS (au plus 1500 ms), a la premiere
+     * demande de densite de la zone. Objectif : toutes les decisions de
+     * neige d'une meme zone partagent le meme regime (jamais de plan qui
+     * bascule au milieu d'un sweep → pas de ligne nouvelle). Passe le
+     * delai, la zone reste sur le regime deterministe.
+     */
+    private void awaitAiPlanOnce() {
+        if (aiAwaited) return;
+        aiAwaited = true;
+        if (aiFuture == null) return;
+        try {
+            MotherAISnowDirector.SnowPlan p = aiFuture.get(1500, java.util.concurrent.TimeUnit.MILLISECONDS);
+            if (p != null) {
+                aiPlan = p;
+                if (p.radiusChunks() > 0) setSnowRadiusChunks(p.radiusChunks());
+                System.out.println("[DLB T290] IA mere : plan applique (rayon " + p.radiusChunks()
+                        + ", boosts " + p.childAuraBoost().size() + ", latence " + p.latencyMs() + " ms).");
+            } else {
+                System.out.println("[DLB T290] IA mere : pas de plan (desactivee/echec) — regime deterministe T289.");
+            }
+        } catch (java.util.concurrent.TimeoutException te) {
+            System.out.println("[DLB T290] IA mere : pas de reponse sous 1500 ms — regime deterministe T289 (le modele continue en tache de fond, ignore).");
+            aiFuture.cancel(true);
+        } catch (Throwable t) {
+            System.out.println("[DLB T290] IA mere : attente en echec (" + t.getClass().getSimpleName() + ") — regime deterministe T289.");
+        }
+    }
+
     /** Permet a la selection de la zone d'imposer le rayon (1..3). */
     public void setSnowRadiusChunks(int r) {
         snowRadiusChunks = Math.max(1, Math.min(3, r));
@@ -200,9 +255,11 @@ public final class TerrainMother {
      * l'appelant garde alors son comportement historique).
      */
     public float snowDensity(int x, int z) {
+        awaitAiPlanOnce();
         evaluateSnowRadius();
         final int r = snowRadiusChunks;
         final double sigma2 = 2.0 * (r * 8.0) * (r * 8.0);   // (r chunks/2)^2 * 2, en blocs
+        final MotherAISnowDirector.SnowPlan plan = aiPlan;   // copy volatile
         double sum = 0, wsum = 0;
         int ccx = x >> 4, ccz = z >> 4;
         for (int dx = -r; dx <= r; dx++) {
@@ -212,6 +269,12 @@ public final class TerrainMother {
                 double ddx = (ccx + dx) * 16 + 8 - x;
                 double ddz = (ccz + dz) * 16 + 8 - z;
                 double w = Math.exp(-(ddx * ddx + ddz * ddz) / sigma2);
+                if (plan != null) {
+                    // T290 : nudge IA borne (0.75..1.25) — l'enfant « parle »
+                    // un peu plus ou moins fort dans son aura, jamais plus.
+                    Float boost = plan.childAuraBoost().get((((long) c.cx) << 32) | (c.cz & 0xffffffffL));
+                    if (boost != null) w *= boost;
+                }
                 sum += c.snowyRatio * w;
                 wsum += w;
             }
