@@ -415,6 +415,14 @@ public class StructureTerrainPrep {
                 coreX0, coreZ0, coreX1, coreZ1, PRELOAD_TOTAL_BUDGET_MS,
                 cp -> streamLoadedChunk(level, cp.x, cp.z, topY), () -> {
             step("prepZone 0/11 : zone chargee, demarrage du pipeline");
+            // T290 (ordre client 25/10 : « new idee, add ia to mother ») : le
+            // damier vient d'etre peuple par les enfants — la mere consulte
+            // SON IA en tache de fond (desactivee par defaut ; activee par
+            // -Ddlb.motherAi=on et un Ollama local). Zero blocage ici : la
+            // reponse est attendue une seule fois (1500 ms max) au premier
+            // calcul de densite de neige ; au-dela, regime deterministe.
+            deepluckyblock.util.TerrainMother m290 = deepluckyblock.util.TerrainMother.current();
+            if (m290 != null) m290.startAiConsultation();
             // T103 : PREMIER GESTE APRES CHARGEMENT -- memoriser la nappe d'eau
             // VANILLA (monde encore intact) sur toute la zone chargee. fixLiquids
             // sera borne a cette base : « reprendre la meme base que vanilla et

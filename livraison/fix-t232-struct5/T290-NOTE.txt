@@ -1,0 +1,88 @@
+DEEP LUCKY BLOCK — LIVRAISON T290 « IA POUR LA MERE »
+======================================================
+Date : 25/10/2026 (horodatage interne du depot)
+Base : build T289 (mere/enfants + aura gaussienne livrees). Livraison SANS
+*.nbt (regle permanente T271).
+CI GitHub : run 40208419669 → build SUCCESS (compilation Java 21 OK).
+
+VOTRE ORDRE : « NEW IDEE, ADD IA TO MOTHER »
+============================================
+
+La Mere peut maintenant CONSULTER une vraie IA — un modele de langage local
+GRATUIT et hors-ligne (Ollama + llama3.2/qwen2.5/phi…) — comme un directeur
+artistique : elle lui envoie son damier d'enfants (les mesures vierges) et
+l'IA tranche, comme un level designer, l'aura de neige de la zone.
+
+Prise de decision honnete d'ingénierie (a contre-courant du blueprint externe
+colle dans la demande) :
+
+- PAS de langchain4j / ollama4j / OkHttp embarques dans le jar : sur votre
+  machine (NeoForge sur Intel iGPU, RAM partagee) embarquer un client LLM
+  complet ajouterait des dizaines de Mo de dependances et des risques de
+  conflit de classpath. Implementation a la place avec java.net.http.HttpClient
+  (natif JDK 21) + Gson (deja fourni par NeoForge) : ZERO dependance, jar
+  quasi inchange, CI verte.
+- PAS de DirectPaletteWriter (ecriture directe dans la palette) ni de refonte
+  100 % asynchrone : notre chaine mere/enfants T289 est stable, auditee et
+  PROTEGEE par vos garde-fous permanents (T283/T286/T288-P4). Ecrire dans les
+  PalettedContainer a la sauvage casserait lumiere/save/audits et n'est pas
+  necessaire ici : l'IA n'ecrit JAMAIS de bloc.
+
+CE QUE FAIT L'IA (et ne fait pas)
+---------------------------------
+- Entree : le damier texte compact (une ligne par enfant : cx cz medianY minY
+  maxY snowy% eau% glace% escarpe), borne 576 enfants (~10 Ko max).
+- Sortie exigee : UNIQUEMENT un JSON {"radius":1..3, "boost":[[cx,cz,f],...]}
+  — le rayon du fondu de neige multi-chunks (comme le T289, mais decide par
+  lecture structurelle du damier) + des multiplicateurs d'aura bornes
+  [0.75..1.25] sur 48 enfants max.
+- Censure mere : radius clamped 1..3, facteurs clamped 0.75..1.25 (jamais
+  plus de ±25 % de voix par enfant), enfants hors grille ignores, JSON
+  illisible → plan refuse. L'IA peut renforcer/attenuer l'aura, jamais
+  deplacer la frontiere brutalement ni poser/retirer de blocs.
+
+GARDE-FOUS DE PRODUCTION (bas de gamme)
+----------------------------------------
+- DESACTIVE PAR DEFAUT : activation volontaire par lancement JVM
+  -Ddlb.motherAi=on (ou -Ddlb.motherAi=ollama:MODELE@URL, ou variable
+  d'environnement DLB_MOTHER_AI). Sans cela : cout strictement nul, chemin
+  de code identique au T289.
+- Si active mais Ollama absent : probe /api/tags 1,5 s, une seule fois par
+  session, log unique, puis court-circuit. Aucun blocage ulterieur.
+- Requete async sur 1 thread daemon priorite MIN (jamais le pool commun) ;
+  timeout dur 9 s ; le modele tourne HORS du processus Minecraft.
+- DETERMINISME PAR ZONE : le plan est attendu UNE SEULE FOIS (1500 ms max)
+  au premier calcul de densite de la zone ; passe ce delai, la zone entiere
+  reste au gaussien deterministe. Jamais de bascule de regime au milieu d'un
+  sweep → zero ligne nouvelle possible.
+- Annulation propre a la fin de fenetre mere (aucune fuite de requete).
+
+MODE D'EMPLOI (test futur, vous seulement si vous voulez)
+---------------------------------------------------------
+1. Installer Ollama ; ollama pull llama3.2:3b (ou qwen2.5:3b — conseille,
+   plus leger ; qwen2.5:7b/llama3.1:8b seulement si RAM confortable).
+2. Lancer le jeu avec -Ddlb.motherAi=on (ou =ollama:qwen2.5:3b@127.0.0.1:11434).
+3. Dans les logs, guetter : « [DLB T290] IA mere : plan recu du modele …
+   radius=…, boosts=… » puis « plan applique ».
+4. Sans aucune de ces etapes, le T290 est un strict NO-OP et le build se
+   comporte exactement comme le T289 validé.
+
+VERIFICATIONS TECHNIQUES
+------------------------
+- Banner en jeu : « [build T290] » (/dlbtest + chat de lancement).
+- Logs nouveaux : lignes [DLB T290] uniquement, jamais d'erreur sans IA.
+- Checksums : 44/44 SHA-256 (11 fichiers sources × 4 copies coherentes ;
+  miroir resources/deepluckyblock_patch/FIXES_MCREATOR 11/11 dans le zip
+  COMPLET + DlbTestCommands a la racine pour diff rapide).
+- 0 fichier *.nbt dans les deux zips (regle permanente).
+
+CONTENU
+-------
+- DEEP-LUCKY-BLOCK-T290-SRC-SEUL-NONBT.zip    → main/ (java + resources kit)
+- DEEP-LUCKY-BLOCK-T290-SRC-COMPLET-NONBT.zip → projet MCreator complet
+  (src/main/... x2 + miroir FIXES_MCREATOR + DlbTestCommands a la racine)
+
+Limites connues NON touchees (reportees, hors demande) : T246 p2 (d21-23),
+perfs de chantier (« Can't keep up » ~19 s au pic), corniches snow_block,
+mob suffocated, POI data mismatch. Piste perf reservee : les ecritures
+groupees + report de lumiere (inspirees du blueprint), a chiffrer a part.
