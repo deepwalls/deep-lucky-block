@@ -91,13 +91,27 @@ jobs:
           python3 - <<'PY'
           import os
           from pathlib import Path
+          def enc(text):
+              return text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
           log = Path(os.environ['RUNNER_TEMP']) / 'java21-build.log'
           if log.exists():
               lines = log.read_text(errors='replace').splitlines()
               errs = [l for l in lines if 'error' in l.lower()]
               text = '\n'.join(errs[:40] + ['---tail---'] + lines[-60:])
-              text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
-              print('::error title=Build diagnostics::' + text)
+              print('::error title=Build diagnostics::' + enc(text))
+          # T291 : l'extrait build ne suffit plus quand le step qui echoue est
+          # la session serveur dediee -- publier AUSSI la queue du journal
+          # serveur (dernieres lignes utiles, phase courante comprise).
+          slog = Path(os.environ['RUNNER_TEMP']) / 'server-check.log'
+          if slog.exists():
+              sl = slog.read_text(errors='replace').splitlines()
+              keep = [l for l in sl if any(k in l for k in (
+                  'DLBVERIFY', 'DLB-STRUCTURE', 'DLB-SETTLE', 'DLB-PERF',
+                  "Can't keep up", 'DLB-CHUNKS', 'DLB-STEP', 'DLB-CPU',
+                  'Post-process', 'decorate', 'prepZone', 'ERROR', 'Exception'))]
+              text2 = '=== server-check.log : lignes pertinentes (derivees) ===\n' \
+                      + '\n'.join(keep[-80:]) + '\n=== tail brut ===\n' + '\n'.join(sl[-50:])
+              print('::error title=Server-check tail::' + enc(text2))
           PY
       - name: Publish campaign results back to the repo
         if: always() && contains(github.event.head_commit.message, '[variants]')
