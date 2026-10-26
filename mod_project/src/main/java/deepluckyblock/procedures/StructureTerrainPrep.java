@@ -7887,7 +7887,10 @@ public class StructureTerrainPrep {
      * jamais bloque, et la zone est analysee EN ENTIER. Meme principe que le
      * pre-chargement des chunks (S.31/S.40 du guide : time-slicing).
      */
-    private static final long FINAL_SLICE_MS = 40;
+    // T291f : borne pilotable (defaut 40 ms, inchangee) -- le banc mesure
+    // l'elasticite de la chaine terrain finale (-Ddlb.terrainSliceMs=NN).
+    private static final long FINAL_SLICE_MS =
+            Long.getLong("dlb.terrainSliceMs", 40L);
 
     /** Etat de la passe finale repartie sur plusieurs ticks. */
     private static final class FinalState {

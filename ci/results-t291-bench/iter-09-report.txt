@@ -1,0 +1,54 @@
+== trous de silence (>0.6 s) entre lignes utiles ==
+  +   1.0 s  -> [13:39:19] [main/DEBUG] [mixin/]: Compatibility level JAVA_21 specified by deep_lucky_block.mixins.json is higher than t
+  +   8.0 s  -> [13:39:27] [main/DEBUG] [ne.ne.fm.ja.FMLModContainer/LOADING]: Creating FMLModContainer instance for [deepluckyblock.Dee
+  +   1.0 s  -> [13:39:28] [modloading-worker-0/DEBUG] [ne.ne.fm.co.ConfigTracker/CONFIG]: Config file deep_lucky_block-weed_removal.tom
+  +   2.0 s  -> [13:39:30] [DLB-StructureLoader/INFO] [de.ut.StructureTemplateCache/]: [STRUCT-CACHE] 'circus' : 730800 entree(s) au fic
+  +   2.0 s  -> [13:39:32] [DLB-StructureLoader/INFO] [de.ut.StructureTemplateCache/]: [STRUCT-CACHE] 'shipdead' : 1700763 entree(s) au 
+  +   2.0 s  -> [13:39:34] [DLB-StructureLoader/INFO] [de.ut.StructureTemplateCache/]: [STRUCT-CACHE] 'citadel' : 2114112 entree(s) au f
+  +   1.0 s  -> [13:39:35] [DLB-StructureLoader/INFO] [de.ut.StructureTemplateCache/]: [STRUCT-CACHE] 'dragon' : 803505 entree(s) au fic
+  +   5.0 s  -> [13:39:40] [DLB-StructureLoader/INFO] [de.ut.StructureTemplateCache/]: [STRUCT-CACHE] 'crimsonlake' : 1366835 entree(s) 
+  +   5.0 s  -> [13:39:45] [Server thread/INFO] [de.ut.StructureTemplateCache/]: [STRUCT-CACHE] Préchargement des décors : 153/153 en 67
+  +   3.0 s  -> [13:39:48] [Server thread/INFO] [de.DeepLuckyBlockMod/]: [DLBTEST] dragon demandee a 1200, 67, 0 (id=2, nbt=dragon, joue
+  +   1.0 s  -> [13:39:49] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 2116,-69 (selection seche T
+  +   1.0 s  -> [13:39:50] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5-FLAT] Zone choisie a 1085,234 (selection seche T
+  +   1.0 s  -> [13:39:51] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] dragon -> 1254, 48, 335 (baseY=83, minRelY=1, r
+  +   1.0 s  -> [13:39:52] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] === PASTE dragon === off=[10,-34,10] dist=0 fac
+  +   1.0 s  -> [13:39:53] [Server thread/INFO] [de.ut.ChunkKeeper/]: [DLB-CHUNKS] 99/99 chunks epingles (maintien en memoire) -- zone c
+  +   1.0 s  -> [13:39:54] [Server thread/WARN] [de.pr.StructureTerrainPrep/]: [DLB-STRUCTURE] lissage bridé : 1866 colonne(s) sortaient
+  +   1.0 s  -> [13:39:55] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] decorate + post de dragon termine
+  +   1.0 s  -> [13:39:56] [Server thread/INFO] [de.pr.StructureTerrainPrep/]: [DLB-STRUCTURE] T280 degel : 0 blocs de glace fraiche ref
+== phases « en N ms » (top 12) ==
+    7707 ms  [13:39:56] [Server thread/INFO] [de.pr.Structures5Procedure/]: [STRUCT5] dragon entièrement terminé (recherche, pose, terrain, vég
+     133 ms  [13:39:56] [Server thread/INFO] [de.pr.StructureTerrainPrep/]: [DLB-STRUCTURE] T285 sweep-neige natif+spray (union lissages+keeper
+      91 ms  [13:39:56] [Server thread/INFO] [de.pr.StructureTerrainPrep/]: [DLB-STRUCTURE] T280 degel : 0 blocs de glace fraiche refondus en e
+      67 ms  [13:39:55] [Server thread/INFO] [de.pr.StructureTerrainPrep/]: [DLB-STRUCTURE] T286 glacis continu : 406 colonnes abaissees, 161 r
+      28 ms  [13:39:55] [Server thread/INFO] [de.pr.StructureTerrainPrep/]: [DLB-STRUCTURE] T288 fusion sol/structure : 1 colonnes de la couron
+      24 ms  [13:39:56] [Server thread/INFO] [de.pr.StructureTerrainPrep/]: [DLB-STRUCTURE] T285 audit final snowy nu + peau terreuse (fenetre 
+== CKU ==
+== DLB-PERF ==
+  [13:39:49] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.0 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 0 lecture(s) servies par le cache (0%), 72 colonne(s) hors memoire
+  [13:39:49] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.0 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 0 lecture(s) servies par le cache (0%), 72 colonne(s) hors memoire
+  [13:39:49] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.0 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 0 lecture(s) servies par le cache (0%), 72 colonne(s) hors memoire
+  [13:39:49] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.0 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 2 lecture(s) servies par le cache (11%), 70 colonne(s) hors memoire
+  [13:39:49] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.0 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 14 lecture(s) servies par le cache (47%), 58 colonne(s) hors memoire
+  [13:39:49] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.0 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 20 lecture(s) servies par le cache (56%), 52 colonne(s) hors memoire
+  [13:39:49] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.0 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 32 lecture(s) servies par le cache (67%), 40 colonne(s) hors memoire
+  [13:39:49] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.0 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 40 lecture(s) servies par le cache (71%), 32 colonne(s) hors memoire
+  [13:39:49] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.2 s -- ou est passe le temps : attente/tick system 0.2 sacces terrain : 25 requete(s) moteur, 176 lecture(s) servies par le cache (88%), 1 colonne(s) hors memoire
+  [13:39:49] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.1 s -- ou est passe le temps : acces terrain : 24 requete(s) moteur, 176 lecture(s) servies par le cache (88%), 1 colonne(s) hors memoire
+  [13:39:50] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.8 s -- ou est passe le temps : attente/tick system 0.8 sacces terrain : 304 requete(s) moteur, 456 lecture(s) servies par le cache (60%), 72 colonne(s) hors memoire
+  [13:39:50] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.1 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 0 lecture(s) servies par le cache (0%), 72 colonne(s) hors memoire
+  [13:39:50] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.0 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 0 lecture(s) servies par le cache (0%), 72 colonne(s) hors memoire
+  [13:39:50] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.0 s -- ou est passe le temps : acces terrain : 2 requete(s) moteur, 6 lecture(s) servies par le cache (75%), 30 colonne(s) hors memoire
+  [13:39:50] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.1 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 0 lecture(s) servies par le cache (0%), 72 colonne(s) hors memoire
+  [13:39:50] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.1 s -- ou est passe le temps : acces terrain : 25 requete(s) moteur, 130 lecture(s) servies par le cache (84%), 1 colonne(s) hors memoire
+  [13:39:51] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.3 s -- ou est passe le temps : attente/tick system 0.3 sacces terrain : 307 requete(s) moteur, 419 lecture(s) servies par le cache (58%), 72 colonne(s) hors memoire
+  [13:39:51] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.2 s -- ou est passe le temps : acces terrain : 20 requete(s) moteur, 0 lecture(s) servies par le cache (0%), 72 colonne(s) hors memoire
+  [13:39:51] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.3 s -- ou est passe le temps : attente/tick system 0.3 sacces terrain : 307 requete(s) moteur, 341 lecture(s) servies par le cache (53%), 72 colonne(s) hors memoire
+  [13:39:51] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.1 s -- ou est passe le temps : acces terrain : 16 requete(s) moteur, 6 lecture(s) servies par le cache (27%), 66 colonne(s) hors memoire
+  [13:39:51] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.1 s -- ou est passe le temps : acces terrain : 25 requete(s) moteur, 150 lecture(s) servies par le cache (86%), 1 colonne(s) hors memoire
+  [13:39:52] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.5 s -- ou est passe le temps : attente/tick system 0.5 sacces terrain : 328 requete(s) moteur, 411 lecture(s) servies par le cache (56%), 72 colonne(s) hors memoire
+  [13:39:52] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.1 s -- ou est passe le temps : acces terrain : 25 requete(s) moteur, 0 lecture(s) servies par le cache (0%), 72 colonne(s) hors memoire
+  [13:39:52] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 0.0 s -- ou est passe le temps : acces terrain : 25 requete(s) moteur, 0 lecture(s) servies par le cache (0%), 72 colonne(s) hors memoire
+  [13:39:56] [Server thread/INFO] [de.ut.TerrainEditClamp/]: [DLB-PERF] TACHE COMPLETE en 3.8 s -- ou est passe le temps : pre-chargement des chunks 1.1 s (28%) | replantTrees 0.6 s (15%) | unsnowExposedGrass 0.4 s (10%) | smooth graduel T109 0.3 s (8%) | verifyGrassSurface 0.1 s (3%) | dressAndPlant 0.1 s (3%) | rebuildTerrain 0.1 s (2%) | prepZone 1c/11 0.0 s (1%) | attente/tick system 1.2 sacces terrain : 1130 requete(s) moteur, 560419 lecture(s) servies par le cache (100%), 984 colonne(s) hors memoire
+== TOTAL dragon cmd -> post-process : 7.8 s ==

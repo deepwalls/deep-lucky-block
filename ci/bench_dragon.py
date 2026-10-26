@@ -190,7 +190,20 @@ def generate_region(lines):
     rects = ('1400 40 1630 270', '900 60 1130 300', '1100 -150 1350 90', '2100 -180 2250 -60', '2100 60 2250 270', '1130 150 1400 380', '2000 -220 2320 -40')
     for rng in rects:
         x1, z1, x2, z2 = [int(v) for v in rng.split()]
-        rcon(f'forceload add {x1} {z1} {x2} {z2}', timeout=60)
+        # vanilla borne un 'forceload add' a 256 chunks par appel : decouper en
+        # tuiles <=13x13 chunks (sinon l'appel est REFUSE silencieusement --
+        # cause des 17 chunks restes vierges aux iters 08/09, verifie par
+        # 'forceload query' -> 'not marked').
+        T = 13 * 16
+        yy = z1
+        while yy <= z2:
+            xx = x1
+            while xx <= x2:
+                r = rcon(f'forceload add {xx} {yy} {min(xx + T, x2)} {min(yy + T, z2)}', timeout=60)
+                if r is not None and ('oo many' in r or 'invalid' in r.lower()):
+                    raise SystemExit(f'forceload refuse pour {xx},{yy}: {r.strip()}')
+                xx += T + 1
+            yy += T + 1
     # sondes sur une grille grossiere couvrant les trois rectangles
     probes = []
     for rng in rects:

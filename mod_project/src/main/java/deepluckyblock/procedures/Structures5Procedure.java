@@ -1584,6 +1584,36 @@ public class Structures5Procedure {
         return dryPickCenter(lvl, origin, checkR, fullCheckR, structMax, p, minEdgeDist, 0);
     }
 
+    /** T291e : veto hybride -- pour un centre dans des chunks DEJA charges,
+     *  echantillonner le terrain REEL (hauteurs WORLD_SURFACE + eau en surface)
+     *  sur une grille ~4 blocs. Le sondage sec T233c ne voit ni les falaises
+     *  internes ni la moindre mare : sur le banc, 5 candidats d'affilee
+     *  etaient rejetés APRES verrouillage d'emprise (0,5-0,7 s chacun).
+     *  Retour : 0 = ok/inconnu (zones non chargees), 1 = veto relief, 2 = veto eau. */
+    private static int quickVetLoaded(net.minecraft.server.level.ServerLevel lvl, int cx, int cz, int fullCheckR) {
+        try {
+            if (!lvl.hasChunkAt(cx, cz)) return 0;
+            int minH = Integer.MAX_VALUE, maxH = Integer.MIN_VALUE;
+            int step = Math.max(4, fullCheckR / 8);
+            BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();
+            for (int dx = -fullCheckR; dx <= fullCheckR; dx += step) {
+                for (int dz = -fullCheckR; dz <= fullCheckR; dz += step) {
+                    mp.set(cx + dx, 64, cz + dz);
+                    if (!lvl.hasChunkAt(mp)) return 0;   // bord de zone non charge : on laisse le sec decider
+                    int h = lvl.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, mp.getX(), mp.getZ());
+                    if (h < minH) minH = h;
+                    if (h > maxH) maxH = h;
+                    mp.setY(h - 1);
+                    if (lvl.getBlockState(mp).getBlock() == net.minecraft.world.level.block.Blocks.WATER) return 2;
+                }
+            }
+            if (maxH - minH > MAX_CLIFF_HEIGHT_DIFF) return 1;
+            return 0;
+        } catch (Throwable any) {
+            return 0;   // veto prudent : le filtre historique reste l'autorite
+        }
+    }
+
     /** T291d : combine les pools (strict, puis soft, tries par proximite de
      *  l'origine) en file de reprise, hors candidat retenu, cap 4. */
     private static void stashSearchReuse(BlockPos origin, int structMax, BlockPos chosen,
@@ -1692,6 +1722,10 @@ public class Structures5Procedure {
                         }
                         if (deepluckyblock.util.StructureSites.conflict(lvl, cx, cz, checkR) != null) { skipped++; continue; }
                         int span = dryRuggedSpan(lvl, cx, cz, fullCheckR);
+                        if (wet <= 5) {
+                            int vet = quickVetLoaded(lvl, cx, cz, fullCheckR);
+                            if (vet != 0) { skipped++; continue; }  // T291e : veto terrain reel (zone chargee)
+                        }
                         if (wet == 0) {
                             if (span <= DRY_PICK_GOOD_SPAN) {
                                 DRY_PICK_SUGGESTED.add(new int[]{cx, cz});
@@ -3375,8 +3409,9 @@ public class Structures5Procedure {
             deepluckyblock.util.ChunkKeeper.release(level);
             deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-SAFETY] {} candidat aquatique écarté avant terrain; recherche du suivant", nbt);
             final BlockPos retryOrigin = origin;
+            // T291c : reprise aquatique raccourcie 10 -> 3 ticks (attente morte).
             deepluckyblock.procedures.TestProcedure.schedule(level,
-                    deepluckyblock.procedures.TestProcedure.currentTick(level) + 10, () -> {
+                    deepluckyblock.procedures.TestProcedure.currentTick(level) + 3, () -> {
                 boolean ok = doPaste(level, retryOrigin, nbt, ox, oy, oz, dist, nf, followSurf, useFlat, keepInt);
                 if (!ok) notifyGenerationAborted(level);
             });
@@ -3740,6 +3775,17 @@ public class Structures5Procedure {
         deepluckyblock.util.SafeSurface.requestZone(level,
                 pasteMin.getX() >> 4, pasteMin.getZ() >> 4,
                 pasteMax.getX() >> 4, pasteMax.getZ() >> 4);
+        // T291g : rechauffer AUSSI la couronne de prepZone (ring terrain +
+        // naturalisation) des l'acceptation du site. Sans cela, prepZone
+        // patiente 1,1-1,7 s (banc) que les ~99 chunks deviennent residents ;
+        // la requete async ci-dessous les fait arriver pendant les controles
+        // de sol restants, et le preload ne compte plus que l'attente residuelle.
+        {
+            final int warmChunk = 7; // 112 blocs : couvre ring + NATURALIZE_EXTRA_RING
+            deepluckyblock.util.SafeSurface.requestZone(level,
+                    (pasteMin.getX() >> 4) - warmChunk, (pasteMin.getZ() >> 4) - warmChunk,
+                    (pasteMax.getX() >> 4) + warmChunk, (pasteMax.getZ() >> 4) + warmChunk);
+        }
         StructureTerrainPrep.setTerrainRingScalePercent(ringScaleFor(nbt));
         deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5] {} : selected solid groundY={}, clearance starts at Y={}, model offsetY={}, foundationBaseY={}",
                 nbt, selectedGroundY, selectedGroundY + 1, oy, foundationBaseY);
