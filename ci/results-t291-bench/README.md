@@ -24,6 +24,7 @@ run mesure donc exactement le même point de départ.
 | 13 | T291e..g | — | 6 | 2,8 s | 8,6 s | pré-chargement couronne 1,2→0,8 s (T291g) |
 | 14 | T291e..g | — (défauts produit) | 5 | 2,6 s | 7,7 s | pré-chargement 0,7 s confirmé |
 | 15 | T292 | — (IA mere ON par défaut) + mock Ollama local | 5 | 3,4 s | 10,2 s | plan IA recu+applique (15 ms, 0 cout) |
+| 16 | T293 | — (cerveau EMBARQUE, zero install, reseau coupe) | ~5 | ~2 s | 8,8 s | plan embarque applique (rayon 1, boosts 48, latence 0 ms) |
 
 ## Attribution du temps résiduel (iter 14, monde chaud)
 

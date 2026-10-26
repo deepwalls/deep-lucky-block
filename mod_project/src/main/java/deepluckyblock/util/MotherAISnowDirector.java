@@ -29,14 +29,15 @@ import java.util.concurrent.Executors;
  * <ul>
  *  <li>zero dependance ajoutee au jar : java.net.http.HttpClient (JDK 21
  *      natif) + Gson (deja fourni par Minecraft/NeoForge) ;</li>
- *  <li>ACTIVE PAR DEFAUT depuis T292 (ordre client 26/10 :
- *      « non je la veux active !! ») : la mere consulte Ollama local
- *      (127.0.0.1:11434, modele qwen2.5:3b) a chaque zone. Coupure
- *      explicite : {@code -Ddlb.motherAi=off} (ou env
- *      {@code DLB_MOTHER_AI=off}). Modele URL ajustables :
- *      {@code -Ddlb.motherAi=ollama:MODELE@URL}. Un joueur SANS Ollama ne
- *      paye qu'UN probe 1,5 s async au premier structure (memorise, puis
- *      court-circuit pour toute la session — zero cout ensuite) ;</li>
+ *  <li>ACTIVE PAR DEFAUT via le CERVEAU EMBARQUE depuis T293 (ordre client
+ *      : « je ne dois avoir a RIEN installer — le mod se met dans mods/ et
+ *      fonctionne, cree tout directement de lui-meme ») : un petit reseau
+ *      de neurones vit dans le jar ({@link MotherSnowBrain}), decision en
+ *      ~50 microsecondes, ZERO dependance, ZERO reseau, ZERO installation.
+ *      Backend reseau optionnel : {@code -Ddlb.motherAi=ollama:MODELE@URL}
+ *      (ou env {@code DLB_MOTHER_AI=ollama:...}) remplace le cerveau
+ *      embarque par Ollama si le joueur le souhaite. Coupure explicite :
+ *      {@code -Ddlb.motherAi=off}. Sans flag, c'est le cerveau qui parle ;</li>
  *  <li>l'IA ne pose JAMAIS de bloc : elle ne fait que NUDGER (borne ±25 %)
  *      l'aura de neige et choisir le rayon 1..3 ; toute decision est
  *      clamped/censuree cote mere ;</li>
@@ -90,22 +91,19 @@ public final class MotherAISnowDirector {
     private static final long REPROBE_AFTER_MS = 10L * 60_000L;
     private static volatile long lastProbeMs = 0L;
 
-    /** Config : null = COUPURE EXPLICITE ; sinon "MODEL@URL".
-     *  T292 : ACTIVE PAR DEFAUT — l'absence totale de propriete/env
-     *  correspond au modele+URL par defaut ; seuls off/false/0 coupent. */
+    /** Config : null = COUPURE EXPLICITE (off/false/0) ; "embedded" = cerveau
+     *  embarque (T293, DEFAUT) ; sinon "MODEL@URL" (backend Ollama, optionnel). */
     private static String readConfig() {
         String v = System.getProperty(PROP);
         if (v == null || v.isEmpty()) {
             try { v = System.getenv(ENV); } catch (Throwable ignored) {}
         }
-        if (v == null || v.isEmpty()) {
-            return DEFAULT_MODEL + "@" + DEFAULT_URL;   // T292 : par defaut ON
+        if (v == null || v.isEmpty() || v.equalsIgnoreCase("on") || v.equalsIgnoreCase("true")
+                || v.equals("1") || v.equalsIgnoreCase("embedded") || v.equalsIgnoreCase("local")) {
+            return "embedded";   // T293 : par defaut = cerveau embarque
         }
         if (v.equalsIgnoreCase("off") || v.equalsIgnoreCase("false") || v.equals("0")) {
             return null;
-        }
-        if (v.equalsIgnoreCase("on") || v.equalsIgnoreCase("true") || v.equals("1")) {
-            return DEFAULT_MODEL + "@" + DEFAULT_URL;
         }
         if (v.startsWith("ollama:")) {
             v = v.substring("ollama:".length());
@@ -113,7 +111,7 @@ public final class MotherAISnowDirector {
             if (!v.contains("@")) return v + "@" + DEFAULT_URL;
             return v;
         }
-        // Valeur libre comprise comme un simple nom de modele.
+        // Valeur libre comprise comme un simple nom de modele (Ollama).
         return v + "@" + DEFAULT_URL;
     }
 
@@ -232,6 +230,26 @@ public final class MotherAISnowDirector {
         String cfg = readConfig();
         if (cfg == null || mother == null) {
             return CompletableFuture.completedFuture(null);
+        }
+        if ("embedded".equals(cfg)) {
+            // T293 : cerveau embarque — decision locale, pas d'appel reseau,
+            // pas d'attente : plan immediat, ~50 us sur damier 24x24.
+            return CompletableFuture.supplyAsync(() -> {
+                long t0 = System.nanoTime();
+                try {
+                    SnowPlan plan = MotherSnowBrain.decide(mother,
+                            (System.nanoTime() - t0) / 1_000_000L);
+                    System.out.println("[DLB T293] IA mere (cerveau embarque) : rayon "
+                            + plan.radiusChunks() + ", boosts " + plan.childAuraBoost().size()
+                            + " — 0 cout reseau, 0 installation requise.");
+                    return plan;
+                } catch (Throwable t) {
+                    System.out.println("[DLB T293] IA mere (cerveau embarque) en echec ("
+                            + t.getClass().getSimpleName() + " : " + t.getMessage()
+                            + ") — fallback deterministe T289.");
+                    return null;
+                }
+            }, AI_POOL);
         }
         final String[] parts = cfg.split("@", 2);
         final String model = parts[0];
