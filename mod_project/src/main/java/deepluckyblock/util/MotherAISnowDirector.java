@@ -29,11 +29,14 @@ import java.util.concurrent.Executors;
  * <ul>
  *  <li>zero dependance ajoutee au jar : java.net.http.HttpClient (JDK 21
  *      natif) + Gson (deja fourni par Minecraft/NeoForge) ;</li>
- *  <li>DESACTIVE PAR DEFAUT : activation explicite exclusivement via la
- *      propriete systeme {@code -Ddlb.motherAi=on}
- *      (ou {@code -Ddlb.motherAi=ollama:MODELE@URL}, ou la variable
- *      d'environnement {@code DLB_MOTHER_AI}) — un joueur sans Ollama ne
- *      paye strictement aucun cout (probe 1,5 s cache puis court-circuit) ;</li>
+ *  <li>ACTIVE PAR DEFAUT depuis T292 (ordre client 26/10 :
+ *      « non je la veux active !! ») : la mere consulte Ollama local
+ *      (127.0.0.1:11434, modele qwen2.5:3b) a chaque zone. Coupure
+ *      explicite : {@code -Ddlb.motherAi=off} (ou env
+ *      {@code DLB_MOTHER_AI=off}). Modele URL ajustables :
+ *      {@code -Ddlb.motherAi=ollama:MODELE@URL}. Un joueur SANS Ollama ne
+ *      paye qu'UN probe 1,5 s async au premier structure (memorise, puis
+ *      court-circuit pour toute la session — zero cout ensuite) ;</li>
  *  <li>l'IA ne pose JAMAIS de bloc : elle ne fait que NUDGER (borne ±25 %)
  *      l'aura de neige et choisir le rayon 1..3 ; toute decision est
  *      clamped/censuree cote mere ;</li>
@@ -67,22 +70,38 @@ public final class MotherAISnowDirector {
         return t;
     });
 
+    // T292 (bug trouve par les tests mock : interblocage) — NE PAS passer
+    // AI_POOL ici : avec un executor MONOFIL sur le client ET un send()
+    // bloquant sur ce meme thread unique, les taches internes du client
+    // (timeouts, livraison du corps) attendent ce thread qui attend la
+    // reponse -> deadlock silencieux, la consultation mourrait TOUJOURS en
+    // silence et tout retombait sur T289. Le client garde son pool interne
+    // (scheduled + selector) ; AI_POOL ne sert qu'a serialiser les send()
+    // bloquants (une consultation a la fois, jamais deux modeles en vol).
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofMillis(PROBE_TIMEOUT_MS))
-            .executor(AI_POOL)
             .build();
 
-    // Etat de session : -1 = pas teste, 0 = indisponible, 1 = disponible.
+    // Etat : -1 = pas teste, 0 = indisponible, 1 = disponible.
     private static volatile int ollamaState = -1;
     private static volatile String lastDiag = "non teste";
+    /** T292 : quand le probe echoue, on reteste au bout de 10 min (le joueur
+     *  peut demarrer Ollama APRES le jeu) au lieu de geler la session. */
+    private static final long REPROBE_AFTER_MS = 10L * 60_000L;
+    private static volatile long lastProbeMs = 0L;
 
-    /** Config : null = desactive ; sinon "MODEL@URL". */
+    /** Config : null = COUPURE EXPLICITE ; sinon "MODEL@URL".
+     *  T292 : ACTIVE PAR DEFAUT — l'absence totale de propriete/env
+     *  correspond au modele+URL par defaut ; seuls off/false/0 coupent. */
     private static String readConfig() {
         String v = System.getProperty(PROP);
         if (v == null || v.isEmpty()) {
             try { v = System.getenv(ENV); } catch (Throwable ignored) {}
         }
-        if (v == null || v.isEmpty() || v.equalsIgnoreCase("off") || v.equalsIgnoreCase("false") || v.equals("0")) {
+        if (v == null || v.isEmpty()) {
+            return DEFAULT_MODEL + "@" + DEFAULT_URL;   // T292 : par defaut ON
+        }
+        if (v.equalsIgnoreCase("off") || v.equalsIgnoreCase("false") || v.equals("0")) {
             return null;
         }
         if (v.equalsIgnoreCase("on") || v.equalsIgnoreCase("true") || v.equals("1")) {
@@ -102,15 +121,20 @@ public final class MotherAISnowDirector {
         return readConfig() != null;
     }
 
-    /** Probe GET /api/tags (1,5 s max), memoise pour la session. */
+    /** Probe GET /api/tags (1,5 s max), memoise ; re-probe toutes les 10 min
+     *  tant qu'il est KO (T292 : Ollama lance en cours de session). */
     private static boolean ollamaReachable(String baseUrl) {
-        if (ollamaState >= 0) return ollamaState == 1;
+        if (ollamaState == 1) return true;
+        if (ollamaState == 0 && System.currentTimeMillis() - lastProbeMs < REPROBE_AFTER_MS) return false;
+        lastProbeMs = System.currentTimeMillis();
         try {
             HttpRequest probe = HttpRequest.newBuilder(URI.create(baseUrl + "/api/tags"))
                     .timeout(Duration.ofMillis(PROBE_TIMEOUT_MS)).GET().build();
             int code = HTTP.send(probe, HttpResponse.BodyHandlers.discarding()).statusCode();
             ollamaState = (code >= 200 && code < 300) ? 1 : 0;
             lastDiag = "HTTP " + code;
+            if (ollamaState == 1)
+                System.out.println("[DLB T290] IA mere : Ollama DETECTE sur " + baseUrl + " -- consultation active.");
         } catch (Throwable t) {
             ollamaState = 0;
             lastDiag = t.getClass().getSimpleName() + " : " + String.valueOf(t.getMessage());
@@ -240,6 +264,12 @@ public final class MotherAISnowDirector {
                         .build();
                 HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
                 long dt = System.currentTimeMillis() - t0;
+                if (resp.statusCode() == 404) {
+                    System.out.println("[DLB T290] IA mere : modele '" + model
+                            + "' absent d'Ollama -- installez-le une fois :  ollama pull " + model
+                            + "  (fallback deterministe T289 en attendant).");
+                    return null;
+                }
                 if (resp.statusCode() / 100 != 2) {
                     System.out.println("[DLB T290] IA mere : Ollama HTTP " + resp.statusCode() + " — fallback deterministe.");
                     return null;
