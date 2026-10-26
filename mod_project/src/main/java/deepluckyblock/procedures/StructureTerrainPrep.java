@@ -1236,6 +1236,7 @@ public class StructureTerrainPrep {
         }
         deepluckyblock.util.DebugLog.structure(
                 "decorateFinish (POST-POSE, apres TOUS les fixwater) : decors + arbres + naturalisation (aucun smooth) -- T75");
+        pulseStart(level, "decorateFinish");   // T291 (B) : pouls anti-silence, eteint dans le lambda de relachement
         deepluckyblock.util.ChunkKeeper.track(level,
                 new BlockPos(min.getX() - terrainRing(), min.getY(), min.getZ() - terrainRing()),
                 new BlockPos(max.getX() + terrainRing(), max.getY(), max.getZ() + terrainRing()));
@@ -1315,6 +1316,7 @@ public class StructureTerrainPrep {
                     // fenetre union -- pose 1 couche si neige native, sinon
                     // de-snowy. Gardes T277 (dedans) et T282 (glace) actives.
                     finalSnowyLayerAudit(level, min, max);
+                    pulseStop();   // T291 : le pouls s'eteint avec la chaine
                     deepluckyblock.util.TerrainChain.release(chainKey);
                     deepluckyblock.util.ChunkKeeper.release(level);
                     clearFootprintProtection();
@@ -2440,6 +2442,37 @@ public class StructureTerrainPrep {
             return;
         }
 
+        // ================================================================
+        // T291 (A) : PRE-TIR DE CHAUFFE de la zone complete de travail.
+        // Mesure de la campagne serveur T290 (10/10 runs, depot
+        // ci/results-t290-server) : le goulot d'attente n'est PAS dans les
+        // passes de terrain elles-memes (toutes < 0,2 s) mais dans les
+        // attentes de generation de chunks du pourtour, serrees entre les
+        // passes -- jusqu'a 13 min de silence total en fin de chaine sur un
+        // serveur charge (2 CPU). Seule l'emprise structure etait pre-
+        // chauffee (T242) ; or les passes qui suivent (habillage, replant,
+        // nettoyage, sweeps et audits neige) scannent l'emprise ELARGIE de
+        // terrainRing() + NATURALIZE_EXTRA_RING (+ marge d'audit).
+        // On demande ici, en tache de fond et SANS attendre, tous les chunks
+        // de cette zone de travail complete : la generation chevauche les
+        // premieres passes au lieu d'etre appelee a la demande entre elles.
+        // Aucun changement fonctionnel : les passes savent deja sauter un
+        // chunk absent ; elles le trouvent en general deja present.
+        // ================================================================
+        try {
+            int warm = terrainRing() + NATURALIZE_EXTRA_RING + 32;
+            int cx0 = (min.getX() - warm) >> 4, cx1 = (max.getX() + warm) >> 4;
+            int cz0 = (min.getZ() - warm) >> 4, cz1 = (max.getZ() + warm) >> 4;
+            deepluckyblock.util.SafeSurface.requestZone(level, cx0, cz0, cx1, cz1);
+            deepluckyblock.util.DebugLog.structure(
+                    "pre-tir de chauffe T291 : chunks [{}..{}]x[{}..{}] demandes en tache de fond",
+                    cx0, cx1, cz0, cz1);
+        } catch (Throwable ignored) {
+            // Le pre-tir n'est qu'une optimisation : jamais fatal.
+        }
+        // T291 (B) : pouls de phase -- plus jamais de silence dans le journal.
+        pulseStart(level, "decorate");
+
         // T23 : les vegetaux rendus flottants par le remodelage sont retires
         // AVANT le reste du decor (consigne « des cocoa qui volent »).
         SWEPT.set(0);
@@ -2622,6 +2655,12 @@ public class StructureTerrainPrep {
                                     // retiree) -- on passe directement a la mesure finale
                                     // puis a la porte de stabilisation.
                                     {
+                                    // T291 : borne de fin mesurable -- la campagne T290 a montre que le
+                                    // silence s'ouvrait quelque part APRES le dernier log utile ; on
+                                    // rend ici le triptyque de fin explicite (mesure/sweep/audit puis
+                                    // porte de stabilisation) pour que le journal dise toujours ou l'on
+                                    // en est.
+                                    step("decorate 12/13 : finitions terminees -- mesure finale, sweep et audit neige");
                                     // === T16 : PORTE DE STABILISATION (guide, sections 30/31/45) ===
                                     // Mesure en jeu du 20/09 (observatoire @400, monde neuf) :
                                     // « decorate TERMINE » n'a JAMAIS pu s'ecrire -- le serveur est
@@ -2646,10 +2685,12 @@ public class StructureTerrainPrep {
                                     // ciel dans la zone structure, retour
                                     // client 20/10) -- gardes T277/T282.
                                     finalSnowyLayerAudit(level, min, max);
+                                    step("decorate 13/13 : porte de stabilisation (relachement des chunks au retour au calme)");
                                     deepluckyblock.util.DebugLog.setPhase("stabilisation puis relachement des chunks");
                                     deepluckyblock.util.SettleGate.wait(level, min, max, () -> {
                                     // Fin de chaine : le terrain est definitif et la
                                     // zone peut etre rendue au chunk system.
+                                    pulseStop();   // T291 : le pouls s'eteint avec la chaine
                                     deepluckyblock.util.TerrainChain.release(chainKey);
                                     deepluckyblock.util.ChunkKeeper.release(level);
                                     clearFootprintProtection();
@@ -7435,6 +7476,52 @@ public class StructureTerrainPrep {
      */
     public static void resetStepClock() {
         LAST_STEP_MS = 0L;
+    }
+
+    // ================================================================
+    // T291 (B) : POULS DE PHASE (anti-silence).
+    // La campagne serveur T290 (10/10 runs) a montre des silences de
+    // plusieurs minutes dans le journal : la derniere phase utile loggee
+    // (audit neige final) precedait 13 min de vide -- impossible a
+    // attribuer a une passe precise (le mot « inventer » est interdit :
+    // on mesure). Le pouls re-logue la phase en cours toutes les
+    // PULSE_TICKS ticks tant que la chaine tourne ; il s'eteint au
+    // relachement de la chaine (pulseStop) ou a l'arret du serveur.
+    // Cout : un log toutes les 10 s pendant le pipeline, zero action
+    // sur le monde. Active uniquement en mode debug structure (flags
+    // -Ddlb.debug=true -Ddlb.structure=true), donc transparent pour le
+    // client qui ne les met pas.
+    // ================================================================
+    private static final int PULSE_TICKS = 200;    // 10 s a 20 TPS
+    private static volatile boolean PULSE_ON = false;
+    private static volatile long PULSE_T0 = 0L;
+
+    private static void pulseStart(ServerLevel level, String what) {
+        PULSE_T0 = System.currentTimeMillis();
+        PULSE_ON = true;
+        pulseBeat(level, what, 0);
+    }
+
+    private static void pulseStop() {
+        PULSE_ON = false;
+    }
+
+    private static void pulseBeat(final ServerLevel level, final String what, final int beat) {
+        if (!PULSE_ON) return;
+        try {
+            if (level == null || level.getServer() == null || !level.getServer().isRunning()) {
+                PULSE_ON = false;
+                return;
+            }
+            long waitedS = (System.currentTimeMillis() - PULSE_T0) / 1000L;
+            deepluckyblock.util.DebugLog.structure(
+                    "pouls {} : phase <<{}>> en cours depuis {} s (battement {})",
+                    what, deepluckyblock.util.DebugLog.phaseNow(), waitedS, beat);
+            TestProcedure.schedule(level, TestProcedure.currentTick(level) + PULSE_TICKS,
+                    () -> pulseBeat(level, what, beat + 1));
+        } catch (Throwable t) {
+            PULSE_ON = false;   // jamais fatal : le pouls est de l'instrumentation
+        }
     }
 
     private static void step(String label) {
