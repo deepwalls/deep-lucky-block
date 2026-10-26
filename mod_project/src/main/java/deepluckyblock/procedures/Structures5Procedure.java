@@ -1128,6 +1128,15 @@ public class Structures5Procedure {
     private static int GROUND_WAIT_TICKS = 0;
     /** Centres démasqués par le contrôle exhaustif x0,6 pendant la génération active. */
     private static final Set<Long> REJECTED_RUGGED_CENTERS = new HashSet<>();
+    /** T291d : candidats de rang 1..4 de la DERNIERE selection seche, reutilises
+     *  en cas de rejet « ecarte avant terrain » au lieu de relancer toute la
+     *  fouille (0,4-0,6 s par tour sur le banc). Fraicheur 30 s, meme origine
+     *  (bandeau 64 blocs), meme taille de structure. */
+    private static final java.util.ArrayDeque<BlockPos> SEARCH_REUSE_QUEUE = new ArrayDeque<>();
+    private static long SEARCH_REUSE_STAMP = 0L;
+    private static BlockPos SEARCH_REUSE_ORIGIN = null;
+    private static int SEARCH_REUSE_STRUCTMAX = -1;
+    private static final long SEARCH_REUSE_TTL_MS = 30_000L;
     /** Rayon ajouté lorsque la zone courante ne contient aucun centre admissible. */
     private static int SEARCH_EXTRA_RADIUS = 0;
     /** Rayon déjà classé pour la demande active : les reprises ne parcourent que
@@ -1575,6 +1584,31 @@ public class Structures5Procedure {
         return dryPickCenter(lvl, origin, checkR, fullCheckR, structMax, p, minEdgeDist, 0);
     }
 
+    /** T291d : combine les pools (strict, puis soft, tries par proximite de
+     *  l'origine) en file de reprise, hors candidat retenu, cap 4. */
+    private static void stashSearchReuse(BlockPos origin, int structMax, BlockPos chosen,
+            java.util.ArrayList<BlockPos> strictPool, java.util.ArrayList<BlockPos> softPool) {
+        SEARCH_REUSE_QUEUE.clear();
+        java.util.Comparator<BlockPos> byDist = java.util.Comparator.comparingDouble(bp -> bp.distSqr(origin));
+        strictPool.sort(byDist);
+        softPool.sort(byDist);
+        for (BlockPos cand : strictPool) {
+            if (SEARCH_REUSE_QUEUE.size() >= 4) break;
+            if (cand.equals(chosen)) continue;
+            if (REJECTED_RUGGED_CENTERS.contains(BlockPos.asLong(cand.getX(), 0, cand.getZ()))) continue;
+            SEARCH_REUSE_QUEUE.add(cand);
+        }
+        for (BlockPos cand : softPool) {
+            if (SEARCH_REUSE_QUEUE.size() >= 4) break;
+            if (cand.equals(chosen)) continue;
+            if (REJECTED_RUGGED_CENTERS.contains(BlockPos.asLong(cand.getX(), 0, cand.getZ()))) continue;
+            SEARCH_REUSE_QUEUE.add(cand);
+        }
+        SEARCH_REUSE_ORIGIN = origin;
+        SEARCH_REUSE_STRUCTMAX = structMax;
+        SEARCH_REUSE_STAMP = System.currentTimeMillis();
+    }
+
     /** T252 : {@code budgetCapMs} > 0 plafonne la duree de CE choix sec
      *  (reliquat du plafond global de recherche, voir findFlat). */
     private static BlockPos dryPickCenter(net.minecraft.server.level.ServerLevel lvl,
@@ -1583,6 +1617,25 @@ public class Structures5Procedure {
         final long t0 = System.currentTimeMillis();
         int probed = 0, water = 0, skipped = 0;
         try {
+            // T291d : revivre les sous-candidats de la fouille precedente avant
+            // de repartir sonder le generateur (selection multi-centaines de ms).
+            {
+                final boolean fresh = !SEARCH_REUSE_QUEUE.isEmpty()
+                        && SEARCH_REUSE_ORIGIN != null
+                        && SEARCH_REUSE_STRUCTMAX == structMax
+                        && System.currentTimeMillis() - SEARCH_REUSE_STAMP < SEARCH_REUSE_TTL_MS
+                        && SEARCH_REUSE_ORIGIN.distSqr(origin) <= 256.0 * 256.0;
+                while (fresh && !SEARCH_REUSE_QUEUE.isEmpty()) {
+                    BlockPos cand = SEARCH_REUSE_QUEUE.poll();
+                    if (REJECTED_RUGGED_CENTERS.contains(BlockPos.asLong(cand.getX(), 0, cand.getZ()))) continue;
+                    if (dryQuarterRejected(cand.getX(), cand.getZ(), Math.max(32, structMax))) continue;
+                    DRY_PICK_SUGGESTED.add(new int[]{cand.getX(), cand.getZ()});
+                    LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T291d : cache, reprise sans re-sondage serveur, {} restant)",
+                            cand.getX(), cand.getZ(), SEARCH_REUSE_QUEUE.size());
+                    return cand;
+                }
+                if (!fresh) SEARCH_REUSE_QUEUE.clear();
+            }
             net.minecraft.world.level.chunk.ChunkGenerator gen = lvl.getChunkSource().getGenerator();
             net.minecraft.world.level.levelgen.RandomState rs = lvl.getChunkSource().randomState();
             final int baseX = p != null ? p.blockPosition().getX() : origin.getX();
@@ -1594,6 +1647,10 @@ public class Structures5Procedure {
                                      {1024,1024},{-1024,-1024},{1024,-1024},{-1024,1024}};
             BlockPos bestStrict = null; int bestStrictSpan = Integer.MAX_VALUE;
             BlockPos bestSoft = null;   int bestSoftSpan = Integer.MAX_VALUE;
+            // T291d : reserve des meilleurs candidats rencontres (hors retour)
+            // pour alimenter SEARCH_REUSE_QUEUE sans second sondage.
+            final java.util.ArrayList<BlockPos> strictPool = new ArrayList<>();
+            final java.util.ArrayList<BlockPos> softPool = new ArrayList<>();
             for (int b = 0; b < bubbles.length; b++) {
                 final int cx0 = baseX + bubbles[b][0], cz0 = baseZ + bubbles[b][1];
                 final int r0 = b == 0 ? Math.max(96, minCenterDist + step) : 128;
@@ -1638,15 +1695,22 @@ public class Structures5Procedure {
                         if (wet == 0) {
                             if (span <= DRY_PICK_GOOD_SPAN) {
                                 DRY_PICK_SUGGESTED.add(new int[]{cx, cz});
+                                stashSearchReuse(origin, structMax, new BlockPos(cx, Math.max(hy, 63), cz), strictPool, softPool);
                                 LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, bulle {}, {} sondes, {} eau/haut ecartees, span sec={}, 0 chunk genere)",
                                         cx, cz, System.currentTimeMillis() - t0, b, probed, water, span);
                                 return new BlockPos(cx, Math.max(hy, 63), cz);
                             }
-                            if (span > 0 && span < bestStrictSpan) {
-                                bestStrictSpan = span; bestStrict = new BlockPos(cx, Math.max(hy, 63), cz);
+                            if (span > 0) {
+                                strictPool.add(new BlockPos(cx, Math.max(hy, 63), cz));
+                                if (span < bestStrictSpan) {
+                                    bestStrictSpan = span; bestStrict = new BlockPos(cx, Math.max(hy, 63), cz);
+                                }
                             }
-                        } else if (wet <= 5 && span > 0 && span <= DRY_PICK_SOFT_SPAN && span < bestSoftSpan) {
-                            bestSoftSpan = span; bestSoft = new BlockPos(cx, Math.max(hy, 63), cz);
+                        } else if (wet <= 5 && span > 0 && span <= DRY_PICK_SOFT_SPAN) {
+                            softPool.add(new BlockPos(cx, Math.max(hy, 63), cz));
+                            if (span < bestSoftSpan) {
+                                bestSoftSpan = span; bestSoft = new BlockPos(cx, Math.max(hy, 63), cz);
+                            }
                         }
                         if (System.currentTimeMillis() - t0 > budget) { blown = true; break; }
                     }
@@ -1654,12 +1718,14 @@ public class Structures5Procedure {
                 }
                 if (bestStrict != null) {
                     DRY_PICK_SUGGESTED.add(new int[]{bestStrict.getX(), bestStrict.getZ()});
+                    stashSearchReuse(origin, structMax, bestStrict, strictPool, softPool);
                     LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, bulle {}, meilleur strict span sec={}, {} sondes, {} eau/haut, 0 chunk genere)",
                             bestStrict.getX(), bestStrict.getZ(), System.currentTimeMillis() - t0, b, bestStrictSpan, probed, water);
                     return bestStrict;
                 }
                 if (bestSoft != null && b > 0) {
                     DRY_PICK_SUGGESTED.add(new int[]{bestSoft.getX(), bestSoft.getZ()});
+                    stashSearchReuse(origin, structMax, bestSoft, strictPool, softPool);
                     LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, bulle {}, admission souple span sec={}, {} sondes, {} eau/haut ecartees, plateforme T104 arbitrera, 0 chunk genere)",
                             bestSoft.getX(), bestSoft.getZ(), System.currentTimeMillis() - t0, b, bestSoftSpan, probed, water);
                     return bestSoft;
@@ -1673,6 +1739,7 @@ public class Structures5Procedure {
             }
             if (bestSoft != null) {
                 DRY_PICK_SUGGESTED.add(new int[]{bestSoft.getX(), bestSoft.getZ()});
+                stashSearchReuse(origin, structMax, bestSoft, strictPool, softPool);
                 LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, DERNIER RECOURS souple span sec={}, {} sondes, {} eau/haut, 0 chunk genere)",
                         bestSoft.getX(), bestSoft.getZ(), System.currentTimeMillis() - t0, bestSoftSpan, probed, water);
                 return bestSoft;

@@ -187,7 +187,7 @@ def analyze(log, t_cmd, t_done):
 def generate_region(lines):
     """Pre-genere la region des candidats par forceload (generation vanilla,
     verifiee par sondes 'if loaded' sur une grille, puis sauvegarde)."""
-    rects = ('1400 40 1630 270', '900 60 1130 300', '1100 -150 1350 90', '2100 -180 2250 -60', '2100 60 2250 270')
+    rects = ('1400 40 1630 270', '900 60 1130 300', '1100 -150 1350 90', '2100 -180 2250 -60', '2100 60 2250 270', '1130 150 1400 380', '2000 -220 2320 -40')
     for rng in rects:
         x1, z1, x2, z2 = [int(v) for v in rng.split()]
         rcon(f'forceload add {x1} {z1} {x2} {z2}', timeout=60)
@@ -198,20 +198,31 @@ def generate_region(lines):
         for gx in range(x1 + 32, x2, 96):
             for gz in range(z1 + 32, z2, 96):
                 probes.append((gx, gz))
-    deadline = time.monotonic() + 600
+    # Les sondes 'say' ne renvoient RIEN dans la reponse RCON -- on lit donc
+    # les marqueurs WLMISS dans le journal serveur entre deux positions (fix
+    # iter 08 : la reponse vide etait lue 'loaded' et le snapshot capturait un
+    # monde partiellement genere -> 6 s de worldgen pendant la pose).
+    log_path = RUN / 'logs' / 'latest.log'
+    deadline = time.monotonic() + 1200
     while time.monotonic() < deadline:
-        all_loaded = True
+        pos0 = log_path.stat().st_size if log_path.exists() else 0
         for cx, cz in probes:
             try:
-                # si le chunk est charge, 'if loaded' reussit et le say passe
-                resp = rcon(f'execute unless loaded {cx} 64 {cz} run say WLMISS', timeout=20)
-                if resp is not None and 'WLMISS' in resp:
-                    all_loaded = False
+                rcon(f'execute unless loaded {cx} 64 {cz} run say WLMISS', timeout=20)
             except Exception:
-                all_loaded = False
-        if all_loaded:
+                pass
+        time.sleep(3)
+        chunk = log_path.read_text(errors='replace')[pos0:] if log_path.exists() else ''
+        missing = chunk.count('WLMISS')
+        print(f'sondes chargement : {missing} chunk(s) en gen sur {len(probes)}', flush=True)
+        if missing == 0:
             break
         time.sleep(5)
+    else:
+        print('ATTENTION : deadline de generation atteinte, snapshot REFUSE (monde incomplet) -- relancer --fresh', flush=True)
+        rcon('forceload remove all', timeout=60)
+        rcon('stop', timeout=20)
+        sys.exit(2)
     rcon('forceload remove all', timeout=60)
     time.sleep(2)
     rcon('save-all flush', timeout=180)
