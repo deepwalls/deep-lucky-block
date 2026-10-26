@@ -1122,6 +1122,31 @@ public class Structures5Procedure {
     private static long SAFETY_AWAIT_START_MS = 0L;
     private static final long SAFETY_AWAIT_TIMEOUT_MS =
             Integer.getInteger("dlb.safetyAwaitTimeoutMs", 600_000); // 10 min par defaut
+    /** T294 (log client T293 : pick sur terrain vierge -> machine faible,
+     *  generateur affame, « restant=20 » fige 16,8 s puis 20 s ; le joueur
+     *  voyait 3 gros freezes avant le basculement) : si le compte de chunks
+     *  manquants ne diminue PAS pendant ce delai, on abandonne le candidat
+     *  — re-recherche immediate loin d'attendre la borne 10 minutes. */
+    private static final long AWAIT_PROGRESS_MS =
+            Long.getLong("dlb.awaitProgressMs", 4_000L);
+    private static int AWAIT_LAST_MISSING = -1;
+    private static long AWAIT_LAST_MOVE_MS = 0L;
+    /** Retourne vrai si l'attente est en panne (aucun chunk livre depuis
+     *  AWAIT_PROGRESS_MS) ; met a jour les temoins de progression. */
+    private static boolean awaitStalled() {
+        int missing = deepluckyblock.util.SafeSurface.zonePlanMissing();
+        long now = System.currentTimeMillis();
+        if (AWAIT_LAST_MISSING < 0 || missing < AWAIT_LAST_MISSING) {
+            AWAIT_LAST_MISSING = missing;
+            AWAIT_LAST_MOVE_MS = now;
+            return false;
+        }
+        return missing > 0 && now - AWAIT_LAST_MOVE_MS > AWAIT_PROGRESS_MS;
+    }
+    private static void resetAwaitProgress() {
+        AWAIT_LAST_MISSING = -1;
+        AWAIT_LAST_MOVE_MS = 0L;
+    }
     /** T229 : reprises consecutives passees a attendre les controles de sol
      * (x0,6 / emprise entiere). Sert uniquement a rendre cette attente visible:
      * sans journal, le joueur ne voyait plus rien passer pendant des minutes. */
@@ -3341,6 +3366,7 @@ public class Structures5Procedure {
             deepluckyblock.util.ChunkKeeper.keep(level);
             if (FOOTPRINT_LOAD_RETRIES == 1) {
                 SAFETY_AWAIT_START_MS = System.currentTimeMillis();
+                resetAwaitProgress();
                 final String planNbt = nbt;
                 deepluckyblock.util.SafeSurface.replanZone(level, cx0, cz0, cx1, cz1,
                         () -> deepluckyblock.util.DebugLog.info(LOGGER,
@@ -3349,6 +3375,21 @@ public class Structures5Procedure {
             }
             long awaitElapsed = SAFETY_AWAIT_START_MS == 0L ? 0L
                     : System.currentTimeMillis() - SAFETY_AWAIT_START_MS;
+                        // T294 : file affamee (generateur qui ne livre plus) -> abandon
+            // immediat du candidat ; [TAG] remplace plus bas par le libelle
+            // de la phase concernee, pour un journal exploit wincli.
+            if (awaitStalled()) {
+                LOGGER.warn("[STRUCT5-SAFETY] {} : [{}] attente en panne -- plan-zone restant={} fige depuis {} ms -- ABANDON candidat (T294, machine faible) : re-recherche immediate",
+                        nbt, "emprise-finale", deepluckyblock.util.SafeSurface.zonePlanMissing(),
+                        System.currentTimeMillis() - AWAIT_LAST_MOVE_MS);
+                deepluckyblock.util.SafeSurface.dropZonePlan();
+                deepluckyblock.util.ChunkKeeper.release(level);
+                SAFETY_AWAIT_START_MS = 0L;
+                GROUND_WAIT_TICKS = 0;
+                FOOTPRINT_LOAD_RETRIES = 0;
+                resetAwaitProgress();
+                return false;   // file liberee : le pipeline re-recherche
+            }
             if (awaitElapsed > SAFETY_AWAIT_TIMEOUT_MS) {
                 int missed = deepluckyblock.util.SafeSurface.zonePlanMissing();
                 LOGGER.warn("[STRUCT5-SAFETY] {} : emprise finale INCOMPLETE apres {} ms ({} chunk(s) manquant(s) "
@@ -3561,6 +3602,7 @@ public class Structures5Procedure {
             deepluckyblock.util.ChunkKeeper.keep(level);
             if (SAFETY_AWAIT_START_MS == 0L) {
                 SAFETY_AWAIT_START_MS = System.currentTimeMillis();
+                resetAwaitProgress();
                 final String planNbt2 = nbt;
                 deepluckyblock.util.SafeSurface.replanZone(level, gx0 >> 4, gz0 >> 4, gx1 >> 4, gz1 >> 4,
                         () -> deepluckyblock.util.DebugLog.info(LOGGER,
@@ -3568,6 +3610,21 @@ public class Structures5Procedure {
                                 System.currentTimeMillis() - SAFETY_AWAIT_START_MS));
             }
             long awaitElapsed = System.currentTimeMillis() - SAFETY_AWAIT_START_MS;
+                        // T294 : file affamee (generateur qui ne livre plus) -> abandon
+            // immediat du candidat ; [TAG] remplace plus bas par le libelle
+            // de la phase concernee, pour un journal exploit wincli.
+            if (awaitStalled()) {
+                LOGGER.warn("[STRUCT5-SAFETY] {} : [{}] attente en panne -- plan-zone restant={} fige depuis {} ms -- ABANDON candidat (T294, machine faible) : re-recherche immediate",
+                        nbt, "x0,6", deepluckyblock.util.SafeSurface.zonePlanMissing(),
+                        System.currentTimeMillis() - AWAIT_LAST_MOVE_MS);
+                deepluckyblock.util.SafeSurface.dropZonePlan();
+                deepluckyblock.util.ChunkKeeper.release(level);
+                SAFETY_AWAIT_START_MS = 0L;
+                GROUND_WAIT_TICKS = 0;
+                FOOTPRINT_LOAD_RETRIES = 0;
+                resetAwaitProgress();
+                return false;   // file liberee : le pipeline re-recherche
+            }
             if (awaitElapsed > SAFETY_AWAIT_TIMEOUT_MS) {
                 LOGGER.warn("[STRUCT5-GROUND] {} : emprise x0,6 INCOMPLETE apres {} ms -- ABANDON PROPRE (T232 borne)", nbt, awaitElapsed);
                 deepluckyblock.util.SafeSurface.dropZonePlan();
@@ -3607,8 +3664,24 @@ public class Structures5Procedure {
             deepluckyblock.util.ChunkKeeper.keep(level);
             if (SAFETY_AWAIT_START_MS == 0L) {
                 SAFETY_AWAIT_START_MS = System.currentTimeMillis();
+                resetAwaitProgress();
             }
             long awaitElapsed = System.currentTimeMillis() - SAFETY_AWAIT_START_MS;
+                        // T294 : file affamee (generateur qui ne livre plus) -> abandon
+            // immediat du candidat ; [TAG] remplace plus bas par le libelle
+            // de la phase concernee, pour un journal exploit wincli.
+            if (awaitStalled()) {
+                LOGGER.warn("[STRUCT5-SAFETY] {} : [{}] attente en panne -- plan-zone restant={} fige depuis {} ms -- ABANDON candidat (T294, machine faible) : re-recherche immediate",
+                        nbt, "emprise-entiere", deepluckyblock.util.SafeSurface.zonePlanMissing(),
+                        System.currentTimeMillis() - AWAIT_LAST_MOVE_MS);
+                deepluckyblock.util.SafeSurface.dropZonePlan();
+                deepluckyblock.util.ChunkKeeper.release(level);
+                SAFETY_AWAIT_START_MS = 0L;
+                GROUND_WAIT_TICKS = 0;
+                FOOTPRINT_LOAD_RETRIES = 0;
+                resetAwaitProgress();
+                return false;   // file liberee : le pipeline re-recherche
+            }
             if (awaitElapsed > SAFETY_AWAIT_TIMEOUT_MS) {
                 LOGGER.warn("[STRUCT5-GROUND] {} : emprise entiere INCOMPLETE apres {} ms -- ABANDON PROPRE (T232 borne)", nbt, awaitElapsed);
                 deepluckyblock.util.SafeSurface.dropZonePlan();

@@ -25,6 +25,7 @@ run mesure donc exactement le même point de départ.
 | 14 | T291e..g | — (défauts produit) | 5 | 2,6 s | 7,7 s | pré-chargement 0,7 s confirmé |
 | 15 | T292 | — (IA mere ON par défaut) + mock Ollama local | 5 | 3,4 s | 10,2 s | plan IA recu+applique (15 ms, 0 cout) |
 | 16 | T293 | — (cerveau EMBARQUE, zero install, reseau coupe) | ~5 | ~2 s | 8,8 s | plan embarque applique (rayon 1, boosts 48, latence 0 ms) |
+| 17 | T294 | — (chien de garde progression plan-zone 4 s ; retour client dragon 141 s / freezes) | ~5 | ~2 s | **8,7 s** | zero abandon declenche ici (monde pre-genere) ; aucune regression. Sur la machine cliente le garde abandonne un candidat en 4 s au lieu de 16,8-20 s fige (retour client T293) |
 
 ## Attribution du temps résiduel (iter 14, monde chaud)
 
