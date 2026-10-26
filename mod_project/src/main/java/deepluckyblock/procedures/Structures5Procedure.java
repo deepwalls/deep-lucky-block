@@ -77,7 +77,10 @@ public class Structures5Procedure {
      * paste de l'everest). C'est la mesure en millisecondes qui garantit qu'un
      * tick ne s'eternise jamais.
      */
-    private static final long PASTE_TICK_BUDGET_MS = 40;
+    // T291c : borne pilotable (defaut 40 ms, inchangee) -- permet de mesurer
+    // l'elasticite du paste au budget tick sur le banc (-Ddlb.pasteTickBudgetMs=NN).
+    private static final long PASTE_TICK_BUDGET_MS =
+            Long.getLong("dlb.pasteTickBudgetMs", 40L);
     private static final int FLAT_SIZE = 10;
     private static final int MAX_HDIFF = 3;
     // Ecart (en blocs) au-dela duquel l'ecart de sol avant/apres smooth est
@@ -3474,10 +3477,14 @@ public class Structures5Procedure {
             deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-GROUND] {} : centre x0,6 incomplet, chargement asynchrone puis reprise (aucun refus)", nbt);
             // T229 : reprises bornees a 200 ci-dessus ; rendre l'attente visible.
             if (++GROUND_WAIT_TICKS % 10 == 0)
-                LOGGER.warn("[STRUCT5-GROUND] {} : controles de sol toujours en chargement ({} reprises de 20 ticks)", nbt, GROUND_WAIT_TICKS);
+                LOGGER.warn("[STRUCT5-GROUND] {} : controles de sol toujours en chargement ({} reprises de 4 ticks)", nbt, GROUND_WAIT_TICKS);
             final BlockPos retryOrigin = origin;
+            // T291c : la reprise passait de 20 a 4 ticks -- sur zone deja chargee
+            // la planification seule coutait 1 s plein avant chaque essai. Sur
+            // terrain vierge, la generation domine : le reveil plus frequent ne
+            // change rien, et le cout par reveil reste borne (zone plan).
             deepluckyblock.procedures.TestProcedure.schedule(level,
-                    deepluckyblock.procedures.TestProcedure.currentTick(level) + 20, () -> {
+                    deepluckyblock.procedures.TestProcedure.currentTick(level) + 4, () -> {
                 boolean ok = doPaste(level, retryOrigin, nbt, ox, oy, oz, dist, nf, followSurf, useFlat, keepInt);
                 if (!ok) notifyGenerationAborted(level);
             });
@@ -3510,10 +3517,10 @@ public class Structures5Procedure {
             }
             // T229 : cette reprise n'avait AUCUN journal. WARN periodique borne.
             if (++GROUND_WAIT_TICKS % 10 == 0)
-                LOGGER.warn("[STRUCT5-GROUND] {} : emprise entiere en chargement ({} reprises de 20 ticks)", nbt, GROUND_WAIT_TICKS);
+                LOGGER.warn("[STRUCT5-GROUND] {} : emprise entiere en chargement ({} reprises de 4 ticks)", nbt, GROUND_WAIT_TICKS);
             final BlockPos retryOrigin = origin;
             deepluckyblock.procedures.TestProcedure.schedule(level,
-                    deepluckyblock.procedures.TestProcedure.currentTick(level) + 20, () -> {
+                    deepluckyblock.procedures.TestProcedure.currentTick(level) + 4, () -> {
                 boolean ok = doPaste(level, retryOrigin, nbt, ox, oy, oz, dist, nf, followSurf, useFlat, keepInt);
                 if (!ok) notifyGenerationAborted(level);
             });
@@ -3540,8 +3547,11 @@ public class Structures5Procedure {
                     nbt, txz.getX(), txz.getZ(), exactRelief, MAX_CLIFF_HEIGHT_DIFF,
                     fullGround.wet(), fullGround.columns());
             final BlockPos retryOrigin = origin;
+            // T291c : la reprise apres rejet passait de 10 a 3 ticks : chaque
+            // candidat ecarte payait 0,5 s de planification morte (le travail
+            // utile entre deux reveils est borne par la recherche T233c).
             deepluckyblock.procedures.TestProcedure.schedule(level,
-                    deepluckyblock.procedures.TestProcedure.currentTick(level) + 10, () -> {
+                    deepluckyblock.procedures.TestProcedure.currentTick(level) + 3, () -> {
                 boolean ok = doPaste(level, retryOrigin, nbt, ox, oy, oz, dist, nf, followSurf, useFlat, keepInt);
                 if (!ok) notifyGenerationAborted(level);
             });
