@@ -58,12 +58,18 @@ public final class DebugLog {
     // T232 (tests sandbox/lab) : -Ddlb.debug=1 (ou env DLB_DEBUG=1) rallume les
     // logs d'info + structure a la VOLee, sans toucher au defaut de
     // publication T221. Strictement additif (rien ne change sans le flag).
-    static {
-        if (System.getProperty("dlb.debug") != null || System.getenv("DLB_DEBUG") != null) {
-            ENABLED = true;
-            STRUCTURE = true;
-        }
-    }
+    // T297 (log client T294 + banc T295 : AUCUNE ligne step/structure
+    // visible alors que dlb.debug etait pose -- ex. « pre-chargement : N
+    // chunks », « prepZone x/11 », « nappe vanilla memorisee ») : ce bloc
+    // static s'executait AVANT la declaration plus bas
+    // « STRUCTURE = false » (ordre Java : champs/blocs dans l'ordre du
+    // fichier), donc la remise a false effacait systematiquement
+    // l'activation. Depuis T221, TOUTES les traces structure() n'ont
+    // JAMAIS ete visibles nulle part -- un trou de diagnostic complet,
+    // en particulier lors des mega-ticks (LAGPROBE gardait un label
+    // perime pendant le coupable reel). Bloc deplace APRES les
+    // declarations.
+    // (voir plus bas)
 
     /**
      * Categorie (a) : generation de structure / terrain.
@@ -86,6 +92,16 @@ public final class DebugLog {
      * (perte / regeneration), pas un spam par frame.
      */
     public static boolean HEART = false; // T221 : silence pour la publication
+
+    // T297 : init debug APRES les declarations ci-dessus (voir explication
+    // au bloc T232 deplace -- anterieurement la declaration STRUCTURE=false
+    // ecrasait l'activation a chaque chargement de classe).
+    static {
+        if (System.getProperty("dlb.debug") != null || System.getenv("DLB_DEBUG") != null) {
+            ENABLED = true;
+            STRUCTURE = true;
+        }
+    }
 
     // ------------------------------------------------------------------
     // T16 : FIL ROUGE DE PHASE.

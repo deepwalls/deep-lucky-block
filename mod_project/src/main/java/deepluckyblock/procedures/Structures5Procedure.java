@@ -1197,6 +1197,33 @@ public class Structures5Procedure {
      * recherche bouclait en silence : c'est le blocage observe en jeu (dragon
      * jamais pose, aucune ligne de log pendant des minutes). */
     private static int SEARCH_FALLBACK_STALL_TICKS = 0;
+    /** T296 (plainte client : « j'ai genere pleins de chunks pres de moi, et il a encore
+     *  choisi de forcer a generer d'autres chunks ») : compteurs de rejet cumules de la
+     *  recherche (tier charge T245 + balayage historique + boucle de verification). Une
+     *  ligne INFO visible sans debug est emise au choix final : le client voit POURQUOI
+     *  les chunks deja generes autour de lui n'ont pas ete retenus (eau / relief >10 /
+     *  sol incomplet / trop pres du joueur / conflit emprise) au lieu de croire que le
+     *  moteur les a ignores. Vide a beginGeneration. */
+    private static int STAT_LOADED_SEEN = 0, STAT_LOADED_REJ_WATER = 0,
+            STAT_LOADED_REJ_RELIEF = 0, STAT_LOADED_REJ_GROUND = 0, STAT_LOADED_REJ_NOTREADY = 0,
+            STAT_SCAN_PLAYER = 0, STAT_SCAN_SITE = 0, STAT_SCAN_WET = 0;
+    private static void pickStatLoadedReject(char reason) {
+        switch (reason) {
+            case 'w' -> STAT_LOADED_REJ_WATER++;
+            case 'r' -> STAT_LOADED_REJ_RELIEF++;
+            case 'g' -> STAT_LOADED_REJ_GROUND++;
+            default -> STAT_LOADED_REJ_NOTREADY++;
+        }
+    }
+    private static void logLoadedTierDigest(int chosenX, int chosenZ) {
+        if (STAT_LOADED_SEEN == 0 && STAT_SCAN_PLAYER == 0 && STAT_SCAN_SITE == 0) return;
+        LOGGER.info("[STRUCT5-PICK] bilan proximite T296 : {} candidat(s) dans les chunks DEJA generes examines, "
+                        + "rejets : eau={}, relief>10={}, sol incomplet={}, verification impossible={} ; "
+                        + "balayage : trop pres du joueur={}, conflit emprise={}, eau(grille)={} -- choix final en {},{}",
+                STAT_LOADED_SEEN, STAT_LOADED_REJ_WATER, STAT_LOADED_REJ_RELIEF,
+                STAT_LOADED_REJ_GROUND, STAT_LOADED_REJ_NOTREADY,
+                STAT_SCAN_PLAYER, STAT_SCAN_SITE, STAT_SCAN_WET, chosenX, chosenZ);
+    }
     /** T229 : candidats dont la zone a ete demandee en tache de fond et qui sont
      * reverifies a chaque reprise, AU LIEU d'etre consommes a vue (T185). T185
      * vidait tout terrain non visite : dans un monde neuf aucune zone au-dela du
@@ -1558,14 +1585,16 @@ public class Structures5Procedure {
             if (scores[idx][1] != 0) break;            // les humides ne passent plus le verdict reel
             if (System.currentTimeMillis() - t0 > budget) break;
             int cx = cands.get(idx)[0], cz = cands.get(idx)[1];
+            STAT_LOADED_SEEN++;                        // T296
             FlatQuality q = qualityOnReady(lvl, cx, cz, checkR);
-            if (q == null) continue;
-            if (q.wetRatio() > 0.0) continue;
-            if (q.slope() > 10) continue;              // porte reelle d'acceptation : relief <= 10
+            if (q == null) { STAT_LOADED_REJ_NOTREADY++; continue; }          // T296
+            if (q.wetRatio() > 0.0) { STAT_LOADED_REJ_WATER++; continue; }    // T296
+            if (q.slope() > 10) { STAT_LOADED_REJ_RELIEF++; continue; }       // T296 -- porte reelle d'acceptation : relief <= 10
             int realY = deepluckyblock.util.SafeSurface.height(lvl,
                     Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx, cz) - 1;
-            if (realY < 1) continue;
+            if (realY < 1) { STAT_LOADED_REJ_GROUND++; continue; }            // T296
             DRY_PICK_SUGGESTED.add(new int[]{cx, cz});
+            logLoadedTierDigest(cx, cz);   // T296
             LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (tier charge T245 : {} ms, {} sondes sechees, {} ecartees eau/haut, {} candidats charges, span sec={}, span reel={}, 0 chunk genere, phase suivante directe)",
                     cx, cz, System.currentTimeMillis() - t0, probed, water, cands.size(), scores[idx][0], q.slope());
             TIER_MISS_PIVOT = null; TIER_MISS_UNTIL_MS = 0L; TIER_MISS_STREAK = 0;   // T255 : succes -> raz
@@ -1578,8 +1607,12 @@ public class Structures5Procedure {
         TIER_MISS_PIVOT = origin;
         TIER_MISS_UNTIL_MS = System.currentTimeMillis()
                 + Math.min(30000L, 8000L * TIER_MISS_STREAK);
-        LOGGER.info("[STRUCT5-FLAT] tier charge T245 sans bon candidat ({} ms, {} candidats dans les chunks charges, {} sondes sechees) : repli choix sec T233c" + (TIER_MISS_STREAK > 1 ? " (saut du tier ~" + Math.min(30, 8 * TIER_MISS_STREAK) + " s, serie " + TIER_MISS_STREAK + ")" : ""),
-                System.currentTimeMillis() - t0, cands.size(), probed);
+        // T296 : dire POURQUOI les chunks deja generes n'ont pas retenu de site --
+        // c'est exactement l'information que le client cherchait dans son log.
+        LOGGER.info("[STRUCT5-FLAT] tier charge T245 sans bon candidat ({} ms, {} candidats dans les chunks charges, {} sondes sechees ; verdicts reels : {} examines, rejets eau={}, relief>10={}, sol/chunks partis={}, surface invalide={}) : repli choix sec T233c" + (TIER_MISS_STREAK > 1 ? " (saut du tier ~" + Math.min(30, 8 * TIER_MISS_STREAK) + " s, serie " + TIER_MISS_STREAK + ")" : ""),
+                System.currentTimeMillis() - t0, cands.size(), probed,
+                STAT_LOADED_SEEN, STAT_LOADED_REJ_WATER, STAT_LOADED_REJ_RELIEF,
+                STAT_LOADED_REJ_NOTREADY, STAT_LOADED_REJ_GROUND);
         return null;
     }
 
@@ -1685,6 +1718,7 @@ public class Structures5Procedure {
                     if (REJECTED_RUGGED_CENTERS.contains(BlockPos.asLong(cand.getX(), 0, cand.getZ()))) continue;
                     if (dryQuarterRejected(cand.getX(), cand.getZ(), Math.max(32, structMax))) continue;
                     DRY_PICK_SUGGESTED.add(new int[]{cand.getX(), cand.getZ()});
+                    logLoadedTierDigest(cand.getX(), cand.getZ());   // T296
                     LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T291d : cache, reprise sans re-sondage serveur, {} restant)",
                             cand.getX(), cand.getZ(), SEARCH_REUSE_QUEUE.size());
                     return cand;
@@ -1755,6 +1789,7 @@ public class Structures5Procedure {
                             if (span <= DRY_PICK_GOOD_SPAN) {
                                 DRY_PICK_SUGGESTED.add(new int[]{cx, cz});
                                 stashSearchReuse(origin, structMax, new BlockPos(cx, Math.max(hy, 63), cz), strictPool, softPool);
+                                logLoadedTierDigest(cx, cz);   // T296
                                 LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, bulle {}, {} sondes, {} eau/haut ecartees, span sec={}, 0 chunk genere)",
                                         cx, cz, System.currentTimeMillis() - t0, b, probed, water, span);
                                 return new BlockPos(cx, Math.max(hy, 63), cz);
@@ -1778,6 +1813,7 @@ public class Structures5Procedure {
                 if (bestStrict != null) {
                     DRY_PICK_SUGGESTED.add(new int[]{bestStrict.getX(), bestStrict.getZ()});
                     stashSearchReuse(origin, structMax, bestStrict, strictPool, softPool);
+                    logLoadedTierDigest(bestStrict.getX(), bestStrict.getZ());   // T296
                     LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, bulle {}, meilleur strict span sec={}, {} sondes, {} eau/haut, 0 chunk genere)",
                             bestStrict.getX(), bestStrict.getZ(), System.currentTimeMillis() - t0, b, bestStrictSpan, probed, water);
                     return bestStrict;
@@ -1785,6 +1821,7 @@ public class Structures5Procedure {
                 if (bestSoft != null && b > 0) {
                     DRY_PICK_SUGGESTED.add(new int[]{bestSoft.getX(), bestSoft.getZ()});
                     stashSearchReuse(origin, structMax, bestSoft, strictPool, softPool);
+                    logLoadedTierDigest(bestSoft.getX(), bestSoft.getZ());   // T296
                     LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, bulle {}, admission souple span sec={}, {} sondes, {} eau/haut ecartees, plateforme T104 arbitrera, 0 chunk genere)",
                             bestSoft.getX(), bestSoft.getZ(), System.currentTimeMillis() - t0, b, bestSoftSpan, probed, water);
                     return bestSoft;
@@ -1799,6 +1836,7 @@ public class Structures5Procedure {
             if (bestSoft != null) {
                 DRY_PICK_SUGGESTED.add(new int[]{bestSoft.getX(), bestSoft.getZ()});
                 stashSearchReuse(origin, structMax, bestSoft, strictPool, softPool);
+                logLoadedTierDigest(bestSoft.getX(), bestSoft.getZ());   // T296
                 LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (selection seche T233c : {} ms, DERNIER RECOURS souple span sec={}, {} sondes, {} eau/haut, 0 chunk genere)",
                         bestSoft.getX(), bestSoft.getZ(), System.currentTimeMillis() - t0, bestSoftSpan, probed, water);
                 return bestSoft;
@@ -2081,6 +2119,9 @@ public class Structures5Procedure {
         REJECTED_RUGGED_CENTERS.clear();
         DRY_PICK_SUGGESTED.clear();   // T233b : nouvelle recherche, nouvelles propositions
         DRY_CELLS_DONE.clear();       // T233c-2 : nouvelle frontiere de recherche seche
+        STAT_LOADED_SEEN = 0; STAT_LOADED_REJ_WATER = 0; STAT_LOADED_REJ_RELIEF = 0;
+        STAT_LOADED_REJ_GROUND = 0; STAT_LOADED_REJ_NOTREADY = 0;
+        STAT_SCAN_PLAYER = 0; STAT_SCAN_SITE = 0; STAT_SCAN_WET = 0;   // T296
         SEARCH_EXTRA_RADIUS = 0;
         SEARCH_SCANNED_RADIUS = -1;
         SEARCH_PROGRESS_LAST_MS = 0L;
@@ -2596,7 +2637,7 @@ public class Structures5Procedure {
                     deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT-PROBE] en cours : {} candidat(s) retenus, {} ms joueur, {} ms emprises, {} ms mesures",
                             candidates.size(), tPlayerMs, tSiteMs, tMeasureMs);
                 }
-                if (_isPlayer) continue;
+                if (_isPlayer) { STAT_SCAN_PLAYER++; continue; }   // T296
                 // T27 : aucune structure ne doit arriver DANS une autre. Un candidat
                 // qui chevauche l'emprise d'une structure deja posee est rejete,
                 // exactement comme un chunk de joueur.
@@ -2607,6 +2648,7 @@ public class Structures5Procedure {
                     // T165 : filtrage d'emprise AVANT scoring. Ne plus lancer une
                     // spirale et deux conflits pour chacun des centaines de points
                     // occupés, et surtout ne plus écrire une ligne par candidat.
+                    STAT_SCAN_SITE++;   // T296
                     continue;
                 }
                 long _t2 = System.currentTimeMillis();
@@ -2616,7 +2658,7 @@ public class Structures5Procedure {
                 tMeasureMs += System.currentTimeMillis() - _t2;
                 if (fq == null) continue;
                 // T75 : une zone en eau n'est jamais constructible, meme notee plate.
-                if (fq.wetRatio() > FLAT_MAX_WET) { wetRanked++; continue; }
+                if (fq.wetRatio() > FLAT_MAX_WET) { wetRanked++; STAT_SCAN_WET++; continue; }   // T296
                 double terrainScore = Math.max(0, fq.flatExtent() * 1000.0 - fq.slope() * 8.0);
                 double loc = Math.max(0, Math.min(100, sc(cx, cz, pp, lx, lz)));
                 double total = terrainScore + loc;
@@ -2685,7 +2727,8 @@ public class Structures5Procedure {
                 break;
             }
             FlatCandidate c = candidates.get(i);
-            // Lecture seule des chunks déjà FULL : aucune génération de candidat.
+            // T296 : ce candidat est-il dans des chunks DEJA generes (tier charge) ?
+            final boolean cLoaded = lvl.getChunkSource().getChunkNow(c.cx() >> 4, c.cz() >> 4) != null;
             // Force la generation reelle des chunks couverts par checkR autour du
             // candidat (memes limites que measureFlatQuality) avant de re-mesurer :
             // sans ce forçage, getHeight() peut rester fantome et le probleme ne
@@ -2697,6 +2740,7 @@ public class Structures5Procedure {
             // attente implicite de la source apres T49) : 27 s de gel dans un seul tick.
             FlatQuality realFq = qualityOnReady(lvl, c.cx(), c.cz(), checkR);
             if (realFq == null) {
+                if (cLoaded) pickStatLoadedReject('n');   // T296
                 // T185 (historique) : candidat consomme a vue, aucun chargement
                 // declenche. Effet mesure en jeu (run dragon du 06/10, monde
                 // neuf) : AUCUNE zone au-dela du spawn n'est FULL -> 100 % des
@@ -2754,10 +2798,12 @@ public class Structures5Procedure {
             if (candidateGround == null) {
                 // Pas de requestZone ici : priorité stricte aux zones déjà
                 // ouvertes dans le passé. Épuiser ce candidat une seule fois.
+                if (cLoaded) pickStatLoadedReject('n');   // T296
                 REJECTED_RUGGED_CENTERS.add(BlockPos.asLong(c.cx(), 0, c.cz()));
                 continue;
             }
             if (candidateGround.wet() > 0) {
+                if (cLoaded) pickStatLoadedReject('w');   // T296
                 REJECTED_RUGGED_CENTERS.add(BlockPos.asLong(c.cx(), 0, c.cz()));
                 phantomRejected++;
                 continue;
@@ -2768,10 +2814,12 @@ public class Structures5Procedure {
                     c.cx() - fullCheckR, c.cz() - fullCheckR,
                     c.cx() + fullCheckR, c.cz() + fullCheckR);
             if (candidateFull == null) {
+                if (cLoaded) pickStatLoadedReject('n');   // T296
                 REJECTED_RUGGED_CENTERS.add(BlockPos.asLong(c.cx(), 0, c.cz()));
                 continue;
             }
             if (candidateFull.wet() > 0) {
+                if (cLoaded) pickStatLoadedReject('w');   // T296
                 REJECTED_RUGGED_CENTERS.add(BlockPos.asLong(c.cx(), 0, c.cz()));
                 phantomRejected++;
                 continue;
@@ -2784,11 +2832,13 @@ public class Structures5Procedure {
                     SEARCH_BEST_LOADED_DRY_RELIEF = exactRelief;
                     SEARCH_BEST_LOADED_DRY = new BlockPos(c.cx(), candidateGround.maxY(), c.cz());
                 }
+                if (cLoaded) pickStatLoadedReject('r');   // T296
                 REJECTED_RUGGED_CENTERS.add(BlockPos.asLong(c.cx(), 0, c.cz()));
                 phantomRejected++;
                 continue;
             }
             int realY = deepluckyblock.util.SafeSurface.surfaceY(lvl, c.cx(), c.cz(), origin.getY());
+            logLoadedTierDigest(c.cx(), c.cz());   // T296
             deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] Zone choisie a {},{} (candidat #{}/{}) : flat={}%, pente={} (score={}, terrain reel exhaustif x0,6, Y reel={}, {} candidat(s) rejetes, {} s de recherche)",
                     c.cx(), c.cz(), i + 1, maxVerified, (int)(realFq.flatExtent() * 100), realFq.slope(), (int) c.total(), realY, phantomRejected,
                     GENERATION_START_MS == 0L ? -1L : (System.currentTimeMillis() - GENERATION_START_MS) / 1000);
@@ -2819,6 +2869,7 @@ public class Structures5Procedure {
                     c.cx() + fullCheckR, c.cz() + fullCheckR);
             if (candidateFull2 == null || candidateFull2.wet() > 0) continue;
             int realY2 = deepluckyblock.util.SafeSurface.surfaceY(lvl, c.cx(), c.cz(), origin.getY());
+            logLoadedTierDigest(c.cx(), c.cz());   // T296
             deepluckyblock.util.DebugLog.info(LOGGER, "[STRUCT5-FLAT] Zone choisie a {},{} (seconde passe T49, terrain reel verifie, Y reel={}, {} s de recherche)",
                     c.cx(), c.cz(), realY2,
                     GENERATION_START_MS == 0L ? -1L : (System.currentTimeMillis() - GENERATION_START_MS) / 1000);
@@ -2949,6 +3000,7 @@ public class Structures5Procedure {
                 }
                 continue;
             }
+            logLoadedTierDigest(c.getX(), c.getZ());   // T296
             LOGGER.info("[STRUCT5-FLAT] Zone choisie a {},{} (candidat differe pret apres chargement fond, relief={}, flat={}%, Y sol={}, {} s de recherche)",
                     c.getX(), c.getZ(), relief, (int) (q.flatExtent() * 100), dg.maxY(),
                     GENERATION_START_MS == 0L ? -1L : (System.currentTimeMillis() - GENERATION_START_MS) / 1000);

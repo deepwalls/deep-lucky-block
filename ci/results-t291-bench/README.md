@@ -63,3 +63,20 @@ candidats intra-job (T291d), pré-chargement de la couronne pendant les contrôl
 de sol (T291g). Pour aller sous 6 s MÊME sur ce banc il faudrait assouplir les
 règles de veto eau/relief (contradiction avec T232/T264) ou payer les
 recherches/vetoes en parallèle — non retenu, à arbitrer si le client le demande.
+
+| 18 | T294+T295+T296 | — (scan nappe chunk-major + digest rejets tier charge) | ~5 | ~2 s | 8,5 s | nappe 25 k colonnes : **3 ms** (etait le mega-tick suspect 26,5 s client) |
+| 19 | idem +T297 | — (DebugLog STRUCTURE repare : ordre init fields/static) | ~5 | ~2,7 s | 9,6 s | toutes les traces structure() enfin visibles au banc — jamais affichees depuis T221 (bug champ/statique) |
+
+## Retour client T294 (Windows portable faible, dragon 141 s) — mesures serveur incubees
+
+- LAGPROBE client : tick 26,5 s label « pre-chargement 76/99 » ; 12,5 s verifyGrassSurface ;
+  pose brute 42,7 s ; decorate+sweep 37,7 s. Sandbox iter-19 : nappe scan 3 ms (T295),
+  max tick 1,8 s (gen de chunks en tache de fond, monde pre-genere).
+- **Lignes strictes reproduites au banc** (ci/analyze_seams.py sur monde post-pose
+  iter-18 vs snapshot pre-pose) : mur +4 blocs strict en x=1487/1488 (bord de
+  chunk 93) sur z=145..189 (45 cellules) + front z=189 x=1489..1525 (37). Ni le
+  client ni le banc n'ont de couture inter-chunk globale (mediane bord = mediane
+  interieur) -- les lignes sont LOCALES au pourtour de l'emprise lisse et
+  possee (candidats : passes decoupees qui ont traite un chunk puis clamp
+  adaptatif T89+T263 ramenant les suivantes, ou heightmap de reference
+  capturee avant l'arrivee d'un chunk).

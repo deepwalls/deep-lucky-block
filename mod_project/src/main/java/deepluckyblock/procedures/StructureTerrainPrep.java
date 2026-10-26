@@ -5772,31 +5772,57 @@ public class StructureTerrainPrep {
      * Coute une lecture de surface par colonne de la zone trackee (une fois).
      */
     private static void captureNaturalWater(ServerLevel level, int x0, int z0, int w, int h) {
+        long t0 = System.currentTimeMillis();
         boolean sameStreamMatrix = NATURAL_WATER != null && NW_X0 == x0 && NW_Z0 == z0
                 && NW_W == w && NW_H == h;
         boolean[][] mask = sameStreamMatrix ? NATURAL_WATER : new boolean[w][h];
         int n = sameStreamMatrix ? NATURAL_WATER_COUNT : 0;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int i = 0; i < w; i++) {
-            for (int j = 0; j < h; j++) {
-                int x = x0 + i, z = z0 + j;
-                if (!deepluckyblock.util.SafeSurface.isLoadedAt(level, x, z)) continue;
-                int y = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                if (level.getBlockState(pos.set(x, y, z)).is(Blocks.WATER) && !mask[i][j]) {
-                    mask[i][j] = true;
-                    n++;
+        // T295 (log client T294 : « tick de 26,5 s » pile apres le label
+        // « pre-chargement des chunks 76/99 » sur machine faible -- le label
+        // LAGPROBE n'etant remis qu'au setPhase suivant, ce tick couvre
+        // AUSSI cette photographie) : le balayage de la nappe resolvait le
+        // chunk DEUX-QUATRE fois PAR COLONNE (isLoadedAt + heightmap +
+        // Level.getBlockState, ce dernier via getChunkSource().getChunk(...,
+        // FULL, true) avec verrouillage et verification de future a chaque
+        // appel) : ~0,5-1 ms/colonne sur PC modeste => 10-25 s EN UN SEUL
+        // TICK pour les ~25 000 colonnes de la zone finale. On balaye
+        // desormais chunk par chunk : UNE resolution + UN test de generation
+        // par chunk, puis heightmap (cache SafeSurface, memes valeurs) et bloc
+        // de surface lus DIRECTEMENT sur le ChunkAccess -- plus aucun passage
+        // par Level.getBlockState. Garde et resultat IDENTIQUES (colonne non
+        // chargee : passee, comme avant ; seul WATER en surface compte).
+        int cx0 = x0 >> 4, cz0 = z0 >> 4, cx1 = (x0 + w - 1) >> 4, cz1 = (z0 + h - 1) >> 4;
+        for (int cx = cx0; cx <= cx1; cx++) {
+            for (int cz = cz0; cz <= cz1; cz++) {
+                net.minecraft.world.level.chunk.ChunkAccess chunk;
+                try { chunk = level.getChunkSource().getChunkNow(cx, cz); }
+                catch (Throwable t) { chunk = null; }
+                if (chunk == null || !deepluckyblock.util.SafeSurface.isReallyGenerated(chunk)) continue;
+                int bx0 = Math.max(x0, cx << 4), bx1 = Math.min(x0 + w - 1, (cx << 4) + 15);
+                int bz0 = Math.max(z0, cz << 4), bz1 = Math.min(z0 + h - 1, (cz << 4) + 15);
+                for (int x = bx0; x <= bx1; x++) {
+                    int i = x - x0;
+                    for (int z = bz0; z <= bz1; z++) {
+                        int y = deepluckyblock.util.SafeSurface.height(level, Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+                        if (chunk.getBlockState(pos.set(x, y, z)).is(Blocks.WATER) && !mask[i][z - z0]) {
+                            mask[i][z - z0] = true;
+                            n++;
+                        }
+                    }
                 }
             }
         }
         NATURAL_WATER = mask;
         NW_X0 = x0; NW_Z0 = z0; NW_W = w; NW_H = h; NATURAL_WATER_COUNT = n;
-        deepluckyblock.util.DebugLog.structure(
-                "nappe vanilla memorisee : {} colonne(s) d'eau sur {}x{} en {},{} -- "
+        // T297 : promu en INFO visible (une ligne par structure) -- c'est le
+        // chronometrage qui confirmera ou non le mega-tick cote machine faible.
+        LOGGER.info("[DLB-STRUCTURE] nappe vanilla memorisee : {} colonne(s) d'eau sur {}x{} en {},{} en {} ms (T295 scan chunk-major) -- "
                         + "fixwater borne a cette base naturelle (T103, plus de lac artificiel)",
-                n, w, h, x0, z0);
+                n, w, h, x0, z0, System.currentTimeMillis() - t0);
     }
 
-    private static boolean[][] waterColumns(ServerLevel level, int x0, int z0, int w, int h) {
+        private static boolean[][] waterColumns(ServerLevel level, int x0, int z0, int w, int h) {
         boolean[][] mask = new boolean[w][h];
         int n = 0, icy = 0, nappy = 0;   // T286 : nappy = nappe vanilla memorisee (lac asseche au moment de la passe)
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
