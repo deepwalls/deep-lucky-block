@@ -5,6 +5,21 @@ tentative de verdict Everest sur machine CI rapide (30,19 s au run precedent,
 budget 30 s -- le reste depend du debit de generation vanilla du runner).
 """
 import os
+import sys as _sys
+import traceback as _tb
+
+
+def _crash_annotation(t, v, tb):
+    # T291 : les deux derniers [server-check] sont morts SANS aucune annotation
+    # (echec avant le bloc try principal, ex. telechargement perf-mods). Tout
+    # crash non intercepte devient une annotation lisible dans le check-run.
+    txt = ''.join(_tb.format_exception(t, v, tb))
+    enc = txt.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+    print('::error title=Server-check crash (pre-boucle/infra)::' + enc[-2800:], flush=True)
+    _sys.exit(1)
+
+
+_sys.excepthook = _crash_annotation
 from collections import deque
 from pathlib import Path
 import queue
