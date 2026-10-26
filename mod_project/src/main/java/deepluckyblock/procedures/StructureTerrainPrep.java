@@ -288,6 +288,11 @@ public class StructureTerrainPrep {
                                 int foundationBaseY, int groundY, Runnable onReady) {
         if (groundY < level.getMinBuildHeight() || groundY >= level.getMaxBuildHeight())
             throw new IllegalArgumentException("Selected groundY is outside build height: " + groundY);
+        // T291b : demarre le chronometre du pipeline (le bilan [DLB-PERF] TACHE
+        // COMPLETE est emis une seule fois, au relachement final de la chaine --
+        // voir pulseStop/chainComplete). Une ligne INFO par structure : cout
+        // nul, diagnostic terrain immediat.
+        deepluckyblock.util.DebugLog.perfBegin();
         prepZoneInternal(level, min, max, foundationBaseY, groundY, onReady);
     }
 
@@ -1322,6 +1327,13 @@ public class StructureTerrainPrep {
                     clearFootprintProtection();
                     CLEARANCE_PLAN = null;
                     deepluckyblock.util.TerrainMother.end();   // T289 : la mere est dissoute avec la zone
+                    // T291b : BILAN CHIFFRE du pipeline complet (top phases par duree
+                    // reelle + cache SafeSurface). UNE ligne INFO par structure -- le
+                    // cout est un formatage ; la valeur est un diagnostic terrain
+                    // immediat quand un joueur signale une lenteur. Visible sans
+                    // flag debug (la ligne unique ne viole pas le silence T221).
+                    String perf = deepluckyblock.util.DebugLog.perfSummary();
+                    if (!perf.isEmpty()) LOGGER.info("[DLB-PERF] {}", perf);
                     step("decorate TERMINE T180 (végétation + arbres restaurés) + sweep-neige T263");
                 };
                 if (raccordT240) smoothAround(level, min, max, () -> {
