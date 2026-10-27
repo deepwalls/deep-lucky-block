@@ -30,9 +30,23 @@ if [ ! -d "$RT/mod-project/src" ]; then
     rm -rf "$RT/Java_Temurin-Hotspot_jdk"
 fi
 
-# 2. Sources HEAD (fixes Txxx) par-dessus le runtime figé (pas de rsync ici)
-rm -rf "$RT/mod-project/src"
-cp -a "$REPO/mod_project/src" "$RT/mod-project/src"
+# 2. Sources HEAD (fixes Txxx) overlay MERGE sur le runtime figé : le dépôt
+#    ne porte qu'un sous-ensemble (procedures/commands/util) — les classes
+#    MCreator générées (init/, entity/, block/...) viennent du runtime tar.
+TAR_SRC="$RT/mod-project/src"
+if [ ! -d "$TAR_SRC/init" ] && [ ! -d "$TAR_SRC/main/java/deepluckyblock/init" ]; then
+    tar -xzf "$RT/runtime-src.tgz" -C "$RT" 2>/dev/null || {
+        # ré-extrait juste le dossier src du runtime si manquant
+        mkdir -p /tmp/rebuild-src && cd /tmp/rebuild-src && rm -rf mod-project
+        cat "$REPO/ci/runtime/parts/part-"* | tar -xzf - mod-project/src mod-project/gradle \
+            mod-project/gradle.properties mod-project/build.gradle mod-project/gradlew \
+            mod-project/settings.gradle mod-project/gradlew.bat mod-project/run 2>/dev/null || \
+        cat "$REPO/ci/runtime/parts/part-"* | tar -xzf - mod-project/src
+        cp -a /tmp/rebuild-src/mod-project/src "$TAR_SRC"
+        cd - > /dev/null
+    }
+fi
+cp -a "$REPO/mod_project/src/." "$TAR_SRC/"
 
 # 3. JDK 21 depuis runtime-jre
 if [ ! -x "$JDK/bin/java" ]; then

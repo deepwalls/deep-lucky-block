@@ -141,6 +141,74 @@ def chunk_heightmap(raw, kind='MOTION_BLOCKING_NO_LEAVES'):
     return (vals + [0] * (256 - len(vals)))[:256], root
 
 
+def chunk_surface_blocks(raw):
+    """Bloc de surface par colonne : {(lx,lz): nom court} (MOTION_BLOCKING-like,
+    calcul maison : premier bloc non-air en descendant les sections)."""
+    try:
+        _, root = nbt_parse(raw)
+    except Exception:
+        return None
+    sections = root.get('sections')
+    if not isinstance(sections, list):
+        return None
+    tops = {}
+    for sec in sorted(sections, key=lambda s: -s.get('Y', 0)):
+        bs = sec.get('block_states') or {}
+        palette = bs.get('palette')
+        if not isinstance(palette, list) or not palette:
+            continue
+        names = [str(p.get('Name', 'minecraft:air')) for p in palette]
+        data = bs.get('data')
+        if data is None:
+            # section mono-palette
+            nm = names[0]
+            if nm == 'minecraft:air':
+                continue
+            for lx in range(16):
+                for lz in range(16):
+                    tops.setdefault((lx, lz), nm)
+            continue
+        npl = max(len(palette), 2)
+        bits = max(4, (npl - 1).bit_length())
+        mask = (1 << bits) - 1
+        per_long = 64 // bits
+        idx_cache = [None] * 4096
+        # decode lineaire : long index li, slot k -> idx = li*per_long + k
+        for li, long_ in enumerate(data):
+            u = long_ & 0xFFFFFFFFFFFFFFFF
+            base = li * per_long
+            for k in range(per_long):
+                i = base + k
+                if i < 4096:
+                    idx_cache[i] = (u >> (k * bits)) & mask
+        for i in range(4096):
+            v = idx_cache[i]
+            if v is None or v >= len(names):
+                continue
+            nm = names[v]
+            if nm.endswith('air'):
+                continue
+            y = i >> 8
+            rest = i & 255
+            lx, lz = rest & 15, rest >> 4
+            if (lx, lz) not in tops:
+                tops[(lx, lz)] = nm
+    return tops
+
+
+NAT_HINTS = ('dirt', 'grass_block', 'sand', 'gravel', 'stone', 'andesite',
+             'diorite', 'granite', 'snow', 'terracotta', 'clay', 'mud',
+             'podzol', 'mycelium', 'coarse_dirt', 'rooted_dirt', 'deepslate',
+             'tuff', 'gravel', 'sandstone')
+NON_TERRAIN_EXACT = ('minecraft:water', 'minecraft:ice')
+
+
+def is_terrain(name):
+    if name in NON_TERRAIN_EXACT or 'air' in name:
+        return False
+    return any(h in name for h in NAT_HINTS)
+
+
 def main():
     world = sys.argv[1]
     cx, cz = int(sys.argv[2]), int(sys.argv[3])
@@ -154,6 +222,7 @@ def main():
     rx0, rz0 = x0 >> 9, z0 >> 9
     rx1, rz1 = x1 >> 9, z1 >> 9
     heights = {}
+    tops = {}
     for rx in range(rx0, rx1 + 1):
         for rz in range(rz0, rz1 + 1):
             f = os.path.join(region_root, 'r.%d.%d.mca' % (rx, rz))
@@ -167,6 +236,10 @@ def main():
                 for i in range(256):
                     bx, bz = (chx << 4) + (i % 16), (chz << 4) + (i // 16)
                     heights[(bx, bz)] = hm[i]
+                t = chunk_surface_blocks(raw)
+                if t:
+                    for (lx2, lz2), nm in t.items():
+                        tops[((chx << 4) + lx2, (chz << 4) + lz2)] = nm
     if not heights:
         print('DLB-SEAM FAIL : aucune hauteur lue sous %s' % region_root)
         return 2
@@ -280,6 +353,42 @@ def main():
         print('  HORZ  z={}  x={}..{}  longueur={}'.format(z, s, e, ln))
     inzone_v = sum(1 for ln, x, s, e in rv if abs(x - cx) <= rad)
     print('DLB-SEAM C verdict : {} serie(s) verticales, {} horizontales >=10 cellules'.format(len(rv), len(rh)))
+
+    # D) meme detection, mais uniquement sur paires TERRAIN des deux cotes
+    #    (filtre les silhouettes de structure dont le heightmap saute
+    #    legitiment au bord du batiment) ; chaque mur retenu reporte les
+    #    materiaux des deux rives pour preuve.
+    def pair_terrain(xa, za, xb, zb):
+        a, b = tops.get((xa, za)), tops.get((xb, zb))
+        return a is not None and b is not None and is_terrain(a) and is_terrain(b)
+
+    vert_t, horz_t = {}, {}
+    for x in range(x0, x1):
+        for z in range(z0, z1 + 1):
+            a, b = h(x, z), h(x + 1, z)
+            if a is None or b is None or abs(a - b) < 4:
+                continue
+            if pair_terrain(x, z, x + 1, z):
+                vert_t.setdefault(x, []).append(z)
+    for z in range(z0, z1):
+        for x in range(x0, x1 + 1):
+            a, b = h(x, z), h(x, z + 1)
+            if a is None or b is None or abs(a - b) < 4:
+                continue
+            if pair_terrain(x, z, x, z + 1):
+                horz_t.setdefault(z, []).append(x)
+    rvt = sorted(runs(vert_t, True), reverse=True)
+    rht = sorted(runs(horz_t, False), reverse=True)
+    print('DLB-SEAM D lignes TERRAIN strictes >=10 cellules (silhouettes batiment exclues) :')
+    for ln, x, s, e in rvt[:10]:
+        ma = tops.get((x, (s + e) // 2), '?').split(':')[-1]
+        mb = tops.get((x + 1, (s + e) // 2), '?').split(':')[-1]
+        print('  VERT  x={}  z={}..{}  longueur={}  rive={}/{}'.format(x, s, e, ln, ma, mb))
+    for ln, z, s, e in rht[:10]:
+        ma = tops.get(((s + e) // 2, z), '?').split(':')[-1]
+        mb = tops.get(((s + e) // 2, z + 1), '?').split(':')[-1]
+        print('  HORZ  z={}  x={}..{}  longueur={}  rive={}/{}'.format(z, s, e, ln, ma, mb))
+    print('DLB-SEAM D verdict : {} serie(s) verticales, {} horizontales (terrain pur)'.format(len(rvt), len(rht)))
     return 0
 
 
