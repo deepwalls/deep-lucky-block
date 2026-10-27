@@ -525,13 +525,27 @@ Runs neufs consommes sur ce round cible-18 : 6 (13-18). Reste budget : 4.
 - Outils livres : ci/analyze_seams.py section D (surface = decode palette +
   DataBitStorage) ; ci/seam_scan_structure.py (rejoue une pose sur snapshot,
   compare pre/post hors emprise) ; ci/rebuild_env.sh (lab /tmp en 5 s apres wipe).
-- **T298 (nouveau, reproduit iter-20 citadel)** : abandon « emprise-finale »
-  T294 (plan-zone fige 4 s -> ABANDON candidat) suivi d'un SILENCE TOTAL de
-  17 min sur le banc ; aucun « Post-process de citadel termine » n'est jamais
-  emis, pourtant le monde contient bien un champ deepslate 104x84+ copieux
-  (x 1420..1640, z 300..447) : la pose a repris/continue sans journalisation.
-  Le terrain du candidat ABANDONNE (1380,460) est intact (2230/2230 colonnes
-  inchangees) — pas de pollution — mais : observatoire impossible (attenteurs
-  & clients aveugles), et un half-batch non annule reste plausible. Piste :
-  marqueur de fin obligatoire sur la branche re-pick + annulation des taches
-  planifiees de la generation abortee (session token).
+- **T298 (nouveau, reproduit iter-20/iter-21 citadel, bit-pour-bit)** :
+  abandon « emprise-finale » T294 (plan-zone fige ~4 s sur les 25 derniers
+  chunks) -> aucun marqueur de fin, silence radio ensuite. Verifications r2 :
+  terrain du candidat abandonne intact (2230/2230 colonnes), aucune tache de
+  paste ne fuit (PASTE_Q n'est alimentee qu'apres toutes les portes). Le
+  « champ deepslate » voisin initialement suspecte de pose fantome s'avere etre
+  du worldgen (biomes forest/plains, minerais deepslate naturels) — les chunks
+  n'existaient pas dans le snapshot, ils ont ete generes pendant le scan.
+- **Correctif livre (T298)** :
+  (1) la detection de panne exige desormais une vraie greve du generateur
+      (SafeSurface.lastChunkReadyMs : aucune livraison globale depuis
+      AWAIT_PROGRESS_MS), pas seulement un compteur de zone stagnanat — sur
+      r3 la zone s'est justement completee en 4,1 s pile au moment ou la borne
+      4 s tirait (condamnation en course) ;
+  (2) notifyGenerationAborted : purge defensive PASTE_Q/CARVE_Q/POST_Q +
+      marqueur console toujours visible « generation <nom> ABANDONNEE
+      proprement apres N s » + message joueur (gold/yellow) avec le mode
+      d'emploi (nouveau lucky block relance une recherche) ;
+  (3) textes d'abandon corriges (plus de promesse « re-recherche immediate »
+      qui n'existait pas).
+- Verif r3 : abandon survenu a 15 s, marqueur visible recu au log (preuve
+  console) ; le terrain scanne apres reste propre (murs « apparus » situes
+  sur chunks generes pendant le scan, monde vierge plains/forest, pas dans
+  l'emprise). Dragon iter-22 de regression : 7,9 s total, aucune regression.

@@ -307,6 +307,16 @@ public final class SafeSurface {
     // au disque) et toutes les detections « deja pret » mentaient pendant des
     // HEURES (visible en lab : pipeline gelue << rien ne spawn >>).
     private static final java.util.Map<Long, Long> READY_TIME = new java.util.concurrent.ConcurrentHashMap<>();
+    /** T298 : horodatage de la derniere LIVRAISON de chunk (toute demande
+     *  confondue, zones de scan comprises). Sert a distinguer une vraie panne
+     *  du generateur (plus aucune livraison depuis AWAIT_PROGRESS_MS) d'une
+     *  simple lenteur/absorbee par la file de fond (lab 27/10 : la phase
+     *  « emprise finale » abandonnait alors que 25 chunks etaient simplement
+     *  en file derriere le backlog du scan de placement). */
+    private static volatile long LAST_CHUNK_READY_MS = 0L;
+    /** T298 : dernier instant ou un chunk (n'importe lequel) a ete livre ;
+     *  0 tant qu'aucune livraison n'a eu lieu cette session. */
+    public static long lastChunkReadyMs() { return LAST_CHUNK_READY_MS; }
     private static final long READY_TTL_MS = Integer.getInteger("dlb.readyTtlMs", 30_000);
     private static final java.util.Set<Long> PENDING = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
@@ -409,6 +419,7 @@ public final class SafeSurface {
                         if (error == null && level.getChunkSource().getChunkNow(cx, cz) != null) {
                             READY.add(key);
                             READY_TIME.put(key, System.currentTimeMillis());
+                            LAST_CHUNK_READY_MS = System.currentTimeMillis();   // T298
                         } else {
                             READY.remove(key);
                             READY_TIME.remove(key);

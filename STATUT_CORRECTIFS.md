@@ -33,3 +33,18 @@ Les anciennes archives sont dépassées. Contrôle visuel client restant.
 Détails, résultats, historique des deux autorisations et checksum :
 `RAPPORT_TEST_SERVEUR.md`. Recherche : `RECHERCHE_OPTIMISATION_30S.md`.
 PR en brouillon : https://github.com/deepwalls/deep-lucky-block/pull/1.
+
+## Session 27/10 (suite) — verdict seams + T298 livré
+
+- **Seams (plainte « lignes strictes » du smooth)** : non reproduites sur le
+  terrain. Les murs mesurés (x=1488, z=189) = silhouette du dragon dans le
+  heightmap (deepslate/tuff des deux rives, ci/analyze_seams.py section D).
+  Hors emprise : 0 mur terrain post-pose (dragon, seed banc 123456789) ;
+  everest/citadel confirmés propres côté terrain.
+- **T298 livré** : panne d'attente d'emprise = vrai signal de grève du
+  générateur (plus aucun chunk livré nulle part depuis 4 s) au lieu du
+  compteur-de-zone qui tirait au moment même où la zone se complétait (4,1 s
+  mesurés, borne 4 s). Abandon = marqueur console + joueur toujours visible,
+  purge défensive des files de pose. Textes d'abandon honnêtes.
+- Banc : iter-20 = 8,4 s ; iter-21 = 6,3 s ; iter-22 (T298) = 7,9 s.
+  Rapports et scans : `ci/results-t291-bench/`.

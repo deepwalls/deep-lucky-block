@@ -1126,13 +1126,24 @@ public class Structures5Procedure {
      *  generateur affame, « restant=20 » fige 16,8 s puis 20 s ; le joueur
      *  voyait 3 gros freezes avant le basculement) : si le compte de chunks
      *  manquants ne diminue PAS pendant ce delai, on abandonne le candidat
-     *  — re-recherche immediate loin d'attendre la borne 10 minutes. */
+     *  — abandon propre et signale (T298) loin d'attendre la borne 10 minutes.
+     *  T298 : la panne n'est declaree que si le generateur n'a RIEN livre du
+     *  tout pendant ce delai (dernire livraison SafeSurface), sinon c'est une
+     *  simple lenteur/file saturee et on patiente sous la borne absolue T232. */
     private static final long AWAIT_PROGRESS_MS =
             Long.getLong("dlb.awaitProgressMs", 4_000L);
     private static int AWAIT_LAST_MISSING = -1;
     private static long AWAIT_LAST_MOVE_MS = 0L;
     /** Retourne vrai si l'attente est en panne (aucun chunk livre depuis
-     *  AWAIT_PROGRESS_MS) ; met a jour les temoins de progression. */
+     *  AWAIT_PROGRESS_MS) ; met a jour les temoins de progression.
+     *  T298 (constat lab 27/10, citadel : « attente en panne -- plan-zone
+     *  restant=25 fige depuis 4071 ms » suivi de 17 min de silence puis d'une
+     *  pose sans aucun marqueur de fin) : le sondage ne regardait que le
+     *  COMPTEUR de la zone (restant stable) — or sur machine lente les chunks
+     *  de la zone restent simplement en file derriere le backlog de scan, le
+     *  generateur livrant en continu AILLEURS. Une attente n'est desormais
+     *  « en panne » que si le COMPTEUR stagne ET que le generateur n'a rien
+     *  livre du tout depuis AWAIT_PROGRESS_MS (vrai signal de blocage). */
     private static boolean awaitStalled() {
         int missing = deepluckyblock.util.SafeSurface.zonePlanMissing();
         long now = System.currentTimeMillis();
@@ -1141,7 +1152,13 @@ public class Structures5Procedure {
             AWAIT_LAST_MOVE_MS = now;
             return false;
         }
-        return missing > 0 && now - AWAIT_LAST_MOVE_MS > AWAIT_PROGRESS_MS;
+        if (missing <= 0 || now - AWAIT_LAST_MOVE_MS <= AWAIT_PROGRESS_MS) return false;
+        long lastReady = deepluckyblock.util.SafeSurface.lastChunkReadyMs();
+        // T298 : si des chunks continuent d'arriver (ou si aucun n'a jamais
+        // ete livre cette session — horodatage non renseigne), ce n'est pas
+        // une panne : on patiente (la borne absolue T232 reste en protection).
+        if (lastReady <= 0L || now - lastReady <= AWAIT_PROGRESS_MS) return false;
+        return true;
     }
     private static void resetAwaitProgress() {
         AWAIT_LAST_MISSING = -1;
@@ -1944,8 +1961,35 @@ public class Structures5Procedure {
         TIER_MISS_STREAK = 0;
         PROGRESS_MSG_LAST_MS = 0L;
         GenerateLuckyItemProcedure.releaseStructureReservation(CURRENT_STRUCTURE_ID);
+        int abortedId = CURRENT_STRUCTURE_ID;
         CURRENT_STRUCTURE_ID = -1;
         GENERATION_BUSY = false;
+        // T298 (lab 27/10, cas citadel) : abandon suivi de 17 min de SILENCE
+        // total puis d'apparition sans aucun marqueur — au sec joueur comme
+        // console. Reponses :
+        //  (1) purge defensive des files de travail : une seule generation est
+        //      active a la fois, et l'abandon la tue — aucun Paste/Carve/Post
+        //      ne doit lui survivre (sinon pose fantome sans chaine de fin).
+        int purged = PASTE_Q.size() + CARVE_Q.size() + POST_Q.size();
+        if (purged > 0) {
+            PASTE_Q.clear(); CARVE_Q.clear(); POST_Q.clear();
+            LOGGER.warn("[DLB] abandon : {} tache(s) de pose/terrain purgees (generation unique abortee)", purged);
+        }
+        //  (2) marqueur de fin TOUJOURS visible (console + joueurs), quelle
+        //      que soit la branche d'abandon : fin du trou noir.
+        long totalMs = GENERATION_START_MS == 0L ? -1L
+                : System.currentTimeMillis() - GENERATION_START_MS;
+        String abortedName = abortedId >= 0 ? structureDisplayName(nbtNameForId(abortedId)) : "?";
+        LOGGER.info("[DLB] generation {} ABANDONNEE proprement{} -- aucune emission silencieuse possible desormais (T298)",
+                abortedName, totalMs > 0 ? " apres " + (totalMs / 1000) + " s" : "");
+        if (level != null && level.getServer() != null) {
+            Component msg = Component.literal("\u00a7e\u2716 " + abortedName
+                    + " : generation abandonnee proprement (terrain sature ou attente en panne) "
+                    + "\u00a77— reessayer un lucky block relancera une recherche complete.");
+            for (Player pl : level.getServer().getPlayerList().getPlayers()) {
+                if (pl != null) pl.sendSystemMessage(msg);
+            }
+        }
         // T235 : quelle que soit la raison de l'abandon (timeout emprise,
         // conflit tardif, verif reelle refusee, hors build height...), le pin
         // ChunkKeeper et le plan de zone SafeSurface ne survivent PAS a la fin
@@ -3431,7 +3475,7 @@ public class Structures5Procedure {
             // immediat du candidat ; [TAG] remplace plus bas par le libelle
             // de la phase concernee, pour un journal exploit wincli.
             if (awaitStalled()) {
-                LOGGER.warn("[STRUCT5-SAFETY] {} : [{}] attente en panne -- plan-zone restant={} fige depuis {} ms -- ABANDON candidat (T294, machine faible) : re-recherche immediate",
+                LOGGER.warn("[STRUCT5-SAFETY] {} : [{}] attente en panne -- plan-zone restant={} fige depuis {} ms -- ABANDON candidat (T294, machine faible) : abandon propre signale (T298) ; un nouveau lucky block relancera une recherche complete",
                         nbt, "emprise-finale", deepluckyblock.util.SafeSurface.zonePlanMissing(),
                         System.currentTimeMillis() - AWAIT_LAST_MOVE_MS);
                 deepluckyblock.util.SafeSurface.dropZonePlan();
@@ -3666,7 +3710,7 @@ public class Structures5Procedure {
             // immediat du candidat ; [TAG] remplace plus bas par le libelle
             // de la phase concernee, pour un journal exploit wincli.
             if (awaitStalled()) {
-                LOGGER.warn("[STRUCT5-SAFETY] {} : [{}] attente en panne -- plan-zone restant={} fige depuis {} ms -- ABANDON candidat (T294, machine faible) : re-recherche immediate",
+                LOGGER.warn("[STRUCT5-SAFETY] {} : [{}] attente en panne -- plan-zone restant={} fige depuis {} ms -- ABANDON candidat (T294, machine faible) : abandon propre signale (T298) ; un nouveau lucky block relancera une recherche complete",
                         nbt, "x0,6", deepluckyblock.util.SafeSurface.zonePlanMissing(),
                         System.currentTimeMillis() - AWAIT_LAST_MOVE_MS);
                 deepluckyblock.util.SafeSurface.dropZonePlan();
@@ -3723,7 +3767,7 @@ public class Structures5Procedure {
             // immediat du candidat ; [TAG] remplace plus bas par le libelle
             // de la phase concernee, pour un journal exploit wincli.
             if (awaitStalled()) {
-                LOGGER.warn("[STRUCT5-SAFETY] {} : [{}] attente en panne -- plan-zone restant={} fige depuis {} ms -- ABANDON candidat (T294, machine faible) : re-recherche immediate",
+                LOGGER.warn("[STRUCT5-SAFETY] {} : [{}] attente en panne -- plan-zone restant={} fige depuis {} ms -- ABANDON candidat (T294, machine faible) : abandon propre signale (T298) ; un nouveau lucky block relancera une recherche complete",
                         nbt, "emprise-entiere", deepluckyblock.util.SafeSurface.zonePlanMissing(),
                         System.currentTimeMillis() - AWAIT_LAST_MOVE_MS);
                 deepluckyblock.util.SafeSurface.dropZonePlan();
