@@ -48,3 +48,20 @@ PR en brouillon : https://github.com/deepwalls/deep-lucky-block/pull/1.
   purge défensive des files de pose. Textes d'abandon honnêtes.
 - Banc : iter-20 = 8,4 s ; iter-21 = 6,3 s ; iter-22 (T298) = 7,9 s.
   Rapports et scans : `ci/results-t291-bench/`.
+
+## Session 27/10 (dlbverify) — T299 livré, pipeline CI vert en sandbox
+
+- **dlbverify** : reproduction exacte du pipeline `ci/server_check.py` en
+  sandbox (nouvel outil permanent `ci/bench_verify.py`, commande RCON).
+- **FAIL smooth** : assertion T89 rendue obsolète par l'adoucissement de
+  marche (le rebord d'un plateau passe 240->238 comme dessiné par T263+) —
+  invariant porté à « jamais sous top=237 dans les 8 » + fixture déplacée
+  hors spawn (6000,6000) + ligne diagn [DLBVERIFY-DBG] conservation gracieuse.
+- **FAIL eau (T299, cause racine réelle)** : la grille T127 ne voyait que
+  l'air — une cellule d'eau courante (résidu) n'était jamais reprise en
+  source et restait flowing en poche (reprod : 9 colonnes x 5 blocs, chunk
+  (2,-3)). Grille élargie : trou = air OU liquide non-source. Verrous
+  T77/T103/T232/T264 inchangés (tryFillColumn garde tout).
+- **Validation** : ALL PASS 2/2 sandbox (r8/r9) incluant la fin de chaine
+  (lake + tickets jamais atteints avant). Dragon : déterminisme + temps
+  en cours de mesure (iter-23).

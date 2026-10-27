@@ -1,0 +1,10 @@
+== DLBVERIFY verify-r1 ==
+verdict : FAIL(1) (wall 864.0 s)
+
+[17:00:45] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] async request dispatch took 20.036505 ms
+[17:00:49] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS async: eight cold chunks, no inline wait, callbacks on server thread
+[17:00:50] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS loot: 8 rotation/mirror variants, 16 generated inventories, existing items/tables preserved
+[17:00:57] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS water (onDemand=false): 45120 source blocks, chunk borders, partial column and dry footprint verified
+[17:00:58] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS water (onDemand=true): 45120 source blocks, chunk borders, partial column and dry footprint verified
+[17:01:03] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS lazy water: cold frontier pinned, refill beyond seed bounds, unrelated padding frontier untouched
+[17:01:03] [Server thread/ERROR] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] FAIL: java.lang.AssertionError: Near-footprint excavation at -8,8

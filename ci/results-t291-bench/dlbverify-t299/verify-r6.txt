@@ -1,0 +1,7 @@
+== DLBVERIFY verify-r6 ==
+verdict : FAIL(1) (wall 650.9 s)
+
+[17:28:04] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] async request dispatch took 5.484664 ms
+[17:28:04] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS async: eight cold chunks, no inline wait, callbacks on server thread
+[17:28:04] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS loot: 8 rotation/mirror variants, 16 generated inventories, existing items/tables preserved
+[17:28:11] [Server thread/ERROR] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] FAIL: java.lang.AssertionError: Unfilled basin at 35,242,-43

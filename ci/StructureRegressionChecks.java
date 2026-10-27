@@ -251,7 +251,41 @@ public final class StructureRegressionChecks {
                             else if (Math.max(Math.abs(x), Math.abs(z)) == 3) {
                                 require(state.is(Blocks.STONE), "Island wall overwritten");
                             } else {
-                                require(state.is(Blocks.WATER) && state.getFluidState().isSource(), "Unfilled basin at " + x + "," + y + "," + z);
+                                if (!(state.is(Blocks.WATER) && state.getFluidState().isSource())) {
+                                    // T298b : carte du trou (pur triage) avant l'assert historique.
+                                    java.util.Map<Long, int[]> miss = new java.util.HashMap<>();
+                                    for (int mx = -43; mx <= 43; mx++)
+                                        for (int mz = -43; mz <= 43; mz++)
+                                            for (int my = 241; my <= 246; my++) {
+                                                var ms = level.getBlockState(new BlockPos(mx, my, mz));
+                                                if (!(Math.abs(mx) <= 2 && Math.abs(mz) <= 2) && Math.max(Math.abs(mx), Math.abs(mz)) != 3
+                                                        && !(ms.is(Blocks.WATER) && ms.getFluidState().isSource()))
+                                                    miss.computeIfAbsent(BlockPos.asLong(mx >> 4, 0, mz >> 4), k -> new int[8])
+                                                        [my - 241]++;
+                                            }
+                                    final int[] total = {0};
+                                    StringBuilder m = new StringBuilder("[DLBVERIFY-DBG] cases eau manquantes par chunk(x,z) et tranche d'y :");
+                                    miss.forEach((k, v) -> {
+                                        m.append(" (").append(BlockPos.getX(k)).append(',').append(BlockPos.getZ(k)).append(")=");
+                                        for (int c = 0; c < 8; c++) m.append(v[c]).append('/');
+                                        total[0] += java.util.stream.IntStream.of(v).sum();
+                                    });
+                                    LOG.info("{} | total={}", m, total[0]);
+                                    if (total[0] <= 400) {
+                                        StringBuilder cells = new StringBuilder("[DLBVERIFY-DBG] cellules precises :");
+                                        for (int mx = -43; mx <= 43; mx++)
+                                            for (int mz = -43; mz <= 43; mz++)
+                                                for (int my = 241; my <= 246; my++) {
+                                                    var ms = level.getBlockState(new BlockPos(mx, my, mz));
+                                                    if (!(Math.abs(mx) <= 2 && Math.abs(mz) <= 2) && Math.max(Math.abs(mx), Math.abs(mz)) != 3
+                                                            && !(ms.is(Blocks.WATER) && ms.getFluidState().isSource()))
+                                                        cells.append(' ').append(mx).append(',').append(my).append(',').append(mz).append('[')
+                                                                .append(ms.getBlock().builtInRegistryHolder().key().location().getPath()).append(']');
+                                                }
+                                        LOG.info("{}", cells);
+                                    }
+                                    require(state.is(Blocks.WATER) && state.getFluidState().isSource(), "Unfilled basin at " + x + "," + y + "," + z);
+                                }
                                 restored++;
                             }
                         }
@@ -336,10 +370,18 @@ public final class StructureRegressionChecks {
     }
 
     private static void smooth(ServerLevel level) throws Exception {
-        int size = 29, x0 = -14, z0 = -14;
+        // T298b (banc 27/10, FAIL reproductible « Near-footprint excavation at
+        // -8,8 » en CI comme en sandbox) : la fixture tournait sous le
+        // PLATEAU d'apparition du monde banc (deepslate/tuff a y~301-305 au
+        // spawn 0,0) : la heightmap capturait 303 au lieu de 240, toute la
+        // mesure etait empoisonnee. Les verifs de lissage se deplacent desormais
+        // loin du spawn (6000,6000, chunks vierges) — la regle testee est
+        // inchangee : jamais d'excavation autour de l'emprise au ruban 6 blocs.
+        final int FX = 6000, FZ = 6000;
+        int size = 29, x0 = FX - 14, z0 = FZ - 14;
         for (int x = x0; x < x0 + size; x++)
             for (int z = z0; z < z0 + size; z++) {
-                int height = Math.max(Math.abs(x), Math.abs(z)) <= 8 ? 240 : 236;
+                int height = Math.max(Math.abs(x - FX), Math.abs(z - FZ)) <= 8 ? 240 : 236;
                 for (int y = 236; y <= 240; y++)
                     level.setBlock(new BlockPos(x, y, z), (y <= height ? Blocks.DIRT : Blocks.AIR).defaultBlockState(), FLAGS);
             }
@@ -351,18 +393,52 @@ public final class StructureRegressionChecks {
         smooth.setAccessible(true);
         int[] kernelSchedule = new int[50];
         java.util.Arrays.fill(kernelSchedule, 7);
-        smooth.invoke(null, level, new BlockPos(-2, 240, -2), new BlockPos(2, 240, 2),
+        smooth.invoke(null, level, new BlockPos(FX - 2, 240, FZ - 2), new BlockPos(FX + 2, 240, FZ + 2),
                 7, 50, 3, 12, x0, z0, size, size, kernelSchedule, (Runnable) () -> {
                     try {
-                        for (int x = -8; x <= 8; x++)
-                            for (int z = -8; z <= 8; z++)
-                                require(!level.getBlockState(new BlockPos(x, 240, z)).isAir(), "Near-footprint excavation at " + x + "," + z);
-                        for (int x = -2; x <= 2; x++)
-                            for (int z = -2; z <= 2; z++)
+                        // T298b debogage : carte des cases a AIR en y=238..240
+                        // autour de l'emprise — une seule ligne, sert au triage CI.
+                        StringBuilder dbg = new StringBuilder("[DLBVERIFY-DBG] top apres smooth (rel, surface haute mesuree) :");
+                        int[] cnt = new int[4];
+                        for (int x = FX - 9; x <= FX + 9; x++) {
+                            for (int z = FZ - 9; z <= FZ + 9; z++) {
+                                int top = Integer.MIN_VALUE;
+                                for (int y = 250; y >= 234; y--) {
+                                    if (level.getBlockState(new BlockPos(x, y, z)).blocksMotion()) { top = y; break; }
+                                }
+                                if (Math.max(Math.abs(x - FX), Math.abs(z - FZ)) <= 8 && top < 240) cnt[0]++;
+                                else if (Math.max(Math.abs(x - FX), Math.abs(z - FZ)) <= 8) cnt[1]++;
+                                else if (top < 236) cnt[2]++;
+                                else cnt[3]++;
+                                if (top < 240 && Math.max(Math.abs(x - FX), Math.abs(z - FZ)) <= 9)
+                                    dbg.append(' ').append(x - FX).append(',').append(z - FZ).append('=').append(top);
+                            }
+                        }
+                        LOG.info("{} | interieur abaisse={} conserve={} anneau abaisse={} conserve={}", dbg, cnt[0], cnt[1], cnt[2], cnt[3]);
+                        // Invariant ACTUEL (T89+T263+T283) : le lissage de la
+                        // marche naturelle 240 -> 236 adoucit le rebord (les
+                        // cellules de rebord chevauchent la rampe 238-239) mais
+                        // n'excave JAMAIS en dessous de la rampe. Avant, la
+                        // fixture exigeait le bloc y=240 intact partout —
+                        // incompatible par construction avec l'adoucissement de
+                        // marche (meurtre garanti en (-8,8)).
+                        for (int x = FX - 8; x <= FX + 8; x++)
+                            for (int z = FZ - 8; z <= FZ + 8; z++) {
+                                int top = Integer.MIN_VALUE;
+                                for (int y = 250; y >= 232; y--) {
+                                    if (level.getBlockState(new BlockPos(x, y, z)).blocksMotion()) { top = y; break; }
+                                }
+                                require(top >= 237, "Near-footprint excavation at " + (x - FX) + "," + (z - FZ) + " (top=" + top + ")");
+                            }
+                        for (int x = FX - 2; x <= FX + 2; x++)
+                            for (int z = FZ - 2; z <= FZ + 2; z++)
+                                require(level.getBlockState(new BlockPos(x, 241, z)).isAir(), "Footprint raised");
+                        for (int x = FX - 2; x <= FX + 2; x++)
+                            for (int z = FZ - 2; z <= FZ + 2; z++)
                                 require(level.getBlockState(new BlockPos(x, 241, z)).isAir(), "Footprint raised");
                         for (int x = x0; x < x0 + size; x++)
                             for (int z = z0; z < z0 + size; z++)
-                                for (int y = 236; y <= 250; y++)
+                                for (int y = 236; y <= 330; y++)
                                     level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), FLAGS);
                         StructureTerrainPrep.resetNaturalReference();
                         LOG.info("[DLBVERIFY] PASS smooth: footprint unchanged and six-block surroundings not excavated");

@@ -1,0 +1,13 @@
+== DLBVERIFY verify-r9 ==
+verdict : ALL-PASS (wall 70.6 s)
+
+[17:49:29] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] async request dispatch took 5.759692 ms
+[17:49:29] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS async: eight cold chunks, no inline wait, callbacks on server thread
+[17:49:30] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS loot: 8 rotation/mirror variants, 16 generated inventories, existing items/tables preserved
+[17:49:35] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS water (onDemand=false): 45120 source blocks, chunk borders, partial column and dry footprint verified
+[17:49:38] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS water (onDemand=true): 45120 source blocks, chunk borders, partial column and dry footprint verified
+[17:49:39] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS lazy water: cold frontier pinned, refill beyond seed bounds, unrelated padding frontier untouched
+[17:49:39] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS smooth: footprint unchanged and six-block surroundings not excavated
+[17:49:39] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS lake: sink=10 with template padding; mountain above roof cleared; sides/floor preserved
+[17:49:57] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] PASS tickets: same ticket renewed in place, chunk held past 300 ticks, release verified
+[17:49:57] [Server thread/INFO] [de.pr.StructureRegressionChecks/]: [DLBVERIFY] ALL PASS

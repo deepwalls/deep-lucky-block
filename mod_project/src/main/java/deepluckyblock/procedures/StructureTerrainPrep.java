@@ -10537,7 +10537,7 @@ public class StructureTerrainPrep {
                             if (expandX == 99) {
                                 int ax = x + ddx[direction], az = z + ddz[direction];
                                 if (ax < x0 || ax > x1 || az < z0 || az > z1
-                                        || !level.getBlockState(mut.set(ax, lvl, az)).isAir()
+                                        || !holeAt(ax, lvl, az)
                                         || !basinCached(ax, az, lvl, basinCache)) {
                                     direction++; continue;
                                 }
@@ -10555,7 +10555,7 @@ public class StructureTerrainPrep {
                                         if (tested.add(key)) {
                                             long col = BlockPos.asLong(nx, 0, nz);
                                             if (!candidates.containsKey(col)
-                                                    && level.getBlockState(mut.set(nx, triggerLevel, nz)).isAir()
+                                                    && holeAt(nx, triggerLevel, nz)
                                                     && basinCached(nx, nz, triggerLevel, basinCache))
                                                 candidates.put(col, triggerLevel);
                                         }
@@ -10603,6 +10603,24 @@ public class StructureTerrainPrep {
                 deepluckyblock.util.SafeSurface.clearCache();
                 startRound(); later();
             }
+        }
+
+        /**
+         * T299 (banc dlbverify 27/10, repro deterministe : « Unfilled basin at
+         * 35,242,-43 », poche de 9 colonnes x 5 blocs laissee en eau COURANTE
+         * sur le bord du bassin de la fixture CI) : la grille T127 ne testait
+         * que l'AIR comme trou reparable ; une cellule d'eau non-source
+         * (residu d'ecoulement) n'etait jamais frontiere ni candidate et ne
+         * pouvait plus etre reprise en source. Une cellule liquide non-source
+         * d'un bassin est un trou comme une case air — tryFillColumn la reprend
+         * en source, avec toutes les regles (fond naturel proche, colonne
+         * libre, plafonds de volume, T103/T77) inchangees.
+         */
+        private boolean holeAt(int x, int y, int z) {
+            BlockState s = level.getBlockState(mut.set(x, y, z));
+            if (s.isAir()) return true;
+            var fs = s.getFluidState();
+            return fs.is(net.minecraft.tags.FluidTags.WATER) && !fs.isSource();
         }
 
         private boolean basinCached(int x, int z, int lvl, java.util.Map<Long, Boolean> cache) {

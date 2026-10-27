@@ -549,3 +549,45 @@ Runs neufs consommes sur ce round cible-18 : 6 (13-18). Reste budget : 4.
   console) ; le terrain scanne apres reste propre (murs « apparus » situes
   sur chunks generes pendant le scan, monde vierge plains/forest, pas dans
   l'emprise). Dragon iter-22 de regression : 7,9 s total, aucune regression.
+
+## 27/10 — ticket dlbverify (CI) : reproduire, instrumenter, guerir
+
+- **Reproduction en sandbox (directive « debrouille toi via des test serveur »)** :
+  la commande `/dlbverify` n'existe PAS dans le mod (le seul hit est un
+  commentaire) : elle est definie par `ci/StructureRegressionChecks.java`,
+  copiee dans le projet runner par le workflow uniquement sur `[server-check]`.
+  Nouvel outil permanent `ci/bench_verify.py` : copie la fixture dans le lab,
+  rebuild gradle, boote le monde banc, lance `/dlbverify` par RCON et archive
+  le rapport. r1 (etat T298) reproduit le pipeline CI : PASS async/loot/
+  water(2x)/lazy, puis FAIL « Near-footprint excavation at -8,8 ».
+- **Hypothese initiale contredite** : un plateau deepslate/tuff a y ~301-305
+  recouvre la zone -14..14 (produit par la fixture smooth elle-meme lors du
+  run, la heightmap capture 303) — MAIS la fixture relocalisee en (6000,6000)
+  vierge reproduit quand meme le FAIL bit-pour-bit. La cause est reelle.
+- **Dbg integre a la fixture (conservé, ligne [DLBVERIFY-DBG], gratuit)** :
+  matrice des sommets apres lissage : plateau 240 conserve sauf ruban de
+  rebord 240->238->236 (+ coin a 235/237) — l'adoucissement de marche
+  DESIRE (rampe d'un escarpement de 4 blocs), pas une excavation. L'assertion
+  historique « bloc y=240 intact partout dans les 8 » etait incompatible par
+  construction avec l'adoucissement : elle exigeait zero coupe la ou le
+  lissage DOIT poser la rampe. Corrige : l'invariant devient « jamais en
+  dessous de top >= 237 dans les 8 » (pente, pas crateres).
+- **FAIL bassin (intermittent, 2/5 aux r4-r6, meme cellule 35,242,-43)** :
+  DBG carte du trou : 9 colonnes x 5 blocs (y 242-246) confines au chunk
+  (2,-3), toutes en eau COURANTE non-source au pied du mur interieur.
+  Lecture du SUT : la grille T127 (WaterConvergenceJob) ne considerait comme
+  trou reparable QUE l'air (`isAir()` au trigger et au candidat) ; une
+  cellule d'eau courante n'etait ni frontiere ni candidate et restait
+  flowing pour toujours ; phase 1 impossible ici (« nappe vanilla ABSENTE »
+  => naturalWaterAt(t103) bloque scanColumn partout, LIQ_SRC=0 confirmé aux
+  logs). Correctif T299 : predicat holeAt = air OU liquide non-source pour
+  la grille T127 (tryFillColumn garde tous ses verrous : fond naturel
+  <= 32 blocs, colonne libre, flags FAST sans physique, plafonds).
+- **Mesures de verification** : r8 et r9 = ALL PASS 2/2 (async, loot,
+  water x2 = 45120 sources, lazy water, smooth, lake, tickets). La boucle
+  atteint le bout de la fixture pour la premiere fois.
+- **Impact worldgen** : T299 n'ajoute RIEN a la carte terrain hors eau ;
+  il ne convertit vers sources que des cellules deja liquides dans des
+  zones d'eau qualifies >= 10x10 — regles T232/T264 veto eau/falaise
+  intouchees, T77/T103 inchanges. Regression dragon iter-23 en cours
+  (checksum determinisme + temps total).
