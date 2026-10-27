@@ -1,0 +1,5 @@
+structure=citadel pos=1380,90,460 emprise=None
+pre=18 post=21 apparus=3 hors_emprise=3
+TERRAIN-MUR ('V', 1506, 6, 388, 393)
+TERRAIN-MUR ('V', 1537, 9, 383, 391)
+TERRAIN-MUR ('H', 389, 8, 1503, 1510)

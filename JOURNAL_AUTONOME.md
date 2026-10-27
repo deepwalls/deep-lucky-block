@@ -511,3 +511,27 @@ Runs neufs consommes sur ce round cible-18 : 6 (13-18). Reste budget : 4.
 - Cause C (invisibilité) : attentes x0,6/entière + chargement footprint en DebugLog
   (désactivé) -> joueur aveugle. Fix : LOGGER.warn périodique borné.
 - mod.zip (deux entrées synchronisées) + overlay CI + livraison mis à jour.
+
+## 27/10 — campagne seams (iter-20) : verdict + defaut T298 decouvert
+
+- **Lignes strictes = fausse piste heightmap** : les murs x=1488 (45 cell) et
+  z=189 (37) detectes par ci/analyze_seams.py sont la SILHOUETTE du dragon
+  (section D nouvelle : bloc de surface par colonne = deepslate/tuff/oak_planks
+  des deux rives ; plateau interieur 135 vs terrain naturel ~74). Hors emprise
+  +8 bl : **0 mur terrain apparu post-pose** (les 3 murs restants sont les
+  falaises naturelles de la seed, identiques pre/post). Bord de fenetre de
+  lissage : aucune serie |dh|>=4 — feather 16 OK. Scans croises : everest
+  (silhouette skirt deepslate sur falaise vierge) + citadel (ci-dessous).
+- Outils livres : ci/analyze_seams.py section D (surface = decode palette +
+  DataBitStorage) ; ci/seam_scan_structure.py (rejoue une pose sur snapshot,
+  compare pre/post hors emprise) ; ci/rebuild_env.sh (lab /tmp en 5 s apres wipe).
+- **T298 (nouveau, reproduit iter-20 citadel)** : abandon « emprise-finale »
+  T294 (plan-zone fige 4 s -> ABANDON candidat) suivi d'un SILENCE TOTAL de
+  17 min sur le banc ; aucun « Post-process de citadel termine » n'est jamais
+  emis, pourtant le monde contient bien un champ deepslate 104x84+ copieux
+  (x 1420..1640, z 300..447) : la pose a repris/continue sans journalisation.
+  Le terrain du candidat ABANDONNE (1380,460) est intact (2230/2230 colonnes
+  inchangees) — pas de pollution — mais : observatoire impossible (attenteurs
+  & clients aveugles), et un half-batch non annule reste plausible. Piste :
+  marqueur de fin obligatoire sur la branche re-pick + annulation des taches
+  planifiees de la generation abortee (session token).

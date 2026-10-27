@@ -66,17 +66,25 @@ recherches/vetoes en parallèle — non retenu, à arbitrer si le client le dema
 
 | 18 | T294+T295+T296 | — (scan nappe chunk-major + digest rejets tier charge) | ~5 | ~2 s | 8,5 s | nappe 25 k colonnes : **3 ms** (etait le mega-tick suspect 26,5 s client) |
 | 19 | idem +T297 | — (DebugLog STRUCTURE repare : ordre init fields/static) | ~5 | ~2,7 s | 9,6 s | toutes les traces structure() enfin visibles au banc — jamais affichees depuis T221 (bug champ/statique) |
+| 20 | T297 (re-mesure monde frais) | monde regenere seed 123456789 | — | — | **8,4 s** | reproduction exacte iter-19 ; verdict seam corrige (ci-dessous) |
 
 ## Retour client T294 (Windows portable faible, dragon 141 s) — mesures serveur incubees
 
 - LAGPROBE client : tick 26,5 s label « pre-chargement 76/99 » ; 12,5 s verifyGrassSurface ;
   pose brute 42,7 s ; decorate+sweep 37,7 s. Sandbox iter-19 : nappe scan 3 ms (T295),
   max tick 1,8 s (gen de chunks en tache de fond, monde pre-genere).
-- **Lignes strictes reproduites au banc** (ci/analyze_seams.py sur monde post-pose
-  iter-18 vs snapshot pre-pose) : mur +4 blocs strict en x=1487/1488 (bord de
-  chunk 93) sur z=145..189 (45 cellules) + front z=189 x=1489..1525 (37). Ni le
-  client ni le banc n'ont de couture inter-chunk globale (mediane bord = mediane
-  interieur) -- les lignes sont LOCALES au pourtour de l'emprise lisse et
-  possee (candidats : passes decoupees qui ont traite un chunk puis clamp
-  adaptatif T89+T263 ramenant les suivantes, ou heightmap de reference
-  capturee avant l'arrivee d'un chunk).
+- **Verdict seam iter-20 (CORRIGE)** : la detection de « lignes strictes » par
+  heightmap (x=1488 z=145..189, z=189 x=1489..1525) signalait en fait la
+  SILHOUETTE du dragon (deepslate + oak_planks) — heightmap MOTION_BLOCKING
+  incluant le batiment, tout saut au bord de la sculpture fait un « mur ».
+  Preuve iter-20 avec ci/analyze_seams.py section D (bloc de surface par
+  colonne, decode palette+DataBitStorage) : les deux rives sont deepslate/
+  tuff, hauteurs ~135-148 = corps du dragon ; plateau interieur 135 vs
+  terrain naturel pre-pose ~74 (crique). Hors emprise (+8 bl de marge) :
+  **0 mur terrain apparu post-pose** — les 3 seuls murs (z=145/137/113) sont
+  identiques pre/post (falaises naturelles de la seed). Bord de la fenetre
+  de lissage : aucune ligne (feather 16 renforce par les sections ci-dessus,
+  scans a +-6 cellules autour du rectangle).
+- Outils : `ci/seam_scan_structure.py <structure> <x> <y> <z>` rejoue une pose
+  sur le snapshot et compare pre/post ; `ci/rebuild_env.sh` reconstruit le
+  lab /tmp apres wipe sandbox (runtime trackes ci/runtime*/parts).

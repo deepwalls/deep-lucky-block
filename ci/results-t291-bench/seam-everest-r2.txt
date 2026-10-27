@@ -1,0 +1,11 @@
+structure=everest pos=2250,90,250 emprise=None
+pre=17 post=26 apparus=9 hors_emprise=9
+TERRAIN-MUR ('V', 2249, 6, 340, 345)
+TERRAIN-MUR ('V', 2298, 6, 389, 394)
+TERRAIN-MUR ('V', 2306, 7, 384, 390)
+TERRAIN-MUR ('V', 2309, 6, 393, 398)
+TERRAIN-MUR ('V', 2329, 6, 405, 410)
+TERRAIN-MUR ('V', 2333, 8, 403, 410)
+TERRAIN-MUR ('V', 2408, 6, 331, 336)
+TERRAIN-MUR ('H', 398, 8, 2312, 2319)
+TERRAIN-MUR ('H', 399, 7, 2304, 2310)
